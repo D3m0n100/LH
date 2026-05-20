@@ -1,0 +1,87 @@
+# ============================================
+# ServoValvePlatform .gitignore
+# ============================================
+
+# ============ 构建目录 ============
+build/
+build_verify/
+cmake-build-*/
+out/
+bin/
+lib/
+
+# ============ Qt相关 ============
+*.autosave
+*.user
+*.pro.user*
+moc_*.cpp
+ui_*.h
+qrc_*.cpp
+.qmake.stash
+
+# ============ C++编译产物 ============
+*.o
+*.obj
+*.exe
+*.dll
+*.so
+*.dylib
+*.a
+*.lib
+*.pdb
+*.ilk
+*.exp
+
+# ============ IDE配置 ============
+.vscode/
+.idea/
+*.code-workspace
+*.suo
+*.sln.docstates
+.vs/
+
+# ============ 日志和数据库 ============
+*.log
+*.db
+*.sqlite
+logs/
+
+# ============ 临时文件 ============
+*~
+*.swp
+*.tmp
+*.bak
+*.orig
+.DS_Store
+Thumbs.db
+
+# ============ Python虚拟环境 ============
+# 不提交 Python 虚拟环境目录，应使用 requirements.txt 安装依赖
+venv/
+*/venv/
+.venv/
+*/.venv/
+__pycache__/
+*/__pycache__/
+*.py[cod]
+*$py.class
+.Python
+pip-log.txt
+pip-delete-this-directory.txt
+
+# 特定路径的虚拟环境
+third_party/custom_dsp_language/compile/venv/
+
+# ============ 测试相关 ============
+Testing/
+CTestTestfile.cmake
+test_output/
+workflow_reports/
+
+# ============ 文档生成 ============
+docs/html/
+docs/latex/
+Doxyfile.bak
+
+# ============ 依赖包（如果使用 vcpkg 等）============
+vcpkg_installed/

@@ -1,0 +1,72 @@
+{
+  "name": "f2812_bridge_mvp",
+  "slaveId": 2,
+  "steps": [
+    {
+      "type": "enter",
+      "params": {
+        "layer": "target",
+        "op": "writeRegs",
+        "address": 1024,
+        "values": [23130],
+        "needResponse": true
+      }
+    },
+    {
+      "type": "poll",
+      "params": {
+        "layer": "target",
+        "address": 1025,
+        "count": 1,
+        "expected": [1],
+        "timeoutMs": 5000,
+        "pollIntervalMs": 100
+      }
+    },
+    {
+      "type": "sendChunk",
+      "params": {
+        "layer": "target",
+        "dataAddress": 1056,
+        "chunkWords": 60,
+        "byteOrder": "BigEndian",
+        "packetIndexAddress": 1040,
+        "packetLengthAddress": 1041,
+        "packetCrcAddress": 1042,
+        "packetOffsetAddress": 1043,
+        "packetIndexBase": 0,
+        "needResponse": true
+      }
+    },
+    {
+      "type": "finalize",
+      "params": {
+        "layer": "target",
+        "op": "writeRegs",
+        "address": 1026,
+        "values": [42405],
+        "needResponse": true
+      }
+    },
+    {
+      "type": "poll",
+      "params": {
+        "layer": "target",
+        "address": 1025,
+        "count": 1,
+        "expected": [3],
+        "timeoutMs": 60000,
+        "pollIntervalMs": 200
+      }
+    },
+    {
+      "type": "queryResult",
+      "params": {
+        "layer": "target",
+        "address": 1027,
+        "count": 2,
+        "expected": [0, 0]
+      }
+    }
+  ]
+}

@@ -1,0 +1,20 @@
+[
+  {
+    "id": "pid_controller",
+    "name": "pid_controller",
+    "category": "control",
+    "description": "PID 控制器（工程自定义版本，已调整默认参数）",
+    "templateCode": "pid = pid_controller(\n    name = \"自定义PID\",\n    kp = 2.0,\n    ki = 0.2,\n    kd = 0.02,\n    setpoint = 60.0,\n    input = pressure_sensor,\n    output = valve_output\n);",
+    "unit": "",
+    "defaultPeriodMs": 10
+  },
+  {
+    "id": "custom_sensor",
+    "name": "custom_sensor",
+    "category": "input",
+    "description": "自定义传感器（工程新增）",
+    "templateCode": "custom_sensor = analog_input(\n    channel = 10,\n    name = \"自定义传感器\",\n    unit = \"V\",\n    min_value = 0.0,\n    max_value = 10.0\n);",
+    "unit": "V",
+    "defaultPeriodMs": 50
+  }
+]

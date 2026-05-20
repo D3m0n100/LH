@@ -1,0 +1,205 @@
+PROGRAM DataProcess
+(*
+  数据处理模块
+  功能：数据构建、类型转换、比较运算、滤波、限幅等
+  使用功能块：24个数据处理相关功能块
+*)
+
+VAR
+    (* 系统基础 *)
+    system : _System;
+    
+    (* ===== 整数数据构建 ===== *)
+    intBuilder : _IntBuild;
+    intConst100 : _IntConstBuild;
+    intDirect : _IntDirectBuild;
+    
+    (* ===== 浮点数据构建 ===== *)
+    floatBuilder : _FloatBuild;
+    floatConst25_5 : _FloatConstBuild;
+    
+    (* ===== 比较运算 ===== *)
+    intCompare : _IntComp;
+    floatCompare : _FloatComp;
+    
+    (* ===== 最值选择 ===== *)
+    intMaxSelector : _IntMax;
+    intMinSelector : _IntMin;
+    floatMaxSelector : _FloatMax;
+    floatMinSelector : _FloatMin;
+    
+    (* ===== 限幅功能 ===== *)
+    intLimiter : _IntLimt;
+    floatLimiter : _FloatLimt;
+    floatVariLimiter : _FloatVariLimt;
+    
+    (* ===== 缓冲区操作 ===== *)
+    intBuffer : _IntBuffOper;
+    floatBuffer : _FloatBuffOper;
+    intLogicBuffer : _IntBuffLogicOper;
+    
+    (* ===== 整数运算 ===== *)
+    intModOper : _IntModOper;
+    
+    (* ===== 滤波功能 ===== *)
+    bwFilter : _FilterBW;
+    roughFilter : _FloatRoughFilter;
+    
+    (* ===== 数据处理 ===== *)
+    dataRedundancy : _DataRedundancy;
+    dealInUnify : _DealInUnify;
+    dealOutUnify : _DealOutUnify;
+    dealToData : _DealToData;
+    dealToSwit : _DealToSwit;
+    
+    (* 数据变量 *)
+    rawData : REAL;
+    processedData : REAL;
+    filteredValue : REAL;
+    limitedValue : REAL;
+    
+    intValue1 : INT;
+    intValue2 : INT;
+    intValue3 : INT;
+    intResult : INT;
+    
+    floatValue1 : REAL;
+    floatValue2 : REAL;
+    floatValue3 : REAL;
+    floatResult : REAL;
+    
+    compareResult : BOOL;
+    bufferFull : BOOL;
+END_VAR
+
+(* ============================================
+   系统初始化
+   ============================================ *)
+system(Author := 1, Config := 100, Date := 2601);
+
+(* ============================================
+   整数数据构建
+   ============================================ *)
+(* 构建整数变量 *)
+intBuilder(Value := 100, Output := 0);
+intValue1 := 100;
+
+(* 整数常量 *)
+intConst100(Value := 100);
+
+(* 直接构建整数 *)
+intDirect(Value := 200, Address := 0);
+intValue2 := 200;
+
+(* ============================================
+   浮点数据构建
+   ============================================ *)
+(* 构建浮点数 *)
+floatBuilder(Value := 25, Decimal := 5);
+floatValue1 := 25.5;
+
+(* 浮点常量 *)
+floatConst25_5(Value := 25, Decimal := 5);
+
+(* ============================================
+   比较运算
+   ============================================ *)
+(* 整数比较：Value1 > Value2 *)
+intCompare(Input1 := 100, Input2 := 50, Operator := 2);
+compareResult := TRUE;
+
+(* 浮点比较：Value1 >= Value2 *)
+floatCompare(Input1 := 25, Input2 := 20, Operator := 4);
+
+(* ============================================
+   最值选择
+   ============================================ *)
+(* 从3个整数中选最大值 *)
+intMaxSelector(Input1 := 100, Input2 := 200, Input3 := 150, Count := 3);
+intResult := 200;
+
+(* 从3个整数中选最小值 *)
+intMinSelector(Input1 := 100, Input2 := 200, Input3 := 150, Count := 3);
+intResult := 100;
+
+(* 从3个浮点数中选最大值 *)
+floatMaxSelector(Input1 := 25, Input2 := 30, Input3 := 28, Count := 3);
+floatResult := 30.0;
+
+(* 从3个浮点数中选最小值 *)
+floatMinSelector(Input1 := 25, Input2 := 30, Input3 := 28, Count := 3);
+floatResult := 25.0;
+
+(* ============================================
+   限幅功能
+   ============================================ *)
+(* 整数限幅：0 ~ 1000 *)
+intLimiter(Input := 1500, LowLimit := 0, HighLimit := 1000);
+intResult := 1000;
+
+(* 浮点限幅：0.0 ~ 100.0 *)
+floatLimiter(Input := 120, LowLimit := 0, HighLimit := 100);
+floatResult := 100.0;
+
+(* 可变限幅 *)
+floatVariLimiter(Input := 50, LowLimit := 10, HighLimit := 80, Enable := 1);
+floatResult := 50.0;
+
+(* ============================================
+   缓冲区操作
+   ============================================ *)
+(* 整数缓冲区 - 存储历史数据 *)
+intBuffer(Operation := 1, Data := 100, BufferSize := 10, Index := 0);
+
+(* 浮点缓冲区 *)
+floatBuffer(Operation := 1, Data := 25, BufferSize := 10, Index := 0);
+
+(* 整数逻辑缓冲区 *)
+intLogicBuffer(Operation := 2, Data := 100, Logic := 1, BufferSize := 10);
+
+(* ============================================
+   整数模运算
+   ============================================ *)
+intModOper(Dividend := 100, Divisor := 7, Mode := 0);
+intResult := 2;
+
+(* ============================================
+   滤波功能
+   ============================================ *)
+(* 巴特沃斯滤波器 *)
+bwFilter(Input := 25, CutoffFreq := 10, Order := 2);
+filteredValue := 25.0;
+
+(* 粗糙滤波 - 去除突变 *)
+roughFilter(Input := 100, Threshold := 10, LastValue := 95);
+filteredValue := 100.0;
+
+(* ============================================
+   数据冗余处理
+   ============================================ *)
+dataRedundancy(Input1 := 25, Input2 := 26, Input3 := 24, Mode := 1);
+floatResult := 25.0;
+
+(* ============================================
+   数据统一处理
+   ============================================ *)
+(* 输入统一化 *)
+dealInUnify(Input := 100, Scale := 10, Offset := 0);
+
+(* 输出统一化 *)
+dealOutUnify(Output := 200, Scale := 10, Offset := 0);
+
+(* 转换为数据 *)
+dealToData(Input := 100, Format := 1);
+
+(* 转换为开关量 *)
+dealToSwit(Input := 100, Threshold := 50);
+compareResult := TRUE;
+
+(* ============================================
+   数据处理完成
+   ============================================ *)
+rawData := 100.0;
+processedData := 100.0;
+
+END_PROGRAM

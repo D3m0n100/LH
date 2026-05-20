@@ -1,0 +1,76 @@
+# Repository-wide ignore rules
+
+# Build outputs
+build/
+build_verify/
+cmake-build-*/
+out/
+bin/
+lib/
+LH/build_current_mingw/
+
+# IDE and editor files
+.vscode/
+.idea/
+.vs/
+*.code-workspace
+*.user
+*.pro.user*
+*.suo
+*.sln.docstates
+
+# C++ / Qt generated files
+*.o
+*.obj
+*.exe
+*.dll
+*.so
+*.dylib
+*.a
+*.lib
+*.pdb
+*.ilk
+*.exp
+*.autosave
+moc_*.cpp
+ui_*.h
+qrc_*.cpp
+.qmake.stash
+
+# Logs and temporary files
+*.log
+*.db
+*.sqlite
+*~
+*.swp
+*.tmp
+*.bak
+*.orig
+.DS_Store
+Thumbs.db
+
+# Python virtual environments and caches
+venv/
+*/venv/
+.venv/
+*/.venv/
+__pycache__/
+*/__pycache__/
+*.py[cod]
+*$py.class
+.Python
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Test and tooling outputs
+Testing/
+CTestTestfile.cmake
+test_output/
+workflow_reports/
+docs/html/
+docs/latex/
+Doxyfile.bak
+vcpkg_installed/
+
+# Local project folders not meant for version control
+zl/

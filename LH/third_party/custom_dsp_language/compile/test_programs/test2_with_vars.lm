@@ -1,0 +1,15 @@
+(* 测试2: 带变量的程序 *)
+PROGRAM WithVars
+VAR
+    system : _System;
+    temp : REAL;
+    count : INT;
+    flag : BOOL;
+END_VAR
+
+system(Author := 1, Config := 100, Date := 2601);
+temp := 25.5;
+count := 42;
+flag := TRUE;
+
+END_PROGRAM

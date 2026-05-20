@@ -1,0 +1,7 @@
+PROGRAM test_undeclared
+VAR
+    x : INT := 0;
+END_VAR
+    x := 1;
+    y := 2;
+END_PROGRAM

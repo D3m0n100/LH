@@ -1,0 +1,84 @@
+{
+  "name": "DownloadProfileExample",
+  "slaveId": 1,
+  "steps": [
+    {
+      "type": "enter",
+      "params": {
+        "layer": "Controller",
+        "slaveId": 1,
+        "op": "writeRegs",
+        "address": 23,
+        "values": [
+          1
+        ],
+        "note": "Enter download mode (example)"
+      }
+    },
+    {
+      "type": "poll",
+      "params": {
+        "layer": "Controller",
+        "slaveId": 1,
+        "address": 10,
+        "count": 1,
+        "expected": [
+          1
+        ],
+        "timeoutMs": 2000,
+        "pollIntervalMs": 100,
+        "note": "Wait controller ready (example)"
+      }
+    },
+    {
+      "type": "sendchunk",
+      "params": {
+        "layer": "Target",
+        "slaveId": 2,
+        "dataAddress": 400,
+        "chunkWords": 60,
+        "needResponse": true,
+        "byteOrder": "BigEndian",
+        "note": "Write payload chunks via Fun16 (example)"
+      }
+    },
+    {
+      "type": "finalize",
+      "params": {
+        "layer": "Target",
+        "slaveId": 2,
+        "op": "writeRegs",
+        "address": 21,
+        "values": [
+          1
+        ],
+        "note": "ConfSave (example)"
+      }
+    },
+    {
+      "type": "poll",
+      "params": {
+        "layer": "Target",
+        "slaveId": 2,
+        "address": 23,
+        "count": 1,
+        "expected": [
+          15
+        ],
+        "timeoutMs": 5000,
+        "pollIntervalMs": 200,
+        "note": "Wait Reset==15 means success (example)"
+      }
+    },
+    {
+      "type": "queryresult",
+      "params": {
+        "layer": "Target",
+        "slaveId": 2,
+        "address": 38,
+        "count": 1,
+        "note": "Read version/status (example)"
+      }
+    }
+  ]
+}

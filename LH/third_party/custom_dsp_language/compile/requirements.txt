@@ -1,0 +1,6 @@
+antlr4-python3-runtime==4.13.1
+click==8.1.7
+colorama==0.4.6
+pyyaml==6.0.1
+jsonschema==4.20.0
+rich==13.7.0

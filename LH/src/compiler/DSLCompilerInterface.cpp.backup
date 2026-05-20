@@ -1,0 +1,171 @@
+#include "DSLCompilerInterface.h"
+
+#include <QCoreApplication>
+#include <QDir>
+#include <QFileInfo>
+#include <QProcess>
+
+DSLCompilerInterface::DSLCompilerInterface(QObject* parent)
+    : QObject(parent)
+{
+}
+
+QString DSLCompilerInterface::compilerWorkingDir() const
+{
+    // exe 目录 /bin 之类 → 回到工程根，再到 third_party
+    QDir appDir(QCoreApplication::applicationDirPath());
+    appDir.cdUp(); // from bin to build, or from bin to root，看你现在布局
+    // 这里假设 exe 在 build/bin，根目录就是 build 的父目录
+    // 如果你以后调整安装路径，这里一起改
+    QString candidate = appDir.absoluteFilePath("third_party/custom_dsp_language/compile");
+    return QDir::cleanPath(candidate);
+}
+
+QString DSLCompilerInterface::compilerEntryScript() const
+{
+    return QDir(compilerWorkingDir()).absoluteFilePath("main.py");
+}
+
+QString DSLCompilerInterface::resolvePythonInterpreter() const
+{
+    // 优先环境变量 PYTHON，其次常见命令
+    QString envPython = qEnvironmentVariable("PYTHON");
+    QStringList candidates;
+    if (!envPython.isEmpty())
+        candidates << envPython;
+
+#ifdef Q_OS_WIN
+    candidates << "python.exe" << "python3.exe" << "py.exe";
+#else
+    candidates << "python3" << "python";
+#endif
+
+    for (const QString& cmd : candidates) {
+        if (cmd.trimmed().isEmpty())
+            continue;
+
+        QProcess proc;
+        proc.start(cmd, QStringList() << "--version");
+        if (proc.waitForFinished(3000) &&
+            proc.exitStatus() == QProcess::NormalExit &&
+            proc.exitCode() == 0) {
+            LOG_INFO(QString("检测到 Python 解释器: %1").arg(cmd));
+            return cmd;
+        }
+    }
+
+    LOG_ERROR("未找到可用的 Python 解释器，请确保已安装 Python 并配置环境变量");
+    return QString();
+}
+
+bool DSLCompilerInterface::compileDslFile(const QString& sourceFile,
+                                          const QString& outputDir,
+                                          const QString& projectName,
+                                          QString* compilerStdout,
+                                          QString* compilerStderr)
+{
+    QString python = resolvePythonInterpreter();
+    if (python.isEmpty()) {
+        if (compilerStderr) {
+            *compilerStderr = "未找到 Python 解释器，请安装 Python 3 并配置 PATH 或 PYTHON 环境变量。";
+        }
+        return false;
+    }
+
+    QString mainPy = compilerEntryScript();
+    if (!QFileInfo::exists(mainPy)) {
+        QString msg = QString("DSL 编译器入口脚本不存在: %1").arg(mainPy);
+        LOG_ERROR(msg);
+        if (compilerStderr) *compilerStderr = msg;
+        return false;
+    }
+
+    QFileInfo srcInfo(sourceFile);
+    if (!srcInfo.exists()) {
+        QString msg = QString("DSL 源文件不存在: %1").arg(sourceFile);
+        LOG_ERROR(msg);
+        if (compilerStderr) *compilerStderr = msg;
+        return false;
+    }
+
+    QDir outDir(outputDir);
+    if (!outDir.exists()) {
+        outDir.mkpath(".");
+    }
+
+    QString projName = projectName;
+    if (projName.isEmpty())
+        projName = srcInfo.completeBaseName();
+
+    QStringList args;
+    args << mainPy
+         << "compile"
+         << srcInfo.absoluteFilePath()
+         << "-o" << outDir.absolutePath()
+         << "-p" << projName;
+
+    LOG_INFO(QString("调用 DSL 编译器: %1 %2").arg(python, args.join(' ')));
+
+    QProcess proc;
+    proc.setProgram(python);
+    proc.setArguments(args);
+    proc.setWorkingDirectory(compilerWorkingDir());
+
+    proc.start();
+    if (!proc.waitForFinished(60 * 1000)) {
+        proc.kill();
+        QString msg = "DSL 编译器执行超时";
+        LOG_ERROR(msg);
+        if (compilerStderr) *compilerStderr = msg;
+        return false;
+    }
+
+    QString stdOut = QString::fromLocal8Bit(proc.readAllStandardOutput());
+    QString stdErr = QString::fromLocal8Bit(proc.readAllStandardError());
+
+    if (compilerStdout) *compilerStdout = stdOut;
+    if (compilerStderr) *compilerStderr = stdErr;
+
+    if (proc.exitStatus() != QProcess::NormalExit || proc.exitCode() != 0) {
+        LOG_ERROR(QString("DSL 编译失败，退出码=%1").arg(proc.exitCode()));
+        if (!stdErr.isEmpty())
+            LOG_ERROR(stdErr);
+        return false;
+    }
+
+    LOG_INFO("DSL 编译成功");
+    if (!stdOut.isEmpty())
+        LOG_INFO(stdOut);
+
+    return true;
+}
+
+bool DSLCompilerInterface::listComponents(QString* compilerStdout,
+                                          QString* compilerStderr)
+{
+    QString python = resolvePythonInterpreter();
+    if (python.isEmpty()) return false;
+
+    QString mainPy = compilerEntryScript();
+    if (!QFileInfo::exists(mainPy)) return false;
+
+    QStringList args;
+    args << mainPy << "list-components";
+
+    QProcess proc;
+    proc.setProgram(python);
+    proc.setArguments(args);
+    proc.setWorkingDirectory(compilerWorkingDir());
+    proc.start();
+    if (!proc.waitForFinished(30 * 1000)) {
+        proc.kill();
+        if (compilerStderr) *compilerStderr = "list-components 超时";
+        return false;
+    }
+
+    QString stdOut = QString::fromLocal8Bit(proc.readAllStandardOutput());
+    QString stdErr = QString::fromLocal8Bit(proc.readAllStandardError());
+    if (compilerStdout) *compilerStdout = stdOut;
+    if (compilerStderr) *compilerStderr = stdErr;
+    return proc.exitStatus() == QProcess::NormalExit && proc.exitCode() == 0;
+}

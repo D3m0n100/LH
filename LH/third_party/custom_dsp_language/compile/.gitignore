@@ -1,0 +1,66 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual Environment
+venv/
+ENV/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+*.cover
+.hypothesis/
+
+# ANTLR generated files
+grammar/*Lexer.py
+grammar/*Parser.py
+grammar/*Listener.py
+grammar/*Visitor.py
+grammar/*.tokens
+grammar/*.interp
+
+# Build artifacts
+*.code
+*.hex
+*.bin
+*.o
+
+# Logs
+*.log
+
+# Documentation builds
+docs/_build/
+
+# Temporary files
+*.tmp
+.temp/

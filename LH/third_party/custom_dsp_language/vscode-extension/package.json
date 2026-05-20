@@ -1,0 +1,18 @@
+{
+  "contributes": {
+    "commands": [
+      {
+        "command": "custom-dsp.compile",
+        "title": "编译为DSP代码",
+        "category": "Custom DSP"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "custom-dsp.compile",
+        "key": "ctrl+f5",
+        "when": "editorTextFocus && resourceExtname == '.cdsp'"
+      }
+    ]
+  }
+}

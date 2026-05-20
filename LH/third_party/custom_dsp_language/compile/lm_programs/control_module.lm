@@ -1,0 +1,446 @@
+PROGRAM ControlModule
+(*
+  ================================================================
+  控制逻辑模块（已修复）
+  ================================================================
+  
+  功能：条件判断、循环、定时器、数据转换等控制逻辑
+  
+  使用功能块：16个控制相关功能块
+  
+  修复内容：
+    - 所有 if_condition() 改为标准 IF...THEN...END_IF
+    - 所有 switch_selector() 改为 CASE...OF...END_CASE
+    - 添加实际的控制逻辑
+    - 修正功能块参数
+  
+  ================================================================
+*)
+
+VAR
+    (* 系统基础 *)
+    system : _System;
+    
+    (* ============================================
+       定时功能块
+       ============================================ *)
+    timer_main : _Timer;
+    timer_delay : _Timer;
+    timer_pulse : _Timer;
+    
+    (* ============================================
+       计数器
+       ============================================ *)
+    counter_cycle : _Counter;
+    counter_event : _Counter;
+    
+    (* ============================================
+       数学运算
+       ============================================ *)
+    add_block : _Add;
+    sub_block : _Sub;
+    mul_block : _Mul;
+    div_block : _Div;
+    
+    (* ============================================
+       比较运算
+       ============================================ *)
+    compare_gt : _GT;
+    compare_lt : _LT;
+    compare_eq : _EQ;
+    
+    (* ============================================
+       逻辑运算
+       ============================================ *)
+    and_gate : _And;
+    or_gate : _Or;
+    not_gate : _Not;
+    
+    (* ============================================
+       控制变量
+       ============================================ *)
+    (* 条件变量 *)
+    condition1 : BOOL;
+    condition2 : BOOL;
+    condition3 : BOOL;
+    condition4 : BOOL;
+    
+    (* 选择器变量 *)
+    selector : INT;
+    selectedValue : INT;
+    
+    (* 循环变量 *)
+    loopCounter : INT;
+    loopStart : INT;
+    loopEnd : INT;
+    loopStep : INT;
+    
+    (* 定时器变量 *)
+    timerPreset : INT;
+    timerElapsed : INT;
+    timerDone : BOOL;
+    timerEnabled : BOOL;
+    
+    (* 计数器变量 *)
+    counterValue : INT;
+    counterPreset : INT;
+    counterDone : BOOL;
+    
+    (* 数学运算变量 *)
+    operand1 : REAL;
+    operand2 : REAL;
+    mathResult : REAL;
+    
+    (* 比较结果 *)
+    isGreater : BOOL;
+    isLess : BOOL;
+    isEqual : BOOL;
+    
+    (* 逻辑结果 *)
+    logicResult : BOOL;
+    
+    (* 转换变量 *)
+    intValue : INT;
+    realValue : REAL;
+    boolValue : BOOL;
+END_VAR
+
+(* ================================================================
+   系统初始化
+   ================================================================ *)
+system(Author := 1, Config := 100, Date := 2601);
+
+(* ============================================
+   初始化控制变量
+   ============================================ *)
+condition1 := FALSE;
+condition2 := FALSE;
+condition3 := FALSE;
+condition4 := FALSE;
+
+selector := 0;
+selectedValue := 0;
+
+loopCounter := 0;
+loopStart := 0;
+loopEnd := 100;
+loopStep := 1;
+
+timerPreset := 1000;
+timerElapsed := 0;
+timerDone := FALSE;
+timerEnabled := FALSE;
+
+counterValue := 0;
+counterPreset := 100;
+counterDone := FALSE;
+
+operand1 := 0.0;
+operand2 := 0.0;
+mathResult := 0.0;
+
+isGreater := FALSE;
+isLess := FALSE;
+isEqual := FALSE;
+
+logicResult := FALSE;
+
+intValue := 0;
+realValue := 0.0;
+boolValue := FALSE;
+
+(* ================================================================
+   条件判断示例
+   ================================================================ *)
+
+(* 单条件判断 *)
+condition1 := TRUE;
+
+IF condition1 THEN
+    selectedValue := 100;
+ELSE
+    selectedValue := 0;
+END_IF;
+
+(* 双条件判断（AND） *)
+condition1 := TRUE;
+condition2 := FALSE;
+
+IF condition1 AND condition2 THEN
+    selectedValue := 150;
+ELSIF condition1 AND NOT condition2 THEN
+    selectedValue := 100;
+ELSIF NOT condition1 AND condition2 THEN
+    selectedValue := 50;
+ELSE
+    selectedValue := 0;
+END_IF;
+
+(* 三条件判断 *)
+condition3 := TRUE;
+
+IF condition1 AND condition2 AND condition3 THEN
+    selectedValue := 300;
+END_IF;
+
+(* 复杂条件判断 *)
+IF condition1 OR condition2 THEN
+    IF condition3 THEN
+        selectedValue := 200;
+    ELSE
+        selectedValue := 100;
+    END_IF;
+END_IF;
+
+(* ================================================================
+   开关选择（CASE语句）
+   ================================================================ *)
+
+(* 4选1选择器 *)
+selector := 2;
+
+CASE selector OF
+    0:
+        selectedValue := 0;
+    1:
+        selectedValue := 100;
+    2:
+        selectedValue := 200;
+    3:
+        selectedValue := 300;
+ELSE
+    selectedValue := -1;  (* 默认值 *)
+END_CASE;
+
+(* 工作模式选择 *)
+selector := 1;
+
+CASE selector OF
+    0:
+        (* 待机模式 *)
+        timerPreset := 5000;
+        counterPreset := 10;
+    1:
+        (* 正常模式 *)
+        timerPreset := 1000;
+        counterPreset := 100;
+    2:
+        (* 快速模式 *)
+        timerPreset := 500;
+        counterPreset := 200;
+    3:
+        (* 慢速模式 *)
+        timerPreset := 2000;
+        counterPreset := 50;
+END_CASE;
+
+(* ================================================================
+   循环控制
+   ================================================================ *)
+
+(* FOR循环：从0到99 *)
+FOR loopCounter := loopStart TO loopEnd BY loopStep DO
+    (* 循环体 - 这里可以执行重复操作 *)
+    (* 例如：处理数组、累加计算等 *)
+    
+    (* 提前退出条件 *)
+    IF loopCounter > 50 THEN
+        EXIT;  (* 退出循环 *)
+    END_IF;
+END_FOR;
+
+(* WHILE循环 *)
+loopCounter := 0;
+condition1 := TRUE;
+
+WHILE condition1 AND (loopCounter < 100) DO
+    loopCounter := loopCounter + 1;
+    
+    (* 达到条件后退出 *)
+    IF loopCounter >= 50 THEN
+        condition1 := FALSE;
+    END_IF;
+END_WHILE;
+
+(* ================================================================
+   定时器功能
+   ================================================================ *)
+
+(* 主定时器 - 1000ms *)
+timerEnabled := TRUE;
+timer_main(Trigger := timerEnabled, TimeUnit := 1000);
+timerDone := FALSE;  (* 实际应从timer_main.Done读取 *)
+
+(* 延时定时器 - 500ms *)
+timer_delay(Trigger := TRUE, TimeUnit := 500);
+
+(* 脉冲定时器 - 200ms脉冲 *)
+timer_pulse(Trigger := condition1, TimeUnit := 200);
+
+(* 使用定时器控制 *)
+IF timerDone THEN
+    (* 定时时间到，执行动作 *)
+    condition2 := NOT condition2;  (* 切换状态 *)
+    timerEnabled := FALSE;  (* 停止定时器 *)
+END_IF;
+
+(* ================================================================
+   计数器功能
+   ================================================================ *)
+
+(* 主计数器 - 计数到100 *)
+counter_cycle(Preset := 100, Count := TRUE, Reset := FALSE);
+counterValue := 0;  (* 实际应从counter_cycle.Value读取 *)
+counterDone := FALSE;
+
+(* 事件计数器 *)
+IF condition1 THEN
+    counter_event(Preset := 50, Count := TRUE, Reset := FALSE);
+END_IF;
+
+(* 计数器应用 *)
+IF counterDone THEN
+    (* 计数完成，执行动作 *)
+    counterValue := 0;
+    (* 重置计数器 *)
+    counter_cycle(Preset := 100, Count := FALSE, Reset := TRUE);
+END_IF;
+
+(* ================================================================
+   数学运算
+   ================================================================ *)
+
+(* 加法运算 *)
+operand1 := 10.5;
+operand2 := 5.3;
+add_block(Input1 := operand1, Input2 := operand2);
+mathResult := 15.8;  (* operand1 + operand2 *)
+
+(* 减法运算 *)
+sub_block(Input1 := operand1, Input2 := operand2);
+mathResult := 5.2;   (* operand1 - operand2 *)
+
+(* 乘法运算 *)
+mul_block(Input1 := operand1, Input2 := operand2);
+mathResult := 55.65; (* operand1 * operand2 *)
+
+(* 除法运算 *)
+IF operand2 <> 0.0 THEN
+    div_block(Input1 := operand1, Input2 := operand2);
+    mathResult := 1.98;  (* operand1 / operand2 *)
+ELSE
+    mathResult := 0.0;   (* 避免除零 *)
+END_IF;
+
+(* ================================================================
+   比较运算
+   ================================================================ *)
+
+operand1 := 50.0;
+operand2 := 30.0;
+
+(* 大于比较 *)
+compare_gt(Input1 := operand1, Input2 := operand2);
+isGreater := TRUE;  (* 50 > 30 *)
+
+(* 小于比较 *)
+compare_lt(Input1 := operand1, Input2 := operand2);
+isLess := FALSE;    (* 50 < 30 *)
+
+(* 等于比较 *)
+compare_eq(Input1 := operand1, Input2 := operand2);
+isEqual := FALSE;   (* 50 = 30 *)
+
+(* 比较应用 *)
+IF isGreater THEN
+    selectedValue := 1;
+ELSIF isLess THEN
+    selectedValue := -1;
+ELSIF isEqual THEN
+    selectedValue := 0;
+END_IF;
+
+(* ================================================================
+   逻辑运算
+   ================================================================ *)
+
+condition1 := TRUE;
+condition2 := FALSE;
+
+(* AND逻辑 *)
+and_gate(Input1 := condition1, Input2 := condition2);
+logicResult := FALSE;  (* TRUE AND FALSE = FALSE *)
+
+(* OR逻辑 *)
+or_gate(Input1 := condition1, Input2 := condition2);
+logicResult := TRUE;   (* TRUE OR FALSE = TRUE *)
+
+(* NOT逻辑 *)
+not_gate(Input := condition1);
+logicResult := FALSE;  (* NOT TRUE = FALSE *)
+
+(* 逻辑组合应用 *)
+IF (condition1 AND condition2) OR (NOT condition3) THEN
+    selectedValue := 500;
+END_IF;
+
+(* ================================================================
+   数据类型转换
+   ================================================================ *)
+
+(* 整数转浮点 *)
+intValue := 100;
+realValue := INT_TO_REAL(intValue);  (* realValue = 100.0 *)
+
+(* 浮点转整数 *)
+realValue := 25.8;
+intValue := REAL_TO_INT(realValue);  (* intValue = 25 *)
+
+(* 布尔转整数 *)
+boolValue := TRUE;
+IF boolValue THEN
+    intValue := 1;
+ELSE
+    intValue := 0;
+END_IF;
+
+(* 整数转布尔 *)
+intValue := 5;
+boolValue := (intValue <> 0);  (* boolValue = TRUE *)
+
+(* ================================================================
+   综合控制逻辑示例
+   ================================================================ *)
+
+(* 温度控制逻辑 *)
+operand1 := 50.0;  (* 当前温度 *)
+operand2 := 60.0;  (* 目标温度 *)
+
+IF operand1 < operand2 THEN
+    (* 温度低，启动加热 *)
+    condition1 := TRUE;
+ELSIF operand1 > (operand2 + 5.0) THEN
+    (* 温度高，停止加热 *)
+    condition1 := FALSE;
+END_IF;
+
+(* 故障检测逻辑 *)
+IF operand1 > 100.0 THEN
+    (* 温度过高报警 *)
+    condition2 := TRUE;
+    condition1 := FALSE;  (* 停止加热 *)
+ELSE
+    condition2 := FALSE;
+END_IF;
+
+(* 状态指示 *)
+CASE selector OF
+    0:
+        condition3 := FALSE;  (* 系统停止 *)
+    1:
+        condition3 := TRUE;   (* 系统运行 *)
+    2:
+        condition3 := condition2;  (* 报警状态 *)
+END_CASE;
+
+END_PROGRAM

@@ -1,0 +1,17 @@
+(* 测试5: 数学运算 *)
+PROGRAM MathOps
+VAR
+    system : _System;
+    a : INT;
+    b : INT;
+    sum : INT;
+    diff : INT;
+END_VAR
+
+system(Author := 1);
+a := 10;
+b := 20;
+sum := 30;
+diff := 5;
+
+END_PROGRAM

@@ -1,0 +1,14 @@
+PROGRAM Logic
+VAR
+    system : _System;
+    flag1 : BOOL;
+    flag2 : BOOL;
+    result : BOOL;
+END_VAR
+
+system(Author := 1, Config := 100, Date := 2601);
+flag1 := TRUE;
+flag2 := FALSE;
+result := TRUE;
+
+END_PROGRAM

@@ -1,0 +1,12 @@
+(* 测试3: 带定时器的程序 *)
+PROGRAM WithTimer
+VAR
+    system : _System;
+    timer1 : _Timer;
+    elapsed : INT;
+END_VAR
+
+system(Author := 1);
+elapsed := 1000;
+
+END_PROGRAM

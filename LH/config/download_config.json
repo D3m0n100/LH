@@ -1,0 +1,50 @@
+{
+  "comm": {
+    "protocol": "ModbusRTU",
+    "serial": {
+      "portName": "COM3",
+      "baudRate": 115200,
+      "parity": "None",
+      "dataBits": 8,
+      "stopBits": 1
+    },
+    "modbus": {
+      "timeoutMs": 300,
+      "retryCount": 3
+    },
+    "enableBridge": true,
+    "bridge": {
+      "enableHandshake": true,
+      "enableTargetProbe": true,
+      "controller": {
+        "slaveId": 1
+      },
+      "target": {
+        "deviceId": 2,
+        "deviceIdRange": [
+          0,
+          63
+        ]
+      },
+      "addressing": {
+        "mode": "TargetAsSlaveId",
+        "targetSelect": {
+          "selectReg": 0
+        }
+      },
+      "handshake": {
+        "slaveId": 1,
+        "address": 38,
+        "count": 1
+      },
+      "targetProbe": {
+        "slaveId": 2,
+        "address": 38,
+        "count": 1
+      },
+      "transfer": {
+        "byteOrder": "BigEndian"
+      }
+    }
+  }
+}

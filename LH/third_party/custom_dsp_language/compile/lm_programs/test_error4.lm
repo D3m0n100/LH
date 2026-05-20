@@ -1,0 +1,6 @@
+PROGRAM test_array_bounds
+VAR
+    buf : ARRAY[0..7] OF INT;
+END_VAR
+    buf[10] := 99;
+END_PROGRAM

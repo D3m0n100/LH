@@ -1,0 +1,16 @@
+// Simple LM Program Example
+// Demonstrates basic syntax and _System block
+
+PROGRAM Main
+VAR
+    system : _System;
+END_VAR
+
+// System initialization - required in every program
+system(
+    Author := 1,
+    Config := 100,
+    Date := 2601    // January 2026
+);
+
+END_PROGRAM
