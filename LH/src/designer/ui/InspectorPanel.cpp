@@ -120,7 +120,7 @@ QToolButton:pressed {
     auto* scrollArea = new QScrollArea(this);
     scrollArea->setFrameShape(QFrame::NoFrame);
     scrollArea->setWidgetResizable(true);
-    scrollArea->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+    scrollArea->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     scrollArea->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
     root->addWidget(scrollArea);
 
@@ -145,32 +145,48 @@ QToolButton:pressed {
     m_parameterTable = new QTableWidget(this);
     m_parameterTable->setColumnCount(7);
     m_parameterTable->setHorizontalHeaderLabels({ "名称", "默认值", "当前值", "变更", "确认", "回读", "偏差" });
-    m_parameterTable->horizontalHeader()->setStretchLastSection(true);
+    m_parameterTable->horizontalHeader()->setStretchLastSection(false);
+    m_parameterTable->horizontalHeader()->setSectionResizeMode(0, QHeaderView::Stretch);
+    m_parameterTable->horizontalHeader()->setSectionResizeMode(1, QHeaderView::ResizeToContents);
+    m_parameterTable->horizontalHeader()->setSectionResizeMode(2, QHeaderView::ResizeToContents);
+    m_parameterTable->horizontalHeader()->setSectionResizeMode(3, QHeaderView::ResizeToContents);
+    m_parameterTable->horizontalHeader()->setSectionResizeMode(4, QHeaderView::ResizeToContents);
+    m_parameterTable->horizontalHeader()->setSectionResizeMode(5, QHeaderView::ResizeToContents);
+    m_parameterTable->horizontalHeader()->setSectionResizeMode(6, QHeaderView::ResizeToContents);
+    m_parameterTable->horizontalHeader()->setMinimumSectionSize(48);
+    m_parameterTable->horizontalHeader()->setDefaultAlignment(Qt::AlignLeft | Qt::AlignVCenter);
+    m_parameterTable->setHorizontalScrollMode(QAbstractItemView::ScrollPerPixel);
+    m_parameterTable->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
     m_parameterTable->setEditTriggers(QAbstractItemView::NoEditTriggers);
     m_parameterTable->setSelectionBehavior(QAbstractItemView::SelectRows);
     m_parameterTable->setSelectionMode(QAbstractItemView::SingleSelection);
     m_parameterTable->setAlternatingRowColors(true);
-    m_parameterTable->setMinimumHeight(130);
-    connect(m_parameterTable, &QTableWidget::itemDoubleClicked,
-            this, &InspectorPanel::onParameterItemDoubleClicked);
-    m_pidParameterTable = new QTableWidget(this);
-    m_pidParameterTable->setColumnCount(7);
-    m_pidParameterTable->setHorizontalHeaderLabels({ "名称", "默认值", "当前值", "变更", "确认", "回读", "偏差" });
-    m_pidParameterTable->horizontalHeader()->setStretchLastSection(true);
-    m_pidParameterTable->setEditTriggers(QAbstractItemView::NoEditTriggers);
-    m_pidParameterTable->setSelectionBehavior(QAbstractItemView::SelectRows);
-    m_pidParameterTable->setSelectionMode(QAbstractItemView::SingleSelection);
-    m_pidParameterTable->setAlternatingRowColors(true);
-    m_pidParameterTable->setMinimumHeight(120);
+    m_parameterTable->verticalHeader()->setDefaultSectionSize(28);
+    m_parameterTable->setMinimumHeight(80);
+    m_contextGroup = new QGroupBox("上下文概览", content);
+    auto* contextLayout = new QFormLayout(m_contextGroup);
+    contextLayout->setContentsMargins(4, 2, 4, 4);
+    contextLayout->setHorizontalSpacing(8);
+    contextLayout->setVerticalSpacing(6);
+    contextLayout->addRow("项目路径", m_projectPathValue);
+    contextLayout->addRow("当前文件", m_currentFileValue);
+    contextLayout->addRow("工作区", m_workspaceValue);
+    contextLayout->addRow("运行状态", m_runtimeValue);
+    contextLayout->addRow("构建状态", m_buildValue);
+    contextLayout->addRow("监控状态", m_monitorValue);
+    contextLayout->addRow("变量摘要", m_variableValue);
+    contextLayout->addRow("参数摘要", m_parameterValue);
+    contextLayout->addRow("资源摘要", m_resourceValue);
+    contentLayout->addWidget(m_contextGroup);
 
-    auto* paramGroup = new QGroupBox("在线参数", content);
-    auto* paramLayout = new QVBoxLayout(paramGroup);
+    m_paramGroup = new QGroupBox("在线参数", content);
+    auto* paramLayout = new QVBoxLayout(m_paramGroup);
     paramLayout->setContentsMargins(0, 2, 0, 0);
     paramLayout->setSpacing(6);
     auto* paramHint = new QLabel("双击参数行可直接修改当前值。", this);
     paramHint->setStyleSheet("QLabel { color: #57606a; }");
     paramLayout->addWidget(paramHint);
-    paramLayout->addWidget(m_parameterTable);
+    paramLayout->addWidget(m_parameterTable, 1);
     m_parameterEditButton = makeActionButton("编辑选中参数", ":/icons/settings.svg", this);
     connect(m_parameterEditButton, &QToolButton::clicked, this, [this]() {
         if (!m_parameterTable || !m_parameterTable->currentItem()) {
@@ -179,21 +195,56 @@ QToolButton:pressed {
         onParameterItemDoubleClicked(m_parameterTable->currentItem());
     });
     paramLayout->addWidget(m_parameterEditButton);
-    auto* applyParametersButton = makeActionButton("应用参数到监控", ":/icons/run.svg", this);
-    connect(applyParametersButton, &QToolButton::clicked, this, &InspectorPanel::requestApplyParameters);
-    paramLayout->addWidget(applyParametersButton);
-    contentLayout->addWidget(paramGroup);
+    m_applyParametersButton = makeActionButton("应用参数到监控", ":/icons/run.svg", this);
+    connect(m_applyParametersButton, &QToolButton::clicked, this, &InspectorPanel::requestApplyParameters);
+    paramLayout->addWidget(m_applyParametersButton);
+    contentLayout->addWidget(m_paramGroup, 1);
+}
 
-    auto* pidGroup = new QGroupBox("PID 参数", content);
-    auto* pidLayout = new QVBoxLayout(pidGroup);
-    pidLayout->setContentsMargins(0, 2, 0, 0);
-    pidLayout->setSpacing(6);
-    auto* pidHint = new QLabel("自动识别名称中包含 PID 的参数，便于专门调参与对比。", this);
-    pidHint->setStyleSheet("QLabel { color: #57606a; }");
-    pidLayout->addWidget(pidHint);
-    pidLayout->addWidget(m_pidParameterTable);
-    contentLayout->addWidget(pidGroup);
-    contentLayout->addStretch();
+void InspectorPanel::setPanelMode(PanelMode mode)
+{
+    m_panelMode = mode;
+    const bool inspectionMode = (m_panelMode == PanelMode::Inspection);
+    if (m_contextGroup) {
+        m_contextGroup->setVisible(inspectionMode);
+    }
+    if (m_paramGroup) {
+        m_paramGroup->setTitle(inspectionMode ? QStringLiteral("在线参数") : QStringLiteral("PID 参数"));
+    }
+    if (m_parameterEditButton) {
+        m_parameterEditButton->setText(inspectionMode ? QStringLiteral("编辑选中参数")
+                                                      : QStringLiteral("编辑选中 PID 参数"));
+        m_parameterEditButton->setVisible(!inspectionMode);
+    }
+    if (m_applyParametersButton) {
+        m_applyParametersButton->setText(inspectionMode ? QStringLiteral("应用参数到监控")
+                                                        : QStringLiteral("应用 PID 参数到监控"));
+        m_applyParametersButton->setVisible(!inspectionMode);
+    }
+    if (m_parameterTable) {
+        if (inspectionMode) {
+            m_parameterTable->setColumnCount(3);
+            m_parameterTable->setHorizontalHeaderLabels({ "名称", "当前值", "详情" });
+            m_parameterTable->horizontalHeader()->setSectionResizeMode(0, QHeaderView::Stretch);
+            m_parameterTable->horizontalHeader()->setSectionResizeMode(1, QHeaderView::ResizeToContents);
+            m_parameterTable->horizontalHeader()->setSectionResizeMode(2, QHeaderView::Stretch);
+            m_parameterTable->horizontalHeader()->setMinimumSectionSize(56);
+            m_parameterTable->setWordWrap(true);
+        } else {
+            m_parameterTable->setColumnCount(7);
+            m_parameterTable->setHorizontalHeaderLabels({ "名称", "默认值", "当前值", "变更", "确认", "回读", "偏差" });
+            m_parameterTable->horizontalHeader()->setSectionResizeMode(0, QHeaderView::Stretch);
+            m_parameterTable->horizontalHeader()->setSectionResizeMode(1, QHeaderView::ResizeToContents);
+            m_parameterTable->horizontalHeader()->setSectionResizeMode(2, QHeaderView::ResizeToContents);
+            m_parameterTable->horizontalHeader()->setSectionResizeMode(3, QHeaderView::ResizeToContents);
+            m_parameterTable->horizontalHeader()->setSectionResizeMode(4, QHeaderView::ResizeToContents);
+            m_parameterTable->horizontalHeader()->setSectionResizeMode(5, QHeaderView::ResizeToContents);
+            m_parameterTable->horizontalHeader()->setSectionResizeMode(6, QHeaderView::ResizeToContents);
+            m_parameterTable->horizontalHeader()->setMinimumSectionSize(48);
+            m_parameterTable->setWordWrap(false);
+        }
+    }
+    refreshParameterTable();
 }
 
 void InspectorPanel::setProjectPath(const QString& projectPath)
@@ -253,24 +304,16 @@ void InspectorPanel::setParameterDetails(const QList<ParameterDefinition>& param
     refreshParameterTable();
 }
 
-void InspectorPanel::setPidParameterDetails(const QList<ParameterDefinition>& parameters)
-{
-    m_pidParameterData = parameters;
-    refreshPidParameterTable();
-}
-
 void InspectorPanel::setParameterReadbackReady(const QStringList& readyParameterNames)
 {
     m_readbackReadyParameters = readyParameterNames;
     refreshParameterTable();
-    refreshPidParameterTable();
 }
 
 void InspectorPanel::setParameterDeviationMap(const QMap<QString, double>& deviationMap)
 {
     m_parameterDeviationMap = deviationMap;
     refreshParameterTable();
-    refreshPidParameterTable();
 }
 
 void InspectorPanel::refreshParameterTable()
@@ -286,72 +329,48 @@ void InspectorPanel::refreshParameterTable()
 
         const QString current = p.currentValue.isEmpty() ? p.defaultValue : p.currentValue;
         auto* nameItem = new QTableWidgetItem(p.name);
-        auto* defaultItem = new QTableWidgetItem(p.defaultValue);
         auto* valueItem = new QTableWidgetItem(current);
-        auto* changeItem = new QTableWidgetItem(current == p.defaultValue ? "未变更" : "已变更");
-        auto* confirmItem = new QTableWidgetItem(p.confirmed ? "已确认" : "待确认");
-        auto* readbackItem = new QTableWidgetItem(readbackStateFor(p));
-        auto* deviationItem = new QTableWidgetItem(deviationStateFor(p));
-        if (current != p.defaultValue) {
-            changeItem->setForeground(QColor("#cf222e"));
-        }
-        if (!p.confirmed) {
-            confirmItem->setForeground(QColor("#cf222e"));
-        }
-        if (readbackItem->text() == "待回读") {
-            readbackItem->setForeground(QColor("#cf222e"));
-        }
-        if (deviationItem->text() != "无") {
-            deviationItem->setForeground(QColor("#cf222e"));
-        }
         m_parameterTable->setItem(row, 0, nameItem);
-        m_parameterTable->setItem(row, 1, defaultItem);
-        m_parameterTable->setItem(row, 2, valueItem);
-        m_parameterTable->setItem(row, 3, changeItem);
-        m_parameterTable->setItem(row, 4, confirmItem);
-        m_parameterTable->setItem(row, 5, readbackItem);
-        m_parameterTable->setItem(row, 6, deviationItem);
+        if (m_panelMode == PanelMode::Inspection) {
+            const QString detailText = QString("默认值: %1\n变更: %2\n确认: %3\n回读: %4\n偏差: %5")
+                                           .arg(p.defaultValue,
+                                                current == p.defaultValue ? "未变更" : "已变更",
+                                                p.confirmed ? "已确认" : "待确认",
+                                                readbackStateFor(p),
+                                                deviationStateFor(p));
+            auto* detailItem = new QTableWidgetItem(detailText);
+            detailItem->setTextAlignment(Qt::AlignLeft | Qt::AlignTop);
+            detailItem->setFlags(detailItem->flags() & ~Qt::ItemIsEditable);
+            m_parameterTable->setItem(row, 1, valueItem);
+            m_parameterTable->setItem(row, 2, detailItem);
+        } else {
+            auto* changeItem = new QTableWidgetItem(current == p.defaultValue ? "未变更" : "已变更");
+            auto* confirmItem = new QTableWidgetItem(p.confirmed ? "已确认" : "待确认");
+            auto* readbackItem = new QTableWidgetItem(readbackStateFor(p));
+            auto* deviationItem = new QTableWidgetItem(deviationStateFor(p));
+            if (current != p.defaultValue) {
+                changeItem->setForeground(QColor("#cf222e"));
+            }
+            if (!p.confirmed) {
+                confirmItem->setForeground(QColor("#cf222e"));
+            }
+            if (readbackItem->text() == "待回读") {
+                readbackItem->setForeground(QColor("#cf222e"));
+            }
+            if (deviationItem->text() != "无") {
+                deviationItem->setForeground(QColor("#cf222e"));
+            }
+            auto* defaultItem = new QTableWidgetItem(p.defaultValue);
+            m_parameterTable->setItem(row, 1, defaultItem);
+            m_parameterTable->setItem(row, 2, valueItem);
+            m_parameterTable->setItem(row, 3, changeItem);
+            m_parameterTable->setItem(row, 4, confirmItem);
+            m_parameterTable->setItem(row, 5, readbackItem);
+            m_parameterTable->setItem(row, 6, deviationItem);
+        }
     }
-}
-
-void InspectorPanel::refreshPidParameterTable()
-{
-    if (!m_pidParameterTable) {
-        return;
-    }
-
-    m_pidParameterTable->setRowCount(0);
-    for (const auto& p : m_pidParameterData) {
-        const int row = m_pidParameterTable->rowCount();
-        m_pidParameterTable->insertRow(row);
-
-        const QString current = p.currentValue.isEmpty() ? p.defaultValue : p.currentValue;
-        auto* nameItem = new QTableWidgetItem(p.name);
-        auto* defaultItem = new QTableWidgetItem(p.defaultValue);
-        auto* valueItem = new QTableWidgetItem(current);
-        auto* changeItem = new QTableWidgetItem(current == p.defaultValue ? "未变更" : "已变更");
-        auto* confirmItem = new QTableWidgetItem(p.confirmed ? "已确认" : "待确认");
-        auto* readbackItem = new QTableWidgetItem(readbackStateFor(p));
-        auto* deviationItem = new QTableWidgetItem(deviationStateFor(p));
-        if (current != p.defaultValue) {
-            changeItem->setForeground(QColor("#cf222e"));
-        }
-        if (!p.confirmed) {
-            confirmItem->setForeground(QColor("#cf222e"));
-        }
-        if (readbackItem->text() == "待回读") {
-            readbackItem->setForeground(QColor("#cf222e"));
-        }
-        if (deviationItem->text() != "无") {
-            deviationItem->setForeground(QColor("#cf222e"));
-        }
-        m_pidParameterTable->setItem(row, 0, nameItem);
-        m_pidParameterTable->setItem(row, 1, defaultItem);
-        m_pidParameterTable->setItem(row, 2, valueItem);
-        m_pidParameterTable->setItem(row, 3, changeItem);
-        m_pidParameterTable->setItem(row, 4, confirmItem);
-        m_pidParameterTable->setItem(row, 5, readbackItem);
-        m_pidParameterTable->setItem(row, 6, deviationItem);
+    if (m_panelMode == PanelMode::Inspection) {
+        m_parameterTable->resizeRowsToContents();
     }
 }
 
@@ -372,6 +391,9 @@ QString InspectorPanel::deviationStateFor(const ParameterDefinition& parameter) 
 
 void InspectorPanel::onParameterItemDoubleClicked(QTableWidgetItem* item)
 {
+    if (m_panelMode == PanelMode::Inspection) {
+        return;
+    }
     if (!item || item->column() != 1 || !m_parameterTable) {
         return;
     }

@@ -11,6 +11,18 @@ bool RunController::usesModbusTransport(const ProjectRuntimeConfig& config)
     return protocol.compare(QStringLiteral("modbus"), Qt::CaseInsensitive) == 0;
 }
 
+QString RunController::findArtifactPathFromCompileResult(const CompileResult& compileResult)
+{
+    for (const CompileArtifact& artifact : compileResult.artifacts) {
+        if (artifact.type == QStringLiteral("download")
+                && artifact.format == QStringLiteral("dsl_custom")
+                && QFileInfo::exists(artifact.path)) {
+            return artifact.path;
+        }
+    }
+    return QString();
+}
+
 QString RunController::resolveDownloadArtifactPath(const ProjectRuntimeConfig& config,
                                                    const QString& projectPath)
 {
@@ -25,17 +37,14 @@ QString RunController::findDownloadArtifactPath(const ProjectRuntimeConfig& conf
                                                 const QString& projectPath,
                                                 const CompileResult& compileResult)
 {
+    const QString compileArtifactPath = findArtifactPathFromCompileResult(compileResult);
+    if (!compileArtifactPath.isEmpty()) {
+        return compileArtifactPath;
+    }
+
     const QString configuredPath = resolveDownloadArtifactPath(config, projectPath);
     if (!configuredPath.isEmpty() && QFileInfo::exists(configuredPath)) {
         return configuredPath;
-    }
-
-    for (const CompileArtifact& artifact : compileResult.artifacts) {
-        if (artifact.type == QStringLiteral("download")
-                && artifact.format == QStringLiteral("dsl_custom")
-                && QFileInfo::exists(artifact.path)) {
-            return artifact.path;
-        }
     }
 
     return QString();

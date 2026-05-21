@@ -395,7 +395,7 @@ void ProjectExplorerWidget::createFileInDirectory(const QString& directoryPath)
         tr("新建文件"),
         tr("文件名:"),
         QLineEdit::Normal,
-        QStringLiteral("main.lm"),
+        QStringLiteral("main.dsl"),
         &accepted).trimmed();
     if (!accepted || fileName.isEmpty()) {
         return;

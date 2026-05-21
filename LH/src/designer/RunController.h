@@ -10,6 +10,7 @@ class RunController
 {
 public:
     static bool usesModbusTransport(const ProjectRuntimeConfig& config);
+    static QString findArtifactPathFromCompileResult(const CompileResult& compileResult);
 
     static QString resolveDownloadArtifactPath(const ProjectRuntimeConfig& config,
                                                const QString& projectPath);

@@ -16,6 +16,12 @@ inline QString decodeUtf8WithLocalFallback(const QByteArray& data)
     if (state.invalidChars == 0) {
         return text;
     }
+
+    QTextCodec* localCodec = QTextCodec::codecForLocale();
+    if (localCodec) {
+        return localCodec->toUnicode(data.constData(), data.size());
+    }
+
     return QString::fromLocal8Bit(data);
 }
 

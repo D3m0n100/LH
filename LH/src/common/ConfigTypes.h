@@ -442,7 +442,9 @@ struct ProjectRuntimeConfig
     QString projectName;                           ///< 项目名称
     QString protocol;                              ///< 通信协议（CAN/RS485/Ethernet）
     QVariantMap commParameters;                    ///< 通信参数
-    QString dslScriptPath;                         ///< DSL 脚本文件路径
+    QString dslScriptPath;                         ///< 旧版单脚本路径（兼容字段）
+    QString mainScriptPath;                        ///< 主入口脚本路径
+    QStringList scriptFiles;                       ///< 工程脚本清单（相对/绝对路径均可）
     QDateTime lastModified;                        ///< 最后修改时间
     QList<MonitorProviderRuntimeConfig> providers; ///< 监控 Provider 列表
     QList<DslMappingEntry> dslMappings;            ///< DSL 组态映射列表
@@ -459,6 +461,12 @@ struct ProjectRuntimeConfig
         obj["protocol"] = protocol;
         obj["commParameters"] = QJsonObject::fromVariantMap(commParameters);
         obj["dslScriptPath"] = dslScriptPath;
+        obj["mainScriptPath"] = mainScriptPath;
+        QJsonArray scriptFilesArray;
+        for (const auto& script : scriptFiles) {
+            scriptFilesArray.append(script);
+        }
+        obj["scriptFiles"] = scriptFilesArray;
         obj["lastModified"] = lastModified.toString(Qt::ISODate);
         obj["target"] = target.toJson();
         obj["controller"] = controller.toJson();
@@ -508,6 +516,22 @@ struct ProjectRuntimeConfig
         cfg.protocol = obj["protocol"].toString();
         cfg.commParameters = obj["commParameters"].toObject().toVariantMap();
         cfg.dslScriptPath = obj["dslScriptPath"].toString();
+        cfg.mainScriptPath = obj["mainScriptPath"].toString();
+        QJsonArray scriptFilesArray = obj["scriptFiles"].toArray();
+        for (const auto& script : scriptFilesArray) {
+            cfg.scriptFiles.append(script.toString());
+        }
+        // 兼容旧工程：mainScriptPath/scriptFiles 为空时回退到 dslScriptPath。
+        if (cfg.mainScriptPath.isEmpty()) {
+            cfg.mainScriptPath = cfg.dslScriptPath;
+        }
+        if (cfg.scriptFiles.isEmpty() && !cfg.mainScriptPath.isEmpty()) {
+            cfg.scriptFiles.append(cfg.mainScriptPath);
+        }
+        // 保持旧字段与新字段一致，避免旧调用链读到空值。
+        if (cfg.dslScriptPath.isEmpty()) {
+            cfg.dslScriptPath = cfg.mainScriptPath;
+        }
         cfg.lastModified = QDateTime::fromString(obj["lastModified"].toString(), Qt::ISODate);
         cfg.target = TargetDeviceConfig::fromJson(obj["target"].toObject());
         cfg.controller = ControllerConfig::fromJson(obj["controller"].toObject());
@@ -559,6 +583,8 @@ struct ProjectRuntimeConfig
         protocol.clear();
         commParameters.clear();
         dslScriptPath.clear();
+        mainScriptPath.clear();
+        scriptFiles.clear();
         lastModified = QDateTime();
         providers.clear();
         dslMappings.clear();

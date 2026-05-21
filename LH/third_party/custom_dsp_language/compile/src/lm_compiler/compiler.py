@@ -55,14 +55,14 @@ class LMCompiler:
     LM编译器
     
     功能：
-    - 读取 .lm 源文件
+    - 读取 .dsl 源文件
     - ANTLR词法/语法分析
     - 构建AST
     - 生成 .code 字节码
     
     用法:
         compiler = LMCompiler()
-        result = compiler.compile_file("program.lm", "output.code")
+        result = compiler.compile_file("program.dsl", "output.code")
         if result.success:
             print("编译成功!")
     """
@@ -97,7 +97,7 @@ class LMCompiler:
         编译LM源文件
         
         Args:
-            source_path: 源文件路径 (.lm)
+            source_path: 源文件路径 (.dsl)
             output_path: 输出文件路径 (.code), 如果为None则自动生成
             
         Returns:
@@ -111,6 +111,12 @@ class LMCompiler:
                 success=False,
                 errors=[f"源文件不存在: {source_path}"]
             )
+        if source_path.suffix.lower() != '.dsl':
+            return CompileResult(
+                success=False,
+                errors=[f"不支持的源文件后缀: {source_path.suffix}"]
+            )
+
         
         # 确定输出路径
         if output_path is None:
@@ -135,9 +141,9 @@ class LMCompiler:
             )
         
         # 编译
-        return self.compile_string(source_code, str(output_path))
+        return self.compile_string(source_code, str(output_path), source_path=str(source_path))
     
-    def compile_string(self, source_code: str, output_path: str = None) -> CompileResult:
+    def compile_string(self, source_code: str, output_path: str = None, source_path: str = None) -> CompileResult:
         """
         编译字符串形式的源代码
         
@@ -236,11 +242,12 @@ class LMCompiler:
             try:
                 output_path = Path(output_path)
                 output_path.parent.mkdir(parents=True, exist_ok=True)
+                source_path = Path(source_path) if source_path is not None else None
 
                 self.emitter.emit_with_header(
                     instructions,
                     str(output_path),
-                    program_name=source_path.stem,
+                    program_name=source_path.stem if source_path is not None else "",
                     metadata={
                         "版本号": compiler_version,
                         "文件名": str(source_path),
@@ -300,9 +307,9 @@ def main():
     import argparse
     
     parser = argparse.ArgumentParser(
-        description='LM编译器 - 将.lm源文件编译为.code字节码'
+        description='LM编译器 - 将.dsl源文件编译为.code字节码'
     )
-    parser.add_argument('input', help='输入的.lm源文件')
+    parser.add_argument('input', help='输入的.dsl源文件')
     parser.add_argument('-o', '--output', help='输出的.code文件（默认：与源文件同名）')
     parser.add_argument('-v', '--verbose', action='store_true', help='显示详细信息')
     parser.add_argument('-d', '--debug', action='store_true', help='显示调试信息')

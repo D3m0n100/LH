@@ -65,6 +65,11 @@ public:
     
     /// 获取当前脚本文件路径
     QString currentScriptFile() const { return m_currentScriptFile; }
+
+    /// 设置当前脚本文件路径
+    void setCurrentScriptFile(const QString& scriptFile);
+    QString currentMainScriptFile() const { return m_runtimeConfig.mainScriptPath; }
+    QStringList projectScriptFiles() const { return m_runtimeConfig.scriptFiles; }
     
     /// 当前是否有打开的项目
     bool hasOpenProject() const { return !m_currentProject.isEmpty(); }
@@ -191,6 +196,7 @@ private:
     
     /// 保存项目配置
     bool saveProjectConfig(const QString& projectDir);
+    void syncScriptConfigFields();
     
     /// 添加到最近项目列表
     void addToRecentProjects(const QString& path);

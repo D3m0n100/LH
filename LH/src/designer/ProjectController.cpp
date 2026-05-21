@@ -1,6 +1,7 @@
 ﻿/**
  * @file ProjectController.cpp
- * @brief 椤圭洰鎺у埗鍣ㄥ疄鐜? */
+ * @brief 项目控制器实现
+ */
 
 #include "ProjectController.h"
 #include "DslScriptEditor.h"
@@ -37,13 +38,23 @@ ProjectController::~ProjectController()
 }
 
 
-// ================= DSL 缂栬緫鍣ㄧ粦瀹?=================
+// ================= DSL 编辑器绑定 =================
 
 void ProjectController::setDslEditor(DslScriptEditor* editor)
 {
     m_dslEditor = editor;
     // Sync mappings to editor once the editor is available.
     syncDslMappingsToEditor();
+}
+
+void ProjectController::setCurrentScriptFile(const QString& scriptFile)
+{
+    if (m_currentScriptFile == scriptFile) {
+        return;
+    }
+
+    m_currentScriptFile = scriptFile;
+    syncScriptConfigFields();
 }
 
 // ================= 椤圭洰鐘舵€?=================
@@ -121,14 +132,18 @@ void ProjectController::createNewProject()
     if (scriptFile.open(QIODevice::WriteOnly | QIODevice::Text)) {
         QTextStream stream(&scriptFile);
         TextEncoding::setUtf8(stream);
-        stream << "// " << projectName << " - DSL脚本\n";
-        stream << "// 创建时间: " << QDateTime::currentDateTime().toString(Qt::ISODate) << "\n";
+        stream << QString::fromUtf8(u8"// ") << projectName << QString::fromUtf8(u8" - DSL脚本\n");
+        stream << QString::fromUtf8(u8"// 创建时间: ")
+               << QDateTime::currentDateTime().toString(Qt::ISODate)
+               << QString::fromUtf8(u8"\n");
         stream << "\n";
-        stream << "// 在此编写 DSL 组态代码，或从左侧函数列表拖拽组件\n";
+        stream << QString::fromUtf8(u8"// 在此编写 DSL 组态代码，或从左侧函数列表拖拽组件\n");
         scriptFile.close();
     }
 
     m_runtimeConfig.dslScriptPath = scriptPath;
+    m_runtimeConfig.mainScriptPath = scriptPath;
+    m_runtimeConfig.scriptFiles = QStringList{scriptPath};
     saveProjectConfig(fullPath);
 
     m_currentProject = fullPath;
@@ -179,8 +194,9 @@ bool ProjectController::openProjectFromPath(const QString& projectPath)
     m_currentProject = projectPath;
     
     // 鍔犺浇 DSL 鑴氭湰
-    if (!m_runtimeConfig.dslScriptPath.isEmpty()) {
-        m_currentScriptFile = m_runtimeConfig.dslScriptPath;
+    syncScriptConfigFields();
+    if (!m_runtimeConfig.mainScriptPath.isEmpty()) {
+        m_currentScriptFile = m_runtimeConfig.mainScriptPath;
         
         QFile scriptFile(m_currentScriptFile);
         if (scriptFile.open(QIODevice::ReadOnly | QIODevice::Text)) {
@@ -309,6 +325,7 @@ bool ProjectController::loadProjectConfig(const QString& projectDir)
 
 bool ProjectController::saveProjectConfig(const QString& projectDir)
 {
+    syncScriptConfigFields();
     m_runtimeConfig.lastModified = QDateTime::currentDateTime();
     
     QString configPath = projectDir + "/project_config.json";
@@ -326,6 +343,28 @@ bool ProjectController::saveProjectConfig(const QString& projectDir)
     emit logMessage(timestampedMessage("项目配置已保存"));
     
     return true;
+}
+
+void ProjectController::syncScriptConfigFields()
+{
+    if (!m_currentScriptFile.isEmpty()) {
+        m_runtimeConfig.mainScriptPath = m_currentScriptFile;
+    }
+
+    if (m_runtimeConfig.mainScriptPath.isEmpty()) {
+        m_runtimeConfig.mainScriptPath = m_runtimeConfig.dslScriptPath;
+    }
+
+    if (m_runtimeConfig.scriptFiles.isEmpty() && !m_runtimeConfig.mainScriptPath.isEmpty()) {
+        m_runtimeConfig.scriptFiles.append(m_runtimeConfig.mainScriptPath);
+    }
+
+    if (!m_runtimeConfig.mainScriptPath.isEmpty()) {
+        m_runtimeConfig.scriptFiles.removeAll(m_runtimeConfig.mainScriptPath);
+        m_runtimeConfig.scriptFiles.prepend(m_runtimeConfig.mainScriptPath);
+    }
+
+    m_runtimeConfig.dslScriptPath = m_runtimeConfig.mainScriptPath;
 }
 
 // ================= DSL 鏄犲皠鍚屾 =================

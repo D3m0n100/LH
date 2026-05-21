@@ -73,10 +73,12 @@ public slots:
                                const ProjectRuntimeConfig& config);
     
     /// 编译参数
-    void compileParameters(const QString& projectPath);
+    void compileParameters(const QString& projectPath,
+                           const ProjectRuntimeConfig& config);
     
     /// 编译通信
-    void compileCommunication(const QString& projectPath);
+    void compileCommunication(const QString& projectPath,
+                              const ProjectRuntimeConfig& config);
     
     /// 取消当前编译（如果支持）
     void cancelCompile();
@@ -126,8 +128,8 @@ private:
     /// 生成时间戳日志消息
     QString timestampedMessage(const QString& msg) const;
 
-    /// 当前项目主脚本路径（优先 main.lm，其次 main.dsl）
-    QString currentDslScriptPath() const;
+    /// 当前项目主脚本路径（优先配置主入口，回退旧约定 main.lm/main.dsl）
+    QString currentDslScriptPath(const ProjectRuntimeConfig& config) const;
 
     /// 获取编译输出目录
     QString buildOutputDirectory(BuildType type) const;

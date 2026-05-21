@@ -1,11 +1,12 @@
 ﻿/**
  * @file MainWindow.cpp
- * @brief 涓荤獥鍙ｇ被瀹炵幇
+ * @brief 主窗口类实现
  *
- * 閲嶆瀯璇存槑锛? * - 椤圭洰绠＄悊閫昏緫宸茶縼绉诲埌 ProjectController
- * - DSL 缂栬瘧閫昏緫宸茶縼绉诲埌 BuildController
- * - 搴旂敤璁剧疆閫昏緫宸茶縼绉诲埌 SettingsController
- * - MainWindow 浠呬繚鐣?UI 鏋勫缓鍜屼俊鍙疯浆鍙戦€昏緫
+ * 重构说明：
+ * - 项目管理逻辑已迁移到 ProjectController
+ * - DSL 编译逻辑已迁移到 BuildController
+ * - 应用设置逻辑已迁移到 SettingsController
+ * - MainWindow 仅保留 UI 构建和信号转发逻辑
  */
 
 #include "MainWindow.h"
@@ -60,7 +61,67 @@
 #include <QFileInfo>
 #include <QDir>
 #include <QSet>
+#include <QStringList>
 #include <cmath>
+
+namespace {
+
+bool containsSeparatedToken(const QString& text, const QString& token)
+{
+    if (text.isEmpty() || token.isEmpty()) {
+        return false;
+    }
+
+    const QString lower = text.toLower();
+    int index = lower.indexOf(token);
+    while (index >= 0) {
+        const int beforeIndex = index - 1;
+        const int afterIndex = index + token.size();
+        const bool beforeOk = beforeIndex < 0 || !lower.at(beforeIndex).isLetterOrNumber();
+        const bool afterOk = afterIndex >= lower.size() || !lower.at(afterIndex).isLetterOrNumber();
+        if (beforeOk && afterOk) {
+            return true;
+        }
+        index = lower.indexOf(token, index + 1);
+    }
+    return false;
+}
+
+bool isPidParameter(const ParameterDefinition& parameter)
+{
+    const QString name = parameter.name.trimmed().toLower();
+    const QString dataType = parameter.dataType.trimmed().toLower();
+    const QString unit = parameter.unit.trimmed().toLower();
+    const QString kind = parameter.metadata.value("kind").toString().trimmed().toLower();
+    const QString role = parameter.metadata.value("role").toString().trimmed().toLower();
+    const QString category = parameter.metadata.value("category").toString().trimmed().toLower();
+
+    const QString combined = QStringList{ name, dataType, unit, kind, role, category }.join(' ');
+    if (combined.contains("pid")) {
+        return true;
+    }
+
+    if (containsSeparatedToken(combined, "kp") ||
+        containsSeparatedToken(combined, "ki") ||
+        containsSeparatedToken(combined, "kd")) {
+        return true;
+    }
+
+    return false;
+}
+
+QList<ParameterDefinition> filterPidParameters(const QList<ParameterDefinition>& parameters)
+{
+    QList<ParameterDefinition> pidParameters;
+    for (const auto& parameter : parameters) {
+        if (parameter.onlineEditable && isPidParameter(parameter)) {
+            pidParameters.append(parameter);
+        }
+    }
+    return pidParameters;
+}
+
+} // namespace
 
 // ================= 鏋勯€?/ 鏋愭瀯 =================
 
@@ -705,6 +766,10 @@ void MainWindow::createDockWidgets()
 
     m_logDock->setWidget(m_bottomPanels);
     addDockWidget(Qt::BottomDockWidgetArea, m_logDock);
+    m_logDock->setMinimumHeight(200);
+    if (m_workspaceTabs) {
+        resizeDocks({m_logDock}, {260}, Qt::Vertical);
+    }
 
     connect(m_logDock, &QDockWidget::visibilityChanged, this, [this](bool visible) {
         if (m_actToggleOutputDock) {
@@ -739,6 +804,7 @@ void MainWindow::createInspectorDock()
                                  QDockWidget::DockWidgetClosable);
 
     m_inspectorPanel = new InspectorPanel(m_inspectorDock);
+    m_inspectorPanel->setPanelMode(InspectorPanel::PanelMode::Inspection);
     m_inspectorDock->setWidget(m_inspectorPanel);
     addDockWidget(Qt::RightDockWidgetArea, m_inspectorDock);
 
@@ -748,10 +814,6 @@ void MainWindow::createInspectorDock()
             this, &MainWindow::onRunProject);
     connect(m_inspectorPanel, &InspectorPanel::requestOpenMonitor,
             this, &MainWindow::onOpenMonitor);
-    connect(m_inspectorPanel, &InspectorPanel::requestEditParameter,
-            this, &MainWindow::onEditParameterRequested);
-    connect(m_inspectorPanel, &InspectorPanel::requestApplyParameters,
-            this, &MainWindow::onApplyParametersRequested);
 }
 
 void MainWindow::createParameterTuningWindow()
@@ -951,17 +1013,8 @@ void MainWindow::refreshInspectorPanel(InspectorPanel* panel)
             }
         }
     }
-    QList<ParameterDefinition> pidParameters;
-    for (const auto& p : cfg.parameters) {
-        if (p.name.contains("pid", Qt::CaseInsensitive) ||
-            p.metadata.value("kind").toString().contains("pid", Qt::CaseInsensitive) ||
-            p.metadata.value("role").toString().contains("pid", Qt::CaseInsensitive)) {
-            pidParameters.append(p);
-        }
-    }
     panel->setParameterReadbackReady(readbackReady);
     panel->setParameterDeviationMap(deviationMap);
-    panel->setPidParameterDetails(pidParameters);
     if (m_workspaceTabs) {
         panel->setWorkspaceName(m_workspaceTabs->tabText(m_workspaceTabs->currentIndex()));
     }
@@ -974,10 +1027,11 @@ void MainWindow::refreshInspectorPanel(ParameterTuningWindow* window)
     }
 
     const auto& cfg = m_projectController->runtimeConfig();
-    window->setParameterDetails(cfg.parameters);
+    const QList<ParameterDefinition> pidParameters = filterPidParameters(cfg.parameters);
+    window->setPidParameterDetails(pidParameters);
     QStringList readbackReady;
     QMap<QString, double> deviationMap;
-    for (const auto& p : cfg.parameters) {
+    for (const auto& p : pidParameters) {
         const QString channelName = QStringLiteral("param::%1").arg(p.name);
         const auto samples = Monitor::MonitorManager::instance().history(channelName, 1);
         const bool hasReadback = !samples.isEmpty();
@@ -992,17 +1046,8 @@ void MainWindow::refreshInspectorPanel(ParameterTuningWindow* window)
             }
         }
     }
-    QList<ParameterDefinition> pidParameters;
-    for (const auto& p : cfg.parameters) {
-        if (p.name.contains("pid", Qt::CaseInsensitive) ||
-            p.metadata.value("kind").toString().contains("pid", Qt::CaseInsensitive) ||
-            p.metadata.value("role").toString().contains("pid", Qt::CaseInsensitive)) {
-            pidParameters.append(p);
-        }
-    }
     window->setParameterReadbackReady(readbackReady);
     window->setParameterDeviationMap(deviationMap);
-    window->setPidParameterDetails(pidParameters);
 }
 
 void MainWindow::addProblem(const QString& severity, const QString& source, const QString& message)
@@ -1519,12 +1564,14 @@ void MainWindow::onCompileConfiguration()
 
 void MainWindow::onCompileParameters()
 {
-    m_buildController->compileParameters(m_projectController->currentProjectPath());
+    m_buildController->compileParameters(m_projectController->currentProjectPath(),
+                                         m_projectController->runtimeConfig());
 }
 
 void MainWindow::onCompileCommunication()
 {
-    m_buildController->compileCommunication(m_projectController->currentProjectPath());
+    m_buildController->compileCommunication(m_projectController->currentProjectPath(),
+                                            m_projectController->runtimeConfig());
 }
 
 void MainWindow::onCompileAndRunProject()
@@ -2067,6 +2114,23 @@ void MainWindow::openFileFromExplorer(const QString& filePath)
         }
     }
 
+    if (info.suffix().compare("dsl", Qt::CaseInsensitive) == 0) {
+        if (loadTextFileToEditor(filePath)) {
+            if (m_projectController) {
+                m_projectController->setCurrentScriptFile(filePath);
+            }
+            if (m_editorSubWindow) {
+                m_editorSubWindow->show();
+                m_editorSubWindow->raise();
+                m_mdiArea->setActiveSubWindow(m_editorSubWindow);
+            }
+            if (m_projectExplorerWidget) {
+                m_projectExplorerWidget->revealPath(filePath);
+            }
+        }
+        return;
+    }
+
     const QString canonicalTarget = info.canonicalFilePath();
     const QString currentDslFile = QFileInfo(m_projectController ? m_projectController->currentScriptFile() : QString()).canonicalFilePath();
 
@@ -2273,9 +2337,13 @@ void MainWindow::onCompileSucceeded(BuildType type)
 
     if (m_pendingRunAfterCompile && type == BuildType::Configuration) {
         m_pendingRunAfterCompile = false;
-        const QString artifactPath = RunController::resolveDownloadArtifactPath(
+        const CompileResult compileResult = m_buildController
+                ? m_buildController->lastCompileResult()
+                : CompileResult();
+        const QString artifactPath = RunController::findDownloadArtifactPath(
                 m_projectController->runtimeConfig(),
-                m_projectController->currentProjectPath());
+                m_projectController->currentProjectPath(),
+                compileResult);
         if (artifactPath.isEmpty() || !QFileInfo::exists(artifactPath)) {
             QMessageBox::warning(this,
                                  "运行条件不完整",

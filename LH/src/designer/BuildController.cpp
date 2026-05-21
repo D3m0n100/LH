@@ -30,8 +30,6 @@ BuildController::~BuildController()
 void BuildController::compileConfiguration(const QString& projectPath,
                                            const ProjectRuntimeConfig& config)
 {
-    Q_UNUSED(config);
-
     if (m_busy) {
         emit logMessage(timestampedMessage("编译器正在忙碌，请稍候。"));
         return;
@@ -60,7 +58,7 @@ void BuildController::compileConfiguration(const QString& projectPath,
     m_currentBuildType = BuildType::Configuration;
     m_currentProjectPath = projectPath;
 
-    const QString sourceFile = currentDslScriptPath();
+    const QString sourceFile = currentDslScriptPath(config);
     if (sourceFile.isEmpty() || !QFileInfo::exists(sourceFile)) {
         emit logMessage(timestampedMessage("未找到当前项目的 DSL 脚本。"));
         emit compileFailed(BuildType::Configuration, QStringLiteral("DSL 脚本不存在。"));
@@ -75,12 +73,14 @@ void BuildController::compileConfiguration(const QString& projectPath,
             QStringLiteral("输出目录: %1").arg(buildOutputDirectory(BuildType::Configuration))));
     emit compileProgress(10);
 
-    m_dslCompiler->compileDslFileAsync(sourceFile,
+    m_dslCompiler->compileProjectAsync(projectPath,
+                                       config,
                                        buildOutputDirectory(BuildType::Configuration),
                                        QFileInfo(projectPath).fileName());
 }
 
-void BuildController::compileParameters(const QString& projectPath)
+void BuildController::compileParameters(const QString& projectPath,
+                                        const ProjectRuntimeConfig& config)
 {
     if (m_busy) {
         emit logMessage(timestampedMessage("编译器正在忙碌，请稍候。"));
@@ -110,7 +110,7 @@ void BuildController::compileParameters(const QString& projectPath)
     m_currentBuildType = BuildType::Parameters;
     m_currentProjectPath = projectPath;
 
-    const QString sourceFile = currentDslScriptPath();
+    const QString sourceFile = currentDslScriptPath(config);
     if (sourceFile.isEmpty() || !QFileInfo::exists(sourceFile)) {
         emit logMessage(timestampedMessage("未找到当前项目的 DSL 脚本。"));
         emit compileFailed(BuildType::Parameters, QStringLiteral("DSL 脚本不存在。"));
@@ -125,12 +125,14 @@ void BuildController::compileParameters(const QString& projectPath)
             QStringLiteral("输出目录: %1").arg(buildOutputDirectory(BuildType::Parameters))));
     emit compileProgress(10);
 
-    m_dslCompiler->compileDslFileAsync(sourceFile,
+    m_dslCompiler->compileProjectAsync(projectPath,
+                                       config,
                                        buildOutputDirectory(BuildType::Parameters),
                                        QFileInfo(projectPath).fileName());
 }
 
-void BuildController::compileCommunication(const QString& projectPath)
+void BuildController::compileCommunication(const QString& projectPath,
+                                           const ProjectRuntimeConfig& config)
 {
     if (m_busy) {
         emit logMessage(timestampedMessage("编译器正在忙碌，请稍候。"));
@@ -160,7 +162,7 @@ void BuildController::compileCommunication(const QString& projectPath)
     m_currentBuildType = BuildType::Communication;
     m_currentProjectPath = projectPath;
 
-    const QString sourceFile = currentDslScriptPath();
+    const QString sourceFile = currentDslScriptPath(config);
     if (sourceFile.isEmpty() || !QFileInfo::exists(sourceFile)) {
         emit logMessage(timestampedMessage("未找到当前项目的 DSL 脚本。"));
         emit compileFailed(BuildType::Communication, QStringLiteral("DSL 脚本不存在。"));
@@ -175,7 +177,8 @@ void BuildController::compileCommunication(const QString& projectPath)
             QStringLiteral("输出目录: %1").arg(buildOutputDirectory(BuildType::Communication))));
     emit compileProgress(10);
 
-    m_dslCompiler->compileDslFileAsync(sourceFile,
+    m_dslCompiler->compileProjectAsync(projectPath,
+                                       config,
                                        buildOutputDirectory(BuildType::Communication),
                                        QFileInfo(projectPath).fileName());
 }
@@ -249,15 +252,30 @@ QString BuildController::timestampedMessage(const QString& msg) const
         .arg(msg);
 }
 
-QString BuildController::currentDslScriptPath() const
+QString BuildController::currentDslScriptPath(const ProjectRuntimeConfig& config) const
 {
     if (m_currentProjectPath.isEmpty()) {
         return QString();
     }
 
-    const QString lmPath = QDir(m_currentProjectPath).absoluteFilePath(QStringLiteral("main.lm"));
-    if (QFileInfo::exists(lmPath)) {
-        return lmPath;
+    auto resolvePath = [this](const QString& path) -> QString {
+        if (path.isEmpty()) {
+            return QString();
+        }
+        if (QFileInfo(path).isAbsolute()) {
+            return path;
+        }
+        return QDir(m_currentProjectPath).absoluteFilePath(path);
+    };
+
+    const QString mainPath = resolvePath(config.mainScriptPath);
+    if (!mainPath.isEmpty() && QFileInfo::exists(mainPath)) {
+        return mainPath;
+    }
+
+    const QString legacyConfigPath = resolvePath(config.dslScriptPath);
+    if (!legacyConfigPath.isEmpty() && QFileInfo::exists(legacyConfigPath)) {
+        return legacyConfigPath;
     }
 
     const QString dslPath = QDir(m_currentProjectPath).absoluteFilePath(QStringLiteral("main.dsl"));

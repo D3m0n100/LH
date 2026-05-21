@@ -81,6 +81,7 @@ private:
     QTextCharFormat m_componentFormat;      ///< 组件名格式
     QTextCharFormat m_typeFormat;           ///< 类型格式
     QTextCharFormat m_singleLineCommentFormat; ///< 单行注释格式
+    QTextCharFormat m_internalMarkerFormat;    ///< 内部映射锚点格式
     QTextCharFormat m_multiLineCommentFormat;  ///< 多行注释格式
     QTextCharFormat m_stringFormat;         ///< 字符串格式
     QTextCharFormat m_numberFormat;         ///< 数字格式

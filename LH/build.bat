@@ -8,8 +8,9 @@ REM Change to script directory
 cd /d "%~dp0"
 
 REM Create build directory if not exists
-if not exist build mkdir build
-cd build
+set "BUILD_DIR=build_current_mingw"
+if not exist "%BUILD_DIR%" mkdir "%BUILD_DIR%"
+cd /d "%BUILD_DIR%"
 
 echo [1/3] Configure CMake...
 cmake -G "MinGW Makefiles" -DCMAKE_PREFIX_PATH=C:/Qt/5.15.2/mingw81_64 ..
@@ -21,7 +22,7 @@ if errorlevel 1 goto :build_error
 
 echo [3/3] Done.
 echo.
-echo Executable should be at: build\bin\ServoValvePlatform.exe
+echo Executable should be at: %BUILD_DIR%\bin\ServoValvePlatform.exe
 echo.
 pause
 exit /b 0

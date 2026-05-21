@@ -26,7 +26,6 @@ int main(int argc, char *argv[])
     app.setOrganizationName("DUT");
 
     // 设置中文支持
-    QTextCodec::setCodecForLocale(QTextCodec::codecForName("UTF-8"));
 
     // 设置应用程序图标（使用资源文件中的图标）
     QIcon appIcon(":/icons/app_icon.png");

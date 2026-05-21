@@ -1,6 +1,7 @@
 ﻿/**
  * @file DslSyntaxHighlighter.cpp
- * @brief DSL 璇硶楂樹寒鍣ㄥ疄鐜? */
+ * @brief DSL 语法高亮器实现
+ */
 
 #include "DslSyntaxHighlighter.h"
 
@@ -12,7 +13,7 @@ DslSyntaxHighlighter::DslSyntaxHighlighter(QTextDocument* parent)
 
 void DslSyntaxHighlighter::setupHighlightingRules()
 {
-    // ===== 鍏抽敭瀛楁牸寮忥紙DSL 缁勪欢鍑芥暟锛?====
+    // ===== 关键字格式（DSL 组件函数）====
     m_componentFormat.setForeground(QColor("#007acc"));
     
     QStringList componentPatterns = {
@@ -35,7 +36,7 @@ void DslSyntaxHighlighter::setupHighlightingRules()
         m_highlightingRules.append(rule);
     }
     
-    // ===== 绫诲瀷鏍煎紡 =====
+    // ===== 类型格式 =====
     m_typeFormat.setForeground(QColor("#8661c5"));
     m_typeFormat.setFontWeight(QFont::Bold);
     
@@ -143,6 +144,16 @@ void DslSyntaxHighlighter::setupHighlightingRules()
         HighlightingRule rule;
         rule.pattern = QRegularExpression("//[^\n]*");
         rule.format = m_singleLineCommentFormat;
+        m_highlightingRules.append(rule);
+    }
+
+    // 内部映射锚点仅用于编辑器定位，不希望在正文中显眼展示
+    m_internalMarkerFormat.setForeground(QColor("#ffffff"));
+    m_internalMarkerFormat.setBackground(QColor("#ffffff"));
+    {
+        HighlightingRule rule;
+        rule.pattern = QRegularExpression(R"(^\s*//\s*@dsl_mapping_id\s*:\s*[A-Za-z0-9\-]+\s*$)");
+        rule.format = m_internalMarkerFormat;
         m_highlightingRules.append(rule);
     }
     

@@ -329,9 +329,63 @@ static QString sha256ForFile(const QString& filePath)
     return QString::fromLatin1(hash.result().toHex());
 }
 
+static QString resolveScriptPath(const QString& projectPath, const QString& path)
+{
+    if (path.isEmpty()) {
+        return QString();
+    }
+    if (QFileInfo(path).isAbsolute()) {
+        return QFileInfo(path).absoluteFilePath();
+    }
+    return QDir(projectPath).absoluteFilePath(path);
+}
+
+static QString resolveProjectMainScriptPath(const QString& projectPath,
+                                            const ProjectRuntimeConfig& config)
+{
+    const QString mainPath = resolveScriptPath(projectPath, config.mainScriptPath);
+    if (!mainPath.isEmpty() && QFileInfo::exists(mainPath)) {
+        return mainPath;
+    }
+
+    const QString legacyPath = resolveScriptPath(projectPath, config.dslScriptPath);
+    if (!legacyPath.isEmpty() && QFileInfo::exists(legacyPath)) {
+        return legacyPath;
+    }
+
+    const QString dslPath = QDir(projectPath).absoluteFilePath(QStringLiteral("main.dsl"));
+    if (QFileInfo::exists(dslPath)) {
+        return dslPath;
+    }
+
+    return QString();
+}
+
+static QStringList normalizeProjectScriptFiles(const QString& projectPath,
+                                               const ProjectRuntimeConfig& config,
+                                               const QString& mainScriptFile)
+{
+    QStringList normalized;
+    for (const QString& script : config.scriptFiles) {
+        const QString path = resolveScriptPath(projectPath, script);
+        if (!path.isEmpty() && !normalized.contains(path)) {
+            normalized.append(path);
+        }
+    }
+
+    if (!mainScriptFile.isEmpty()) {
+        normalized.removeAll(mainScriptFile);
+        normalized.prepend(mainScriptFile);
+    }
+
+    return normalized;
+}
+
 CompileResult DSLCompilerInterface::buildCompileResult(const QString& sourceFile,
                                                        const QString& outputDir,
                                                        const QString& projectName,
+                                                       const QString& mainScriptFile,
+                                                       const QStringList& scriptFiles,
                                                        bool success,
                                                        const QString& stdOut,
                                                        const QString& stdErr) const
@@ -355,6 +409,9 @@ CompileResult DSLCompilerInterface::buildCompileResult(const QString& sourceFile
         artifact.format = QStringLiteral("dsl_custom");
         artifact.checksum = sha256ForFile(outputFile);
         artifact.metadata.insert(QStringLiteral("sourceFile"), sourceFile);
+        artifact.metadata.insert(QStringLiteral("mainScriptFile"), mainScriptFile.isEmpty() ? sourceFile : mainScriptFile);
+        artifact.metadata.insert(QStringLiteral("scriptFiles"), scriptFiles);
+        artifact.metadata.insert(QStringLiteral("artifactScope"), QStringLiteral("project"));
         artifact.metadata.insert(QStringLiteral("outputDir"), outputDir);
         result.artifacts.append(artifact);
     }
@@ -375,37 +432,14 @@ QString DSLCompilerInterface::prepareCompilerInput(const QString& sourceFile,
     }
 
     const QString suffix = sourceInfo.suffix().toLower();
-    if (suffix == QStringLiteral("lm")) {
-        return sourceInfo.absoluteFilePath();
-    }
-
-    QFile src(sourceInfo.absoluteFilePath());
-    if (!src.open(QIODevice::ReadOnly | QIODevice::Text)) {
+    if (suffix != QStringLiteral("dsl")) {
         if (errorMessage) {
-            *errorMessage = QStringLiteral("Failed to read source file: %1").arg(sourceInfo.absoluteFilePath());
+            *errorMessage = QStringLiteral("Unsupported source file suffix: %1").arg(sourceInfo.suffix());
         }
         return QString();
     }
 
-    const QString stagingDir = QDir(outputDir).absoluteFilePath(QStringLiteral(".compiler_staging"));
-    QDir().mkpath(stagingDir);
-
-    const QString stagedLmFile = QDir(stagingDir).absoluteFilePath(sourceInfo.completeBaseName() + QStringLiteral(".lm"));
-    QFile staged(stagedLmFile);
-    if (!staged.open(QIODevice::WriteOnly | QIODevice::Text | QIODevice::Truncate)) {
-        if (errorMessage) {
-            *errorMessage = QStringLiteral("Failed to create staged LM file: %1").arg(stagedLmFile);
-        }
-        return QString();
-    }
-
-    const QString sourceText = TextEncoding::decodeUtf8WithLocalFallback(src.readAll());
-    const QString normalizedText = normalizeLegacyDslSource(sourceText, sourceInfo.completeBaseName());
-    staged.write(normalizedText.toUtf8());
-    staged.close();
-    src.close();
-
-    return stagedLmFile;
+    return sourceInfo.absoluteFilePath();
 }
 
 bool DSLCompilerInterface::compileDslFile(const QString& sourceFile,
@@ -496,7 +530,14 @@ bool DSLCompilerInterface::compileDslFile(const QString& sourceFile,
                  && proc.exitCode() == 0
                  && QFileInfo::exists(outputFile);
 
-    m_lastCompileResult = buildCompileResult(sourceFile, outputDir, projectName, ok, stdOut, stdErr);
+    m_lastCompileResult = buildCompileResult(sourceFile,
+                                             outputDir,
+                                             projectName,
+                                             sourceFile,
+                                             QStringList{sourceFile},
+                                             ok,
+                                             stdOut,
+                                             stdErr);
 
     if (!ok) {
         qWarning() << "[DSLCompilerInterface] compileDslFile failed. exitCode="
@@ -513,7 +554,44 @@ CompileResult DSLCompilerInterface::compileDslFileWithResult(const QString& sour
     QString stdOut;
     QString stdErr;
     const bool ok = compileDslFile(sourceFile, outputDir, projectName, &stdOut, &stdErr);
-    m_lastCompileResult = buildCompileResult(sourceFile, outputDir, projectName, ok, stdOut, stdErr);
+    m_lastCompileResult = buildCompileResult(sourceFile,
+                                             outputDir,
+                                             projectName,
+                                             sourceFile,
+                                             QStringList{sourceFile},
+                                             ok,
+                                             stdOut,
+                                             stdErr);
+    return m_lastCompileResult;
+}
+
+CompileResult DSLCompilerInterface::compileProjectWithResult(const QString& projectPath,
+                                                             const ProjectRuntimeConfig& config,
+                                                             const QString& outputDir,
+                                                             const QString& projectName)
+{
+    const QString mainScriptFile = resolveProjectMainScriptPath(projectPath, config);
+    if (mainScriptFile.isEmpty()) {
+        CompileResult result;
+        result.success = false;
+        result.projectName = projectName;
+        result.errors.append(QStringLiteral("Main script not found for project compile."));
+        return result;
+    }
+
+    const QStringList scriptFiles = normalizeProjectScriptFiles(projectPath, config, mainScriptFile);
+
+    QString stdOut;
+    QString stdErr;
+    const bool ok = compileDslFile(mainScriptFile, outputDir, projectName, &stdOut, &stdErr);
+    m_lastCompileResult = buildCompileResult(mainScriptFile,
+                                             outputDir,
+                                             projectName,
+                                             mainScriptFile,
+                                             scriptFiles,
+                                             ok,
+                                             stdOut,
+                                             stdErr);
     return m_lastCompileResult;
 }
 
@@ -662,6 +740,8 @@ void DSLCompilerInterface::compileDslFileAsync(const QString& sourceFile,
     m_process->setWorkingDirectory(workDir);
     m_process->setProcessChannelMode(QProcess::SeparateChannels);
     m_process->setProperty("sourceFile", sourceFile);
+    m_process->setProperty("mainScriptFile", sourceFile);
+    m_process->setProperty("scriptFiles", QStringList{sourceFile});
     m_process->setProperty("outputDir", outputDir);
     m_process->setProperty("projectName", projectName);
     m_process->setProperty("expectedOutputFile", outputFile);
@@ -693,6 +773,25 @@ void DSLCompilerInterface::compileDslFileAsync(const QString& sourceFile,
     m_process->setProperty("compileTimedOut", false);
     m_process->start();
     m_compileTimeoutTimer->start(120 * 1000);
+}
+
+void DSLCompilerInterface::compileProjectAsync(const QString& projectPath,
+                                               const ProjectRuntimeConfig& config,
+                                               const QString& outputDir,
+                                               const QString& projectName)
+{
+    const QString mainScriptFile = resolveProjectMainScriptPath(projectPath, config);
+    if (mainScriptFile.isEmpty()) {
+        emit compileFailedToStart(QStringLiteral("Main script not found for project compile."));
+        return;
+    }
+
+    const QStringList scriptFiles = normalizeProjectScriptFiles(projectPath, config, mainScriptFile);
+    compileDslFileAsync(mainScriptFile, outputDir, projectName);
+    if (m_process) {
+        m_process->setProperty("mainScriptFile", mainScriptFile);
+        m_process->setProperty("scriptFiles", scriptFiles);
+    }
 }
 
 void DSLCompilerInterface::cancelCurrentCompile()
@@ -789,6 +888,8 @@ void DSLCompilerInterface::onProcessFinished(int exitCode, QProcess::ExitStatus 
     m_lastCompileResult = buildCompileResult(m_process->property("sourceFile").toString(),
                                              m_process->property("outputDir").toString(),
                                              m_process->property("projectName").toString(),
+                                             m_process->property("mainScriptFile").toString(),
+                                             m_process->property("scriptFiles").toStringList(),
                                              success,
                                              m_asyncStdOut,
                                              m_asyncStdErr);

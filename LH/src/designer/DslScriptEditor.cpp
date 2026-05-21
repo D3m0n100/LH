@@ -1,16 +1,18 @@
 ﻿/**
  * @file DslScriptEditor.cpp
- * @brief DSL 鑴氭湰缂栬緫鍣ㄥ疄鐜? *
- * ============== 鏋舵瀯璇存槑 ==============
+ * @brief DSL 脚本编辑器实现
+ * ============== 架构说明 ==============
  *
- * 鏈枃浠朵负 DSL 缂栬緫鍣ㄧ殑鎬绘帶瀹炵幇锛屼富瑕佽亴璐ｏ細
- * - UI 缁勪欢鐨勫垱寤哄拰甯冨眬
- * - 妯″潡鐨勫垵濮嬪寲鍜屽崗璋? * - 淇″彿妲借繛鎺? * - 鏌ユ壘/鏇挎崲鍔熻兘
+ * 本文件为 DSL 编辑器的总控实现，主要职责：
+ * - UI 组件的创建和布局
+ * - 模块的初始化和协调
+ * - 信号槽连接
+ * - 查找/替换功能
  *
- * 鍏蜂綋鍔熻兘鐢变互涓嬫ā鍧楀疄鐜帮細
- * - DslSyntaxHighlighter: 璇硶楂樹寒
- * - DslCompletionEngine: 浠ｇ爜琛ュ叏
- * - DslDragDropHandler: 鎷栨嫿澶勭悊
+ * 具体功能由以下模块实现：
+ * - DslSyntaxHighlighter: 语法高亮
+ * - DslCompletionEngine: 代码补全
+ * - DslDragDropHandler: 拖拽处理
  */
 
 #include "DslScriptEditor.h"

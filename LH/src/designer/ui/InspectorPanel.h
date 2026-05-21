@@ -11,13 +11,20 @@ class QTableWidget;
 class QTableWidgetItem;
 class QPushButton;
 class QToolButton;
+class QGroupBox;
 
 class InspectorPanel : public QWidget
 {
     Q_OBJECT
 
 public:
+    enum class PanelMode {
+        Inspection,
+        Tuning
+    };
+
     explicit InspectorPanel(QWidget* parent = nullptr);
+    void setPanelMode(PanelMode mode);
 
     void setProjectPath(const QString& projectPath);
     void setCurrentFile(const QString& filePath);
@@ -29,7 +36,6 @@ public:
     void setParameterSummary(const QString& summary);
     void setResourceSummary(const QString& summary);
     void setParameterDetails(const QList<ParameterDefinition>& parameters);
-    void setPidParameterDetails(const QList<ParameterDefinition>& parameters);
     void setParameterReadbackReady(const QStringList& readyParameterNames);
     void setParameterDeviationMap(const QMap<QString, double>& deviationMap);
 
@@ -43,7 +49,6 @@ signals:
 private:
     void applyStateStyle(QLabel* label, const QString& state);
     void refreshParameterTable();
-    void refreshPidParameterTable();
     void onParameterItemDoubleClicked(QTableWidgetItem* item);
     QString readbackStateFor(const ParameterDefinition& parameter) const;
     QString deviationStateFor(const ParameterDefinition& parameter) const;
@@ -59,11 +64,13 @@ private:
     QLabel* m_resourceValue = nullptr;
     QTableWidget* m_parameterTable = nullptr;
     QToolButton* m_parameterEditButton = nullptr;
+    QToolButton* m_applyParametersButton = nullptr;
     QList<ParameterDefinition> m_parameterData;
-    QTableWidget* m_pidParameterTable = nullptr;
-    QList<ParameterDefinition> m_pidParameterData;
     QStringList m_readbackReadyParameters;
     QMap<QString, double> m_parameterDeviationMap;
+    PanelMode m_panelMode = PanelMode::Tuning;
+    QGroupBox* m_contextGroup = nullptr;
+    QGroupBox* m_paramGroup = nullptr;
 };
 
 #endif // INSPECTOR_PANEL_H

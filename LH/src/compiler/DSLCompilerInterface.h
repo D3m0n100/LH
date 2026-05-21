@@ -11,6 +11,7 @@ struct CompileResult;
 #include <QProcess>
 #include <QTimer>
 #include <QVariantMap>
+#include "common/ConfigTypes.h"
 #include "Common.h"
 
 // DSL 编译接口封装：调用 Python main.py compile
@@ -56,6 +57,10 @@ public:
     CompileResult compileDslFileWithResult(const QString& sourceFile,
                                            const QString& outputDir,
                                            const QString& projectName);
+    CompileResult compileProjectWithResult(const QString& projectPath,
+                                           const ProjectRuntimeConfig& config,
+                                           const QString& outputDir,
+                                           const QString& projectName);
 
     CompileResult lastCompileResult() const { return m_lastCompileResult; }
 
@@ -63,6 +68,10 @@ public:
     // 使用 QProcess 的异步模式进行编译，不阻塞调用线程（UI 线程）。
     // 结果通过 compileFinished / compileFailedToStart 信号返回。
     void compileDslFileAsync(const QString& sourceFile,
+                             const QString& outputDir,
+                             const QString& projectName);
+    void compileProjectAsync(const QString& projectPath,
+                             const ProjectRuntimeConfig& config,
                              const QString& outputDir,
                              const QString& projectName);
 
@@ -105,6 +114,8 @@ private:
     CompileResult buildCompileResult(const QString& sourceFile,
                                      const QString& outputDir,
                                      const QString& projectName,
+                                     const QString& mainScriptFile,
+                                     const QStringList& scriptFiles,
                                      bool success,
                                      const QString& stdOut,
                                      const QString& stdErr) const;

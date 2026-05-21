@@ -1,6 +1,7 @@
 ﻿/**
  * @file ChartWidget.cpp
- * @brief 瀹炴椂鐩戞帶鍥捐〃鎺т欢瀹炵幇锛堟€ц兘浼樺寲鐗堟湰锛? */
+ * @brief 实时监控图表控件实现（性能优化版本）
+ */
 
 #include "ChartWidget.h"
 #include "MonitorTypes.h"
