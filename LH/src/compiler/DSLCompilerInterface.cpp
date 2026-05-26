@@ -2,6 +2,9 @@
 #include "TextEncoding.h"
 
 #include <QCoreApplication>
+
+// 静态成员定义：Python 解释器路径缓存
+QString DSLCompilerInterface::s_cachedPythonInterpreter;
 #include <QCryptographicHash>
 #include <QDir>
 #include <QFile>
@@ -11,6 +14,10 @@
 #include <QStringList>
 #include <QRegularExpression>
 #include <QHash>
+#include <QSet>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QJsonArray>
 
 namespace {
 bool canExecutePython(const QString& program, QString* details = nullptr)
@@ -133,6 +140,74 @@ QString sanitizeProgramName(const QString& baseName)
     return name;
 }
 
+QString injectMissingInstanceDeclarations(const QString& sourceText,
+                                          const QStringList& instanceOrder,
+                                          const QHash<QString, QString>& instanceTypeMap)
+{
+    if (instanceOrder.isEmpty()) {
+        return sourceText;
+    }
+
+    QStringList lines = sourceText.split(QLatin1Char('\n'));
+    QSet<QString> declaredInstances;
+    const QRegularExpression declarationRe(
+        QStringLiteral(R"(^\s*([A-Za-z_][A-Za-z0-9_]*)\s*:)"));
+
+    int varLine = -1;
+    int endVarLine = -1;
+    int programLine = -1;
+
+    for (int i = 0; i < lines.size(); ++i) {
+        const QString trimmed = lines.at(i).trimmed();
+        if (programLine < 0 && trimmed.startsWith(QStringLiteral("PROGRAM "), Qt::CaseInsensitive)) {
+            programLine = i;
+        }
+        if (varLine < 0 && trimmed.compare(QStringLiteral("VAR"), Qt::CaseInsensitive) == 0) {
+            varLine = i;
+        } else if (varLine >= 0
+                   && endVarLine < 0
+                   && trimmed.compare(QStringLiteral("END_VAR"), Qt::CaseInsensitive) == 0) {
+            endVarLine = i;
+        }
+
+        const QRegularExpressionMatch declarationMatch = declarationRe.match(lines.at(i));
+        if (declarationMatch.hasMatch()) {
+            declaredInstances.insert(declarationMatch.captured(1));
+        }
+    }
+
+    QStringList missingDeclarations;
+    for (const QString& instanceName : instanceOrder) {
+        if (!declaredInstances.contains(instanceName)) {
+            missingDeclarations << QStringLiteral("    %1 : %2;")
+                                       .arg(instanceName, instanceTypeMap.value(instanceName));
+        }
+    }
+    if (missingDeclarations.isEmpty()) {
+        return sourceText;
+    }
+
+    if (varLine >= 0 && endVarLine > varLine) {
+        for (int i = missingDeclarations.size() - 1; i >= 0; --i) {
+            lines.insert(endVarLine, missingDeclarations.at(i));
+        }
+        return lines.join(QLatin1Char('\n'));
+    }
+
+    if (programLine >= 0) {
+        QStringList varBlock;
+        varBlock << QStringLiteral("VAR");
+        varBlock << missingDeclarations;
+        varBlock << QStringLiteral("END_VAR");
+        varBlock << QString();
+        for (int i = varBlock.size() - 1; i >= 0; --i) {
+            lines.insert(programLine + 1, varBlock.at(i));
+        }
+    }
+
+    return lines.join(QLatin1Char('\n'));
+}
+
 QString normalizeLegacyDslSource(const QString& sourceText, const QString& sourceBaseName)
 {
     const QRegularExpression legacyCallRe(
@@ -186,7 +261,7 @@ QString normalizeLegacyDslSource(const QString& sourceText, const QString& sourc
 
     const QString transformedBody = transformed.join(QLatin1Char('\n'));
     if (hasProgramEnvelope(transformedBody)) {
-        return transformedBody;
+        return injectMissingInstanceDeclarations(transformedBody, instanceOrder, instanceTypeMap);
     }
 
     QStringList wrapped;
@@ -207,6 +282,67 @@ QString normalizeLegacyDslSource(const QString& sourceText, const QString& sourc
 
     wrapped << QStringLiteral("END_PROGRAM");
     return wrapped.join(QLatin1Char('\n'));
+}
+
+QString extractProgramStatements(const QString& sourceText,
+                                 const QString& sourcePath,
+                                 QStringList* varDeclarations,
+                                 QString* errorMessage)
+{
+    if (!hasProgramEnvelope(sourceText)) {
+        return sourceText.trimmed();
+    }
+
+    const QString normalized = normalizeLegacyDslSource(sourceText, QFileInfo(sourcePath).completeBaseName());
+    const QStringList lines = normalized.split(QLatin1Char('\n'));
+    int programLine = -1;
+    int endProgramLine = -1;
+    bool inVarBlock = false;
+    QStringList statements;
+
+    for (int i = 0; i < lines.size(); ++i) {
+        const QString trimmed = lines.at(i).trimmed();
+        if (programLine < 0 && trimmed.startsWith(QStringLiteral("PROGRAM "), Qt::CaseInsensitive)) {
+            programLine = i;
+            continue;
+        }
+        if (trimmed.compare(QStringLiteral("END_PROGRAM"), Qt::CaseInsensitive) == 0) {
+            endProgramLine = i;
+            break;
+        }
+        if (programLine < 0) {
+            continue;
+        }
+
+        if (trimmed.compare(QStringLiteral("VAR"), Qt::CaseInsensitive) == 0) {
+            inVarBlock = true;
+            continue;
+        }
+        if (trimmed.compare(QStringLiteral("END_VAR"), Qt::CaseInsensitive) == 0) {
+            inVarBlock = false;
+            continue;
+        }
+
+        if (inVarBlock) {
+            if (!trimmed.isEmpty()) {
+                if (varDeclarations) {
+                    varDeclarations->append(lines.at(i));
+                }
+            }
+            continue;
+        }
+
+        statements << lines.at(i);
+    }
+
+    if (programLine < 0 || endProgramLine < 0) {
+        if (errorMessage) {
+            *errorMessage = QStringLiteral("Program envelope is incomplete: %1").arg(sourcePath);
+        }
+        return QString();
+    }
+
+    return statements.join(QLatin1Char('\n')).trimmed();
 }
 } // namespace
 
@@ -256,6 +392,11 @@ QString DSLCompilerInterface::compilerEntryScript() const
 
 QString DSLCompilerInterface::resolvePythonInterpreter() const
 {
+    // 使用缓存的解释器路径（首次解析后缓存，避免每次编译都重新探测）
+    if (!s_cachedPythonInterpreter.isEmpty()) {
+        return s_cachedPythonInterpreter;
+    }
+
     QDir workDir(compilerWorkingDir());
 
 #ifdef Q_OS_WIN
@@ -271,6 +412,7 @@ QString DSLCompilerInterface::resolvePythonInterpreter() const
         if (canExecutePython(venvPython, &probeDetails)
                 && hasDslRuntimeSupport(venvPython, workDir.absolutePath(), &probeDetails)) {
             qInfo() << "[DSLCompilerInterface] Using venv Python interpreter:" << venvPython;
+            s_cachedPythonInterpreter = venvPython;
             return venvPython;
         }
 
@@ -300,6 +442,7 @@ QString DSLCompilerInterface::resolvePythonInterpreter() const
         if (canExecutePython(cmd, &probeDetails)
                 && hasDslRuntimeSupport(cmd, workDir.absolutePath(), &probeDetails)) {
             qInfo() << "[DSLCompilerInterface] Detected Python interpreter:" << cmd;
+            s_cachedPythonInterpreter = cmd;
             return cmd;
         }
         qWarning() << "[DSLCompilerInterface] Python candidate is not suitable for DSL compile:"
@@ -327,6 +470,102 @@ static QString sha256ForFile(const QString& filePath)
     QCryptographicHash hash(QCryptographicHash::Sha256);
     hash.addData(&file);
     return QString::fromLatin1(hash.result().toHex());
+}
+
+static QString readTextFile(const QString& filePath, QString* errorMessage)
+{
+    QFile file(filePath);
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        if (errorMessage) {
+            *errorMessage = QStringLiteral("Failed to read source file: %1").arg(filePath);
+        }
+        return QString();
+    }
+    return TextEncoding::decodeUtf8WithLocalFallback(file.readAll());
+}
+
+static bool writeTextFile(const QString& filePath, const QString& text, QString* errorMessage)
+{
+    QFileInfo info(filePath);
+    QDir dir;
+    if (!dir.mkpath(info.absolutePath())) {
+        if (errorMessage) {
+            *errorMessage = QStringLiteral("Failed to create staging directory: %1")
+                                .arg(info.absolutePath());
+        }
+        return false;
+    }
+
+    QFile file(filePath);
+    if (!file.open(QIODevice::WriteOnly | QIODevice::Text | QIODevice::Truncate)) {
+        if (errorMessage) {
+            *errorMessage = QStringLiteral("Failed to write staging file: %1").arg(filePath);
+        }
+        return false;
+    }
+    file.write(text.toUtf8());
+    return true;
+}
+
+static QString compilerStagingDir(const QString& outputDir)
+{
+    return QDir(outputDir).absoluteFilePath(QStringLiteral(".compiler_staging"));
+}
+
+static QString runDslCompilerProcess(const QString& python,
+                                     const QString& entryScript,
+                                     const QString& compilerInputFile,
+                                     const QString& outputFile,
+                                     const QString& workDir,
+                                     QString* compilerStdout,
+                                     QString* compilerStderr)
+{
+    QStringList args;
+    args << entryScript
+         << QDir::toNativeSeparators(compilerInputFile)
+         << QStringLiteral("-o")
+         << QDir::toNativeSeparators(outputFile)
+         << QStringLiteral("-v");
+
+    QProcess proc;
+    proc.setProgram(python);
+    proc.setArguments(args);
+    proc.setWorkingDirectory(workDir);
+
+    qInfo() << "[DSLCompilerInterface] Running:" << python << args
+            << "cwd =" << workDir;
+
+    proc.start();
+    if (!proc.waitForFinished(120 * 1000)) {
+        proc.kill();
+        if (compilerStderr) {
+            *compilerStderr = QStringLiteral("DSL compile process timeout.");
+        }
+        qWarning() << "[DSLCompilerInterface] compile process timeout.";
+        return QStringLiteral("timeout");
+    }
+
+    const QString stdOut =
+            TextEncoding::decodeUtf8WithLocalFallback(proc.readAllStandardOutput());
+    const QString stdErr =
+            TextEncoding::decodeUtf8WithLocalFallback(proc.readAllStandardError());
+
+    if (compilerStdout) {
+        *compilerStdout = stdOut;
+    }
+    if (compilerStderr) {
+        *compilerStderr = stdErr;
+    }
+
+    if (proc.exitStatus() == QProcess::NormalExit
+            && proc.exitCode() == 0
+            && QFileInfo::exists(outputFile)) {
+        return QString();
+    }
+
+    return QStringLiteral("exitCode=%1 outputFile=%2")
+            .arg(proc.exitCode())
+            .arg(outputFile);
 }
 
 static QString resolveScriptPath(const QString& projectPath, const QString& path)
@@ -381,6 +620,156 @@ static QStringList normalizeProjectScriptFiles(const QString& projectPath,
     return normalized;
 }
 
+static QString assembleProjectCompilerInput(const QString& projectPath,
+                                            const QString& outputDir,
+                                            const QString& mainScriptFile,
+                                            const QStringList& scriptFiles,
+                                            QString* errorMessage)
+{
+    if (scriptFiles.isEmpty()) {
+        if (errorMessage) {
+            *errorMessage = QStringLiteral("Project script file list is empty.");
+        }
+        return QString();
+    }
+
+    QString mainSourceText;
+    QStringList childFragments;
+    QStringList childVarDeclarations;
+    const QString normalizedMainPath = QFileInfo(mainScriptFile).absoluteFilePath();
+
+    for (int i = 0; i < scriptFiles.size(); ++i) {
+        const QString& scriptFile = scriptFiles.at(i);
+        const QFileInfo info(scriptFile);
+        if (!info.exists() || !info.isFile()) {
+            if (errorMessage) {
+                *errorMessage = QStringLiteral("Project script file not found: %1").arg(scriptFile);
+            }
+            return QString();
+        }
+        if (info.suffix().toLower() != QStringLiteral("dsl")) {
+            if (errorMessage) {
+                *errorMessage = QStringLiteral("Unsupported project script suffix: %1")
+                                    .arg(info.fileName());
+            }
+            return QString();
+        }
+
+        QString readError;
+        const QString sourceText = readTextFile(info.absoluteFilePath(), &readError);
+        if (!readError.isEmpty()) {
+            if (errorMessage) {
+                *errorMessage = readError;
+            }
+            return QString();
+        }
+        const bool isMainFile = info.absoluteFilePath() == normalizedMainPath || i == 0;
+
+        const QString relativePath = QDir(projectPath).relativeFilePath(info.absoluteFilePath());
+        QStringList decoratedFragment;
+        decoratedFragment << QStringLiteral("// BEGIN %1").arg(relativePath);
+        QString fragmentText = sourceText.trimmed();
+        if (!isMainFile) {
+            QString fragmentError;
+            fragmentText = extractProgramStatements(sourceText,
+                                                    info.absoluteFilePath(),
+                                                    &childVarDeclarations,
+                                                    &fragmentError);
+            if (!fragmentError.isEmpty()) {
+                if (errorMessage) {
+                    *errorMessage = fragmentError;
+                }
+                return QString();
+            }
+        }
+        decoratedFragment << fragmentText;
+        decoratedFragment << QStringLiteral("// END %1").arg(relativePath);
+        decoratedFragment << QString();
+
+        if (isMainFile) {
+            mainSourceText = decoratedFragment.join(QLatin1Char('\n'));
+        } else {
+            childFragments << decoratedFragment;
+        }
+    }
+
+    const QFileInfo mainInfo(mainScriptFile);
+    QString assembledSource = mainSourceText;
+    const QString childSourceText = childFragments.join(QLatin1Char('\n'));
+    if (!childSourceText.trimmed().isEmpty()) {
+        if (hasProgramEnvelope(mainSourceText)) {
+            QStringList mainLines = mainSourceText.split(QLatin1Char('\n'));
+            int varLine = -1;
+            int endVarLine = -1;
+            int endProgramLine = -1;
+            for (int i = 0; i < mainLines.size(); ++i) {
+                const QString trimmed = mainLines.at(i).trimmed();
+                if (varLine < 0 && trimmed.compare(QStringLiteral("VAR"), Qt::CaseInsensitive) == 0) {
+                    varLine = i;
+                } else if (varLine >= 0
+                           && endVarLine < 0
+                           && trimmed.compare(QStringLiteral("END_VAR"), Qt::CaseInsensitive) == 0) {
+                    endVarLine = i;
+                }
+                if (trimmed.compare(
+                        QStringLiteral("END_PROGRAM"), Qt::CaseInsensitive) == 0) {
+                    endProgramLine = i;
+                }
+            }
+            if (endProgramLine < 0) {
+                if (errorMessage) {
+                    *errorMessage = QStringLiteral("Main script PROGRAM envelope is missing END_PROGRAM: %1")
+                                        .arg(mainScriptFile);
+                }
+                return QString();
+            }
+            if (!childVarDeclarations.isEmpty()) {
+                if (varLine >= 0 && endVarLine > varLine) {
+                    for (int i = childVarDeclarations.size() - 1; i >= 0; --i) {
+                        mainLines.insert(endVarLine, childVarDeclarations.at(i));
+                    }
+                    endProgramLine += childVarDeclarations.size();
+                } else {
+                    QStringList varBlock;
+                    varBlock << QStringLiteral("VAR");
+                    varBlock << childVarDeclarations;
+                    varBlock << QStringLiteral("END_VAR");
+                    varBlock << QString();
+                    const int insertLine = qMax(0, endProgramLine);
+                    for (int i = varBlock.size() - 1; i >= 0; --i) {
+                        mainLines.insert(insertLine, varBlock.at(i));
+                    }
+                    endProgramLine += varBlock.size();
+                }
+            }
+            mainLines.insert(endProgramLine, childSourceText.trimmed());
+            mainLines.insert(endProgramLine + 1, QString());
+            assembledSource = mainLines.join(QLatin1Char('\n'));
+        } else {
+            QStringList fragmentParts;
+            fragmentParts << mainSourceText;
+            if (!childVarDeclarations.isEmpty()) {
+                fragmentParts << childVarDeclarations.join(QLatin1Char('\n'));
+            }
+            fragmentParts << childSourceText;
+            assembledSource = fragmentParts.join(QLatin1Char('\n'));
+        }
+    }
+
+    const QString assembledText = normalizeLegacyDslSource(assembledSource, mainInfo.completeBaseName());
+    const QString assembledPath = QDir(compilerStagingDir(outputDir)).absoluteFilePath(
+        mainInfo.completeBaseName() + QStringLiteral("_assembled.dsl"));
+
+    QString writeError;
+    if (!writeTextFile(assembledPath, assembledText, &writeError)) {
+        if (errorMessage) {
+            *errorMessage = writeError;
+        }
+        return QString();
+    }
+    return assembledPath;
+}
+
 CompileResult DSLCompilerInterface::buildCompileResult(const QString& sourceFile,
                                                        const QString& outputDir,
                                                        const QString& projectName,
@@ -419,6 +808,152 @@ CompileResult DSLCompilerInterface::buildCompileResult(const QString& sourceFile
     return result;
 }
 
+CompileResult DSLCompilerInterface::buildCompileResult(const QString& sourceFile,
+                                                       const QString& outputDir,
+                                                       const QString& projectName,
+                                                       const QString& mainScriptFile,
+                                                       const QStringList& scriptFiles,
+                                                       bool success,
+                                                       const QString& stdOut,
+                                                       const QString& stdErr,
+                                                       const ProjectRuntimeConfig& config) const
+{
+    CompileResult result = buildCompileResult(sourceFile, outputDir, projectName,
+                                              mainScriptFile, scriptFiles,
+                                              success, stdOut, stdErr);
+
+    if (result.success) {
+        CompileArtifact pointsArtifact = generateRuntimePointsJson(outputDir, config);
+        if (!pointsArtifact.path.isEmpty())
+            result.artifacts.append(pointsArtifact);
+
+        const auto points = RuntimePointConverter::fromProjectConfig(config);
+        int parameterCount = 0;
+        for (const auto& pt : points) {
+            if (pt.kind == RuntimePointKind::Parameter)
+                parameterCount++;
+        }
+
+        CompileArtifact manifestArtifact = generateRuntimeManifestJson(
+            outputDir, projectName, mainScriptFile, scriptFiles,
+            points.size(), parameterCount);
+        if (!manifestArtifact.path.isEmpty())
+            result.artifacts.append(manifestArtifact);
+    }
+
+    return result;
+}
+
+CompileArtifact DSLCompilerInterface::generateRuntimePointsJson(
+    const QString& outputDir, const ProjectRuntimeConfig& config) const
+{
+    const auto points = RuntimePointConverter::fromProjectConfig(config);
+
+    QJsonArray arr;
+    for (const auto& pt : points) {
+        QJsonObject obj;
+        obj[QStringLiteral("id")] = pt.id;
+        obj[QStringLiteral("name")] = pt.name;
+
+        QString kindStr;
+        switch (pt.kind) {
+        case RuntimePointKind::Variable:  kindStr = QStringLiteral("Variable");  break;
+        case RuntimePointKind::Parameter: kindStr = QStringLiteral("Parameter"); break;
+        case RuntimePointKind::Status:    kindStr = QStringLiteral("Status");    break;
+        case RuntimePointKind::Alarm:     kindStr = QStringLiteral("Alarm");     break;
+        case RuntimePointKind::Resource:  kindStr = QStringLiteral("Resource");  break;
+        }
+        obj[QStringLiteral("kind")] = kindStr;
+        obj[QStringLiteral("dataType")] = pt.dataType;
+        obj[QStringLiteral("unit")] = pt.unit;
+
+        QString accessStr;
+        switch (pt.access) {
+        case RuntimePointAccess::ReadOnly:  accessStr = QStringLiteral("ReadOnly");  break;
+        case RuntimePointAccess::WriteOnly: accessStr = QStringLiteral("WriteOnly"); break;
+        case RuntimePointAccess::ReadWrite: accessStr = QStringLiteral("ReadWrite"); break;
+        }
+        obj[QStringLiteral("access")] = accessStr;
+        obj[QStringLiteral("sourceModule")] = pt.sourceModule;
+        obj[QStringLiteral("bindingPath")] = pt.bindingPath;
+        if (!pt.addressing.isEmpty())
+            obj[QStringLiteral("addressing")] = QJsonObject::fromVariantMap(pt.addressing);
+        if (!pt.defaultValue.isNull())
+            obj[QStringLiteral("defaultValue")] = QJsonValue::fromVariant(pt.defaultValue);
+        if (!pt.metadata.isEmpty())
+            obj[QStringLiteral("metadata")] = QJsonObject::fromVariantMap(pt.metadata);
+
+        arr.append(obj);
+    }
+
+    const QString filePath = QDir(outputDir).absoluteFilePath(
+        QStringLiteral("runtime_points.json"));
+    QFile file(filePath);
+    if (!file.open(QIODevice::WriteOnly | QIODevice::Text | QIODevice::Truncate)) {
+        qWarning() << "[DSLCompilerInterface] Failed to write" << filePath;
+        return {};
+    }
+    file.write(QJsonDocument(arr).toJson(QJsonDocument::Indented));
+    file.close();
+
+    CompileArtifact artifact;
+    artifact.type = QString::fromLatin1(CompileArtifactType::RuntimePoints);
+    artifact.path = filePath;
+    artifact.format = QStringLiteral("json");
+    artifact.checksum = sha256ForFile(filePath);
+    artifact.metadata.insert(QStringLiteral("pointCount"), arr.size());
+    return artifact;
+}
+
+CompileArtifact DSLCompilerInterface::generateRuntimeManifestJson(
+    const QString& outputDir,
+    const QString& projectName,
+    const QString& mainScriptFile,
+    const QStringList& scriptFiles,
+    int pointCount,
+    int parameterCount) const
+{
+    QJsonObject manifest;
+    manifest[QStringLiteral("projectName")] = projectName;
+    manifest[QStringLiteral("mainScriptPath")] = mainScriptFile;
+
+    QJsonArray scriptsArr;
+    for (const auto& s : scriptFiles)
+        scriptsArr.append(s);
+    manifest[QStringLiteral("scriptFiles")] = scriptsArr;
+
+    QJsonArray artifactPathsArr;
+    const QString codeFile = defaultOutputFileForSource(mainScriptFile, outputDir);
+    if (QFileInfo::exists(codeFile))
+        artifactPathsArr.append(codeFile);
+    const QString pointsPath = QDir(outputDir).absoluteFilePath(
+        QStringLiteral("runtime_points.json"));
+    if (QFileInfo::exists(pointsPath))
+        artifactPathsArr.append(pointsPath);
+    manifest[QStringLiteral("artifactPaths")] = artifactPathsArr;
+
+    manifest[QStringLiteral("generatedAt")] = QDateTime::currentDateTime().toString(Qt::ISODate);
+    manifest[QStringLiteral("pointCount")] = pointCount;
+    manifest[QStringLiteral("parameterCount")] = parameterCount;
+
+    const QString filePath = QDir(outputDir).absoluteFilePath(
+        QStringLiteral("runtime_manifest.json"));
+    QFile file(filePath);
+    if (!file.open(QIODevice::WriteOnly | QIODevice::Text | QIODevice::Truncate)) {
+        qWarning() << "[DSLCompilerInterface] Failed to write" << filePath;
+        return {};
+    }
+    file.write(QJsonDocument(manifest).toJson(QJsonDocument::Indented));
+    file.close();
+
+    CompileArtifact artifact;
+    artifact.type = QString::fromLatin1(CompileArtifactType::RuntimeManifest);
+    artifact.path = filePath;
+    artifact.format = QStringLiteral("json");
+    artifact.checksum = sha256ForFile(filePath);
+    return artifact;
+}
+
 QString DSLCompilerInterface::prepareCompilerInput(const QString& sourceFile,
                                                    const QString& outputDir,
                                                    QString* errorMessage) const
@@ -439,7 +974,28 @@ QString DSLCompilerInterface::prepareCompilerInput(const QString& sourceFile,
         return QString();
     }
 
-    return sourceInfo.absoluteFilePath();
+    QString readError;
+    const QString sourceText = readTextFile(sourceInfo.absoluteFilePath(), &readError);
+    if (!readError.isEmpty()) {
+        if (errorMessage) {
+            *errorMessage = readError;
+        }
+        return QString();
+    }
+
+    const QString stagedText = normalizeLegacyDslSource(sourceText, sourceInfo.completeBaseName());
+    const QString stagedPath = QDir(compilerStagingDir(outputDir)).absoluteFilePath(
+        sourceInfo.completeBaseName() + QStringLiteral(".dsl"));
+
+    QString writeError;
+    if (!writeTextFile(stagedPath, stagedText, &writeError)) {
+        if (errorMessage) {
+            *errorMessage = writeError;
+        }
+        return QString();
+    }
+
+    return stagedPath;
 }
 
 bool DSLCompilerInterface::compileDslFile(const QString& sourceFile,
@@ -492,43 +1048,21 @@ bool DSLCompilerInterface::compileDslFile(const QString& sourceFile,
 
     const QString outputFile = defaultOutputFileForSource(sourceFile, outputDir);
 
-    QStringList args;
-    args << entryScript
-         << QDir::toNativeSeparators(compilerInputFile)
-         << QStringLiteral("-o")
-         << QDir::toNativeSeparators(outputFile)
-         << QStringLiteral("-v");
-
-    QProcess proc;
-    proc.setProgram(python);
-    proc.setArguments(args);
-    proc.setWorkingDirectory(workDir);
-
-    qInfo() << "[DSLCompilerInterface] Running:" << python << args
-            << "cwd =" << workDir;
-
-    proc.start();
-    if (!proc.waitForFinished(120 * 1000)) {
-        proc.kill();
-        if (compilerStderr)
-            *compilerStderr = QStringLiteral("DSL compile process timeout.");
-        qWarning() << "[DSLCompilerInterface] compileDslFile timeout.";
-        return false;
-    }
-
-    const QString stdOut =
-            TextEncoding::decodeUtf8WithLocalFallback(proc.readAllStandardOutput());
-    const QString stdErr =
-            TextEncoding::decodeUtf8WithLocalFallback(proc.readAllStandardError());
-
+    QString stdOut;
+    QString stdErr;
+    const QString compileError = runDslCompilerProcess(python,
+                                                       entryScript,
+                                                       compilerInputFile,
+                                                       outputFile,
+                                                       workDir,
+                                                       &stdOut,
+                                                       &stdErr);
     if (compilerStdout)
         *compilerStdout = stdOut;
     if (compilerStderr)
         *compilerStderr = stdErr;
 
-    const bool ok = proc.exitStatus() == QProcess::NormalExit
-                 && proc.exitCode() == 0
-                 && QFileInfo::exists(outputFile);
+    const bool ok = compileError.isEmpty();
 
     m_lastCompileResult = buildCompileResult(sourceFile,
                                              outputDir,
@@ -540,8 +1074,7 @@ bool DSLCompilerInterface::compileDslFile(const QString& sourceFile,
                                              stdErr);
 
     if (!ok) {
-        qWarning() << "[DSLCompilerInterface] compileDslFile failed. exitCode="
-                   << proc.exitCode() << "outputFile=" << outputFile;
+        qWarning() << "[DSLCompilerInterface] compileDslFile failed." << compileError;
     }
 
     return ok;
@@ -580,10 +1113,59 @@ CompileResult DSLCompilerInterface::compileProjectWithResult(const QString& proj
     }
 
     const QStringList scriptFiles = normalizeProjectScriptFiles(projectPath, config, mainScriptFile);
+    QString assemblyError;
+    const QString compilerInputFile = assembleProjectCompilerInput(projectPath,
+                                                                   outputDir,
+                                                                   mainScriptFile,
+                                                                   scriptFiles,
+                                                                   &assemblyError);
+    if (compilerInputFile.isEmpty()) {
+        CompileResult result;
+        result.success = false;
+        result.projectName = projectName;
+        result.errors.append(assemblyError);
+        result.stdErr = assemblyError;
+        m_lastCompileResult = result;
+        return m_lastCompileResult;
+    }
+
+    const QString python = resolvePythonInterpreter();
+    if (python.isEmpty()) {
+        CompileResult result;
+        result.success = false;
+        result.projectName = projectName;
+        result.errors.append(QStringLiteral(
+                "No suitable Python interpreter found for DSL compile. "
+                "Recreate third_party/custom_dsp_language/compile/venv "
+                "and install requirements.txt, or install Python 3 plus antlr4-python3-runtime in PATH."));
+        result.stdErr = result.errors.join(QLatin1Char('\n'));
+        m_lastCompileResult = result;
+        return m_lastCompileResult;
+    }
+
+    const QString workDir = compilerWorkingDir();
+    const QString entryScript = compilerEntryScript();
+    if (!QFileInfo::exists(entryScript)) {
+        CompileResult result;
+        result.success = false;
+        result.projectName = projectName;
+        result.errors.append(QStringLiteral("Compiler entry script not found: %1").arg(entryScript));
+        result.stdErr = result.errors.join(QLatin1Char('\n'));
+        m_lastCompileResult = result;
+        return m_lastCompileResult;
+    }
 
     QString stdOut;
     QString stdErr;
-    const bool ok = compileDslFile(mainScriptFile, outputDir, projectName, &stdOut, &stdErr);
+    const QString outputFile = defaultOutputFileForSource(mainScriptFile, outputDir);
+    const QString compileError = runDslCompilerProcess(python,
+                                                       entryScript,
+                                                       compilerInputFile,
+                                                       outputFile,
+                                                       workDir,
+                                                       &stdOut,
+                                                       &stdErr);
+    const bool ok = compileError.isEmpty();
     m_lastCompileResult = buildCompileResult(mainScriptFile,
                                              outputDir,
                                              projectName,
@@ -591,7 +1173,8 @@ CompileResult DSLCompilerInterface::compileProjectWithResult(const QString& proj
                                              scriptFiles,
                                              ok,
                                              stdOut,
-                                             stdErr);
+                                             stdErr,
+                                             config);
     return m_lastCompileResult;
 }
 
@@ -667,10 +1250,74 @@ bool DSLCompilerInterface::listComponents(QString* compilerStdout,
     return ok;
 }
 
+QString DSLCompilerInterface::describeComponents(QString* compilerStderr)
+{
+    const QString python = resolvePythonInterpreter();
+    if (python.isEmpty()) {
+        if (compilerStderr)
+            *compilerStderr = QStringLiteral(
+                    "No suitable Python interpreter found for DSL compile. "
+                    "Recreate third_party/custom_dsp_language/compile/venv "
+                    "and install requirements.txt, or install Python 3 plus antlr4-python3-runtime in PATH.");
+        return QString();
+    }
+
+    const QString workDir = compilerWorkingDir();
+    const QString entryScript = compilerEntryScript();
+    if (!QFileInfo::exists(entryScript)) {
+        const QString msg =
+                QStringLiteral("Compiler entry script not found: %1").arg(entryScript);
+        qWarning() << "[DSLCompilerInterface]" << msg;
+        if (compilerStderr)
+            *compilerStderr = msg;
+        return QString();
+    }
+
+    QStringList args;
+    args << entryScript << QStringLiteral("--describe-blocks");
+
+    QProcess proc;
+    proc.setProgram(python);
+    proc.setArguments(args);
+    proc.setWorkingDirectory(workDir);
+
+    qInfo() << "[DSLCompilerInterface] describeComponents:" << python << args
+            << "cwd =" << workDir;
+
+    proc.start();
+    if (!proc.waitForFinished(30 * 1000)) {
+        proc.kill();
+        if (compilerStderr)
+            *compilerStderr = QStringLiteral("describe-blocks timeout.");
+        qWarning() << "[DSLCompilerInterface] describeComponents timeout.";
+        return QString();
+    }
+
+    const QString stdOut =
+            TextEncoding::decodeUtf8WithLocalFallback(proc.readAllStandardOutput());
+    const QString stdErr =
+            TextEncoding::decodeUtf8WithLocalFallback(proc.readAllStandardError());
+
+    if (compilerStderr)
+        *compilerStderr = stdErr;
+
+    const bool ok = proc.exitStatus() == QProcess::NormalExit && proc.exitCode() == 0;
+
+    if (!ok) {
+        qWarning() << "[DSLCompilerInterface] describeComponents failed. exitCode="
+                   << proc.exitCode();
+        return QString();
+    }
+
+    return stdOut.trimmed();
+}
+
 void DSLCompilerInterface::compileDslFileAsync(const QString& sourceFile,
                                                const QString& outputDir,
                                                const QString& projectName)
 {
+    m_asyncProjectConfig.clear();
+
     if (m_process && m_process->state() != QProcess::NotRunning) {
         const QString msg =
                 QStringLiteral("DSL compile request ignored: previous compile is still running.");
@@ -787,11 +1434,85 @@ void DSLCompilerInterface::compileProjectAsync(const QString& projectPath,
     }
 
     const QStringList scriptFiles = normalizeProjectScriptFiles(projectPath, config, mainScriptFile);
-    compileDslFileAsync(mainScriptFile, outputDir, projectName);
-    if (m_process) {
-        m_process->setProperty("mainScriptFile", mainScriptFile);
-        m_process->setProperty("scriptFiles", scriptFiles);
+
+    QString assemblyError;
+    const QString compilerInputFile = assembleProjectCompilerInput(projectPath,
+                                                                   outputDir,
+                                                                   mainScriptFile,
+                                                                   scriptFiles,
+                                                                   &assemblyError);
+    if (compilerInputFile.isEmpty()) {
+        emit compileFailedToStart(assemblyError);
+        return;
     }
+
+    const QString python = resolvePythonInterpreter();
+    if (python.isEmpty()) {
+        emit compileFailedToStart(QStringLiteral(
+                "No suitable Python interpreter found for DSL compile. "
+                "Recreate third_party/custom_dsp_language/compile/venv "
+                "and install requirements.txt, or install Python 3 plus antlr4-python3-runtime in PATH."));
+        return;
+    }
+
+    const QString workDir = compilerWorkingDir();
+    const QString entryScript = compilerEntryScript();
+    if (!QFileInfo::exists(entryScript)) {
+        emit compileFailedToStart(QStringLiteral("Compiler entry script not found: %1").arg(entryScript));
+        return;
+    }
+
+    const QString outputFile = defaultOutputFileForSource(mainScriptFile, outputDir);
+
+    QStringList args;
+    args << entryScript
+         << QDir::toNativeSeparators(compilerInputFile)
+         << QStringLiteral("-o")
+         << QDir::toNativeSeparators(outputFile)
+         << QStringLiteral("-v");
+
+    m_process = new QProcess(this);
+    m_asyncStdOut.clear();
+    m_asyncStdErr.clear();
+    m_asyncProjectConfig = config;
+
+    m_process->setProgram(python);
+    m_process->setArguments(args);
+    m_process->setWorkingDirectory(workDir);
+    m_process->setProcessChannelMode(QProcess::SeparateChannels);
+    m_process->setProperty("sourceFile", mainScriptFile);
+    m_process->setProperty("mainScriptFile", mainScriptFile);
+    m_process->setProperty("scriptFiles", scriptFiles);
+    m_process->setProperty("outputDir", outputDir);
+    m_process->setProperty("projectName", projectName);
+    m_process->setProperty("expectedOutputFile", outputFile);
+
+    connect(m_process,
+            QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished),
+            this,
+            &DSLCompilerInterface::onProcessFinished);
+    connect(m_process, &QProcess::errorOccurred,
+            this, &DSLCompilerInterface::onProcessErrorOccurred);
+    connect(m_process, &QProcess::readyReadStandardOutput,
+            this, &DSLCompilerInterface::onProcessReadyReadStandardOutput);
+    connect(m_process, &QProcess::readyReadStandardError,
+            this, &DSLCompilerInterface::onProcessReadyReadStandardError);
+
+    if (!m_compileTimeoutTimer) {
+        m_compileTimeoutTimer = new QTimer(this);
+        m_compileTimeoutTimer->setSingleShot(true);
+        connect(m_compileTimeoutTimer, &QTimer::timeout,
+                this, &DSLCompilerInterface::onCompileTimeout);
+    }
+
+    LOG_INFO(QStringLiteral("[DSLCompilerInterface] Running project compile (async): %1 %2, cwd = %3")
+             .arg(python,
+                  args.join(QLatin1Char(' ')),
+                  workDir));
+
+    m_process->setProperty("compileTimedOut", false);
+    m_process->start();
+    m_compileTimeoutTimer->start(120 * 1000);
 }
 
 void DSLCompilerInterface::cancelCurrentCompile()
@@ -885,14 +1606,27 @@ void DSLCompilerInterface::onProcessFinished(int exitCode, QProcess::ExitStatus 
     }
 
     const bool success = (exitCode == 0 && normalExit && outputExists);
-    m_lastCompileResult = buildCompileResult(m_process->property("sourceFile").toString(),
-                                             m_process->property("outputDir").toString(),
-                                             m_process->property("projectName").toString(),
-                                             m_process->property("mainScriptFile").toString(),
-                                             m_process->property("scriptFiles").toStringList(),
-                                             success,
-                                             m_asyncStdOut,
-                                             m_asyncStdErr);
+    if (!m_asyncProjectConfig.isEmpty()) {
+        m_lastCompileResult = buildCompileResult(m_process->property("sourceFile").toString(),
+                                                 m_process->property("outputDir").toString(),
+                                                 m_process->property("projectName").toString(),
+                                                 m_process->property("mainScriptFile").toString(),
+                                                 m_process->property("scriptFiles").toStringList(),
+                                                 success,
+                                                 m_asyncStdOut,
+                                                 m_asyncStdErr,
+                                                 m_asyncProjectConfig);
+        m_asyncProjectConfig.clear();
+    } else {
+        m_lastCompileResult = buildCompileResult(m_process->property("sourceFile").toString(),
+                                                 m_process->property("outputDir").toString(),
+                                                 m_process->property("projectName").toString(),
+                                                 m_process->property("mainScriptFile").toString(),
+                                                 m_process->property("scriptFiles").toStringList(),
+                                                 success,
+                                                 m_asyncStdOut,
+                                                 m_asyncStdErr);
+    }
 
     emit compileFinished(exitCode, normalExit && outputExists, m_asyncStdOut, m_asyncStdErr);
 

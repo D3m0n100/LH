@@ -20,6 +20,7 @@ set(COMM_SOURCES
     EthernetInterface.cpp
     ControllerBridge.cpp
     DownloadProfile.cpp
+    VirtualDeviceBackend.cpp
 )
 
 # 通信模块头文件
@@ -38,6 +39,8 @@ set(COMM_HEADERS
     ControllerBridge.h
     DownloadProfile.h
     IDownloadTransport.h
+    IDeviceBackend.h
+    VirtualDeviceBackend.h
 )
 
 # 创建静态库

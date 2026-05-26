@@ -221,6 +221,7 @@ public:
 
     /// 获取当前脚本文本
     QString currentScript() const;
+    QString scriptForSave() const;
     /// 设置脚本文本
     void setScript(const QString& text);
     /// 清空脚本
@@ -242,14 +243,13 @@ public:
 
     /// 扫描脚本中的 mapping marker，返回 mappingId -> marker 行号（从 1 开始）
     QMap<QString, int> scanDslMappingMarkers() const;
+    static QString stripDslMappingMarkers(const QString& script);
 
     /// 查找某个 mappingId 的 marker 行号（从 1 开始），找不到返回 -1
     int findDslMappingMarkerLine(const QString& mappingId) const;
 
     /// 确保某个 mappingId 的 marker 存在；优先插入在 nearCodeLine 前一行
     /// 返回 marker 行号（从 1 开始），失败返回 -1
-    int ensureDslMappingMarker(const QString& mappingId, int nearCodeLine);
-
     /// 根据 mappingId 跳转到对应代码行（优先 marker 下一行）
     void gotoMappingId(const QString& mappingId);
 

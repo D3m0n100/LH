@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 """
-代码生成?遍历 AST 生成 .code 文件所需的指令序
+代码生成器：遍历 AST 生成 .code 文件所需的指令序列
 编译流程:
-    源代?-> ANTLR解析 -> AST -> CodeGenerator -> 指令列表 -> CodeEmitter -> .code文件
+    源代码 -> ANTLR 解析 -> AST -> CodeGenerator -> 指令列表 -> CodeEmitter -> .code 文件
 
 .code 文件格式:
-    每行一条指? 类型ID 类型ID 内存地址 参数1 参数2 ...
+    每行一条指令: 类型ID 类型ID 内存地址 参数1 参数2 ...
     
     示例:
         40961 40961 0 1 100 2601    (_System, 地址0, Author=1, Config=100, Date=2601)
@@ -28,7 +28,7 @@ from dataclasses import dataclass, field
 from typing import List, Optional, Any, Dict
 
 # 使用相对导入时需要确保包结构正确
-# 如果作为独立脚本运行, 需要调整导入路?import sys
+# 如果作为独立脚本运行, 需要调整导入路径
 import os
 
 # 确保可以导入同级和上级包
@@ -73,17 +73,17 @@ except ImportError:
 @dataclass
 class Instruction:
     """
-    一?.code 指令
+    一条 .code 指令
     
     格式: type_id type_id address param1 param2 ...
-    注意: type_id 出现两次�?.code 文件的固定格
+    注意: type_id 出现两次，.code 文件采用固定格式
     """
     type_id: int
     address: int
     params: List[int] = field(default_factory=list)
     comment: str = ""       # 调试注释, 不写入文
     def to_code_line(self) -> str:
-        """生成 .code 文件中的一"""
+        """生成 .code 文件中的一行"""
         parts = [str(self.type_id), str(self.type_id), str(self.address)]
         parts.extend(str(p) for p in self.params)
         return " ".join(parts)
@@ -100,14 +100,14 @@ class CompileError(Exception):
     def __init__(self, message: str, node: Optional[ASTNode] = None):
         self.node = node
         if node and hasattr(node, 'line'):
-            message = f"第{node.line}? {message}"
+            message = f"第 {node.line} 行: {message}"
         super().__init__(message)
 
 
 class CodeGenerator:
     """
     代码生成
-    ?AST 转换?.code 指令序列
+    将 AST 转换为 .code 指令序列
     编译策略:
         1. 首先生成 _System 指令（每个程序必须有
         2. 为每个功能块实例分配内存并生成指
@@ -121,7 +121,7 @@ class CodeGenerator:
         self.instructions: List[Instruction] = []
         self.errors: List[str] = []
         
-        # 符号? 变量?-> {type, address, fb_type}
+        # 符号表: 变量名 -> {type, address, fb_type}
         self._symbols: Dict[str, Dict[str, Any]] = {}
 
     def generate(self, program: Program) -> List[Instruction]:
@@ -139,33 +139,33 @@ class CodeGenerator:
         self.memory.reset()
         self._symbols.clear()
 
-        # ?? 生成 _System 指令 (必须是第一
+        # 先生成 _System 指令（必须是第一条）
         self._emit_system(program)
 
-        # ?? 处理变量声明, 为功能块实例分配内存
+        # 处理变量声明, 为功能块实例分配内存
         self._process_variables(program.variables)
 
-        # ?? 处理语句, 生成指令
+        # 处理语句, 生成指令
         for stmt in program.statements:
             self._process_statement(stmt)
 
         return self.instructions
 
     def _emit_system(self, program: Program):
-        """生成 _System 功能块指"""
+        """生成 _System 功能块指令"""
         system_meta = self.registry.get("_System")
         if not system_meta:
-            self.errors.append("未找?_System 功能块定")
+            self.errors.append("未找到 _System 功能块定义")
             return
 
         # _System 总是在地址 0
         address = self.memory.allocate("_system_", "_System", system_meta.memory_size)
 
-        # 查找用户是否显式声明?_System 并传递了参数
+        # 查找用户是否显式声明了 _System 并传递了参数
         # 如果没有, 使用默认参数
         system_params = self._find_system_params(program)
 
-        # 构建参数列表 (使用默认值填
+        # 构建参数列表（使用默认值填充）
         param_values = []
         for p_def in system_meta.parameters:
             value = system_params.get(p_def.name, p_def.default_value)
@@ -181,10 +181,10 @@ class CodeGenerator:
         ))
 
     def _find_system_params(self, program: Program) -> Dict[str, Any]:
-        """?AST 中查?_System 的参"""
+        """在 AST 中查找 _System 的参数"""
         params = {}
         
-        # 查找名为 system �?_System 类型的变
+        # 查找名为 system 且类型为 _System 的变量
         system_instance = None
         for var in program.variables:
             if var.data_type == "_System":
@@ -211,10 +211,10 @@ class CodeGenerator:
                 meta = self.registry.get(var.data_type)
 
                 if meta.name == "_System":
-                    # _System 已在 _emit_system 中分? 复用地址 0
+                    # _System 已在 _emit_system 中分配，复用地址 0
                     address = 0
                 else:
-                    # 其他功能块类�?-> 分配功能块内
+                    # 其他功能块类型 -> 分配功能块内存
                     address = self.memory.allocate(
                         var.name, var.data_type, meta.memory_size
                     )
@@ -252,11 +252,11 @@ class CodeGenerator:
         elif isinstance(stmt, Assignment):
             self._process_assignment(stmt)
         else:
-            # 尝试处理 IF / WHILE / FOR 等控制流语句（递归处理内部语句
+            # 尝试处理 IF / WHILE / FOR 等控制流语句（递归处理内部语句）
             self._process_control_flow(stmt)
 
     def _process_control_flow(self, stmt):
-        """递归处理控制流语句（IF/WHILE/FOR 等）中的子语"""
+        """递归处理控制流语句（IF/WHILE/FOR 等）中的子语句"""
         # 常见的含有子语句列表的属性名
         body_attrs = [
             'then_statements', 'else_statements', 'elsif_clauses',
@@ -460,7 +460,7 @@ class CodeGenerator:
         """
         生成常量构建指令
         
-        根据数据类型选择对应�?ConstBuild 功能
+        根据数据类型选择对应的 ConstBuild 功能
         """
         dt_upper = str(data_type.value).upper() if hasattr(data_type, 'value') else str(data_type).upper()
 
@@ -507,8 +507,8 @@ class CodeGenerator:
             return self._eval_literal(expr)
 
         if isinstance(expr, Identifier):
-            # 如果变量有已知的编译时�? 返回
-            # 目前简单处? 返回 0
+            # 如果变量有已知的编译时值，返回该值
+            # 目前简单处理：返回 0
             return 0
 
         if isinstance(expr, BinaryOp):
@@ -636,8 +636,8 @@ class CodeGenerator:
         if isinstance(value, bool):
             return 1 if value else 0
         if isinstance(value, float):
-            # 对于浮点? 使用 IEEE 754 编码
-            # �?float 转为�?32 位整数表
+            # 对于浮点数，使用 IEEE 754 编码
+            # 将 float 转为 32 位整数表示
             return struct.unpack('!I', struct.pack('!f', value))[0]
         try:
             return int(value)

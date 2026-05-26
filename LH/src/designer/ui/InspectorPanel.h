@@ -6,6 +6,8 @@
 
 #include "common/ConfigTypes.h"
 
+struct ParameterStateInfo;
+
 class QLabel;
 class QTableWidget;
 class QTableWidgetItem;
@@ -38,6 +40,7 @@ public:
     void setParameterDetails(const QList<ParameterDefinition>& parameters);
     void setParameterReadbackReady(const QStringList& readyParameterNames);
     void setParameterDeviationMap(const QMap<QString, double>& deviationMap);
+    void setParameterStateMap(const QMap<QString, ParameterStateInfo>& stateMap);
 
 signals:
     void requestCompile();
@@ -68,6 +71,7 @@ private:
     QList<ParameterDefinition> m_parameterData;
     QStringList m_readbackReadyParameters;
     QMap<QString, double> m_parameterDeviationMap;
+    QMap<QString, ParameterStateInfo> m_parameterStateMap;
     PanelMode m_panelMode = PanelMode::Tuning;
     QGroupBox* m_contextGroup = nullptr;
     QGroupBox* m_paramGroup = nullptr;

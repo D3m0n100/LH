@@ -10,6 +10,7 @@
 #include <algorithm>
 #include <iterator>
 #include <stdexcept>
+#include <cassert>
 
 namespace Monitor {
 
@@ -197,13 +198,13 @@ public:
         return (*this)[index];
     }
 
-    /// 获取最老的元素
-    reference front() { return (*this)[0]; }
-    const_reference front() const { return (*this)[0]; }
+    /// 获取最老的元素（调用方需确保 !empty()）
+    reference front() { assert(m_size > 0 && "RingBuffer::front() called on empty buffer"); return (*this)[0]; }
+    const_reference front() const { assert(m_size > 0 && "RingBuffer::front() called on empty buffer"); return (*this)[0]; }
 
-    /// 获取最新的元素
-    reference back() { return (*this)[m_size - 1]; }
-    const_reference back() const { return (*this)[m_size - 1]; }
+    /// 获取最新的元素（调用方需确保 !empty()）
+    reference back() { assert(m_size > 0 && "RingBuffer::back() called on empty buffer"); return (*this)[m_size - 1]; }
+    const_reference back() const { assert(m_size > 0 && "RingBuffer::back() called on empty buffer"); return (*this)[m_size - 1]; }
 
     /// 迭代器
     iterator begin() { return iterator(this, 0); }

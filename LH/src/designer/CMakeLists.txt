@@ -22,6 +22,8 @@ add_library(designer_module STATIC
     ui/GlobalStatusBar.cpp
     ui/InspectorPanel.cpp
     ParameterTuningWindow.cpp
+    ParameterController.cpp
+    RuntimeSessionController.cpp
     ui/ProblemsPanel.cpp
 )
 

@@ -30,109 +30,24 @@ BuildController::~BuildController()
 void BuildController::compileConfiguration(const QString& projectPath,
                                            const ProjectRuntimeConfig& config)
 {
-    if (m_busy) {
-        emit logMessage(timestampedMessage("编译器正在忙碌，请稍候。"));
-        return;
-    }
-
-    if (projectPath.isEmpty()) {
-        emit logMessage(timestampedMessage("请先打开或创建项目。"));
-        emit compileFailed(BuildType::Configuration, QStringLiteral("项目路径为空。"));
-        return;
-    }
-
-    emit saveRequired();
-
-    QStringList errors;
-    bool valid = true;
-    emit validationRequired(BuildType::Configuration, errors, valid);
-    if (!valid) {
-        const QString errorMessage = errors.isEmpty()
-                ? QStringLiteral("构建前校验失败。")
-                : errors.join('\n');
-        emit logMessage(timestampedMessage(errorMessage));
-        emit compileFailed(BuildType::Configuration, errorMessage);
-        return;
-    }
-
-    m_currentBuildType = BuildType::Configuration;
-    m_currentProjectPath = projectPath;
-
-    const QString sourceFile = currentDslScriptPath(config);
-    if (sourceFile.isEmpty() || !QFileInfo::exists(sourceFile)) {
-        emit logMessage(timestampedMessage("未找到当前项目的 DSL 脚本。"));
-        emit compileFailed(BuildType::Configuration, QStringLiteral("DSL 脚本不存在。"));
-        return;
-    }
-
-    setBusy(true);
-    emit compileStarted(BuildType::Configuration);
-    emit logMessage(timestampedMessage(
-            QStringLiteral("开始编译组态: %1").arg(QFileInfo(sourceFile).fileName())));
-    emit logMessage(timestampedMessage(
-            QStringLiteral("输出目录: %1").arg(buildOutputDirectory(BuildType::Configuration))));
-    emit compileProgress(10);
-
-    m_dslCompiler->compileProjectAsync(projectPath,
-                                       config,
-                                       buildOutputDirectory(BuildType::Configuration),
-                                       QFileInfo(projectPath).fileName());
+    compileCommon(BuildType::Configuration, projectPath, config);
 }
 
 void BuildController::compileParameters(const QString& projectPath,
                                         const ProjectRuntimeConfig& config)
 {
-    if (m_busy) {
-        emit logMessage(timestampedMessage("编译器正在忙碌，请稍候。"));
-        return;
-    }
-
-    if (projectPath.isEmpty()) {
-        emit logMessage(timestampedMessage("请先打开或创建项目。"));
-        emit compileFailed(BuildType::Parameters, QStringLiteral("项目路径为空。"));
-        return;
-    }
-
-    emit saveRequired();
-
-    QStringList errors;
-    bool valid = true;
-    emit validationRequired(BuildType::Parameters, errors, valid);
-    if (!valid) {
-        const QString errorMessage = errors.isEmpty()
-                ? QStringLiteral("构建前校验失败。")
-                : errors.join('\n');
-        emit logMessage(timestampedMessage(errorMessage));
-        emit compileFailed(BuildType::Parameters, errorMessage);
-        return;
-    }
-
-    m_currentBuildType = BuildType::Parameters;
-    m_currentProjectPath = projectPath;
-
-    const QString sourceFile = currentDslScriptPath(config);
-    if (sourceFile.isEmpty() || !QFileInfo::exists(sourceFile)) {
-        emit logMessage(timestampedMessage("未找到当前项目的 DSL 脚本。"));
-        emit compileFailed(BuildType::Parameters, QStringLiteral("DSL 脚本不存在。"));
-        return;
-    }
-
-    setBusy(true);
-    emit compileStarted(BuildType::Parameters);
-    emit logMessage(timestampedMessage(
-            QStringLiteral("开始编译参数: %1").arg(QFileInfo(sourceFile).fileName())));
-    emit logMessage(timestampedMessage(
-            QStringLiteral("输出目录: %1").arg(buildOutputDirectory(BuildType::Parameters))));
-    emit compileProgress(10);
-
-    m_dslCompiler->compileProjectAsync(projectPath,
-                                       config,
-                                       buildOutputDirectory(BuildType::Parameters),
-                                       QFileInfo(projectPath).fileName());
+    compileCommon(BuildType::Parameters, projectPath, config);
 }
 
 void BuildController::compileCommunication(const QString& projectPath,
                                            const ProjectRuntimeConfig& config)
+{
+    compileCommon(BuildType::Communication, projectPath, config);
+}
+
+void BuildController::compileCommon(BuildType type,
+                                    const QString& projectPath,
+                                    const ProjectRuntimeConfig& config)
 {
     if (m_busy) {
         emit logMessage(timestampedMessage("编译器正在忙碌，请稍候。"));
@@ -141,45 +56,50 @@ void BuildController::compileCommunication(const QString& projectPath,
 
     if (projectPath.isEmpty()) {
         emit logMessage(timestampedMessage("请先打开或创建项目。"));
-        emit compileFailed(BuildType::Communication, QStringLiteral("项目路径为空。"));
+        emit compileFailed(type, QStringLiteral("项目路径为空。"));
         return;
     }
 
     emit saveRequired();
 
-    QStringList errors;
-    bool valid = true;
-    emit validationRequired(BuildType::Communication, errors, valid);
-    if (!valid) {
-        const QString errorMessage = errors.isEmpty()
-                ? QStringLiteral("构建前校验失败。")
-                : errors.join('\n');
-        emit logMessage(timestampedMessage(errorMessage));
-        emit compileFailed(BuildType::Communication, errorMessage);
-        return;
+    // 使用回调进行编译前校验（替代旧的引用参数信号）
+    if (m_validationCallback) {
+        QStringList errors;
+        if (!m_validationCallback(type, errors)) {
+            const QString errorMessage = errors.isEmpty()
+                    ? QStringLiteral("构建前校验失败。")
+                    : errors.join('\n');
+            emit logMessage(timestampedMessage(errorMessage));
+            emit compileFailed(type, errorMessage);
+            return;
+        }
     }
 
-    m_currentBuildType = BuildType::Communication;
+    m_currentBuildType = type;
     m_currentProjectPath = projectPath;
 
     const QString sourceFile = currentDslScriptPath(config);
     if (sourceFile.isEmpty() || !QFileInfo::exists(sourceFile)) {
         emit logMessage(timestampedMessage("未找到当前项目的 DSL 脚本。"));
-        emit compileFailed(BuildType::Communication, QStringLiteral("DSL 脚本不存在。"));
+        emit compileFailed(type, QStringLiteral("DSL 脚本不存在。"));
         return;
     }
 
+    // 编译类型对应的中文名称
+    const char* typeNames[] = {"组态", "参数", "通信"};
+    const char* typeName = typeNames[static_cast<int>(type)];
+
     setBusy(true);
-    emit compileStarted(BuildType::Communication);
+    emit compileStarted(type);
     emit logMessage(timestampedMessage(
-            QStringLiteral("开始编译通信: %1").arg(QFileInfo(sourceFile).fileName())));
+            QStringLiteral("开始编译%1: %2").arg(typeName).arg(QFileInfo(sourceFile).fileName())));
     emit logMessage(timestampedMessage(
-            QStringLiteral("输出目录: %1").arg(buildOutputDirectory(BuildType::Communication))));
+            QStringLiteral("输出目录: %1").arg(buildOutputDirectory(type))));
     emit compileProgress(10);
 
     m_dslCompiler->compileProjectAsync(projectPath,
                                        config,
-                                       buildOutputDirectory(BuildType::Communication),
+                                       buildOutputDirectory(type),
                                        QFileInfo(projectPath).fileName());
 }
 

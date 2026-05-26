@@ -3,6 +3,7 @@
 #include <QtCore/QDir>
 #include <QtCore/QFile>
 #include <QtCore/QFileInfo>
+#include <QtCore/QStringList>
 #include <QtCore/QTextStream>
 
 #include "compiler/DSLCompilerInterface.h"
@@ -59,6 +60,133 @@ int main(int argc, char* argv[])
     }
 
     DSLCompilerInterface compiler;
+
+    ProjectRuntimeConfig missingChildConfig;
+    missingChildConfig.mainScriptPath = sourcePath;
+    missingChildConfig.dslScriptPath = sourcePath;
+    missingChildConfig.scriptFiles = QStringList{
+        sourcePath,
+        QStringLiteral("missing_child.dsl")
+    };
+    const CompileResult missingChildResult = compiler.compileProjectWithResult(
+        runtimeRoot,
+        missingChildConfig,
+        outputDir,
+        QStringLiteral("missing_child_probe"));
+    if (missingChildResult.success
+            || !missingChildResult.errors.join(QLatin1Char('\n')).contains(
+                QStringLiteral("Project script file not found"))) {
+        qCritical() << "Missing project child script was not rejected before compile.";
+        qCritical() << "errors:" << missingChildResult.errors;
+        qCritical() << "stderr:" << missingChildResult.stdErr;
+        return 12;
+    }
+
+    const QString projectRoot = QDir(runtimeRoot).filePath(QStringLiteral("project"));
+    const QString projectOutputDir = QDir(runtimeRoot).filePath(QStringLiteral("build_output/project"));
+    QDir().mkpath(projectRoot);
+    QDir().mkpath(projectOutputDir);
+
+    const QString projectMainPath = QDir(projectRoot).filePath(QStringLiteral("main.dsl"));
+    const QString projectSubPath = QDir(projectRoot).filePath(QStringLiteral("valve_auto.dsl"));
+    const QString projectMainDsl = QStringLiteral(
+        "PROGRAM Main\n"
+        "VAR\n"
+        "END_VAR\n"
+        "\n"
+        "drv_ao_1 = _DrvAO(\n"
+        "    channel = 0,\n"
+        "    value = 0\n"
+        ");\n"
+        "\n"
+        "END_PROGRAM\n");
+    const QString projectSubDsl = QStringLiteral(
+        "PROGRAM ValveAuto\n"
+        "VAR\n"
+        "    subReady : BOOL;\n"
+        "END_VAR\n"
+        "\n"
+        "drv_do_1 = _DrvDO(\n"
+        "    OutputWord = 0,\n"
+        "    Port = 0,\n"
+        "    Mask = 255,\n"
+        "    Action = 1\n"
+        ");\n"
+        "\n"
+        "END_PROGRAM\n");
+
+    if (!writeTextFile(projectMainPath, projectMainDsl)
+            || !writeTextFile(projectSubPath, projectSubDsl)) {
+        return 7;
+    }
+
+    ProjectRuntimeConfig config;
+    config.mainScriptPath = QStringLiteral("main.dsl");
+    config.dslScriptPath = config.mainScriptPath;
+    config.scriptFiles = QStringList{
+        QStringLiteral("main.dsl"),
+        QStringLiteral("valve_auto.dsl")
+    };
+
+    const CompileResult projectResult = compiler.compileProjectWithResult(
+        projectRoot,
+        config,
+        projectOutputDir,
+        QStringLiteral("project_probe"));
+    const QString projectErrorText = projectResult.errors.join(QLatin1Char('\n'))
+                                   + QLatin1Char('\n')
+                                   + projectResult.stdErr;
+    const bool projectSkippedForRuntime =
+        !projectResult.success
+        && projectErrorText.contains(QStringLiteral("No suitable Python interpreter found"));
+    if (!projectResult.success && !projectSkippedForRuntime) {
+        qCritical() << "compileProjectWithResult failed";
+        qCritical() << "stdout:" << projectResult.stdOut;
+        qCritical() << "stderr:" << projectResult.stdErr;
+        return 8;
+    }
+
+    const QString assembledPath = QDir(projectOutputDir).filePath(
+        QStringLiteral(".compiler_staging/main_assembled.dsl"));
+    const QString assembledText = readTextFile(assembledPath);
+    if (!assembledText.contains(QStringLiteral("drv_ao_1 : _DrvAO;"))
+            || !assembledText.contains(QStringLiteral("drv_do_1 : _DrvDO;"))
+            || !assembledText.contains(QStringLiteral("subReady : BOOL;"))
+            || !assembledText.contains(QStringLiteral("drv_ao_1("))
+            || !assembledText.contains(QStringLiteral("drv_do_1("))) {
+        qCritical() << "Project assembly did not include all source fragments.";
+        qCritical() << "assembled file:" << assembledPath;
+        qCritical() << assembledText;
+        return 10;
+    }
+    if (assembledText.indexOf(QStringLiteral("subReady : BOOL;"))
+            > assembledText.indexOf(QStringLiteral("END_VAR"))) {
+        qCritical() << "Project assembly placed child VAR declarations outside the main VAR block.";
+        qCritical() << assembledText;
+        return 13;
+    }
+
+    if (projectResult.success) {
+        const QString projectOutputCodePath = QDir(projectOutputDir).filePath(QStringLiteral("main.code"));
+        if (!QFileInfo::exists(projectOutputCodePath)) {
+            qCritical() << "Project output .code file not found:" << projectOutputCodePath;
+            return 9;
+        }
+
+        bool artifactListsSubFile = false;
+        for (const CompileArtifact& artifact : projectResult.artifacts) {
+            const QStringList scriptFiles = artifact.metadata.value(QStringLiteral("scriptFiles")).toStringList();
+            if (scriptFiles.contains(projectSubPath)) {
+                artifactListsSubFile = true;
+                break;
+            }
+        }
+        if (!artifactListsSubFile) {
+            qCritical() << "Project compile artifact did not preserve the script file list.";
+            return 11;
+        }
+    }
+
     const CompileResult result = compiler.compileDslFileWithResult(sourcePath, outputDir, QStringLiteral("legacy_probe"));
     const bool ok = result.success;
 
@@ -100,10 +228,10 @@ int main(int argc, char* argv[])
         return 6;
     }
 
-    const QString stagedLmPath = QDir(outputDir).filePath(QStringLiteral(".compiler_staging/main.lm"));
-    const QString stagedText = readTextFile(stagedLmPath);
+    const QString stagedDslPath = QDir(outputDir).filePath(QStringLiteral(".compiler_staging/main.dsl"));
+    const QString stagedText = readTextFile(stagedDslPath);
     if (stagedText.isEmpty()) {
-        qCritical() << "Staged LM file missing or empty:" << stagedLmPath;
+        qCritical() << "Staged DSL file missing or empty:" << stagedDslPath;
         return 4;
     }
 
@@ -122,13 +250,14 @@ int main(int argc, char* argv[])
 
     if (!wrapped || !declared || !callConverted || !assignConverted) {
         qCritical() << "Legacy DSL normalization assertions failed.";
-        qCritical() << "staged file:" << stagedLmPath;
+        qCritical() << "staged file:" << stagedDslPath;
         qCritical() << stagedText;
         return 5;
     }
 
     qInfo() << "Legacy DSL compile probe passed.";
     qInfo() << "Output file:" << outputCodePath;
-    qInfo() << "Staged file:" << stagedLmPath;
+    qInfo() << "Staged file:" << stagedDslPath;
+    qInfo() << "Project assembled file:" << assembledPath;
     return 0;
 }

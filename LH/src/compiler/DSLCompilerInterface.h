@@ -12,6 +12,7 @@ struct CompileResult;
 #include <QTimer>
 #include <QVariantMap>
 #include "common/ConfigTypes.h"
+#include "common/RuntimePointTypes.h"
 #include "Common.h"
 
 // DSL 编译接口封装：调用 Python main.py compile
@@ -35,6 +36,12 @@ struct CompileResult
     QStringList warnings;
     QStringList errors;
 };
+
+namespace CompileArtifactType {
+    inline constexpr const char* Download        = "download";
+    inline constexpr const char* RuntimePoints   = "runtime_points";
+    inline constexpr const char* RuntimeManifest = "runtime_manifest";
+}
 
 class DSLCompilerInterface : public QObject
 {
@@ -79,6 +86,10 @@ public:
     bool listComponents(QString* compilerStdout,
                         QString* compilerStderr = nullptr);
 
+    // 读取编译器侧功能块元数据（name/category/description/parameters 等）
+    // 返回编译器输出的 JSON 字符串，失败返回空 QString
+    QString describeComponents(QString* compilerStderr = nullptr);
+
     // 取消当前异步编译
     void cancelCurrentCompile();
 
@@ -120,6 +131,26 @@ private:
                                      const QString& stdOut,
                                      const QString& stdErr) const;
 
+    CompileResult buildCompileResult(const QString& sourceFile,
+                                     const QString& outputDir,
+                                     const QString& projectName,
+                                     const QString& mainScriptFile,
+                                     const QStringList& scriptFiles,
+                                     bool success,
+                                     const QString& stdOut,
+                                     const QString& stdErr,
+                                     const ProjectRuntimeConfig& config) const;
+
+    CompileArtifact generateRuntimePointsJson(const QString& outputDir,
+                                              const ProjectRuntimeConfig& config) const;
+
+    CompileArtifact generateRuntimeManifestJson(const QString& outputDir,
+                                                const QString& projectName,
+                                                const QString& mainScriptFile,
+                                                const QStringList& scriptFiles,
+                                                int pointCount,
+                                                int parameterCount) const;
+
     // 异步编译相关成员
     // 注意：本类预期在 UI 线程中创建并使用，QProcess 也运行在同一线程，
     // 通过 Qt 的信号/槽机制回调到主线程，不涉及显式多线程。
@@ -128,6 +159,10 @@ private:
     QString   m_asyncStdErr;          // 异步编译累计标准错误
     QTimer*   m_compileTimeoutTimer = nullptr;
     CompileResult m_lastCompileResult;
+    ProjectRuntimeConfig m_asyncProjectConfig;  // 异步项目编译时暂存配置
+
+    // Python 解释器路径缓存（避免每次编译都重新探测）
+    static QString s_cachedPythonInterpreter;
 };
 
 #endif // DSLCOMPILERINTERFACE_H

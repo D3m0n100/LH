@@ -381,37 +381,49 @@ ProtocolDetector::ProtocolInfo ProtocolDetector::detectRawCAN(ICommInterface* in
 bool ProtocolDetector::analyzeModbusRTUFrame(const QByteArray& data)
 {
     if (data.size() < 5) return false;
-    
-    // 检查基本结构：地址 + 功能码 + 数据 + CRC
-    int expectedLength = 5; // 最小长度
-    
-    // 根据功能码判断数据长度
-    switch (data[1]) {
-    case 0x01: case 0x02: case 0x03: case 0x04: // 读操作
-        if (data.size() >= 5) {
-            expectedLength = 5 + (data[2] * 256 + data[3]) * 2; // 寄存器数量 * 2
-        }
-        break;
-    case 0x05: case 0x06: // 写单个
-        expectedLength = 8;
-        break;
-    case 0x0F: case 0x10: // 写多个
-        if (data.size() >= 6) {
-            expectedLength = 6 + data[6]; // 数据长度
-        }
-        break;
-    }
-    
-    // 验证CRC
-    if (data.size() >= expectedLength) {
-        QByteArray frameWithoutCRC = data.left(expectedLength - 2);
+
+    quint8 funcCode = static_cast<quint8>(data[1]);
+
+    // 错误响应: [addr][func|0x80][exception_code][CRC_lo][CRC_hi] = 5 字节
+    if (funcCode & 0x80) {
+        if (data.size() < 5) return false;
+        QByteArray frameWithoutCRC = data.left(3);
         quint16 calculatedCRC = calculateCRC16(frameWithoutCRC);
-        quint16 receivedCRC = (data[expectedLength - 1] << 8) | data[expectedLength - 2];
-        
+        quint16 receivedCRC = static_cast<quint8>(data[3])
+                            | (static_cast<quint8>(data[4]) << 8);
         return calculatedCRC == receivedCRC;
     }
-    
-    return false;
+
+    int expectedLength = 5; // 最小长度
+
+    // 根据功能码判断数据长度
+    switch (funcCode) {
+    case 0x01: case 0x02: case 0x03: case 0x04: // 读操作响应
+        // 响应格式: [addr][func][byte_count][data...][CRC_lo][CRC_hi]
+        if (data.size() >= 3) {
+            expectedLength = 3 + static_cast<quint8>(data[2]) + 2;
+        }
+        break;
+    case 0x05: case 0x06: // 写单个响应: [addr][func][addr_hi][addr_lo][val_hi][val_lo][CRC]
+        expectedLength = 8;
+        break;
+    case 0x0F: case 0x10: // 写多个响应: [addr][func][addr_hi][addr_lo][qty_hi][qty_lo][CRC]
+        expectedLength = 8;
+        break;
+    default:
+        return false; // 未知功能码
+    }
+
+    // 数据不足时无法验证
+    if (data.size() < expectedLength) return false;
+
+    // 验证CRC
+    QByteArray frameWithoutCRC = data.left(expectedLength - 2);
+    quint16 calculatedCRC = calculateCRC16(frameWithoutCRC);
+    quint16 receivedCRC = static_cast<quint8>(data[expectedLength - 2])
+                        | (static_cast<quint8>(data[expectedLength - 1]) << 8);
+
+    return calculatedCRC == receivedCRC;
 }
 
 bool ProtocolDetector::analyzeModbusTCPFrame(const QByteArray& data)
@@ -436,9 +448,9 @@ bool ProtocolDetector::analyzeCANOpenFrame(const QByteArray& data)
     quint8 cobId = data[0];
     if ((cobId & 0x80) == 0) return false; // 必须是COB-ID
     
-    // 检查功能码
+    // 检查功能码范围（CANopen 使用 0x0-0xB 的功能码组）
     quint8 functionCode = (cobId >> 7) & 0x0F;
-    if (functionCode > 0xF) return false;
+    if (functionCode > 0xB) return false; // 超出 CANopen 定义的 COB-ID 范围
     
     return true;
 }
@@ -479,11 +491,27 @@ quint16 ProtocolDetector::calculateCRC16(const QByteArray& data)
 
 bool ProtocolDetector::validateCANChecksum(const QByteArray& data)
 {
-    // 简化的CAN校验和验证
-    // 实际的CAN协议有更复杂的CRC校验
-    if (data.size() < 8) return false;
-    
-    // 这里可以实现更复杂的CAN帧验证逻辑
+    // 标准 CAN 帧结构校验（CAN 协议本身由硬件 CRC 校验，这里做帧格式验证）
+    // 最小帧: [ID_hi][ID_lo][DLC/flags][data...]
+    if (data.size() < 3) return false;
+
+    // 提取 DLC（数据长度码），位于第 3 字节低 4 位
+    quint8 dlc = static_cast<quint8>(data[2]) & 0x0F;
+    if (dlc > 8) return false; // CAN 帧数据最多 8 字节
+
+    // 帧总长应至少为 3（头部）+ dlc（数据）
+    if (data.size() < 3 + dlc) return false;
+
+    // 所有数据字节不应全为 0xFF（噪声帧特征）
+    bool allFF = true;
+    for (int i = 3; i < 3 + dlc; ++i) {
+        if (static_cast<quint8>(data[i]) != 0xFF) {
+            allFF = false;
+            break;
+        }
+    }
+    if (allFF && dlc > 0) return false;
+
     return true;
 }
 

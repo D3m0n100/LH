@@ -99,8 +99,8 @@ public:
 
     // ===== 组态合法性校验 =====
     
-    /// 校验项目配置
-    bool validateConfiguration(QStringList& errors) const;
+    /// 校验项目配置（非 const，因为校验失败时会 emit validationFailed 信号）
+    bool validateConfiguration(QStringList& errors);
 
     // ===== DSL 映射同步 =====
     

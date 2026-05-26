@@ -19,21 +19,26 @@
 #include "ProjectExplorerWidget.h"
 #include "ProgramBlocksWidget.h"
 #include "MonitorManager.h"
+#include "../communication/IDeviceBackend.h"
 #include "SampleDataProvider.h"
 #include "ui/ThemeManager.h"
 #include "ui/GlobalStatusBar.h"
 #include "ui/InspectorPanel.h"
 #include "ui/ProblemsPanel.h"
 #include "ParameterTuningWindow.h"
+#include "ParameterController.h"
+#include "RuntimeSessionController.h"
 #include "Common.h"
 #include "TextEncoding.h"
 
 #include <QMdiArea>
 #include <QMdiSubWindow>
+#include <QPointer>
 #include <QMenuBar>
 #include <QToolBar>
 #include <QStatusBar>
 #include <QDockWidget>
+#include <algorithm>
 #include <QTextEdit>
 #include <QPlainTextEdit>
 #include <QLabel>
@@ -208,6 +213,9 @@ MainWindow::MainWindow(QWidget* parent)
     }
 
     m_sampleDataProvider = new SampleDataProvider(this);
+    if (m_sessionController) {
+        m_sessionController->setSampleDataProvider(m_sampleDataProvider);
+    }
     // SampleDataProvider 鐩存帴鍚?MonitorManager 鍐欐牱鏈紝涓嶄緷璧?MonitorWidget銆?    
     // 搴旂敤鍒濆璁剧疆
     applyFontSize(m_settingsController->currentFontPointSize());
@@ -226,9 +234,10 @@ MainWindow::MainWindow(QWidget* parent)
 
 MainWindow::~MainWindow()
 {
+    m_parameterTuningWindow = nullptr; // parent 会在 Qt 对象树中删除它
     m_settingsController->saveSettings();
     m_projectController->saveRecentProjects();
-    
+
     LOG_INFO("MainWindow 已销毁");
 }
 
@@ -267,7 +276,13 @@ void MainWindow::createControllers()
     m_projectController->loadRecentProjects();
     
     m_buildController = new BuildController(this);
-    
+
+    m_parameterController = new ParameterController(this);
+
+    m_sessionController = new RuntimeSessionController(this);
+    m_sessionController->setProjectController(m_projectController);
+    m_sessionController->setBuildController(m_buildController);
+
     LOG_DEBUG("鎺у埗鍣ㄥ凡鍒涘缓");
 }
 
@@ -298,6 +313,64 @@ void MainWindow::connectControllerSignals()
             this, &MainWindow::onDirectorySelectionRequired);
     connect(m_projectController, &ProjectController::saveConfirmationRequired,
             this, &MainWindow::onSaveConfirmationRequired);
+
+    // ===== ParameterController 淇″彿杩炴帴 =====
+    connect(m_parameterController, &ParameterController::stateChanged,
+            this, [this](const QString& name, ParameterState, ParameterState newState) {
+                if (!m_projectController) {
+                    return;
+                }
+
+                auto& parameters = m_projectController->runtimeConfig().parameters;
+                auto it = std::find_if(parameters.begin(), parameters.end(),
+                                       [&name](const ParameterDefinition& parameter) {
+                                           return parameter.name == name;
+                                       });
+                if (it == parameters.end()) {
+                    return;
+                }
+
+                const auto info = m_parameterController->parameterState(name);
+                it->confirmed = (newState == ParameterState::Confirmed);
+                if (newState == ParameterState::Confirmed && !info.readbackValue.isEmpty()) {
+                    it->currentValue = info.readbackValue;
+                }
+            });
+    connect(m_parameterController, &ParameterController::statesChanged,
+            this, [this]() { refreshInspectorPanel(); });
+
+    // ===== RuntimeSessionController 淇″彿杩炴帴 =====
+    connect(m_sessionController, &RuntimeSessionController::stateChanged,
+            this, [this](RuntimeSessionState oldState, RuntimeSessionState newState) {
+                Q_UNUSED(oldState);
+                const bool running = (newState == RuntimeSessionState::Running
+                                      || newState == RuntimeSessionState::Monitoring);
+                updateStatusBar(running ? "项目运行中" : "项目已停止");
+                if (m_globalStatusBar) {
+                    m_globalStatusBar->setBuildState(running ? "运行中" : "已停止");
+                }
+                refreshInspectorPanel();
+            });
+    connect(m_sessionController, &RuntimeSessionController::runtimeError,
+            this, [this](const QString& msg) {
+                if (msg == QStringLiteral("NO_ARTIFACT")) {
+                    // 需要弹窗交互，由 MainWindow 处理
+                    return;
+                }
+                appendOutput(QString("[%1] %2")
+                             .arg(QDateTime::currentDateTime().toString("HH:mm:ss"), msg));
+            });
+    connect(m_sessionController, &RuntimeSessionController::logMessage,
+            this, &MainWindow::appendOutput);
+    connect(m_sessionController, &RuntimeSessionController::demoModeChanged,
+            this, [this](bool active) {
+                updateStatusBar(active ? "演示模式：采集中" : "");
+            });
+    connect(m_sessionController, &RuntimeSessionController::monitoringChanged,
+            this, [this](bool active) {
+                Q_UNUSED(active);
+                refreshInspectorPanel();
+            });
     connect(m_projectController, &ProjectController::scriptLoadRequired,
             this, &MainWindow::onScriptLoadRequired);
     connect(m_projectController, &ProjectController::editorClearRequired,
@@ -318,8 +391,10 @@ void MainWindow::connectControllerSignals()
             this, &MainWindow::onLogMessage);
     connect(m_buildController, &BuildController::saveRequired,
             this, &MainWindow::onBuildSaveRequired);
-    connect(m_buildController, &BuildController::validationRequired,
-            this, &MainWindow::onBuildValidationRequired);
+    // validationRequired 已改为回调模式，通过 setValidationCallback 设置
+    m_buildController->setValidationCallback([this](BuildType type, QStringList& errors) -> bool {
+        return onBuildValidation(type, errors);
+    });
 
     // ===== SettingsController 淇″彿杩炴帴 =====
     connect(m_settingsController, &SettingsController::fontSizeChanged,
@@ -822,7 +897,7 @@ void MainWindow::createParameterTuningWindow()
         return;
     }
 
-    m_parameterTuningWindow = new ParameterTuningWindow(nullptr);
+    m_parameterTuningWindow = new ParameterTuningWindow(this);
     m_parameterTuningWindow->setWindowFlag(Qt::Tool, true);
     m_parameterTuningWindow->setAttribute(Qt::WA_QuitOnClose, false);
 
@@ -964,12 +1039,14 @@ void MainWindow::updateEditorSubWindowTitle()
 
 void MainWindow::refreshInspectorPanel()
 {
-    if (!m_projectController) {
+    if (!m_projectController || m_refreshingInspector) {
         return;
     }
 
+    m_refreshingInspector = true;
     refreshInspectorPanel(m_inspectorPanel);
     refreshInspectorPanel(m_parameterTuningWindow);
+    m_refreshingInspector = false;
 }
 
 void MainWindow::refreshInspectorPanel(InspectorPanel* panel)
@@ -980,10 +1057,14 @@ void MainWindow::refreshInspectorPanel(InspectorPanel* panel)
 
     panel->setProjectPath(m_projectController->currentProjectPath());
     panel->setCurrentFile(m_projectController->currentScriptFile());
-    panel->setRuntimeState(m_projectRunning ? "运行中" : "已停止");
+    panel->setRuntimeState(m_sessionController && m_sessionController->isRunning() ? "运行中" : "已停止");
     panel->setBuildState(m_buildController && m_buildController->isBusy() ? "忙碌" : "空闲");
     panel->setMonitoringState(m_monitorWidget && m_monitorWidget->isMonitoring() ? "活动" : "未活动");
     const auto& cfg = m_projectController->runtimeConfig();
+
+    // 同步参数定义到状态机控制器（保留已有状态）
+    m_parameterController->loadDefinitions(cfg.parameters);
+
     int editableParameters = 0;
     for (const auto& p : cfg.parameters) {
         if (p.onlineEditable) {
@@ -996,6 +1077,13 @@ void MainWindow::refreshInspectorPanel(InspectorPanel* panel)
                                             .arg(editableParameters));
     panel->setResourceSummary(QStringLiteral("%1 个，已挂载监控").arg(cfg.resources.size()));
     panel->setParameterDetails(cfg.parameters);
+
+    // 推送参数状态映射
+    QMap<QString, ParameterStateInfo> stateMap;
+    for (const auto& si : m_parameterController->parameterStates())
+        stateMap.insert(si.name, si);
+    panel->setParameterStateMap(stateMap);
+
     QStringList readbackReady;
     QMap<QString, double> deviationMap;
     for (const auto& p : cfg.parameters) {
@@ -1048,6 +1136,12 @@ void MainWindow::refreshInspectorPanel(ParameterTuningWindow* window)
     }
     window->setParameterReadbackReady(readbackReady);
     window->setParameterDeviationMap(deviationMap);
+
+    // 推送参数状态映射
+    QMap<QString, ParameterStateInfo> stateMap;
+    for (const auto& si : m_parameterController->parameterStates())
+        stateMap.insert(si.name, si);
+    window->setParameterStateMap(stateMap);
 }
 
 void MainWindow::addProblem(const QString& severity, const QString& source, const QString& message)
@@ -1126,69 +1220,21 @@ const ProjectRuntimeConfig& MainWindow::runtimeConfig() const
 
 void MainWindow::startDemoModeIfNeeded(const QString& reason)
 {
-    auto& manager = Monitor::MonitorManager::instance();
-
-    // 鏈夌湡瀹?providers 鏃剁粷涓嶅己鍒跺惎鐢?demo锛堥伩鍏嶆贩璺戯級
-    if (!manager.providerIds().isEmpty()) {
-        if (m_demoModeActive) {
-            stopDemoMode(QStringLiteral("检测到真实采集器，关闭演示模式：%1").arg(reason));
-        }
-        return;
-    }
-
-    if (!m_sampleDataProvider) {
-        return;
-    }
-
-    if (!m_demoModeActive) {
-        if (!m_sampleDataProvider->isRunning()) {
-            m_sampleDataProvider->start();
-        }
-        m_demoModeActive = true;
-
-    appendOutput(QString("[%1] 演示模式已启动（原因：%2）")
-                         .arg(QDateTime::currentDateTime().toString("HH:mm:ss"))
-                         .arg(reason));
-        updateStatusBar("演示模式：采集中");
-    }
+    m_sessionController->startDemoMode(reason);
+    m_demoModeActive = m_sessionController->isDemoMode();
 }
 
 void MainWindow::stopDemoMode(const QString& reason)
 {
-    if (!m_demoModeActive && !(m_sampleDataProvider && m_sampleDataProvider->isRunning())) {
-        return;
-    }
-
-    if (m_sampleDataProvider && m_sampleDataProvider->isRunning()) {
-        m_sampleDataProvider->stop();
-    }
-
-    auto& manager = Monitor::MonitorManager::instance();
-    const QStringList channels = manager.channelNames(); // copy
-    for (const QString& ch : channels) {
-        const auto cfg = manager.channelConfig(ch);
-        if (cfg.metadata.value("__demoMode").toBool()) {
-            manager.removeChannel(ch);
-        }
-    }
-
-    m_demoModeActive = false;
-
-    appendOutput(QString("[%1] 演示模式已停止（%2）")
-                     .arg(QDateTime::currentDateTime().toString("HH:mm:ss"))
-                     .arg(reason));
+    m_sessionController->stopDemoMode(reason);
+    m_demoModeActive = m_sessionController->isDemoMode();
 }
 
 bool MainWindow::applyRuntimeConfigToMonitor()
 {
-    QStringList errors;
-    if (!m_projectController->validateConfiguration(errors)) {
-        showValidationErrors(errors);
-        return false;
-    }
-
-    const auto& cfg = m_projectController->runtimeConfig();
-    if (m_globalStatusBar) {
+    // 更新 GlobalStatusBar 协议和采样率
+    if (m_projectController && m_globalStatusBar) {
+        const auto& cfg = m_projectController->runtimeConfig();
         m_globalStatusBar->setProtocolName(cfg.protocol);
         int maxHz = 0;
         for (const auto& provider : cfg.providers) {
@@ -1199,23 +1245,8 @@ bool MainWindow::applyRuntimeConfigToMonitor()
         }
         m_globalStatusBar->setSamplingRateHz(maxHz);
     }
-    bool ok = Monitor::MonitorManager::instance().applyConfiguration(cfg);
-    if (!ok) {
-        appendOutput(QString("[%1] 运行时配置应用到监控系统失败" )
-                         .arg(QDateTime::currentDateTime().toString("HH:mm:ss")));
-        return false;
-    }
 
-    // 鑻ュ綋鍓嶅凡瀛樺湪鐪熷疄 providers锛屽垯纭繚 Demo Mode 鍏抽棴锛堥伩鍏嶆贩璺戯級
-    const QStringList providers = Monitor::MonitorManager::instance().providerIds();
-    if (!providers.isEmpty()) {
-        stopDemoMode(QStringLiteral("已应用运行时配置，并检测到 %1 个 providers").arg(providers.size()));
-    }
-
-    appendOutput(QString("[%1] 运行时配置已应用到监控系统")
-                     .arg(QDateTime::currentDateTime().toString("HH:mm:ss")));
-
-    return true;
+    return m_sessionController->applyRuntimeConfig();
 }
 
 
@@ -1270,12 +1301,16 @@ void MainWindow::onSaveProject()
 
     // 鍏堜繚瀛?DSL 鑴氭湰鍐呭
     if (m_dslEditor && !m_projectController->currentScriptFile().isEmpty()) {
+        const QString scriptForSave = m_dslEditor->scriptForSave();
         QFile scriptFile(m_projectController->currentScriptFile());
         if (scriptFile.open(QIODevice::WriteOnly | QIODevice::Text)) {
             QTextStream stream(&scriptFile);
             TextEncoding::setUtf8(stream);
-            stream << m_dslEditor->currentScript();
+            stream << scriptForSave;
             scriptFile.close();
+        }
+        if (scriptForSave != m_dslEditor->currentScript()) {
+            m_dslEditor->setScript(scriptForSave);
         }
         m_dslEditor->setModified(false);
     }
@@ -1583,16 +1618,18 @@ void MainWindow::onCompileAndRunProject()
 
 void MainWindow::onRunProject()
 {
+    // 前置校验（含 UI 弹窗）
     if (!m_projectController->hasOpenProject()) {
         QMessageBox::warning(this, "警告", "请先打开或创建项目。");
         return;
     }
-    
-    if (m_projectRunning) {
+
+    if (m_sessionController->isRunning()) {
         QMessageBox::information(this, "提示", "项目已在运行中。");
         return;
     }
 
+    // 未保存修改处理
     const bool hasUnsavedChanges =
             (m_projectController && m_projectController->isModified())
             || (m_dslEditor && m_dslEditor->isModified());
@@ -1604,9 +1641,8 @@ void MainWindow::onRunProject()
                                       "当前工程或 DSL 脚本存在未保存修改。是否先保存后再运行？",
                                       QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel,
                                       QMessageBox::Save);
-        if (choice == QMessageBox::Cancel) {
+        if (choice == QMessageBox::Cancel)
             return;
-        }
         if (choice == QMessageBox::Save) {
             onBuildSaveRequired();
         } else if (choice == QMessageBox::Discard) {
@@ -1614,79 +1650,59 @@ void MainWindow::onRunProject()
         }
     }
 
-    const auto& cfg = m_projectController->runtimeConfig();
-    if (!RunController::usesModbusTransport(cfg)) {
-        QMessageBox::warning(this, "运行条件不完整",
-                             "当前运行链路要求 PC 通过 Modbus RTU/TCP 连接控制器，请先配置 Modbus 传输。");
-        return;
-    }
-
-    const CompileResult compileResult = m_buildController
-            ? m_buildController->lastCompileResult()
-            : CompileResult();
-    const QString artifactPath = RunController::findDownloadArtifactPath(
-            cfg,
-            m_projectController->currentProjectPath(),
-            compileResult);
-
-    if (artifactPath.isEmpty() || !QFileInfo::exists(artifactPath)) {
-        const QMessageBox::StandardButton choice =
-                QMessageBox::question(this,
-                                      "缺少编译产物",
-                                      "未找到 DSL 编译生成的 .code 文件。是否立即编译并在成功后继续运行？",
-                                      QMessageBox::Yes | QMessageBox::No,
-                                      QMessageBox::Yes);
-        if (choice == QMessageBox::Yes) {
-            m_pendingRunAfterCompile = true;
-            m_skipNextBuildSave = runWithDiskVersion;
-            m_buildController->compileConfiguration(m_projectController->currentProjectPath(),
-                                                   m_projectController->runtimeConfig());
-            return;
+    // 委托控制器做业务校验
+    if (!m_sessionController->prepareRun()) {
+        // 检查是否需要编译后运行
+        if (m_sessionController->artifactPath().isEmpty()) {
+            const QMessageBox::StandardButton choice =
+                    QMessageBox::question(this,
+                                          "缺少编译产物",
+                                          "未找到 DSL 编译生成的 .code 文件。是否立即编译并在成功后继续运行？",
+                                          QMessageBox::Yes | QMessageBox::No,
+                                          QMessageBox::Yes);
+            if (choice == QMessageBox::Yes) {
+                m_sessionController->setPendingRunAfterCompile(true);
+                m_sessionController->setSkipNextBuildSave(runWithDiskVersion);
+                m_buildController->compileConfiguration(m_projectController->currentProjectPath(),
+                                                       m_projectController->runtimeConfig());
+                return;
+            }
+            appendOutput(QString("[%1] 运行已阻止：未找到 DSL 编译产物")
+                         .arg(QDateTime::currentDateTime().toString("HH:mm:ss")));
         }
-
-        appendOutput(QString("[%1] 运行已阻止：未找到 DSL 编译产物")
-                     .arg(QDateTime::currentDateTime().toString("HH:mm:ss")));
         return;
     }
 
-    if (!applyRuntimeConfigToMonitor()) {
+    // 应用运行时配置
+    if (!m_sessionController->applyRuntimeConfig())
         return;
-    }
 
+    // 启动监控 UI
     if (m_monitorWidget) {
         m_monitorWidget->startMonitoring();
     }
 
+    // 执行运行
+    m_sessionController->executeRun();
+
+    // 更新 UI
     m_projectRunning = true;
     updateStatusBar("项目运行中");
-    if (m_globalStatusBar) {
+    if (m_globalStatusBar)
         m_globalStatusBar->setBuildState("运行中");
-    }
-    
-    appendOutput(QString("[%1] 项目已启动，下载产物：%2")
-                 .arg(QDateTime::currentDateTime().toString("HH:mm:ss"))
-                 .arg(QDir::toNativeSeparators(artifactPath)));
     refreshInspectorPanel();
 }
 
 void MainWindow::onStopProject()
 {
-    if (!m_projectRunning) {
+    if (!m_sessionController->isRunning())
         return;
-    }
-    
-    Monitor::MonitorManager::instance().stopMonitoring();
 
-    stopDemoMode(QStringLiteral("项目已停止"));
-    
+    m_sessionController->requestStop();
     m_projectRunning = false;
     updateStatusBar("项目已停止");
-    if (m_globalStatusBar) {
+    if (m_globalStatusBar)
         m_globalStatusBar->setBuildState("已停止");
-    }
-    
-    appendOutput(QString("[%1] 项目已停止")
-                 .arg(QDateTime::currentDateTime().toString("HH:mm:ss")));
     refreshInspectorPanel();
 }
 
@@ -1798,65 +1814,80 @@ void MainWindow::onOpenDiagnosisWizard()
 
 void MainWindow::onEditParameterRequested(const QString& parameterName)
 {
-    if (parameterName.isEmpty() || !m_projectController) {
+    if (parameterName.isEmpty() || !m_projectController || !m_parameterController) {
         return;
     }
 
-    auto& cfg = m_projectController->runtimeConfig();
-    for (auto& p : cfg.parameters) {
-        if (p.name != parameterName) {
-            continue;
-        }
-        if (!p.onlineEditable) {
-            appendOutput(QString("参数 %1 不允许在线修改").arg(parameterName));
-            return;
-        }
+    const auto stateInfo = m_parameterController->parameterState(parameterName);
+    if (!stateInfo.onlineEditable) {
+        appendOutput(QString("参数 %1 不允许在线修改").arg(parameterName));
+        return;
+    }
 
-        bool ok = false;
-        const QString current = p.currentValue.isEmpty() ? p.defaultValue : p.currentValue;
-        const QString value = QInputDialog::getText(
-            this,
-            "编辑参数",
-            QString("输入参数 %1 的新值").arg(parameterName),
-            QLineEdit::Normal,
-            current,
-            &ok);
-        if (!ok) {
-            return;
-        }
+    bool ok = false;
+    const QString current = stateInfo.editedValue.isEmpty()
+                                ? stateInfo.definitionValue
+                                : stateInfo.editedValue;
+    const QString value = QInputDialog::getText(
+        this,
+        "编辑参数",
+        QString("输入参数 %1 的新值").arg(parameterName),
+        QLineEdit::Normal,
+        current,
+        &ok);
+    if (!ok) {
+        return;
+    }
 
-        p.currentValue = value.trimmed();
-        p.confirmed = false;
+    if (m_parameterController->editParameter(parameterName, value.trimmed())) {
+        // 同步写回 runtimeConfig（保持旧字段兼容）
+        auto& cfg = m_projectController->runtimeConfig();
+        for (auto& p : cfg.parameters) {
+            if (p.name == parameterName) {
+                p.currentValue = value.trimmed();
+                p.confirmed = false;
+                break;
+            }
+        }
         m_projectController->setModified(true);
         refreshInspectorPanel();
-        appendOutput(QString("参数 %1 已更新为 %2").arg(parameterName, p.currentValue));
+        appendOutput(QString("参数 %1 已更新为 %2").arg(parameterName, value.trimmed()));
         updateStatusBar(QString("参数 %1 已更新").arg(parameterName));
-        return;
+    } else {
+        appendOutput(QString("参数 %1 编辑失败").arg(parameterName));
     }
-
-    appendOutput(QString("未找到参数 %1").arg(parameterName));
 }
 
 void MainWindow::onApplyParametersRequested()
 {
-    if (!m_projectController) {
+    if (!m_projectController || !m_parameterController) {
         return;
     }
 
-    for (auto& p : m_projectController->runtimeConfig().parameters) {
-        if (p.onlineEditable) {
-            p.confirmed = true;
-        }
+    IDeviceBackend* backend = Monitor::MonitorManager::instance().deviceBackend();
+    if (!backend || !backend->isOnline()) {
+        appendOutput("设备后端未连接，无法应用参数。");
+        updateStatusBar("参数应用失败：设备离线");
+        return;
     }
-    const auto& cfg = m_projectController->runtimeConfig();
-    bool ok = Monitor::MonitorManager::instance().applyConfiguration(cfg);
+
+    QString errorMessage;
+    const bool ok = m_parameterController->applyModifiedParametersWithReadback(
+        backend,
+        2,
+        100,
+        &errorMessage);
     if (ok) {
-        appendOutput("参数已应用到监控系统，等待采样回读确认。");
-        updateStatusBar("参数已应用");
+        appendOutput("参数已下发并完成回读确认。");
+        updateStatusBar("参数下发与回读完成");
     } else {
-        appendOutput("参数应用到监控系统失败。");
-        updateStatusBar("参数应用失败");
+        if (errorMessage.isEmpty()) {
+            errorMessage = QStringLiteral("参数下发失败");
+        }
+        appendOutput(QString("参数下发/回读失败：%1").arg(errorMessage));
+        updateStatusBar("参数下发/回读失败");
     }
+    refreshInspectorPanel();
 }
 
 void MainWindow::onAbout()
@@ -2066,7 +2097,7 @@ void MainWindow::openAuxiliaryTextFileInMdi(const QString& filePath)
     sub->setProperty("filePath", filePath);
     sub->setProperty("modified", false);
     sub->setWindowTitle(QFileInfo(filePath).fileName());
-    connect(viewer, &QPlainTextEdit::textChanged, this, [sub, filePath]() {
+    connect(viewer, &QPlainTextEdit::textChanged, this, [sub = QPointer<QMdiSubWindow>(sub), filePath]() {
         if (!sub) {
             return;
         }
@@ -2335,23 +2366,22 @@ void MainWindow::onCompileSucceeded(BuildType type)
         }
     }
 
-    if (m_pendingRunAfterCompile && type == BuildType::Configuration) {
-        m_pendingRunAfterCompile = false;
+    if (m_sessionController->hasPendingRunAfterCompile() && type == BuildType::Configuration) {
         const CompileResult compileResult = m_buildController
                 ? m_buildController->lastCompileResult()
                 : CompileResult();
-        const QString artifactPath = RunController::findDownloadArtifactPath(
-                m_projectController->runtimeConfig(),
-                m_projectController->currentProjectPath(),
-                compileResult);
-        if (artifactPath.isEmpty() || !QFileInfo::exists(artifactPath)) {
+        if (m_sessionController->onCompileSucceeded(compileResult)) {
+            // 控制器已自动执行运行，更新 UI
+            m_projectRunning = true;
+            if (m_monitorWidget)
+                m_monitorWidget->startMonitoring();
+            updateStatusBar("项目运行中");
+            if (m_globalStatusBar)
+                m_globalStatusBar->setBuildState("运行中");
+        } else {
             QMessageBox::warning(this,
                                  "运行条件不完整",
                                  "编译成功，但没有生成可运行的 .code 文件。");
-            appendOutput(QString("[%1] 运行已阻止：编译成功但未生成 .code")
-                         .arg(QDateTime::currentDateTime().toString("HH:mm:ss")));
-        } else {
-            onRunProject();
         }
     }
 
@@ -2361,7 +2391,7 @@ void MainWindow::onCompileSucceeded(BuildType type)
 void MainWindow::onCompileFailed(BuildType type, const QString& errorMessage)
 {
     Q_UNUSED(type);
-    m_pendingRunAfterCompile = false;
+    m_sessionController->setPendingRunAfterCompile(false);
     m_progressBar->setVisible(false);
     setCompileActionsEnabled(true);
     updateStatusBar("编译失败");
@@ -2381,8 +2411,8 @@ void MainWindow::onBuildBusyChanged(bool busy)
 
 void MainWindow::onBuildSaveRequired()
 {
-    if (m_skipNextBuildSave) {
-        m_skipNextBuildSave = false;
+    if (m_sessionController && m_sessionController->skipNextBuildSave()) {
+        m_sessionController->setSkipNextBuildSave(false);
         m_lastBuildSaveSucceeded = true;
         appendOutput(QString("[%1] 已按用户选择跳过保存，编译将使用磁盘上的 DSL 文件")
                      .arg(QDateTime::currentDateTime().toString("HH:mm:ss")));
@@ -2396,12 +2426,16 @@ void MainWindow::onBuildSaveRequired()
         m_projectController->syncDslMappingsFromEditor();
         m_projectController->syncDslMappingsToEditor();
 
+        const QString scriptForSave = m_dslEditor->scriptForSave();
         QFile scriptFile(m_projectController->currentScriptFile());
         if (scriptFile.open(QIODevice::WriteOnly | QIODevice::Text)) {
             QTextStream stream(&scriptFile);
             TextEncoding::setUtf8(stream);
-            stream << m_dslEditor->currentScript();
+            stream << scriptForSave;
             scriptFile.close();
+            if (scriptForSave != m_dslEditor->currentScript()) {
+                m_dslEditor->setScript(scriptForSave);
+            }
             m_dslEditor->setModified(false);
         } else {
             saveSucceeded = false;
@@ -2421,22 +2455,26 @@ void MainWindow::onBuildSaveRequired()
 
 void MainWindow::onBuildValidationRequired(BuildType type, QStringList& errors, bool& valid)
 {
+    valid = onBuildValidation(type, errors);
+}
+
+bool MainWindow::onBuildValidation(BuildType type, QStringList& errors)
+{
     if (!m_lastBuildSaveSucceeded) {
         errors << "保存当前 DSL 脚本失败，已取消编译。";
-        valid = false;
         showValidationErrors(errors);
-        return;
+        return false;
     }
 
     if (type == BuildType::Configuration) {
-        valid = m_projectController->validateConfiguration(errors);
+        bool valid = m_projectController->validateConfiguration(errors);
         if (!valid) {
             showValidationErrors(errors);
         }
-        return;
+        return valid;
     }
 
-    valid = true;
+    return true;
 }
 
 // ================= SettingsController 淇″彿澶勭悊妲藉嚱鏁?=================
@@ -2484,10 +2522,6 @@ void MainWindow::onMonitorThresholdExceeded(const QString& channelName, double v
                .arg(value, 0, 'f', 3)
                .arg(thresholdValue, 0, 'f', 3));
 }
-
-
-
-
 
 
 

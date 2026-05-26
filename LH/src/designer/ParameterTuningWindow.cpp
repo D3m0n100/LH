@@ -1,5 +1,6 @@
 #include "ParameterTuningWindow.h"
 
+#include "ParameterController.h"
 #include "ui/InspectorPanel.h"
 #include "monitor/MonitorManager.h"
 
@@ -743,4 +744,9 @@ void ParameterTuningWindow::setParameterReadbackReady(const QStringList& readyPa
 void ParameterTuningWindow::setParameterDeviationMap(const QMap<QString, double>& deviationMap)
 {
     if (m_panel) m_panel->setParameterDeviationMap(deviationMap);
+}
+
+void ParameterTuningWindow::setParameterStateMap(const QMap<QString, ParameterStateInfo>& stateMap)
+{
+    if (m_panel) m_panel->setParameterStateMap(stateMap);
 }

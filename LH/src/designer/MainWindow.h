@@ -73,6 +73,8 @@ QT_END_NAMESPACE
 // 前向声明 - 控制器类
 class ProjectController;
 class SettingsController;
+class ParameterController;
+class RuntimeSessionController;
 
 // 前向声明 - 其他类
 class MonitorWidget;
@@ -217,7 +219,8 @@ private slots:
     void onCompileFailed(BuildType type, const QString& errorMessage);
     void onBuildBusyChanged(bool busy);
     void onBuildSaveRequired();
-    void onBuildValidationRequired(BuildType type, QStringList& errors, bool& valid);
+    void onBuildValidationRequired(BuildType type, QStringList& errors, bool& valid); // 旧签名保留兼容
+    bool onBuildValidation(BuildType type, QStringList& errors); // 新回调签名
     
     // SettingsController 信号处理
     void onFontSizeChanged(int pointSize);
@@ -281,6 +284,8 @@ private:
     ProjectController*  m_projectController;    ///< 项目控制器
     BuildController*    m_buildController;      ///< 编译控制器
     SettingsController* m_settingsController;   ///< 设置控制器
+    ParameterController* m_parameterController = nullptr; ///< 参数状态机控制器
+    RuntimeSessionController* m_sessionController = nullptr; ///< 运行会话控制器
 
     // ================= 中心工作区 =================
     QMdiArea*     m_mdiArea;
@@ -380,6 +385,7 @@ private:
     bool m_skipNextBuildSave = false;
     int m_alarmCount = 0;
     QStringList m_runtimeProviderIds;
+    bool m_refreshingInspector = false;
 };
 
 #endif // MAINWINDOW_H

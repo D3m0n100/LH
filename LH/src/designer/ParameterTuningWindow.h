@@ -6,6 +6,8 @@
 
 #include "common/ConfigTypes.h"
 
+struct ParameterStateInfo;
+
 class InspectorPanel;
 class QComboBox;
 class QGroupBox;
@@ -34,6 +36,7 @@ public:
     void setParameterDetails(const QList<ParameterDefinition>& parameters);
     void setParameterReadbackReady(const QStringList& readyParameterNames);
     void setParameterDeviationMap(const QMap<QString, double>& deviationMap);
+    void setParameterStateMap(const QMap<QString, ParameterStateInfo>& stateMap);
 
 private:
     void loadWindowState();

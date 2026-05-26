@@ -14,6 +14,7 @@
 
 #include <QtCore>
 #include <QDebug>
+#include <QDateTime>
 #include <memory>
 #include <functional>
 
@@ -23,10 +24,10 @@
 #define PLATFORM_VERSION_PATCH 0
 
 // ============ 日志宏 ============
-#define LOG_INFO(msg)    qInfo()    << "[INFO]"  << msg
-#define LOG_WARN(msg)    qWarning() << "[WARN]"  << msg
-#define LOG_ERROR(msg)   qCritical()<< "[ERROR]" << msg
-#define LOG_DEBUG(msg)   qDebug()   << "[DEBUG]" << msg
+#define LOG_INFO(msg)    qInfo().noquote()    << "[INFO]"  << QDateTime::currentDateTime().toString("hh:mm:ss.zzz") << msg
+#define LOG_WARN(msg)    qWarning().noquote() << "[WARN]"  << QDateTime::currentDateTime().toString("hh:mm:ss.zzz") << msg
+#define LOG_ERROR(msg)   qCritical().noquote()<< "[ERROR]" << QDateTime::currentDateTime().toString("hh:mm:ss.zzz") << msg
+#define LOG_DEBUG(msg)   qDebug().noquote()   << "[DEBUG]" << QDateTime::currentDateTime().toString("hh:mm:ss.zzz") << msg
 
 // ============ 单例宏 ============
 /**

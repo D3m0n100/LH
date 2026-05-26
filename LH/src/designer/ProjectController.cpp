@@ -459,14 +459,7 @@ void ProjectController::syncDslMappingsToEditor()
             continue;
         }
 
-        // Marker missing: insert near mapped line to keep navigation stable.
-        int nearLine = mapping.lineNumber > 0 ? mapping.lineNumber : 1;
-        int insertedMarkerLine = m_dslEditor->ensureDslMappingMarker(mapping.id, nearLine);
-        if (insertedMarkerLine > 0) {
-            markerMap = m_dslEditor->scanDslMappingMarkers();
-            const int markerLine = markerMap.value(mapping.id, insertedMarkerLine);
-            mapping.lineNumber = markerLine + 1;
-        }
+        // Marker comments are legacy-only and must not be written back to the DSL script.
     }
 
     // 3) Recover minimal mappings from markers found in script.
@@ -539,28 +532,28 @@ DslMappingEntry ProjectController::createMappingFromInsertRecord(const DslInsert
 
 // ================= 缁勬€佸悎娉曟€ф牎楠?=================
 
-bool ProjectController::validateConfiguration(QStringList& errors) const
+bool ProjectController::validateConfiguration(QStringList& errors)
 {
     errors.clear();
-    
+
     bool valid = true;
-    
+
     if (!checkRequiredFields(m_runtimeConfig, errors)) {
         valid = false;
     }
-    
+
     if (!checkDuplicateChannelBindings(m_runtimeConfig, errors)) {
         valid = false;
     }
-    
+
     if (!checkHardwareResourceLimits(m_runtimeConfig, errors)) {
         valid = false;
     }
-    
+
     if (!valid) {
-        emit const_cast<ProjectController*>(this)->validationFailed(errors);
+        emit validationFailed(errors);
     }
-    
+
     return valid;
 }
 

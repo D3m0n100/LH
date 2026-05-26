@@ -9,6 +9,8 @@
 
 // 运行时配置类型（避免在头文件中引入，减少依赖）
 #include "../common/ConfigTypes.h"
+#include "../common/RuntimePointTypes.h"
+#include "../communication/IDeviceBackend.h"
 
 #include <QReadLocker>
 #include <QWriteLocker>
@@ -203,6 +205,18 @@ static std::function<double()> makeDemoSampler(const QString& providerId,
     };
 }
 
+static const char* qualityToString(RuntimePointQuality q)
+{
+    switch (q) {
+    case RuntimePointQuality::Good:      return "Good";
+    case RuntimePointQuality::Simulated: return "Simulated";
+    case RuntimePointQuality::Stale:     return "Stale";
+    case RuntimePointQuality::Bad:       return "Bad";
+    case RuntimePointQuality::Offline:   return "Offline";
+    default:                             return "Unknown";
+    }
+}
+
 } // namespace
 
 // ============================================================================
@@ -217,12 +231,15 @@ MonitorManager& MonitorManager::instance()
 
 MonitorManager::MonitorManager()
     : QObject(nullptr)
-    , m_dataProcessor(nullptr)
+    , m_backendPollTimer(new QTimer(this))
     , m_cleanupTimer(new QTimer(this))
     , m_dataRetentionDays(DEFAULT_DATA_RETENTION_DAYS)
-    , m_isMonitoring(false)
 {
     setupCleanupTimer();
+
+    // 后端轮询定时器（默认不启动，applyConfiguration 中设置间隔后按需启动）
+    connect(m_backendPollTimer, &QTimer::timeout,
+            this, &MonitorManager::onBackendPollTimeout);
 
     // 监控采样落库：默认启用（可通过 setDatabaseLoggingEnabled 关闭）
     m_dataLogger = std::make_unique<MonitorDataLogger>(this);
@@ -258,18 +275,67 @@ void MonitorManager::setupCleanupTimer()
 
 void MonitorManager::setDataProcessor(MonitorDataProcessor* processor)
 {
-    m_dataProcessor = processor;
+    m_dataProcessor.store(processor, std::memory_order_release);
 
     // 确保处理器中的通道与当前注册的通道同步
-    if (m_dataProcessor) {
+    if (processor) {
         QReadLocker locker(&m_channelLock);
         for (const QString& channelName : m_channels.keys()) {
-            m_dataProcessor->ensureChannel(channelName);
+            processor->ensureChannel(channelName);
         }
     }
 
     qDebug() << "[MonitorManager] 数据处理器已设置:"
              << (processor ? "启用增量分发" : "禁用增量分发");
+}
+
+// ============================================================================
+// 设备后端连接
+// ============================================================================
+
+void MonitorManager::setDeviceBackend(IDeviceBackend* backend)
+{
+    if (m_backend == backend)
+        return;
+
+    if (m_backendPointsChangedConnection) {
+        disconnect(m_backendPointsChangedConnection);
+        m_backendPointsChangedConnection = {};
+    }
+    if (m_backendConnectionStateConnection) {
+        disconnect(m_backendConnectionStateConnection);
+        m_backendConnectionStateConnection = {};
+    }
+
+    m_backend = backend;
+    m_backendPollTimer->stop();
+    m_backendPointIds.clear();
+    m_pointIdToChannel.clear();
+
+    if (backend) {
+        // 连接 backend 的 pointsChanged 信号，实时更新通道
+        m_backendPointsChangedConnection =
+                connect(backend, &IDeviceBackend::pointsChanged,
+                        this, [this](const QHash<QString, QVariant>& updates) {
+                            for (auto it = updates.constBegin(); it != updates.constEnd(); ++it) {
+                                const QString channelName = m_pointIdToChannel.value(it.key());
+                                if (channelName.isEmpty())
+                                    continue;
+                                recordSample(channelName, it.value().toDouble(), QString(),
+                                             {{"quality", "Good"}, {"source", "backend_push"}});
+                            }
+                        });
+
+        m_backendConnectionStateConnection =
+                connect(backend, &IDeviceBackend::connectionStateChanged,
+                        this, [this](bool connected) {
+                            qDebug() << "[MonitorManager] backend connectionStateChanged:" << connected;
+                        });
+
+        qDebug() << "[MonitorManager] device backend set:" << backend;
+    } else {
+        qDebug() << "[MonitorManager] device backend cleared";
+    }
 }
 
 // ============================================================================
@@ -330,8 +396,11 @@ bool MonitorManager::registerChannel(const ChannelConfig& config)
     }
 
     // 同步到数据处理器
-    if (m_dataProcessor) {
-        m_dataProcessor->ensureChannel(config.name);
+    {
+        MonitorDataProcessor* proc = m_dataProcessor.load(std::memory_order_acquire);
+        if (proc) {
+            proc->ensureChannel(config.name);
+        }
     }
 
     qDebug() << "[MonitorManager] 注册通道:" << config.name;
@@ -354,8 +423,11 @@ bool MonitorManager::removeChannel(const QString& name)
     }
 
     // 清理数据处理器中的缓存
-    if (m_dataProcessor) {
-        m_dataProcessor->clearChannelCache(name);
+    {
+        MonitorDataProcessor* proc = m_dataProcessor.load(std::memory_order_acquire);
+        if (proc) {
+            proc->clearChannelCache(name);
+        }
     }
 
     qDebug() << "[MonitorManager] 移除通道:" << name;
@@ -684,6 +756,11 @@ void MonitorManager::startMonitoring()
         }
     }
 
+    // 启动后端轮询定时器（如果已配置）
+    if (m_backend && m_backendPollTimer->interval() > 0 && !m_backendPointIds.isEmpty()) {
+        m_backendPollTimer->start();
+    }
+
     // 启动清理定时器
     m_cleanupTimer->start();
 
@@ -705,6 +782,9 @@ void MonitorManager::stopMonitoring()
             timer->stop();
         }
     }
+
+    // 停止后端轮询定时器
+    m_backendPollTimer->stop();
 
     // 停止清理定时器
     m_cleanupTimer->stop();
@@ -734,8 +814,11 @@ void MonitorManager::clearChannelData(const QString& channelName)
         }
     }
 
-    if (m_dataProcessor) {
-        m_dataProcessor->clearChannelCache(channelName);
+    {
+        MonitorDataProcessor* proc = m_dataProcessor.load(std::memory_order_acquire);
+        if (proc) {
+            proc->clearChannelCache(channelName);
+        }
     }
 }
 
@@ -748,8 +831,11 @@ void MonitorManager::clearAllData()
         }
     }
 
-    if (m_dataProcessor) {
-        m_dataProcessor->clearAllCache();
+    {
+        MonitorDataProcessor* proc = m_dataProcessor.load(std::memory_order_acquire);
+        if (proc) {
+            proc->clearAllCache();
+        }
     }
 }
 
@@ -767,6 +853,63 @@ void MonitorManager::onCleanupTimeout()
     }
 
     qDebug() << "[MonitorManager] 数据清理完成，截止时间:" << cutoff;
+}
+
+void MonitorManager::onBackendPollTimeout()
+{
+    if (!m_backend || m_backendPointIds.isEmpty())
+        return;
+
+    QHash<QString, QVariant> values;
+    QString errorMsg;
+    const bool ok = m_backend->readPoints(m_backendPointIds, values, &errorMsg);
+
+    RuntimePointQuality quality;
+    if (!ok) {
+        // backend 无法返回值 → 根据连接状态推断质量
+        quality = m_backend->isOnline() ? RuntimePointQuality::Bad : RuntimePointQuality::Offline;
+    } else {
+        // backend 正常返回：virtual → Simulated，real → Good
+        const QVariantMap status = m_backend->queryStatus();
+        const QString backendType = status.value(QStringLiteral("backend")).toString();
+        quality = (backendType == QStringLiteral("virtual"))
+                      ? RuntimePointQuality::Simulated
+                      : RuntimePointQuality::Good;
+    }
+
+    const QDateTime now = QDateTime::currentDateTimeUtc();
+
+    for (auto it = values.constBegin(); it != values.constEnd(); ++it) {
+        const QString channelName = m_pointIdToChannel.value(it.key());
+        if (channelName.isEmpty())
+            continue;
+
+        Sample sample;
+        sample.channelName = channelName;
+        sample.value = it.value().toDouble();
+        sample.timestamp = now;
+        sample.metadata[QStringLiteral("quality")] = QString::fromLatin1(qualityToString(quality));
+        sample.metadata[QStringLiteral("source")] = QStringLiteral("backend_poll");
+
+        recordSample(sample);
+    }
+
+    // 若 readPoints 完全失败，给所有通道记录一条质量异常样本
+    if (!ok && !m_backendPointIds.isEmpty()) {
+        for (const auto& pointId : m_backendPointIds) {
+            const QString channelName = m_pointIdToChannel.value(pointId);
+            if (channelName.isEmpty())
+                continue;
+            Sample sample;
+            sample.channelName = channelName;
+            sample.value = 0.0;
+            sample.timestamp = now;
+            sample.metadata[QStringLiteral("quality")] = QString::fromLatin1(qualityToString(quality));
+            sample.metadata[QStringLiteral("source")] = QStringLiteral("backend_poll");
+            sample.metadata[QStringLiteral("error")] = errorMsg;
+            recordSample(sample);
+        }
+    }
 }
 
 void MonitorManager::onProviderTimeout()
@@ -819,23 +962,25 @@ void MonitorManager::connectChannelSignals(const std::shared_ptr<MonitorChannel>
 
 void MonitorManager::dispatchToProcessor(const QString& channelName, const Sample& sample)
 {
-    if (!m_dataProcessor) {
+    MonitorDataProcessor* proc = m_dataProcessor.load(std::memory_order_acquire);
+    if (!proc) {
         return;
     }
 
     // 增量追加到数据处理器
-    m_dataProcessor->appendSample(channelName, sample);
+    proc->appendSample(channelName, sample);
 }
 
 void MonitorManager::dispatchToProcessor(const QString& channelName,
                                          const QList<Sample>& samples)
 {
-    if (!m_dataProcessor || samples.isEmpty()) {
+    MonitorDataProcessor* proc = m_dataProcessor.load(std::memory_order_acquire);
+    if (!proc || samples.isEmpty()) {
         return;
     }
 
     // 批量增量追加到数据处理器
-    m_dataProcessor->appendSamples(channelName, samples);
+    proc->appendSamples(channelName, samples);
 }
 
 bool MonitorManager::applyConfiguration(const ProjectRuntimeConfig& config)
@@ -1005,7 +1150,9 @@ bool MonitorManager::applyConfiguration(const ProjectRuntimeConfig& config)
     }
 
     // ---------------------------------------------------------------------
-    // 3) 基于 providers 注册采集器（必须有可运行 sampler）
+    // 3) 基于 providers 注册采集器
+    //    有 backend → 走 backend polling，不创建 demo sampler
+    //    无 backend → 保留 demo sampler（兼容无硬件开发场景）
     // ---------------------------------------------------------------------
 
     QList<MonitorProviderRuntimeConfig> providers = config.providers;
@@ -1024,7 +1171,6 @@ bool MonitorManager::applyConfiguration(const ProjectRuntimeConfig& config)
             p.periodMs = entry.periodMs > 0 ? entry.periodMs : 20;
             p.priority = 128;
             p.metadata = entry.metadata;
-            // 便于 sampler 推断行为
             p.metadata["snippetId"] = entry.snippetId;
             p.metadata["snippetName"] = entry.snippetName;
             p.metadata["mappingId"] = entry.id;
@@ -1032,6 +1178,12 @@ bool MonitorManager::applyConfiguration(const ProjectRuntimeConfig& config)
             providers.push_back(p);
         }
     }
+
+    // 清理旧的 backend 轮询映射
+    m_backendPointIds.clear();
+    m_pointIdToChannel.clear();
+
+    int minPeriodMs = 0;
 
     for (const auto& p : providers) {
         if (p.id.trimmed().isEmpty()) {
@@ -1055,11 +1207,9 @@ bool MonitorManager::applyConfiguration(const ProjectRuntimeConfig& config)
         pc.metadata["projectName"] = config.projectName;
         pc.metadata[kRuntimeManagedKey] = true;
 
-        // 尝试关联到 mapping，以便 demo sampler 根据 snippetId 做出更合理行为
-        QString snippetId;
+        // 关联 mapping 元数据
         if (mappingById.contains(pc.id)) {
             const auto& m = mappingById[pc.id];
-            snippetId = m.snippetId;
             pc.metadata["snippetId"] = m.snippetId;
             pc.metadata["snippetName"] = m.snippetName;
             pc.metadata["mappingId"] = m.id;
@@ -1067,21 +1217,27 @@ bool MonitorManager::applyConfiguration(const ProjectRuntimeConfig& config)
             pc.metadata["lineNumber"] = m.lineNumber;
         } else if (mappingByChannel.contains(pc.channelName)) {
             const auto& m = mappingByChannel[pc.channelName];
-            snippetId = m.snippetId;
             pc.metadata["snippetId"] = m.snippetId;
             pc.metadata["snippetName"] = m.snippetName;
             pc.metadata["mappingId"] = m.id;
             pc.metadata["signalPath"] = m.signalPath;
             pc.metadata["lineNumber"] = m.lineNumber;
-        } else {
-            // fallback: 尝试从 metadata 读取
-            snippetId = pc.metadata.value("snippetId").toString();
         }
 
-        pc.sampler = makeDemoSampler(pc.id, pc.channelName, pc.unit, snippetId, pc.metadata);
-        pc.errorHandler = [pid = pc.id](const QString& err) {
-            qWarning() << "[MonitorManager] provider error:" << pid << err;
-        };
+        if (m_backend) {
+            // backend 模式：收集 point ID 映射，不创建 sampler
+            m_backendPointIds.append(pc.id);
+            m_pointIdToChannel.insert(pc.id, pc.channelName);
+            if (minPeriodMs <= 0 || pc.periodMs < minPeriodMs)
+                minPeriodMs = pc.periodMs;
+        } else {
+            // 无 backend：创建 demo sampler（兼容旧模式）
+            QString snippetId = pc.metadata.value("snippetId").toString();
+            pc.sampler = makeDemoSampler(pc.id, pc.channelName, pc.unit, snippetId, pc.metadata);
+            pc.errorHandler = [pid = pc.id](const QString& err) {
+                qWarning() << "[MonitorManager] provider error:" << pid << err;
+            };
+        }
 
         if (!registerProvider(pc)) {
             qWarning() << "[MonitorManager] 注册采集器失败:" << pc.id
@@ -1089,6 +1245,15 @@ bool MonitorManager::applyConfiguration(const ProjectRuntimeConfig& config)
             success = false;
             continue;
         }
+    }
+
+    // 配置后端轮询定时器
+    if (m_backend && !m_backendPointIds.isEmpty() && minPeriodMs > 0) {
+        m_backendPollTimer->setInterval(minPeriodMs);
+        qDebug() << "[MonitorManager] backend polling configured:"
+                 << m_backendPointIds.size() << "points, interval=" << minPeriodMs << "ms";
+    } else {
+        m_backendPollTimer->stop();
     }
 
     // ---------------------------------------------------------------------

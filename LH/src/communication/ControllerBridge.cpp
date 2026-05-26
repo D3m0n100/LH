@@ -10,6 +10,28 @@
 #include <QVariantList>
 
 namespace {
+
+// RAII helper: 临时切换 Modbus 站地址，析构时自动恢复
+class StationAddressGuard {
+public:
+    StationAddressGuard(ModbusInterface* modbus, int newId)
+        : m_modbus(modbus)
+        , m_oldId(modbus->stationAddress())
+    {
+        m_modbus->setStationAddress(newId);
+    }
+    ~StationAddressGuard()
+    {
+        m_modbus->setStationAddress(m_oldId);
+    }
+    StationAddressGuard(const StationAddressGuard&) = delete;
+    StationAddressGuard& operator=(const StationAddressGuard&) = delete;
+
+private:
+    ModbusInterface* m_modbus;
+    int m_oldId;
+};
+
 QVector<quint16> bytesToWordsBE(const QByteArray& chunk)
 {
     QVector<quint16> out;
@@ -116,16 +138,16 @@ bool ControllerBridge::handshake()
 
     const bool enableHandshake = m_cfg.value("enableHandshake", true).toBool();
     if (!enableHandshake) {
-        if (!m_controllerOnline) {
-            m_controllerOnline = true;
+        if (!m_controllerOnline.load()) {
+            m_controllerOnline.store(true);
             emit controllerOnlineChanged(true);
         }
         return true;
     }
 
     if (!m_modbus->isConnected()) {
-        if (m_controllerOnline) {
-            m_controllerOnline = false;
+        if (m_controllerOnline.load()) {
+            m_controllerOnline.store(false);
             emit controllerOnlineChanged(false);
         }
         m_modbus->reportCommError(CommErrorCode::ConnectionLost, "Serial not connected");
@@ -137,14 +159,15 @@ bool ControllerBridge::handshake()
     const int addr = hs.value("address", 0).toInt();
     const int count = hs.value("count", 1).toInt();
 
-    const int oldId = m_modbus->stationAddress();
-    m_modbus->setStationAddress(slaveId);
-    const bool ok = m_modbus->readHoldingRegisters(addr, count);
-    m_modbus->setStationAddress(oldId);
+    bool ok;
+    {
+        StationAddressGuard guard(m_modbus, slaveId);
+        ok = m_modbus->readHoldingRegisters(addr, count);
+    }
 
     if (!ok) {
-        if (m_controllerOnline) {
-            m_controllerOnline = false;
+        if (m_controllerOnline.load()) {
+            m_controllerOnline.store(false);
             emit controllerOnlineChanged(false);
         }
         m_modbus->reportCommError(CommErrorCode::DeviceNotFound,
@@ -153,8 +176,8 @@ bool ControllerBridge::handshake()
         return false;
     }
 
-    if (!m_controllerOnline) {
-        m_controllerOnline = true;
+    if (!m_controllerOnline.load()) {
+        m_controllerOnline.store(true);
         emit controllerOnlineChanged(true);
     }
     return true;
@@ -168,14 +191,14 @@ bool ControllerBridge::probeTarget()
 
     const bool enableProbe = m_cfg.value("enableTargetProbe", true).toBool();
     if (!enableProbe) {
-        if (!m_targetOnline) {
-            m_targetOnline = true;
+        if (!m_targetOnline.load()) {
+            m_targetOnline.store(true);
             emit targetOnlineChanged(true);
         }
         return true;
     }
 
-    if (!m_controllerOnline && !handshake()) {
+    if (!m_controllerOnline.load() && !handshake()) {
         return false;
     }
 
@@ -186,13 +209,14 @@ bool ControllerBridge::probeTarget()
     const int slaveId = tp.value("slaveId", defaultTarget).toInt();
     const QVariant expectedVar = tp.value("expected");
 
-    const int oldId = m_modbus->stationAddress();
-    m_modbus->setStationAddress(slaveId);
-    const bool ok = m_modbus->readHoldingRegisters(addr, count);
-    m_modbus->setStationAddress(oldId);
+    bool ok;
+    {
+        StationAddressGuard guard(m_modbus, slaveId);
+        ok = m_modbus->readHoldingRegisters(addr, count);
+    }
     if (!ok) {
-        if (m_targetOnline) {
-            m_targetOnline = false;
+        if (m_targetOnline.load()) {
+            m_targetOnline.store(false);
             emit targetOnlineChanged(false);
         }
         m_modbus->reportCommError(CommErrorCode::DeviceNotFound,
@@ -222,8 +246,8 @@ bool ControllerBridge::probeTarget()
         }
     }
 
-    if (!m_targetOnline) {
-        m_targetOnline = true;
+    if (!m_targetOnline.load()) {
+        m_targetOnline.store(true);
         emit targetOnlineChanged(true);
     }
     return true;
@@ -279,11 +303,8 @@ bool ControllerBridge::selectTargetIfNeeded(int targetId)
     }
 
     const int controllerSlave = m_cfg.value("controller").toMap().value("slaveId", 1).toInt();
-    const int oldId = m_modbus->stationAddress();
-    m_modbus->setStationAddress(controllerSlave);
-    const bool ok = m_modbus->writeMultipleRegisters(selectReg, { static_cast<quint16>(targetId) });
-    m_modbus->setStationAddress(oldId);
-    return ok;
+    StationAddressGuard guard(m_modbus, controllerSlave);
+    return m_modbus->writeMultipleRegisters(selectReg, { static_cast<quint16>(targetId) });
 }
 
 bool ControllerBridge::stepEnterOrFinalize(const QVariantMap& params)
@@ -309,32 +330,31 @@ bool ControllerBridge::stepEnterOrFinalize(const QVariantMap& params)
         }
     }
 
-    const int oldId = m_modbus->stationAddress();
-    m_modbus->setStationAddress(slaveId);
-
     bool ok = false;
-    if (op.compare("writecoils", Qt::CaseInsensitive) == 0) {
-        const QVariantList vs = params.value("values").toList();
-        QVector<bool> coils;
-        coils.reserve(vs.size());
-        for (const auto& v : vs) {
-            coils.push_back(v.toInt() != 0);
-        }
-        ok = m_modbus->writeMultipleCoils(addr, coils);
-    } else {
-        const QVariantList vs = params.value("values").toList();
-        QVector<quint16> regs;
-        regs.reserve(vs.size());
-        for (const auto& v : vs) {
-            regs.push_back(static_cast<quint16>(v.toUInt()));
-        }
-        ok = m_modbus->writeMultipleRegisters(addr, regs);
-        if (!ok && slaveId == 0 && !needResp) {
-            ok = true;
+    {
+        StationAddressGuard guard(m_modbus, slaveId);
+
+        if (op.compare("writecoils", Qt::CaseInsensitive) == 0) {
+            const QVariantList vs = params.value("values").toList();
+            QVector<bool> coils;
+            coils.reserve(vs.size());
+            for (const auto& v : vs) {
+                coils.push_back(v.toInt() != 0);
+            }
+            ok = m_modbus->writeMultipleCoils(addr, coils);
+        } else {
+            const QVariantList vs = params.value("values").toList();
+            QVector<quint16> regs;
+            regs.reserve(vs.size());
+            for (const auto& v : vs) {
+                regs.push_back(static_cast<quint16>(v.toUInt()));
+            }
+            ok = m_modbus->writeMultipleRegisters(addr, regs);
+            if (!ok && slaveId == 0 && !needResp) {
+                ok = true;
+            }
         }
     }
-
-    m_modbus->setStationAddress(oldId);
     return ok;
 }
 
@@ -366,14 +386,12 @@ bool ControllerBridge::stepPoll(const QVariantMap& params)
         }
     }
 
-    const int oldId = m_modbus->stationAddress();
-    m_modbus->setStationAddress(slaveId);
+    StationAddressGuard guard(m_modbus, slaveId);
 
     QElapsedTimer t;
     t.start();
     while (t.elapsed() < timeoutMs) {
         if (isAbortRequested()) {
-            m_modbus->setStationAddress(oldId);
             m_modbus->reportCommError(CommErrorCode::OperationCancelled, "Download cancelled during poll");
             return false;
         }
@@ -388,7 +406,6 @@ bool ControllerBridge::stepPoll(const QVariantMap& params)
                     }
                 }
                 if (match) {
-                    m_modbus->setStationAddress(oldId);
                     return true;
                 }
             }
@@ -396,7 +413,6 @@ bool ControllerBridge::stepPoll(const QVariantMap& params)
         QThread::msleep(static_cast<unsigned long>(pollMs));
     }
 
-    m_modbus->setStationAddress(oldId);
     m_modbus->reportCommError(CommErrorCode::ConnectionTimeout,
                               "Poll timeout",
                               QString("slave=%1 addr=%2").arg(slaveId).arg(addr));
@@ -439,8 +455,7 @@ bool ControllerBridge::stepSendChunk(const QVariantMap& params, const QByteArray
         }
     }
 
-    const int oldId = m_modbus->stationAddress();
-    m_modbus->setStationAddress(slaveId);
+    StationAddressGuard guard(m_modbus, slaveId);
 
     const int bytesPerChunk = chunkWords * 2;
     const int totalBytes = payload.size();
@@ -449,7 +464,6 @@ bool ControllerBridge::stepSendChunk(const QVariantMap& params, const QByteArray
 
     for (int i = 0; i < packetCount; ++i) {
         if (isAbortRequested()) {
-            m_modbus->setStationAddress(oldId);
             m_modbus->reportCommError(CommErrorCode::OperationCancelled, "Download cancelled during transfer");
             return false;
         }
@@ -463,7 +477,6 @@ bool ControllerBridge::stepSendChunk(const QVariantMap& params, const QByteArray
         if (packetIndexAddr > 0) {
             const bool ok = m_modbus->writeMultipleRegisters(packetIndexAddr, { static_cast<quint16>(packetIndexBase + i) });
             if (!ok) {
-                m_modbus->setStationAddress(oldId);
                 m_modbus->reportCommError(CommErrorCode::SendFailed, "Write packetIndex failed");
                 return false;
             }
@@ -471,7 +484,6 @@ bool ControllerBridge::stepSendChunk(const QVariantMap& params, const QByteArray
         if (packetLenAddr > 0) {
             const bool ok = m_modbus->writeMultipleRegisters(packetLenAddr, { static_cast<quint16>(len) });
             if (!ok) {
-                m_modbus->setStationAddress(oldId);
                 m_modbus->reportCommError(CommErrorCode::SendFailed, "Write packetLength failed");
                 return false;
             }
@@ -479,7 +491,6 @@ bool ControllerBridge::stepSendChunk(const QVariantMap& params, const QByteArray
         if (packetCrcAddr > 0) {
             const bool ok = m_modbus->writeMultipleRegisters(packetCrcAddr, { chunkCrc });
             if (!ok) {
-                m_modbus->setStationAddress(oldId);
                 m_modbus->reportCommError(CommErrorCode::SendFailed, "Write packetCrc failed");
                 return false;
             }
@@ -487,7 +498,6 @@ bool ControllerBridge::stepSendChunk(const QVariantMap& params, const QByteArray
         if (packetOffsetAddr > 0) {
             const bool ok = m_modbus->writeMultipleRegisters(packetOffsetAddr, { static_cast<quint16>(off) });
             if (!ok) {
-                m_modbus->setStationAddress(oldId);
                 m_modbus->reportCommError(CommErrorCode::SendFailed, "Write packetOffset failed");
                 return false;
             }
@@ -498,7 +508,6 @@ bool ControllerBridge::stepSendChunk(const QVariantMap& params, const QByteArray
             ok = true;
         }
         if (!ok) {
-            m_modbus->setStationAddress(oldId);
             m_modbus->reportCommError(CommErrorCode::ConnectionTimeout,
                                       "Chunk write failed",
                                       QString("slave=%1 pkt=%2/%3").arg(slaveId).arg(i + 1).arg(packetCount));
@@ -510,7 +519,6 @@ bool ControllerBridge::stepSendChunk(const QVariantMap& params, const QByteArray
         emit downloadProgress(percent, sent, totalBytes, i + 1, packetCount);
     }
 
-    m_modbus->setStationAddress(oldId);
     return true;
 }
 
@@ -532,10 +540,9 @@ bool ControllerBridge::stepQueryResult(const QVariantMap& params)
         }
     }
 
-    const int oldId = m_modbus->stationAddress();
-    m_modbus->setStationAddress(slaveId);
+    StationAddressGuard guard(m_modbus, slaveId);
+
     if (!m_modbus->readHoldingRegisters(addr, count)) {
-        m_modbus->setStationAddress(oldId);
         m_modbus->reportCommError(CommErrorCode::ConnectionTimeout,
                                   "QueryResult read failed",
                                   QString("slave=%1 addr=%2 count=%3").arg(slaveId).arg(addr).arg(count));
@@ -552,7 +559,6 @@ bool ControllerBridge::stepQueryResult(const QVariantMap& params)
     QVector<quint16> expected;
     if (parseExpected(params.value("expected"), count, expected)) {
         if (got.size() < count) {
-            m_modbus->setStationAddress(oldId);
             m_modbus->reportCommError(CommErrorCode::InvalidResponse,
                                       "QueryResult size mismatch",
                                       QString("expected=%1 got=%2").arg(count).arg(got.size()));
@@ -560,7 +566,6 @@ bool ControllerBridge::stepQueryResult(const QVariantMap& params)
         }
         for (int i = 0; i < count; ++i) {
             if (got[i] != expected[i]) {
-                m_modbus->setStationAddress(oldId);
                 m_modbus->reportCommError(CommErrorCode::ProtocolError,
                                           "QueryResult expected mismatch",
                                           QString("idx=%1 expected=%2 got=%3").arg(i).arg(expected[i]).arg(got[i]));
@@ -569,7 +574,6 @@ bool ControllerBridge::stepQueryResult(const QVariantMap& params)
         }
     }
 
-    m_modbus->setStationAddress(oldId);
     return true;
 }
 

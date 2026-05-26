@@ -31,8 +31,14 @@ def main():
     
     parser.add_argument(
         'input',
-        nargs='+',
+        nargs='*',
         help='输入的.lm源文件（支持通配符）'
+    )
+
+    parser.add_argument(
+        '--describe-blocks',
+        action='store_true',
+        help='输出所有功能块的元数据（JSON格式）'
     )
     
     parser.add_argument(
@@ -69,7 +75,40 @@ def main():
     )
     
     args = parser.parse_args()
-    
+
+    # --describe-blocks: 输出所有功能块元数据
+    if args.describe_blocks:
+        import json
+        from lm_compiler.function_blocks.registry import FunctionBlockRegistry
+        registry = FunctionBlockRegistry()
+        registry.load_defaults()
+        blocks = []
+        for name, meta in sorted(registry.all_blocks().items()):
+            params = []
+            for p in meta.parameters:
+                params.append({
+                    "name": p.name,
+                    "data_type": p.data_type,
+                    "direction": p.direction,
+                    "offset": p.offset,
+                    "default_value": p.default_value,
+                    "description": p.description,
+                })
+            blocks.append({
+                "name": meta.name,
+                "type_id": meta.type_id,
+                "memory_size": meta.memory_size,
+                "category": meta.category,
+                "description": meta.description,
+                "parameters": params,
+            })
+        print(json.dumps(blocks, ensure_ascii=False))
+        return 0
+
+    if not args.input:
+        print("错误: 未指定输入文件")
+        return 1
+
     # 展开通配符
     input_files = []
     for pattern in args.input:

@@ -1,5 +1,6 @@
 // 文件：src/communication/Common.h
 // 通信模块通用宏定义和辅助函数
+// 日志宏已统一到 include/Common.h，此处仅保留通信专用工具
 
 #ifndef COMMUNICATION_COMMON_H
 #define COMMUNICATION_COMMON_H
@@ -9,25 +10,11 @@
 #include <QDateTime>
 #include <QRegularExpression>
 
-// ============================================================================
-// 日志宏定义
-// ============================================================================
+#include "../../include/Common.h"
 
-#ifndef LOG_INFO
-#define LOG_INFO(msg) qInfo().noquote() << "[INFO]" << QDateTime::currentDateTime().toString("hh:mm:ss.zzz") << msg
-#endif
-
-#ifndef LOG_WARN
-#define LOG_WARN(msg) qWarning().noquote() << "[WARN]" << QDateTime::currentDateTime().toString("hh:mm:ss.zzz") << msg
-#endif
-
-#ifndef LOG_ERROR
-#define LOG_ERROR(msg) qCritical().noquote() << "[ERROR]" << QDateTime::currentDateTime().toString("hh:mm:ss.zzz") << msg
-#endif
-
-#ifndef LOG_DEBUG
-#define LOG_DEBUG(msg) qDebug().noquote() << "[DEBUG]" << QDateTime::currentDateTime().toString("hh:mm:ss.zzz") << msg
-#endif
+// 日志宏：统一使用 include/Common.h 中的定义
+// 不能用 #include "Common.h"，否则同目录下会先包含自己
+#include "../../include/Common.h"
 
 // ============================================================================
 // 字节操作辅助宏

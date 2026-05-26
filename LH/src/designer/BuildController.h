@@ -31,6 +31,7 @@
 #include <QObject>
 #include <QProcess>
 #include <QString>
+#include <functional>
 #include "common/ConfigTypes.h"
 #include "compiler/DSLCompilerInterface.h"
 
@@ -64,6 +65,9 @@ public:
     /// 获取当前编译类型
     BuildType currentBuildType() const { return m_currentBuildType; }
     CompileResult lastCompileResult() const { return m_lastCompileResult; }
+
+    using ValidationCallback = std::function<bool(BuildType type, QStringList& errors)>;
+    void setValidationCallback(ValidationCallback callback) { m_validationCallback = callback; }
 
 public slots:
     // ===== 编译操作 =====
@@ -106,10 +110,8 @@ signals:
     
     /// 需要先保存项目
     void saveRequired();
-    
-    /// 需要校验配置
-    void validationRequired(BuildType type, QStringList& errors, bool& valid);
 
+    /// 设置编译前校验回调（替代旧的 validationRequired 信号，避免引用参数）
 private slots:
     // ===== 编译过程回调 =====
     void onDslCompilerFinished(int exitCode, bool normalExit, const QString& stdOut, const QString& stdErr);
@@ -134,10 +136,16 @@ private:
     /// 获取编译输出目录
     QString buildOutputDirectory(BuildType type) const;
 
+    /// 通用编译入口（三个编译类型的公共逻辑）
+    void compileCommon(BuildType type, const QString& projectPath, const ProjectRuntimeConfig& config);
+
 private:
     // ===== 编译接口 =====
     DSLCompilerInterface* m_dslCompiler = nullptr;
-    
+
+    // ===== 校验回调 =====
+    ValidationCallback m_validationCallback;
+
     // ===== 状态 =====
     bool m_busy = false;
     BuildType m_currentBuildType = BuildType::Configuration;

@@ -66,8 +66,8 @@ private:
     ModbusInterface* m_modbus = nullptr; // Not owned.
     QVariantMap m_cfg;
 
-    bool m_controllerOnline = false;
-    bool m_targetOnline = false;
+    std::atomic_bool m_controllerOnline{false};
+    std::atomic_bool m_targetOnline{false};
     std::atomic_bool m_abortRequested{false};
 };
 

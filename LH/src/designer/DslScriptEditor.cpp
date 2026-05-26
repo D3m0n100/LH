@@ -715,7 +715,7 @@ void DslScriptEditor::setupShortcuts()
     m_escapeShortcut = new QShortcut(QKeySequence("Escape"), this);
     connect(m_escapeShortcut, &QShortcut::activated, this, &DslScriptEditor::hideFindBar);
 
-    m_mappingShortcut = new QShortcut(QKeySequence("Ctrl+M"), this);
+    m_mappingShortcut = new QShortcut(QKeySequence("Ctrl+Shift+M"), this);
     connect(m_mappingShortcut, &QShortcut::activated, this, &DslScriptEditor::onShowDslMappings);
 }
 
@@ -839,6 +839,18 @@ void DslScriptEditor::gotoLine(int lineNumber)
 
 // ===== DSL 鏄犲皠绋冲畾锛堟彃鍏ユ爣璁版硶锛?=====
 
+namespace {
+
+const QRegularExpression& dslMappingMarkerRegex()
+{
+    static const QRegularExpression re(
+        R"(^\s*//\s*@dsl_mapping_id\s*:\s*([A-Za-z0-9\-]+)\s*$)"
+    );
+    return re;
+}
+
+}
+
 QMap<QString, int> DslScriptEditor::scanDslMappingMarkers() const
 {
     QMap<QString, int> result;
@@ -846,14 +858,10 @@ QMap<QString, int> DslScriptEditor::scanDslMappingMarkers() const
         return result;
     }
 
-    static const QRegularExpression re(
-        R"(^\s*//\s*@dsl_mapping_id\s*:\s*([A-Za-z0-9\-]+)\s*$)"
-    );
-
     QTextDocument* doc = m_editor->document();
     int line = 1;
     for (QTextBlock block = doc->begin(); block.isValid(); block = block.next(), ++line) {
-        QRegularExpressionMatch m = re.match(block.text());
+        QRegularExpressionMatch m = dslMappingMarkerRegex().match(block.text());
         if (m.hasMatch()) {
             result.insert(m.captured(1), line);
         }
@@ -867,14 +875,10 @@ int DslScriptEditor::findDslMappingMarkerLine(const QString& mappingId) const
         return -1;
     }
 
-    static const QRegularExpression re(
-        R"(^\s*//\s*@dsl_mapping_id\s*:\s*([A-Za-z0-9\-]+)\s*$)"
-    );
-
     QTextDocument* doc = m_editor->document();
     int line = 1;
     for (QTextBlock block = doc->begin(); block.isValid(); block = block.next(), ++line) {
-        QRegularExpressionMatch m = re.match(block.text());
+        QRegularExpressionMatch m = dslMappingMarkerRegex().match(block.text());
         if (m.hasMatch() && m.captured(1) == mappingId) {
             return line;
         }
@@ -882,52 +886,20 @@ int DslScriptEditor::findDslMappingMarkerLine(const QString& mappingId) const
     return -1;
 }
 
-int DslScriptEditor::ensureDslMappingMarker(const QString& mappingId, int nearCodeLine)
+QString DslScriptEditor::stripDslMappingMarkers(const QString& script)
 {
-    if (!m_editor || mappingId.isEmpty()) {
-        return -1;
-    }
+    const QStringList lines = script.split('\n');
+    QStringList kept;
+    kept.reserve(lines.size());
 
-    // 宸插瓨鍦ㄥ垯鐩存帴杩斿洖
-    int existing = findDslMappingMarkerLine(mappingId);
-    if (existing > 0) {
-        return existing;
-    }
-
-    QTextDocument* doc = m_editor->document();
-    const QString markerLine = QString("// @dsl_mapping_id: %1").arg(mappingId);
-
-    int blockCount = doc->blockCount();
-    if (nearCodeLine < 1) {
-        nearCodeLine = 1;
-    }
-
-    if (nearCodeLine <= blockCount) {
-        QTextBlock target = doc->findBlockByLineNumber(nearCodeLine - 1);
-        if (!target.isValid()) {
-            return -1;
+    for (const QString& line : lines) {
+        if (dslMappingMarkerRegex().match(line).hasMatch()) {
+            continue;
         }
-
-        // 鑻ヤ笂涓€琛屽凡缁忔槸璇?mapping 鐨?marker锛屽垯澶嶇敤
-        QTextBlock prev = target.previous();
-        if (prev.isValid() && prev.text().contains(mappingId) && prev.text().contains("@dsl_mapping_id")) {
-            return prev.blockNumber() + 1;
-        }
-
-        QTextCursor cursor(target);
-        cursor.insertText(markerLine + "\n");
-        return findDslMappingMarkerLine(mappingId);
+        kept.append(line);
     }
 
-    // 濡傛灉 nearCodeLine 瓒呭嚭鑼冨洿锛岃拷鍔犲埌鏈熬
-    QTextCursor cursor(doc);
-    cursor.movePosition(QTextCursor::End);
-    QString tail = doc->toPlainText();
-    if (!tail.isEmpty() && !tail.endsWith("\n")) {
-        cursor.insertText("\n");
-    }
-    cursor.insertText(markerLine + "\n");
-    return findDslMappingMarkerLine(mappingId);
+    return kept.join('\n');
 }
 
 void DslScriptEditor::gotoMappingId(const QString& mappingId)
@@ -1032,6 +1004,11 @@ QString DslScriptEditor::currentScript() const
     return m_editor ? m_editor->toPlainText() : QString();
 }
 
+QString DslScriptEditor::scriptForSave() const
+{
+    return stripDslMappingMarkers(currentScript());
+}
+
 void DslScriptEditor::setScript(const QString& text)
 {
     if (m_editor) {
@@ -1099,16 +1076,7 @@ void DslScriptEditor::onFunctionItemActivated(QListWidgetItem* item)
     const QString mappingId = QUuid::createUuid().toString(QUuid::WithoutBraces);
 
     QTextCursor cursor = m_editor->textCursor();
-
-    // 纭繚鍦ㄦ柊琛屾彃鍏?marker + snippet
-    if (!cursor.atBlockStart()) {
-        cursor.movePosition(QTextCursor::EndOfBlock);
-        cursor.insertText("\n");
-    }
-
-    const int markerLine = cursor.blockNumber() + 1;
-    cursor.insertText(QString("// @dsl_mapping_id: %1\n").arg(mappingId));
-    m_editor->setTextCursor(cursor);
+    const int codeLine = cursor.blockNumber() + (cursor.atBlockStart() ? 1 : 2);
 
     // 鎻掑叆 snippet 浠ｇ爜
     insertSnippet(snippetCode);
@@ -1118,7 +1086,7 @@ void DslScriptEditor::onFunctionItemActivated(QListWidgetItem* item)
     record.snippetId = snippetId;
     record.snippetName = item->text();
     record.mappingId = mappingId;
-    record.lineNumber = markerLine + 1;
+    record.lineNumber = codeLine;
     record.generatedCode = snippetCode;
     record.insertTime = QDateTime::currentDateTime();
     m_insertRecords.append(record);
@@ -1151,14 +1119,13 @@ void DslScriptEditor::insertSnippet(const QString& text)
 void DslScriptEditor::onDropSucceeded(const DragDropResult& result)
 {
     const QString mappingId = QUuid::createUuid().toString(QUuid::WithoutBraces);
-    const int markerLine = ensureDslMappingMarker(mappingId, result.lineNumber);
 
     // 璁板綍鎻掑叆锛坙ineNumber 璁板綍浠ｇ爜琛岋紝鑰岄潪 marker 琛岋級
     DslInsertRecord record;
     record.snippetId = result.snippetId;
     record.snippetName = result.snippetName;
     record.mappingId = mappingId;
-    record.lineNumber = (markerLine > 0) ? (markerLine + 1) : result.lineNumber;
+    record.lineNumber = result.lineNumber + 1;
     record.generatedCode = result.insertedCode;
     record.insertTime = QDateTime::currentDateTime();
     m_insertRecords.append(record);
@@ -1391,8 +1358,8 @@ void DslScriptEditor::onShowDslMappings()
     QVBoxLayout* layout = new QVBoxLayout(&dlg);
 
     QLabel* hint = new QLabel(
-        "选择一条映射后跳转到对应位置（优先 marker 下一行）。\n"
-        "提示: 插入 snippet 时会自动写入 // @dsl_mapping_id: <uuid> 作为稳定锚点。",
+        "选择一条映射后跳转到对应位置（兼容旧 marker）。\n"
+        "提示: 旧版本脚本中的 // @dsl_mapping_id: <uuid> 会在保存时自动清理。",
         &dlg
     );
     hint->setWordWrap(true);

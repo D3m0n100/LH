@@ -672,15 +672,19 @@ QVector<QPointF> MonitorDataProcessor::applyDownsampling(const QVector<QPointF>&
 
 QVector<QPointF> MonitorDataProcessor::limitPointCount(const QVector<QPointF>& points) const
 {
-    if (points.size() <= m_config.maxDisplaySamples) {
+    if (points.size() <= m_config.maxDisplaySamples || m_config.maxDisplaySamples <= 0) {
         return points;
     }
-    
-    // 使用 LTTB（Largest Triangle Three Bucket）算法进行降采样
-    // 简化版：等间距采样
+
+    // maxDisplaySamples == 1 时直接返回最后一个点
+    if (m_config.maxDisplaySamples == 1) {
+        return {points.last()};
+    }
+
+    // 等间距采样
     QVector<QPointF> result;
     result.reserve(m_config.maxDisplaySamples);
-    
+
     double step = static_cast<double>(points.size() - 1) / (m_config.maxDisplaySamples - 1);
     
     for (int i = 0; i < m_config.maxDisplaySamples - 1; ++i) {

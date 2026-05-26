@@ -46,6 +46,7 @@ add_library(monitor STATIC ${MONITOR_SOURCES})
 target_link_libraries(monitor
     PUBLIC
         core_module
+        ServoValveComm
         Qt5::Core
         Qt5::Widgets
         Qt5::Charts

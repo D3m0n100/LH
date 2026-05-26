@@ -107,65 +107,87 @@ DataManager::~DataManager()
 
 bool DataManager::initialize(const QString& dbPath)
 {
-    QMutexLocker dbLocker(&m_dbMutex);
-    
-    // 如果已经初始化，先关闭旧连接
-    if (m_initialized) {
-        LOG_INFO("DataManager 重新初始化，先关闭旧连接");
-        // 临时释放锁以调用 shutdown
-        dbLocker.unlock();
-        shutdown();
-        dbLocker.relock();
-    }
-    
-    // 确保目录存在
-    QFileInfo fileInfo(dbPath);
-    QDir dir = fileInfo.absoluteDir();
-    if (!dir.exists()) {
-        if (!dir.mkpath(".")) {
-            LOG_ERROR("无法创建数据库目录: " + dir.absolutePath());
-            emit databaseError("initialize", "无法创建数据库目录: " + dir.absolutePath());
-            return false;
+    QString initError; // 在锁外 emit 的错误信息
+
+    // --- 持锁阶段：准备数据库连接 ---
+    {
+        QMutexLocker dbLocker(&m_dbMutex);
+
+        // 如果已经初始化，在同一把锁内关闭旧连接（避免 unlock/relock 竞态）
+        if (m_initialized) {
+            LOG_INFO("DataManager 重新初始化，先关闭旧连接");
+            {
+                QMutexLocker cacheLocker(&m_cacheMutex);
+                m_runtimeCache.clear();
+            }
+            if (m_db.isOpen()) {
+                m_db.close();
+            }
+            QString connName = m_connectionName;
+            m_db = QSqlDatabase();
+            QSqlDatabase::removeDatabase(connName);
+            m_initialized = false;
+            m_schemaVersion = -1;
+        }
+
+        // 确保目录存在
+        QFileInfo fileInfo(dbPath);
+        QDir dir = fileInfo.absoluteDir();
+        if (!dir.exists()) {
+            if (!dir.mkpath(".")) {
+                initError = "无法创建数据库目录: " + dir.absolutePath();
+                LOG_ERROR(initError);
+            }
+        }
+
+        if (initError.isEmpty()) {
+            // 使用命名连接
+            m_db = QSqlDatabase::addDatabase("QSQLITE", m_connectionName);
+            m_db.setDatabaseName(dbPath);
+
+            if (!m_db.open()) {
+                initError = "数据库打开失败: " + m_db.lastError().text();
+                LOG_ERROR(initError);
+                QSqlDatabase::removeDatabase(m_connectionName);
+            }
+        }
+
+        if (initError.isEmpty()) {
+            // 启用外键约束
+            executeSql("PRAGMA foreign_keys = ON", "启用外键约束");
+
+            // 检查并创建版本表
+            executeSql(SchemaDefinitions::CREATE_VERSION_TABLE, "创建版本表");
+
+            // 获取当前版本
+            int currentVersion = getDatabaseVersion();
+            LOG_INFO(QString("当前数据库版本: %1, 目标版本: %2")
+                     .arg(currentVersion).arg(CURRENT_SCHEMA_VERSION));
+
+            // 执行迁移
+            if (currentVersion < CURRENT_SCHEMA_VERSION) {
+                if (!migrateSchema(currentVersion, CURRENT_SCHEMA_VERSION)) {
+                    initError = "Schema 迁移失败";
+                    LOG_ERROR(initError);
+                    m_db.close();
+                    QSqlDatabase::removeDatabase(m_connectionName);
+                }
+            }
+        }
+
+        if (initError.isEmpty()) {
+            m_schemaVersion = CURRENT_SCHEMA_VERSION;
+            m_initialized = true;
+            LOG_INFO("数据库初始化完成: " + dbPath);
         }
     }
-    
-    // 使用命名连接
-    m_db = QSqlDatabase::addDatabase("QSQLITE", m_connectionName);
-    m_db.setDatabaseName(dbPath);
-    
-    if (!m_db.open()) {
-        QString error = m_db.lastError().text();
-        LOG_ERROR("数据库打开失败: " + error);
-        emit databaseError("initialize", "数据库打开失败: " + error);
-        QSqlDatabase::removeDatabase(m_connectionName);
+    // --- 锁已释放 ---
+
+    // 在锁外 emit 信号，避免死锁
+    if (!initError.isEmpty()) {
+        emit databaseError("initialize", initError);
         return false;
     }
-    
-    // 启用外键约束
-    executeSql("PRAGMA foreign_keys = ON", "启用外键约束");
-    
-    // 检查并创建版本表
-    executeSql(SchemaDefinitions::CREATE_VERSION_TABLE, "创建版本表");
-    
-    // 获取当前版本
-    int currentVersion = getDatabaseVersion();
-    LOG_INFO(QString("当前数据库版本: %1, 目标版本: %2")
-             .arg(currentVersion).arg(CURRENT_SCHEMA_VERSION));
-    
-    // 执行迁移
-    if (currentVersion < CURRENT_SCHEMA_VERSION) {
-        if (!migrateSchema(currentVersion, CURRENT_SCHEMA_VERSION)) {
-            LOG_ERROR("Schema 迁移失败");
-            m_db.close();
-            QSqlDatabase::removeDatabase(m_connectionName);
-            return false;
-        }
-    }
-    
-    m_schemaVersion = CURRENT_SCHEMA_VERSION;
-    m_initialized = true;
-    
-    LOG_INFO("数据库初始化完成: " + dbPath);
     return true;
 }
 
@@ -347,7 +369,7 @@ bool DataManager::upgradeToVersion2()
 QueryResult DataManager::executeQuery(QSqlQuery& query, const QString& description)
 {
     QueryResult result;
-    
+
     if (query.exec()) {
         result.success = true;
         result.affectedRows = query.numRowsAffected();
@@ -356,11 +378,12 @@ QueryResult DataManager::executeQuery(QSqlQuery& query, const QString& descripti
         result.success = false;
         result.errorCode = query.lastError().nativeErrorCode();
         result.errorText = query.lastError().text();
-        
+
         logSqlError(query, description);
-        emit databaseError(description, result.fullError());
+        // 注意：不在这里 emit databaseError，因为调用方通常持有 m_dbMutex。
+        // 调用方应在释放锁后自行 emit。
     }
-    
+
     return result;
 }
 
@@ -414,30 +437,37 @@ QueryResult DataManager::logRuntimeData(const QString& varName, double value, co
         result.errorText = "DataManager 未初始化";
         return result;
     }
-    
-    QMutexLocker dbLocker(&m_dbMutex);
-    
-    QSqlQuery query(m_db);
-    query.prepare(R"(
-        INSERT INTO runtime_data (timestamp, variable_name, value, unit)
-        VALUES (COALESCE(:timestamp, CURRENT_TIMESTAMP), :name, :value, :unit)
-    )");
-    query.bindValue(":timestamp", QDateTime::currentDateTimeUtc());
-    query.bindValue(":name", varName);
-    query.bindValue(":value", value);
-    query.bindValue(":unit", unit);
-    
-    QueryResult result = executeQuery(query, "记录运行数据");
-    
-    if (result.success) {
-        // 更新缓存
-        {
+
+    QueryResult result;
+    bool shouldEmit = false;
+
+    {
+        QMutexLocker dbLocker(&m_dbMutex);
+
+        QSqlQuery query(m_db);
+        query.prepare(R"(
+            INSERT INTO runtime_data (timestamp, variable_name, value, unit)
+            VALUES (COALESCE(:timestamp, CURRENT_TIMESTAMP), :name, :value, :unit)
+        )");
+        query.bindValue(":timestamp", QDateTime::currentDateTimeUtc());
+        query.bindValue(":name", varName);
+        query.bindValue(":value", value);
+        query.bindValue(":unit", unit);
+
+        result = executeQuery(query, "记录运行数据");
+
+        if (result.success) {
             QMutexLocker cacheLocker(&m_cacheMutex);
             m_runtimeCache[varName] = value;
+            shouldEmit = true;
         }
+    }
+    // 锁已释放
+
+    if (shouldEmit) {
         emit dataUpdated(varName, value);
     }
-    
+
     return result;
 }
 
@@ -502,22 +532,21 @@ QueryResult DataManager::logRuntimeDataBatch(const QList<QVariantMap>& records)
     }
     
     QueryResult result;
+    QMap<QString, double> emitValues; // 在锁外 emit 的数据
+
     if (m_db.commit()) {
         result.success = true;
         result.affectedRows = successCount;
-        
-        // 更新缓存并发送信号
+
+        // 更新缓存
         {
             QMutexLocker cacheLocker(&m_cacheMutex);
             for (auto it = updatedValues.begin(); it != updatedValues.end(); ++it) {
                 m_runtimeCache[it.key()] = it.value();
             }
         }
-        
-        for (auto it = updatedValues.begin(); it != updatedValues.end(); ++it) {
-            emit dataUpdated(it.key(), it.value());
-        }
-        
+
+        emitValues = std::move(updatedValues);
         LOG_DEBUG(QString("批量记录运行数据: %1/%2 条成功")
                   .arg(successCount).arg(records.size()));
     } else {
@@ -525,7 +554,13 @@ QueryResult DataManager::logRuntimeDataBatch(const QList<QVariantMap>& records)
         result.errorText = "提交事务失败: " + m_db.lastError().text();
         LOG_ERROR(result.errorText);
     }
-    
+
+    dbLocker.unlock(); // 在 emit 前释放锁
+
+    for (auto it = emitValues.begin(); it != emitValues.end(); ++it) {
+        emit dataUpdated(it.key(), it.value());
+    }
+
     return result;
 }
 
