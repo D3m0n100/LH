@@ -581,10 +581,10 @@ void ParameterTuningWindow::refreshPidTrend()
 
     QString summary = QStringLiteral("参数：%1").arg(it->name);
     if (!it->currentValue.isEmpty()) {
-        summary += QStringLiteral(" | 当前值 %1").arg(it->currentValue);
+        summary += QStringLiteral(" | 当前值：%1").arg(it->currentValue);
     }
     if (!it->defaultValue.isEmpty()) {
-        summary += QStringLiteral(" | 默认值 %1").arg(it->defaultValue);
+        summary += QStringLiteral(" | 默认值：%1").arg(it->defaultValue);
     }
     summary += QStringLiteral(" | 历史样本 %1").arg(samples.size());
     m_pidSummaryLabel->setText(summary);

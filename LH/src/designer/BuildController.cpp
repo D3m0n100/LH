@@ -80,8 +80,8 @@ void BuildController::compileCommon(BuildType type,
 
     const QString sourceFile = currentDslScriptPath(config);
     if (sourceFile.isEmpty() || !QFileInfo::exists(sourceFile)) {
-        emit logMessage(timestampedMessage("未找到当前项目的 DSL 脚本。"));
-        emit compileFailed(type, QStringLiteral("DSL 脚本不存在。"));
+        emit logMessage(timestampedMessage("未找到当前项目的 .lh 脚本。"));
+        emit compileFailed(type, QStringLiteral(".lh 脚本不存在。"));
         return;
     }
 
@@ -189,18 +189,15 @@ QString BuildController::currentDslScriptPath(const ProjectRuntimeConfig& config
     };
 
     const QString mainPath = resolvePath(config.mainScriptPath);
-    if (!mainPath.isEmpty() && QFileInfo::exists(mainPath)) {
+    if (!mainPath.isEmpty()
+            && QFileInfo::exists(mainPath)
+            && QFileInfo(mainPath).suffix().compare(QStringLiteral("lh"), Qt::CaseInsensitive) == 0) {
         return mainPath;
     }
 
-    const QString legacyConfigPath = resolvePath(config.dslScriptPath);
-    if (!legacyConfigPath.isEmpty() && QFileInfo::exists(legacyConfigPath)) {
-        return legacyConfigPath;
-    }
-
-    const QString dslPath = QDir(m_currentProjectPath).absoluteFilePath(QStringLiteral("main.dsl"));
-    if (QFileInfo::exists(dslPath)) {
-        return dslPath;
+    const QString lhPath = QDir(m_currentProjectPath).absoluteFilePath(QStringLiteral("main.lh"));
+    if (QFileInfo::exists(lhPath)) {
+        return lhPath;
     }
 
     return QString();

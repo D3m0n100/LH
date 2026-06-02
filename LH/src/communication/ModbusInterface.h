@@ -86,7 +86,9 @@ public:
 
     // 简单缓存访问（便于上层同步读取）
     QMap<int, QVector<quint16>> holdingRegisters() const;
+    QMap<int, QVector<quint16>> inputRegisters() const;
     QMap<int, QVector<bool>> coils() const;
+    QMap<int, QVector<bool>> discreteInputs() const;
 
 signals:
     void registerDataReceived(int address, const QVector<quint16>& values);

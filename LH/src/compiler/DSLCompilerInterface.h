@@ -51,7 +51,7 @@ public:
 
     // ================= 同步编译接口 =================
     // 编译一个 DSL 文件（同步阻塞版本）
-    // sourceFile: 绝对路径或相对当前工作目录的 .dsl 文件
+    // sourceFile: 绝对路径或相对当前工作目录的 .lh 文件
     // outputDir : 输出目录（不存在则自动创建）
     // projectName: 项目名称，可选，将作为编译器参数传入
     // compilerStdout / compilerStderr: 如非空，则返回编译器的标准输出 / 错误输出

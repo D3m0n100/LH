@@ -34,6 +34,7 @@ public:
     void setRuntimeState(const QString& runtimeState);
     void setBuildState(const QString& buildState);
     void setMonitoringState(const QString& monitoringState);
+    void setOpcState(const QString& opcState);
     void setVariableSummary(const QString& summary);
     void setParameterSummary(const QString& summary);
     void setResourceSummary(const QString& summary);
@@ -62,6 +63,7 @@ private:
     QLabel* m_runtimeValue = nullptr;
     QLabel* m_buildValue = nullptr;
     QLabel* m_monitorValue = nullptr;
+    QLabel* m_opcValue = nullptr;
     QLabel* m_variableValue = nullptr;
     QLabel* m_parameterValue = nullptr;
     QLabel* m_resourceValue = nullptr;

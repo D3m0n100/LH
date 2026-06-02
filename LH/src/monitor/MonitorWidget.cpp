@@ -1,8 +1,9 @@
-﻿// 鏂囦欢锛歴rc/monitor/MonitorWidget.cpp
-// 鐩戞帶涓荤晫闈㈡帶浠跺疄鐜帮紙鎬ц兘浼樺寲鐗堟湰锛?//
-// 瀵煎嚭鍔熻兘瀹屽杽鐗堟湰锛?// - 鏀寔 CSV / JSON / TSV 涓夌鏍煎紡瀵煎嚭
-// - 瀹屾暣鐨勯€氶亾鍏冧俊鎭拰鏃堕棿鎴宠涔?// - 鏍煎紡閫夋嫨閫氳繃鏂囦欢瀵硅瘽妗嗚繃婊ゅ櫒瀹炵幇
-
+// 文件: src/monitor/MonitorWidget.cpp
+// 监控主界面控件实现（性能优化版本）
+// 导出功能完善版本：
+// - 支持 CSV / JSON / TSV 三种格式导出
+// - 完整的通道元信息和时间戳
+// - 格式选择通过文件对话框过滤器实现
 #include "MonitorWidget.h"
 #include "MonitorChartView.h"
 #include "MonitorDataProcessor.h"
@@ -69,10 +70,10 @@ MonitorWidget::MonitorWidget(QWidget* parent)
     setupUI();
     setupStatsTimer();
 
-    // 璁剧疆瀵煎嚭鍔╂墜鐨勭埗绐楀彛
+    // 设置导出助手的父窗口
     m_exportHelper->setParentWidget(this);
 
-    // 杩炴帴 MonitorManager 淇″彿
+    // 连接 MonitorManager 信号
     auto& manager = Monitor::MonitorManager::instance();
     connect(&manager, &Monitor::MonitorManager::sampleRecorded,
             this, &MonitorWidget::onSampleRecorded);
@@ -83,7 +84,7 @@ MonitorWidget::MonitorWidget(QWidget* parent)
 
     manager.setDataProcessor(m_dataProcessor);
 
-    // 鍒濆鍒锋柊閫氶亾鍒楄〃
+    // 初始化刷新通道列表
     onRefreshChannelList();
 }
 
@@ -158,7 +159,7 @@ void MonitorWidget::setupChannelPanel()
 
     m_channelPanelLayout->addLayout(buttonLayout);
 
-    // 閫氶亾鍒楄〃
+    // 通道列表
     m_channelListWidget = new QListWidget();
     m_channelListWidget->setSelectionMode(QAbstractItemView::NoSelection);
     connect(m_channelListWidget, &QListWidget::itemChanged,
@@ -167,7 +168,7 @@ void MonitorWidget::setupChannelPanel()
             this, &MonitorWidget::onChannelItemDoubleClicked);
     m_channelPanelLayout->addWidget(m_channelListWidget);
 
-    // 閫氶亾璁℃暟鏍囩
+    // 通道计数标签
     m_channelCountLabel = new QLabel(tr("已选择: 0/0"));
     m_channelCountLabel->setObjectName("MonitorMetaLabel");
     m_channelPanelLayout->addWidget(m_channelCountLabel);
@@ -177,20 +178,20 @@ void MonitorWidget::setupMainContent()
 {
     m_splitter = new QSplitter(Qt::Horizontal);
 
-    // 宸︿晶閫氶亾闈㈡澘
+    // 左侧通道面板
     setupChannelPanel();
     m_splitter->addWidget(m_channelPanel);
 
-    // 涓ぎ鍥捐〃瑙嗗浘
+    // 中央图表视图
     m_chartView = new MonitorChartView(this);
     m_chartView->setDataProcessor(m_dataProcessor);
     m_splitter->addWidget(m_chartView);
 
-    // 鍙充晶锛氭暟鎹?/ 鍛婅 Tab
+    // 右侧：数据 / 告警 Tab
     m_rightTabWidget = new QTabWidget();
     m_rightTabWidget->setMaximumWidth(320);
 
-    // ---- 鏁版嵁 Tab ----
+    // ---- 数据 Tab ----
     QWidget* dataTab = new QWidget();
     QVBoxLayout* dataLayout = new QVBoxLayout(dataTab);
     dataLayout->setContentsMargins(0, 0, 0, 0);
@@ -205,7 +206,7 @@ void MonitorWidget::setupMainContent()
     dataLayout->addWidget(m_dataTable);
     m_rightTabWidget->addTab(dataTab, tr("数据"));
 
-    // ---- 鍛婅 Tab ----
+    // ---- 告警 Tab ----
     QWidget* alarmTab = new QWidget();
     QVBoxLayout* alarmLayout = new QVBoxLayout(alarmTab);
     alarmLayout->setContentsMargins(0, 0, 0, 0);
@@ -241,10 +242,10 @@ void MonitorWidget::setupMainContent()
 
     m_splitter->addWidget(m_rightTabWidget);
 
-    // 璁剧疆鍒嗗壊姣斾緥
-    m_splitter->setStretchFactor(0, 1);  // 閫氶亾闈㈡澘
-    m_splitter->setStretchFactor(1, 4);  // 鍥捐〃
-    m_splitter->setStretchFactor(2, 1);  // 鍙充晶 Tab
+    // 设置分割比例
+    m_splitter->setStretchFactor(0, 1);  // 通道面板
+    m_splitter->setStretchFactor(1, 4);  // 图表
+    m_splitter->setStretchFactor(2, 1);  // 右侧 Tab
 
     m_mainLayout->addWidget(m_splitter);
 }
@@ -270,7 +271,7 @@ void MonitorWidget::onThresholdExceeded(const QString& channelName, double value
     m_alarmTable->setItem(row, 2, valItem);
     m_alarmTable->setItem(row, 3, thrItem);
 
-    // 闄愬埗鏉℃暟锛岄槻姝㈠唴瀛樿啫鑳€
+    // 限制条目数，防止内存膨胀
     while (m_alarmTable->rowCount() > m_maxAlarmRecords) {
         m_alarmTable->removeRow(0);
     }
@@ -355,7 +356,7 @@ void MonitorWidget::setupStatsTimer()
 }
 
 // ============================================================================
-// 閫氶亾閫夋嫨鐩稿叧
+// 通道选择相关
 // ============================================================================
 
 QStringList MonitorWidget::selectedChannels() const
@@ -419,7 +420,7 @@ void MonitorWidget::deselectAllChannels()
 }
 
 // ============================================================================
-// 鐩戞帶鎺у埗
+// 监控控制
 // ============================================================================
 
 void MonitorWidget::startMonitoring()
@@ -481,20 +482,20 @@ void MonitorWidget::startMonitoring()
         }
     }
 
-    // 鑻ョ敤鎴峰皻鏈€夋嫨閫氶亾锛岄粯璁ゅ叏閫夛紝閬垮厤鍥捐〃绌虹櫧瀵艰嚧璇互涓烘湭閲囨牱
+    // 若用户尚未选择通道，默认全选，避免图表空白导致误以为未采样
     if (selectedChannels().isEmpty() && m_channelListWidget && m_channelListWidget->count() > 0) {
         selectAllChannels();
     }
 
     manager.startMonitoring();
 
-    // 淇濇寔鐜版湁 statsTimer 涓?UI 琛屼负涓嶅彉
+    // 保持现有 statsTimer 与 UI 行为不变
     m_isMonitoring = true;
     m_startStopButton->setText(tr("停止监控"));
     m_statsTimer->start();
 
     emit monitoringStarted();
-    qDebug() << "[MonitorWidget] 鐩戞帶宸插惎鍔紝providers=" << providers.size();
+    qDebug() << "[MonitorWidget] 监控已启动，providers=" << providers.size();
 }
 
 void MonitorWidget::stopMonitoring()
@@ -506,7 +507,7 @@ void MonitorWidget::stopMonitoring()
     auto& manager = Monitor::MonitorManager::instance();
     manager.stopMonitoring();
 
-    // Demo Mode锛氬仠姝㈡紨绀烘暟鎹彁渚涘櫒锛岄伩鍏嶅悗鍙扮户缁窇
+    // Demo Mode：停止演示数据提供器，避免后台继续运行
     if (m_demoModeActive && m_sampleDataProvider && m_sampleDataProvider->isRunning()) {
         m_sampleDataProvider->stop();
         m_demoModeActive = false;
@@ -554,19 +555,19 @@ int MonitorWidget::targetFps() const
 }
 
 // ============================================================================
-// 鏁版嵁瀵煎嚭锛堟牳蹇冨姛鑳斤級
+// 数据导出（核心功能）
 // ============================================================================
 
 void MonitorWidget::onExportData()
 {
-    qDebug() << "[MonitorWidget] 寮€濮嬪鍑烘暟鎹?..";
+    qDebug() << "[MonitorWidget] 开始导出数据...";
     
-    // 1. 鑾峰彇閫変腑鐨勯€氶亾
+    // 1. 获取选中的通道
     QStringList channels = selectedChannels();
     if (channels.isEmpty()) {
         QMessageBox::warning(this, tr("导出失败"),
                             tr("请至少选择一个监控通道"));
-        qWarning() << "[MonitorWidget] 瀵煎嚭澶辫触: 娌℃湁閫変腑閫氶亾";
+        qWarning() << "[MonitorWidget] 导出失败: 没有选中通道";
         return;
     }
     
@@ -583,7 +584,7 @@ void MonitorWidget::onExportData()
         msgBox.exec();
         QAbstractButton* clicked = msgBox.clickedButton();
         if (clicked == cancelBtn) {
-            qDebug() << "[MonitorWidget] 鐢ㄦ埛鍙栨秷瀵煎嚭";
+            qDebug() << "[MonitorWidget] 用户取消导出";
             return;
         }
         fromDatabase = (clicked == dbBtn);
@@ -594,7 +595,7 @@ void MonitorWidget::onExportData()
     if (!package.isValid()) {
         QMessageBox::warning(this, tr("导出失败"),
                             tr("选中的通道没有可导出的数据"));
-        qWarning() << "[MonitorWidget] 瀵煎嚭澶辫触: 娌℃湁鏁版嵁";
+        qWarning() << "[MonitorWidget] 导出失败: 没有数据";
         return;
     }
     
@@ -609,14 +610,14 @@ void MonitorWidget::onExportData()
     );
     
     if (filePath.isEmpty()) {
-        qDebug() << "[MonitorWidget] 鐢ㄦ埛鍙栨秷瀵煎嚭";
+        qDebug() << "[MonitorWidget] 用户取消导出";
         return;
     }
     
-    // 4. 鏍规嵁鏂囦欢鎵╁睍鍚嶉€夋嫨瀵煎嚭鏍煎紡
+    // 4. 根据文件扩展名选择导出格式
     ExportResult result = m_exportHelper->exportPackageAuto(package, filePath);
     
-    // 5. 鏄剧ず瀵煎嚭缁撴灉
+    // 5. 显示导出结果
     if (result.success) {
         QString message = tr("数据导出成功！\n\n"
                             "文件: %1\n"
@@ -631,17 +632,17 @@ void MonitorWidget::onExportData()
             .arg(result.fileSizeBytes);
         
         QMessageBox::information(this, tr("导出成功"), message);
-        qDebug() << "[MonitorWidget] 瀵煎嚭鎴愬姛:" << result.filePath;
+        qDebug() << "[MonitorWidget] 导出成功:" << result.filePath;
     } else {
         QMessageBox::critical(this, tr("导出失败"),
                              tr("导出失败: %1").arg(result.errorMessage));
-        qWarning() << "[MonitorWidget] 瀵煎嚭澶辫触:" << result.errorMessage;
+        qWarning() << "[MonitorWidget] 导出失败:" << result.errorMessage;
     }
 }
 
 void MonitorWidget::exportCurrentChartImage()
 {
-    qDebug() << "[MonitorWidget] 寮€濮嬪鍑哄浘琛ㄥ浘鍍?..";
+    qDebug() << "[MonitorWidget] 开始导出图表图像...";
     
     if (!m_chartView) {
         QMessageBox::warning(this, tr("导出失败"), tr("图表视图不可用"));
@@ -661,11 +662,11 @@ void MonitorWidget::exportCurrentChartImage()
     );
     
     if (filePath.isEmpty()) {
-        qDebug() << "[MonitorWidget] 鐢ㄦ埛鍙栨秷瀵煎嚭";
+        qDebug() << "[MonitorWidget] 用户取消导出";
         return;
     }
     
-    // 鏍规嵁鎵╁睍鍚嶉€夋嫨瀵煎嚭鏍煎紡
+    // 根据扩展名选择导出格式
     QString ext = QFileInfo(filePath).suffix().toLower();
     ExportResult result;
     
@@ -677,7 +678,7 @@ void MonitorWidget::exportCurrentChartImage()
         result = m_exportHelper->exportChartAsPngToFile(m_chartView, filePath);
     }
     
-    // 鏄剧ず缁撴灉
+    // 显示结果
     if (result.success) {
         QMessageBox::information(this, tr("导出成功"),
                                 tr("图表已导出到:\n%1").arg(result.filePath));
@@ -699,10 +700,10 @@ ExportDataPackage MonitorWidget::buildExportDataPackage(const QStringList& chann
     auto& manager = Monitor::MonitorManager::instance();
     
     for (const QString& channelId : channelIds) {
-        // 鑾峰彇閫氶亾閰嶇疆
+        // 获取通道配置
         Monitor::ChannelConfig config = manager.channelConfig(channelId);
 
-        // 鍒涘缓閫氶亾淇℃伅
+        // 创建通道信息
         ExportChannelInfo info;
         info.channelId = channelId;
         info.displayName = config.displayName.isEmpty() ? channelId : config.displayName;
@@ -714,7 +715,7 @@ ExportDataPackage MonitorWidget::buildExportDataPackage(const QStringList& chann
         }
         info.samplePeriodMs = periodMs;
 
-        // 鑾峰彇閫氶亾鍘嗗彶鏁版嵁
+        // 获取通道历史数据
         QList<Monitor::Sample> samples;
         const qint64 winMs = timeWindow();
         if (fromDatabase && manager.isDatabaseHistoryAvailable()) {
@@ -727,8 +728,8 @@ ExportDataPackage MonitorWidget::buildExportDataPackage(const QStringList& chann
                 samples = manager.historyFromDatabase(channelId, qMax(50, estimate));
             }
         } else {
-            // 鍐呭瓨鍘嗗彶锛堝綋鍓嶄細璇濓級
-            const int estimate = static_cast<int>(winMs / 100); // 淇濇寔涓庡師閫昏緫涓€鑷寸殑浼扮畻
+            // 内存历史（当前会话）
+            const int estimate = static_cast<int>(winMs / 100); // 保持与原逻辑一致的估算
             samples = manager.history(channelId, qMax(50, estimate));
         }
 
@@ -739,15 +740,15 @@ ExportDataPackage MonitorWidget::buildExportDataPackage(const QStringList& chann
     
     package.metadata.totalSamples = package.totalSampleCount();
     
-    qDebug() << "[MonitorWidget] 鏋勫缓瀵煎嚭鏁版嵁鍖? 閫氶亾鏁?" << package.channelInfos.size()
-             << "鏍锋湰鏁?" << package.metadata.totalSamples;
+    qDebug() << "[MonitorWidget] 构建导出数据包: 通道数=" << package.channelInfos.size()
+             << " 样本数=" << package.metadata.totalSamples;
     
     return package;
 }
 
 // ============================================================================
-// 妲藉嚱鏁板疄鐜?// ============================================================================
-
+// 函数实现
+// ============================================================================
 void MonitorWidget::onStartStopClicked()
 {
     if (m_isMonitoring) {
@@ -781,7 +782,7 @@ void MonitorWidget::onChannelItemChanged(QListWidgetItem* item)
     bool visible = (item->checkState() == Qt::Checked);
     
     emit visibleChannelsChanged(selectedChannels());
-    qDebug() << "[MonitorWidget] 閫氶亾鍙鎬у彉鍖?" << channelId << visible;
+    qDebug() << "[MonitorWidget] 通道可见性变化:" << channelId << visible;
 }
 
 void MonitorWidget::onChannelItemDoubleClicked(QListWidgetItem* item)
@@ -805,7 +806,7 @@ void MonitorWidget::onSampleRecorded(const QString& channelName, double value,
 {
     Q_UNUSED(timestamp);
     
-    // 鏇存柊鏁版嵁琛ㄦ牸
+    // 更新数据表格
     updateDataTableRow(channelName, value, unit);
 }
 
@@ -823,17 +824,17 @@ void MonitorWidget::onTimeWindowChanged(int index)
 {
     qint64 windowMs = m_timeWindowCombo->itemData(index).toLongLong();
     setTimeWindow(windowMs);
-    qDebug() << "[MonitorWidget] 鏃堕棿绐楀彛鍙樻洿涓?" << windowMs << "ms";
+    qDebug() << "[MonitorWidget] 时间窗口变更为" << windowMs << "ms";
 }
 
 void MonitorWidget::onFpsChanged(int value)
 {
     setTargetFps(value);
-    qDebug() << "[MonitorWidget] 鐩爣甯х巼鍙樻洿涓?" << value << "FPS";
+    qDebug() << "[MonitorWidget] 目标帧率变更为" << value << "FPS";
 }
 
 // ============================================================================
-// 鍐呴儴杈呭姪鏂规硶
+// 内部辅助方法
 // ============================================================================
 
 void MonitorWidget::refreshChannelList()
@@ -856,7 +857,7 @@ void MonitorWidget::refreshChannelList()
         item->setCheckState(previousSelected.contains(name) || previousSelected.isEmpty() 
                            ? Qt::Checked : Qt::Unchecked);
         
-        // 璁剧疆宸ュ叿鎻愮ず
+        // 设置工具提示
         QString tooltip = tr("通道: %1\n单位: %2")
             .arg(name, config.unit.isEmpty() ? "-" : config.unit);
         item->setToolTip(tooltip);
@@ -882,7 +883,7 @@ void MonitorWidget::updateStatsDisplay()
         return;
     }
     
-    // 鑾峰彇娓叉煋缁熻
+    // 获取渲染统计
     int fps = m_chartView->targetFps();
     int channelCount = selectedChannels().size();
     
@@ -916,7 +917,7 @@ void MonitorWidget::updateDataTableRow(const QString& channelName,
         }
     }
     
-    // 娣诲姞鏂拌
+    // 添加新行
     int row = m_dataTable->rowCount();
     m_dataTable->insertRow(row);
     m_dataTable->setItem(row, 0, new QTableWidgetItem(channelName));

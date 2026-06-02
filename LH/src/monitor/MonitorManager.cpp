@@ -1,6 +1,5 @@
-// 文件：src/monitor/MonitorManager.cpp
+﻿// 文件：src/monitor/MonitorManager.cpp
 // 监控管理器实现（性能优化版本）
-
 #include "MonitorManager.h"
 #include "MonitorChannel.h"
 #include "MonitorDataProcessor.h"
@@ -8,7 +7,6 @@
 #include "core/DataManager.h"
 
 // 运行时配置类型（避免在头文件中引入，减少依赖）
-#include "../common/ConfigTypes.h"
 #include "../common/RuntimePointTypes.h"
 #include "../communication/IDeviceBackend.h"
 
@@ -27,10 +25,8 @@ namespace Monitor {
 
 namespace {
 
-// 标记由 applyConfiguration() 生成/管理的资源，便于幂等清理。
-// 注意：这是内部约定，不影响外部 API。
+// 用于标记 applyConfiguration() 生成/管理的资源，便于幂等清理
 constexpr const char* kRuntimeManagedKey = "__runtimeManaged";
-
 struct DemoSamplerState
 {
     std::mt19937 rng;
@@ -51,7 +47,6 @@ struct DemoSamplerState
         , isDigital(digital)
     {
         constexpr double kPi = 3.14159265358979323846;
-        // 初值取中间值附近，保持稳定。
         const double mid = (minValue + maxValue) * 0.5;
         value = mid;
         phase = (static_cast<double>(seed % 360) / 180.0) * kPi;
@@ -62,8 +57,7 @@ struct DemoSamplerState
 static QString normalizeUnit(QString unit)
 {
     unit = unit.trimmed();
-    // 统一一些常见符号
-    unit.replace(QString::fromUtf8("℃"), QString::fromUtf8("°C"));
+    unit.replace(QStringLiteral("℃"), QStringLiteral("°C"));
     return unit;
 }
 
@@ -81,14 +75,12 @@ static bool isDigitalSnippetOrUnit(const QString& snippetId, const QString& unit
     if (metadata.value("digital").toBool()) {
         return true;
     }
-    // unit 为空时，很多数字量输入默认不带单位。
     if (u.isEmpty() && (sid.contains("input") || sid.contains("output"))) {
-        // 仍然需要避免把 analog_* 误判
+        // 仍然需要避免把 analog_* 误判为数字点
         if (!sid.contains("analog")) {
             return true;
         }
     }
-    // 典型布尔/开关单位
     if (u == "bool" || u == "boolean" || u == "on/off" || u == "onoff") {
         return true;
     }
@@ -100,7 +92,6 @@ static void inferRangeFromUnitAndMetadata(const QString& unit,
                                          double& outMin,
                                          double& outMax)
 {
-    // 优先使用 metadata 中的显式范围（与 snippets 模板字段对齐）
     const bool hasMin = metadata.contains("min_value") || metadata.contains("min");
     const bool hasMax = metadata.contains("max_value") || metadata.contains("max");
     if (hasMin && hasMax) {
@@ -123,8 +114,7 @@ static void inferRangeFromUnitAndMetadata(const QString& unit,
     } else if (u.contains("mpa")) {
         outMin = 0.0;
         outMax = 10.0;
-    } else if (u.contains("°c") || u.contains("c")) {
-        // 以温度的常见范围为默认
+    } else if (u.contains("掳c") || u.contains("c")) {
         outMin = 0.0;
         outMax = 150.0;
     } else if (u.contains("ma")) {
@@ -161,11 +151,11 @@ static std::function<double()> makeDemoSampler(const QString& providerId,
     double maxV = 100.0;
     inferRangeFromUnitAndMetadata(unit, metadata, minV, maxV);
 
-    // 对 digital 明确锁定 0/1
     if (digital) {
         minV = 0.0;
         maxV = 1.0;
     }
+
 
     auto state = std::make_shared<DemoSamplerState>(seed, minV, maxV, digital);
 
@@ -173,7 +163,6 @@ static std::function<double()> makeDemoSampler(const QString& providerId,
         state->tick++;
 
         if (state->isDigital) {
-            // 每隔一段时间随机翻转一次
             if (state->tick % 25 == 0) {
                 const int r = static_cast<int>(state->rng() % 4); // 25% 机会翻转
                 if (r == 0) {
@@ -183,7 +172,6 @@ static std::function<double()> makeDemoSampler(const QString& providerId,
             return static_cast<double>(state->digitalValue);
         }
 
-        // 稳定曲线 + 小幅随机游走：target 用低频正弦，value 做惯性跟随。
         const double range = std::max(1e-9, state->maxValue - state->minValue);
         const double mid = (state->minValue + state->maxValue) * 0.5;
         const double amplitude = range * 0.25;
@@ -191,11 +179,9 @@ static std::function<double()> makeDemoSampler(const QString& providerId,
         state->phase += 0.08; // 控制变化速度
         const double target = mid + amplitude * std::sin(state->phase);
 
-        // 噪声标准差随量程缩放，避免太“跳”
         const double noiseStd = range * 0.01;
         const double n = state->noise(state->rng) * noiseStd;
 
-        // 惯性滤波：更平滑
         state->value = state->value * 0.92 + target * 0.08 + n;
 
         // 限幅
@@ -205,22 +191,34 @@ static std::function<double()> makeDemoSampler(const QString& providerId,
     };
 }
 
-static const char* qualityToString(RuntimePointQuality q)
+static QString qualityToString(RuntimePointQuality q)
 {
-    switch (q) {
-    case RuntimePointQuality::Good:      return "Good";
-    case RuntimePointQuality::Simulated: return "Simulated";
-    case RuntimePointQuality::Stale:     return "Stale";
-    case RuntimePointQuality::Bad:       return "Bad";
-    case RuntimePointQuality::Offline:   return "Offline";
-    default:                             return "Unknown";
-    }
+    return runtimePointQualityToString(q);
+}
+
+static RuntimePointQuality qualityFromBackendError(const CommError& error, bool backendOnline)
+{
+    return runtimePointQualityFromBackendError(error, backendOnline);
+}
+
+static void attachBackendStatusMetadata(Sample& sample, const BackendStatusSnapshot& status)
+{
+    sample.metadata[QStringLiteral("backendType")] = status.backendType;
+    sample.metadata[QStringLiteral("backendOnline")] = status.online;
+    sample.metadata[QStringLiteral("backendDownloading")] = status.downloading;
+    sample.metadata[QStringLiteral("backendDownloadPercent")] = status.downloadPercent;
+    sample.metadata[QStringLiteral("backendLastErrorCode")] = static_cast<int>(status.lastErrorCode);
+    sample.metadata[QStringLiteral("backendLastErrorCodeName")] = commErrorCodeToString(status.lastErrorCode);
+    sample.metadata[QStringLiteral("backendLastErrorMessage")] = status.lastErrorMessage;
+    sample.metadata[QStringLiteral("backendLastErrorDetails")] = status.lastErrorDetails;
+    sample.metadata[QStringLiteral("backendPartialSuccess")] = status.partialSuccess;
+    sample.metadata[QStringLiteral("backendTimestamp")] = status.timestamp;
 }
 
 } // namespace
 
 // ============================================================================
-// 单例与构造/析构
+// 单例与构造
 // ============================================================================
 
 MonitorManager& MonitorManager::instance()
@@ -237,15 +235,12 @@ MonitorManager::MonitorManager()
 {
     setupCleanupTimer();
 
-    // 后端轮询定时器（默认不启动，applyConfiguration 中设置间隔后按需启动）
     connect(m_backendPollTimer, &QTimer::timeout,
             this, &MonitorManager::onBackendPollTimeout);
 
-    // 监控采样落库：默认启用（可通过 setDatabaseLoggingEnabled 关闭）
     m_dataLogger = std::make_unique<MonitorDataLogger>(this);
     m_dataLogger->setEnabled(DEFAULT_DB_LOGGING_ENABLED);
 
-    // 程序退出前尽量 flush，避免静态析构顺序导致 DataManager 已销毁
     if (QCoreApplication::instance()) {
         connect(QCoreApplication::instance(), &QCoreApplication::aboutToQuit,
                 this, [this]() { if (m_dataLogger) { m_dataLogger->shutdown(); } });
@@ -254,7 +249,6 @@ MonitorManager::MonitorManager()
 
 MonitorManager::~MonitorManager()
 {
-    // 尽力将最后一批监控样本落库
     flushDatabaseLogging();
     if (m_dataLogger) {
         m_dataLogger->shutdown();
@@ -277,7 +271,7 @@ void MonitorManager::setDataProcessor(MonitorDataProcessor* processor)
 {
     m_dataProcessor.store(processor, std::memory_order_release);
 
-    // 确保处理器中的通道与当前注册的通道同步
+    // 确保处理器中的通道与当前注册通道同步
     if (processor) {
         QReadLocker locker(&m_channelLock);
         for (const QString& channelName : m_channels.keys()) {
@@ -322,7 +316,8 @@ void MonitorManager::setDeviceBackend(IDeviceBackend* backend)
                                 if (channelName.isEmpty())
                                     continue;
                                 recordSample(channelName, it.value().toDouble(), QString(),
-                                             {{"quality", "Good"}, {"source", "backend_push"}});
+                                             {{"quality", runtimePointQualityToString(RuntimePointQuality::Good)},
+                                              {"source", "backend_push"}});
                             }
                         });
 
@@ -339,9 +334,8 @@ void MonitorManager::setDeviceBackend(IDeviceBackend* backend)
 }
 
 // ============================================================================
-// 监控采样落库开关
+// 监控采样日志开关
 // ============================================================================
-
 void MonitorManager::setDatabaseLoggingEnabled(bool enabled)
 {
     if (m_dataLogger) {
@@ -422,7 +416,6 @@ bool MonitorManager::removeChannel(const QString& name)
         m_channels.remove(name);
     }
 
-    // 清理数据处理器中的缓存
     {
         MonitorDataProcessor* proc = m_dataProcessor.load(std::memory_order_acquire);
         if (proc) {
@@ -516,7 +509,6 @@ void MonitorManager::recordSample(const Sample& sample)
     // 增量分发到数据处理器
     dispatchToProcessor(sample.channelName, sample);
 
-    // 发送信号
     emit sampleRecorded(sample.channelName, sample.value,
                         sample.unit, sample.timestamp);
 }
@@ -528,7 +520,6 @@ void MonitorManager::recordSamples(const QString& channelName,
         return;
     }
 
-    // 规范化：确保样本的 channelName 与参数一致（便于落库/回放）
     QList<Sample> normalizedSamples = samples;
     for (Sample& s : normalizedSamples) {
         if (s.channelName.isEmpty() || s.channelName != channelName) {
@@ -570,7 +561,6 @@ void MonitorManager::recordSamples(const QString& channelName,
     // 批量增量分发
     dispatchToProcessor(channelName, normalizedSamples);
 
-    // 发送信号
     emit samplesRecorded(channelName, normalizedSamples.size());
 }
 
@@ -619,7 +609,7 @@ QList<Sample> MonitorManager::historyFromDatabase(const QString& channelName, in
         out.append(s);
     }
 
-    // getLatestRecords 按 DESC 返回，这里统一转为 ASC
+    // getLatestRecords 默认按 DESC 返回，这里统一转为 ASC
     std::reverse(out.begin(), out.end());
     return out;
 }
@@ -654,7 +644,6 @@ QList<Sample> MonitorManager::historyFromDatabase(const QString& channelName,
 // ============================================================================
 // 采集器管理
 // ============================================================================
-
 bool MonitorManager::registerProvider(const ProviderConfig& config)
 {
     if (config.id.isEmpty() || config.channelName.isEmpty()) {
@@ -676,7 +665,7 @@ bool MonitorManager::registerProvider(const ProviderConfig& config)
     {
         QWriteLocker locker(&m_providerLock);
 
-        // 如果已存在，先停止旧的定时器
+        // 若已存在，先停止旧定时器
         if (m_providerTimers.contains(config.id)) {
             m_providerTimers[config.id]->stop();
             m_providerTimers[config.id]->deleteLater();
@@ -685,7 +674,6 @@ bool MonitorManager::registerProvider(const ProviderConfig& config)
 
         m_providers[config.id] = config;
 
-        // 创建采样定时器
         if (config.sampler && config.periodMs > 0) {
             QTimer* timer = new QTimer(this);
             timer->setProperty("providerId", config.id);
@@ -748,7 +736,6 @@ void MonitorManager::startMonitoring()
 
     m_isMonitoring = true;
 
-    // 启动所有采集器定时器
     {
         QReadLocker locker(&m_providerLock);
         for (QTimer* timer : m_providerTimers) {
@@ -761,7 +748,6 @@ void MonitorManager::startMonitoring()
         m_backendPollTimer->start();
     }
 
-    // 启动清理定时器
     m_cleanupTimer->start();
 
     qDebug() << "[MonitorManager] 监控已启动";
@@ -775,7 +761,6 @@ void MonitorManager::stopMonitoring()
 
     m_isMonitoring = false;
 
-    // 停止所有采集器定时器
     {
         QReadLocker locker(&m_providerLock);
         for (QTimer* timer : m_providerTimers) {
@@ -783,13 +768,11 @@ void MonitorManager::stopMonitoring()
         }
     }
 
-    // 停止后端轮询定时器
     m_backendPollTimer->stop();
 
-    // 停止清理定时器
     m_cleanupTimer->stop();
 
-    // 停止监控时尽力 flush 一次（避免丢数据）
+    // 停止时 flush 一次，避免丢数据
     flushDatabaseLogging();
 
     qDebug() << "[MonitorManager] 监控已停止";
@@ -840,9 +823,8 @@ void MonitorManager::clearAllData()
 }
 
 // ============================================================================
-// 私有槽函数
+// 私有函数
 // ============================================================================
-
 void MonitorManager::onCleanupTimeout()
 {
     QDateTime cutoff = QDateTime::currentDateTimeUtc().addDays(-m_dataRetentionDays);
@@ -861,23 +843,26 @@ void MonitorManager::onBackendPollTimeout()
         return;
 
     QHash<QString, QVariant> values;
+    QHash<QString, CommError> pointErrors;
     QString errorMsg;
-    const bool ok = m_backend->readPoints(m_backendPointIds, values, &errorMsg);
+    const bool ok = m_backend->readPoints(m_backendPointIds, values, &errorMsg, &pointErrors);
 
-    RuntimePointQuality quality;
-    if (!ok) {
-        // backend 无法返回值 → 根据连接状态推断质量
-        quality = m_backend->isOnline() ? RuntimePointQuality::Bad : RuntimePointQuality::Offline;
-    } else {
-        // backend 正常返回：virtual → Simulated，real → Good
-        const QVariantMap status = m_backend->queryStatus();
-        const QString backendType = status.value(QStringLiteral("backend")).toString();
-        quality = (backendType == QStringLiteral("virtual"))
-                      ? RuntimePointQuality::Simulated
-                      : RuntimePointQuality::Good;
+    const BackendStatusSnapshot status = m_backend->statusSnapshot();
+    const bool backendOnline = status.online;
+    const CommError backendError(CommProtocolType::Custom,
+                                 status.lastErrorCode,
+                                 status.lastErrorMessage,
+                                 status.lastErrorDetails);
+    RuntimePointQuality baseQuality = qualityFromBackendError(backendError, backendOnline);
+    if (status.backendType == QStringLiteral("virtual") && baseQuality == RuntimePointQuality::Good) {
+        baseQuality = RuntimePointQuality::Simulated;
+    }
+    if (status.partialSuccess) {
+        baseQuality = RuntimePointQuality::Stale;
     }
 
     const QDateTime now = QDateTime::currentDateTimeUtc();
+    QSet<QString> emittedPoints;
 
     for (auto it = values.constBegin(); it != values.constEnd(); ++it) {
         const QString channelName = m_pointIdToChannel.value(it.key());
@@ -888,30 +873,45 @@ void MonitorManager::onBackendPollTimeout()
         sample.channelName = channelName;
         sample.value = it.value().toDouble();
         sample.timestamp = now;
-        sample.metadata[QStringLiteral("quality")] = QString::fromLatin1(qualityToString(quality));
+        sample.metadata[QStringLiteral("quality")] = qualityToString(baseQuality);
         sample.metadata[QStringLiteral("source")] = QStringLiteral("backend_poll");
+        attachBackendStatusMetadata(sample, status);
 
         recordSample(sample);
+        emittedPoints.insert(it.key());
     }
 
-    // 若 readPoints 完全失败，给所有通道记录一条质量异常样本
-    if (!ok && !m_backendPointIds.isEmpty()) {
-        for (const auto& pointId : m_backendPointIds) {
-            const QString channelName = m_pointIdToChannel.value(pointId);
-            if (channelName.isEmpty())
-                continue;
-            Sample sample;
-            sample.channelName = channelName;
-            sample.value = 0.0;
-            sample.timestamp = now;
-            sample.metadata[QStringLiteral("quality")] = QString::fromLatin1(qualityToString(quality));
-            sample.metadata[QStringLiteral("source")] = QStringLiteral("backend_poll");
-            sample.metadata[QStringLiteral("error")] = errorMsg;
-            recordSample(sample);
+    for (const auto& pointId : m_backendPointIds) {
+        if (emittedPoints.contains(pointId))
+            continue;
+
+        const QString channelName = m_pointIdToChannel.value(pointId);
+        if (channelName.isEmpty())
+            continue;
+
+        const CommError pointError = pointErrors.value(pointId);
+        const RuntimePointQuality quality = pointError.isError()
+                                                ? qualityFromBackendError(pointError, backendOnline)
+                                                : (ok ? baseQuality
+                                                      : (backendOnline ? RuntimePointQuality::Bad
+                                                                       : RuntimePointQuality::Offline));
+
+        Sample sample;
+        sample.channelName = channelName;
+        sample.value = 0.0;
+        sample.timestamp = now;
+        sample.metadata[QStringLiteral("quality")] = qualityToString(quality);
+        sample.metadata[QStringLiteral("source")] = QStringLiteral("backend_poll");
+        sample.metadata[QStringLiteral("errorCode")] = static_cast<int>(pointError.code);
+        sample.metadata[QStringLiteral("errorCodeName")] = commErrorCodeToString(pointError.code);
+        sample.metadata[QStringLiteral("error")] = pointError.message.isEmpty() ? errorMsg : pointError.message;
+        if (!pointError.details.isEmpty()) {
+            sample.metadata[QStringLiteral("errorDetails")] = pointError.details;
         }
+        attachBackendStatusMetadata(sample, status);
+        recordSample(sample);
     }
 }
-
 void MonitorManager::onProviderTimeout()
 {
     QTimer* timer = qobject_cast<QTimer*>(sender());
@@ -990,8 +990,6 @@ bool MonitorManager::applyConfiguration(const ProjectRuntimeConfig& config)
              << "providers=" << config.providers.size()
              << "mappings=" << config.dslMappings.size();
 
-    // applyConfiguration 不应隐式改变外部“是否在监控”的语义；但如果当前正在采样，
-    // 为避免定时器在变更过程中触发，这里临时停止并在最后恢复。
     const bool wasMonitoring = m_isMonitoring;
     if (wasMonitoring) {
         stopMonitoring();
@@ -1015,7 +1013,6 @@ bool MonitorManager::applyConfiguration(const ProjectRuntimeConfig& config)
     }
     for (const QString& id : providersToRemove) {
         if (!unregisterProvider(id)) {
-            // 理论上不会失败（因为列表来自现存项），但仍保留日志。
             qWarning() << "[MonitorManager] 清理旧采集器失败:" << id;
             success = false;
         }
@@ -1036,7 +1033,6 @@ bool MonitorManager::applyConfiguration(const ProjectRuntimeConfig& config)
     }
     for (const QString& name : channelsToRemove) {
         if (!removeChannel(name)) {
-            // 同上：尽量给出清晰日志
             qWarning() << "[MonitorManager] 清理旧通道失败:" << name;
             success = false;
         } else {
@@ -1044,8 +1040,8 @@ bool MonitorManager::applyConfiguration(const ProjectRuntimeConfig& config)
         }
     }
 
-    // ---------------------------------------------------------------------
     // 2) 基于 dslMappings/providers 注册通道
+    // ---------------------------------------------------------------------
     // ---------------------------------------------------------------------
 
     QSet<QString> registeredChannelNames;
@@ -1075,8 +1071,7 @@ bool MonitorManager::applyConfiguration(const ProjectRuntimeConfig& config)
                                 : chCfg.name;
         chCfg.maxSamples = Limits::DEFAULT_RING_BUFFER_CAPACITY;
 
-        // 填充一些可追溯元数据，便于 UI/导出/调试。
-        chCfg.metadata = entry.metadata;
+        // 填充可追溯元数据，便于 UI/导出/调试
         chCfg.metadata["mappingId"] = entry.id;
         chCfg.metadata["snippetId"] = entry.snippetId;
         chCfg.metadata["snippetName"] = entry.snippetName;
@@ -1095,8 +1090,9 @@ bool MonitorManager::applyConfiguration(const ProjectRuntimeConfig& config)
         channelsTouched = true;
     }
 
-    // providers 中如果引用了额外通道，也一并注册（保证 UI 能看到通道）
-    for (const auto& p : config.providers) {
+    QList<MonitorProviderRuntimeConfig> providers = config.providers;
+    // providers 为空、mappings 非空时，从 mappings 派生 providers
+    for (const auto& p : providers) {
         const QString chName = p.channelName.trimmed();
         if (chName.isEmpty()) {
             qWarning() << "[MonitorManager] providers 条目缺少 channelName，id=" << p.id;
@@ -1117,7 +1113,7 @@ bool MonitorManager::applyConfiguration(const ProjectRuntimeConfig& config)
         chCfg.metadata["periodMs"] = p.periodMs;
         chCfg.metadata[kRuntimeManagedKey] = true;
 
-        // 若能匹配到 mapping，则补齐显示名/额外元数据
+        // 如果能匹配到 mapping，则补齐显示名和额外元数据
         if (mappingById.contains(p.id)) {
             const auto& m = mappingById[p.id];
             if (!m.snippetName.trimmed().isEmpty()) {
@@ -1150,14 +1146,11 @@ bool MonitorManager::applyConfiguration(const ProjectRuntimeConfig& config)
     }
 
     // ---------------------------------------------------------------------
-    // 3) 基于 providers 注册采集器
-    //    有 backend → 走 backend polling，不创建 demo sampler
-    //    无 backend → 保留 demo sampler（兼容无硬件开发场景）
+    // 3) 基于 providers 注册采集器：有 backend 时走 polling，无 backend 时保留 demo sampler
+    // ---------------------------------------------------------------------
     // ---------------------------------------------------------------------
 
-    QList<MonitorProviderRuntimeConfig> providers = config.providers;
-
-    // providers 为空但 mappings 非空时，从 mappings 派生 providers
+    // providers 为空时，允许由 mappings 派生 providers
     if (providers.isEmpty() && !config.dslMappings.isEmpty()) {
         providers.reserve(config.dslMappings.size());
         for (const auto& entry : config.dslMappings) {
@@ -1206,7 +1199,6 @@ bool MonitorManager::applyConfiguration(const ProjectRuntimeConfig& config)
         pc.metadata = p.metadata;
         pc.metadata["projectName"] = config.projectName;
         pc.metadata[kRuntimeManagedKey] = true;
-
         // 关联 mapping 元数据
         if (mappingById.contains(pc.id)) {
             const auto& m = mappingById[pc.id];
@@ -1231,7 +1223,6 @@ bool MonitorManager::applyConfiguration(const ProjectRuntimeConfig& config)
             if (minPeriodMs <= 0 || pc.periodMs < minPeriodMs)
                 minPeriodMs = pc.periodMs;
         } else {
-            // 无 backend：创建 demo sampler（兼容旧模式）
             QString snippetId = pc.metadata.value("snippetId").toString();
             pc.sampler = makeDemoSampler(pc.id, pc.channelName, pc.unit, snippetId, pc.metadata);
             pc.errorHandler = [pid = pc.id](const QString& err) {
@@ -1247,7 +1238,7 @@ bool MonitorManager::applyConfiguration(const ProjectRuntimeConfig& config)
         }
     }
 
-    // 配置后端轮询定时器
+    // ---------------------------------------------------------------------
     if (m_backend && !m_backendPointIds.isEmpty() && minPeriodMs > 0) {
         m_backendPollTimer->setInterval(minPeriodMs);
         qDebug() << "[MonitorManager] backend polling configured:"
@@ -1255,11 +1246,9 @@ bool MonitorManager::applyConfiguration(const ProjectRuntimeConfig& config)
     } else {
         m_backendPollTimer->stop();
     }
-
     // ---------------------------------------------------------------------
     // 3.5) 将变量 / 参数 / 资源作为可监控对象挂到监控系统
     // ---------------------------------------------------------------------
-
     auto registerObjectChannel = [&](const QString& channelName,
                                      const QString& displayName,
                                      const QString& unit,
@@ -1355,9 +1344,8 @@ bool MonitorManager::applyConfiguration(const ProjectRuntimeConfig& config)
     }
 
     // ---------------------------------------------------------------------
-    // 4) 通知 UI 刷新 & 恢复监控状态
+    // 4) 通知 UI 刷新并恢复监控状态
     // ---------------------------------------------------------------------
-
     if (channelsTouched) {
         emit channelsChanged();
     }
@@ -1375,3 +1363,4 @@ bool MonitorManager::applyConfiguration(const ProjectRuntimeConfig& config)
 }
 
 } // namespace Monitor
+

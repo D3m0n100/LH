@@ -14,20 +14,24 @@
 #include "BuildController.h"
 #include "RunController.h"
 #include "SettingsController.h"
+#include "OpcServerSettingsDialog.h"
 #include "MonitorWidget.h"
 #include "DownloadDockWidget.h"
 #include "ProjectExplorerWidget.h"
 #include "ProgramBlocksWidget.h"
 #include "MonitorManager.h"
 #include "../communication/IDeviceBackend.h"
+#include "../communication/IOpcServer.h"
 #include "SampleDataProvider.h"
 #include "ui/ThemeManager.h"
 #include "ui/GlobalStatusBar.h"
 #include "ui/InspectorPanel.h"
+#include "ui/StatusTextHelper.h"
 #include "ui/ProblemsPanel.h"
 #include "ParameterTuningWindow.h"
 #include "ParameterController.h"
 #include "RuntimeSessionController.h"
+#include "../diagnostics/DiagnosticSnapshotService.h"
 #include "Common.h"
 #include "TextEncoding.h"
 
@@ -126,6 +130,55 @@ QList<ParameterDefinition> filterPidParameters(const QList<ParameterDefinition>&
     return pidParameters;
 }
 
+QString formatOpcStatusDetails(const BackendStatusSnapshot& status)
+{
+    const QString modbusOnline = status.extras.value(QStringLiteral("modbusConnected")).toBool()
+            ? QStringLiteral("online")
+            : QStringLiteral("offline");
+    const QString polling = status.extras.value(QStringLiteral("polling")).toBool()
+            ? QStringLiteral("on")
+            : QStringLiteral("off");
+    QStringList parts;
+    parts << QStringLiteral("backend=%1").arg(status.backendType);
+    parts << QStringLiteral("modbus=%1").arg(modbusOnline);
+    parts << QStringLiteral("polling=%1").arg(polling);
+    parts << QStringLiteral("poll ok=%1").arg(status.extras.value(QStringLiteral("successfulPollCount")).toInt());
+    parts << QStringLiteral("poll fail=%1").arg(status.extras.value(QStringLiteral("failedPollCount")).toInt());
+    parts << QStringLiteral("write ok=%1").arg(status.extras.value(QStringLiteral("successfulWriteCount")).toInt());
+    parts << QStringLiteral("write fail=%1").arg(status.extras.value(QStringLiteral("failedWriteCount")).toInt());
+    parts << QStringLiteral("points=%1/%2")
+                   .arg(status.extras.value(QStringLiteral("addressedPointCount")).toInt())
+                   .arg(status.extras.value(QStringLiteral("unresolvedPointCount")).toInt());
+
+    const QString lastOkWrite = status.extras.value(QStringLiteral("lastSuccessfulWriteTime")).toString();
+    const QString lastFailWrite = status.extras.value(QStringLiteral("lastFailedWriteTime")).toString();
+    const QString lastOkPoll = status.extras.value(QStringLiteral("lastSuccessfulPollTime")).toString();
+    const QString lastErr = status.lastErrorMessage.trimmed();
+    const QString lastWritePoint = status.extras.value(QStringLiteral("lastWritePointId")).toString();
+    const QString lastWriteMsg = status.extras.value(QStringLiteral("lastWriteMessage")).toString();
+
+    if (!lastWritePoint.isEmpty()) {
+        parts << QStringLiteral("lastWrite=%1").arg(lastWritePoint);
+    }
+    if (!lastWriteMsg.isEmpty()) {
+        parts << QStringLiteral("lastWriteMsg=%1").arg(lastWriteMsg);
+    }
+    if (!lastOkWrite.isEmpty()) {
+        parts << QStringLiteral("lastOkWrite=%1").arg(lastOkWrite);
+    }
+    if (!lastFailWrite.isEmpty()) {
+        parts << QStringLiteral("lastFailWrite=%1").arg(lastFailWrite);
+    }
+    if (!lastOkPoll.isEmpty()) {
+        parts << QStringLiteral("lastOkPoll=%1").arg(lastOkPoll);
+    }
+    if (!lastErr.isEmpty()) {
+        parts << QStringLiteral("lastErr=%1").arg(lastErr);
+    }
+
+    return parts.join(QStringLiteral(" | "));
+}
+
 } // namespace
 
 // ================= 鏋勯€?/ 鏋愭瀯 =================
@@ -191,7 +244,7 @@ MainWindow::MainWindow(QWidget* parent)
 
     createControllers();
 
-    // 鍒涘缓 UI
+    // 创建 UI
     createMenus();
     createToolBars();
     createStatusBar();
@@ -199,13 +252,13 @@ MainWindow::MainWindow(QWidget* parent)
     createInspectorDock();
     createParameterTuningWindow();
     
-    // 寤虹珛淇″彿杩炴帴
+    // 建立信号连接
     initConnections();
     connectControllerSignals();
 
     ThemeManager::applyModernTheme(qApp);
 
-    // 鐩戞帶鍛婅锛氭妸闃堝€艰秴闄愪俊鍙峰啓鍏ヨ緭鍑烘棩蹇楋紝渚夸簬杩芥函
+    // 监控告警：把阈值超限信号写入输出日志，便于追踪
     {
         auto& manager = Monitor::MonitorManager::instance();
         connect(&manager, &Monitor::MonitorManager::thresholdExceeded,
@@ -216,16 +269,17 @@ MainWindow::MainWindow(QWidget* parent)
     if (m_sessionController) {
         m_sessionController->setSampleDataProvider(m_sampleDataProvider);
     }
-    // SampleDataProvider 鐩存帴鍚?MonitorManager 鍐欐牱鏈紝涓嶄緷璧?MonitorWidget銆?    
-    // 搴旂敤鍒濆璁剧疆
+    // SampleDataProvider 直接向 MonitorManager 写样本，不依赖 MonitorWidget
+    // 应用初始设置
     applyFontSize(m_settingsController->currentFontPointSize());
     updateRecentProjectsMenu();
 
-    updateStatusBar("就绪");
+    updateStatusBar(QStringLiteral("就绪"));
     if (m_globalStatusBar) {
-        m_globalStatusBar->setBuildState("空闲");
+        m_globalStatusBar->setBuildState(QStringLiteral("空闲"));
         m_globalStatusBar->setConnectionState(false);
         m_globalStatusBar->setProjectName("无");
+        m_globalStatusBar->setOpcState(false);
     }
     refreshInspectorPanel();
     
@@ -264,7 +318,7 @@ void MainWindow::closeEvent(QCloseEvent* event)
     }
 }
 
-// ================= 鎺у埗鍣ㄥ垱寤?=================
+// ================= 控制器创建 =================
 
 void MainWindow::createControllers()
 {
@@ -282,13 +336,14 @@ void MainWindow::createControllers()
     m_sessionController = new RuntimeSessionController(this);
     m_sessionController->setProjectController(m_projectController);
     m_sessionController->setBuildController(m_buildController);
+    m_sessionController->setParameterController(m_parameterController);
 
-    LOG_DEBUG("鎺у埗鍣ㄥ凡鍒涘缓");
+    LOG_DEBUG("控制器已创建");
 }
 
 void MainWindow::connectControllerSignals()
 {
-    // ===== ProjectController 淇″彿杩炴帴 =====
+    // ===== ProjectController 信号连接 =====
     connect(m_projectController, &ProjectController::projectCreated,
             this, &MainWindow::onProjectCreated);
     connect(m_projectController, &ProjectController::projectOpened,
@@ -314,7 +369,7 @@ void MainWindow::connectControllerSignals()
     connect(m_projectController, &ProjectController::saveConfirmationRequired,
             this, &MainWindow::onSaveConfirmationRequired);
 
-    // ===== ParameterController 淇″彿杩炴帴 =====
+    // ===== ParameterController 信号连接 =====
     connect(m_parameterController, &ParameterController::stateChanged,
             this, [this](const QString& name, ParameterState, ParameterState newState) {
                 if (!m_projectController) {
@@ -331,23 +386,38 @@ void MainWindow::connectControllerSignals()
                 }
 
                 const auto info = m_parameterController->parameterState(name);
-                it->confirmed = (newState == ParameterState::Confirmed);
                 if (newState == ParameterState::Confirmed && !info.readbackValue.isEmpty()) {
                     it->currentValue = info.readbackValue;
+                    it->confirmed = true;
+                } else if (newState == ParameterState::Mismatch
+                           || newState == ParameterState::Timeout
+                           || newState == ParameterState::ApplyFailed) {
+                    it->currentValue = info.editedValue.isEmpty()
+                            ? info.definitionValue
+                            : info.editedValue;
+                    it->confirmed = false;
+                } else {
+                    it->currentValue = info.editedValue.isEmpty()
+                            ? info.definitionValue
+                            : info.editedValue;
+                    it->confirmed = false;
                 }
             });
     connect(m_parameterController, &ParameterController::statesChanged,
             this, [this]() { refreshInspectorPanel(); });
+    connect(m_parameterController, &ParameterController::readbackFinished,
+            this, &MainWindow::onParameterReadbackFinished);
 
-    // ===== RuntimeSessionController 淇″彿杩炴帴 =====
+    // ===== RuntimeSessionController 信号连接 =====
     connect(m_sessionController, &RuntimeSessionController::stateChanged,
             this, [this](RuntimeSessionState oldState, RuntimeSessionState newState) {
                 Q_UNUSED(oldState);
                 const bool running = (newState == RuntimeSessionState::Running
                                       || newState == RuntimeSessionState::Monitoring);
-                updateStatusBar(running ? "项目运行中" : "项目已停止");
+                updateStatusBar(running ? QStringLiteral("运行中") : QStringLiteral("已停止"));
                 if (m_globalStatusBar) {
-                    m_globalStatusBar->setBuildState(running ? "运行中" : "已停止");
+                    m_globalStatusBar->setBuildState(running ? QStringLiteral("运行中")
+                                                             : QStringLiteral("已停止"));
                 }
                 refreshInspectorPanel();
             });
@@ -371,6 +441,25 @@ void MainWindow::connectControllerSignals()
                 Q_UNUSED(active);
                 refreshInspectorPanel();
             });
+    connect(m_sessionController, &RuntimeSessionController::opcRunningChanged,
+            this, [this](bool running) {
+                m_opcRunning = running;
+                if (running) {
+                    m_lastOpcError.clear();
+                }
+                if (m_globalStatusBar) {
+                    m_globalStatusBar->setOpcState(running, m_lastOpcError);
+                }
+                refreshInspectorPanel();
+            });
+    connect(m_sessionController, &RuntimeSessionController::opcErrorOccurred,
+            this, [this](const QString& message) {
+                m_lastOpcError = message;
+                if (m_globalStatusBar) {
+                    m_globalStatusBar->setOpcState(m_opcRunning, m_lastOpcError);
+                }
+                refreshInspectorPanel();
+            });
     connect(m_projectController, &ProjectController::scriptLoadRequired,
             this, &MainWindow::onScriptLoadRequired);
     connect(m_projectController, &ProjectController::editorClearRequired,
@@ -378,7 +467,7 @@ void MainWindow::connectControllerSignals()
     connect(m_projectController, &ProjectController::validationFailed,
             this, &MainWindow::onValidationFailed);
 
-    // ===== BuildController 淇″彿杩炴帴 =====
+    // ===== BuildController 信号连接 =====
     connect(m_buildController, &BuildController::compileStarted,
             this, &MainWindow::onCompileStarted);
     connect(m_buildController, &BuildController::compileSucceeded,
@@ -396,7 +485,7 @@ void MainWindow::connectControllerSignals()
         return onBuildValidation(type, errors);
     });
 
-    // ===== SettingsController 淇″彿杩炴帴 =====
+    // ===== SettingsController 信号连接 =====
     connect(m_settingsController, &SettingsController::fontSizeChanged,
             this, &MainWindow::onFontSizeChanged);
     connect(m_settingsController, &SettingsController::logMessage,
@@ -404,7 +493,7 @@ void MainWindow::connectControllerSignals()
     connect(m_settingsController, &SettingsController::defaultProjectDirChanged,
             m_projectController, &ProjectController::setDefaultProjectDir);
             
-    LOG_DEBUG("鎺у埗鍣ㄤ俊鍙峰凡杩炴帴");
+    LOG_DEBUG("控制器信号已连接");
 }
 
 // ================= UI 鏋勫缓 =================
@@ -482,11 +571,11 @@ void MainWindow::createMenus()
 
     QMenu* viewMenu = menuBar()->addMenu("视图(&V)");
 
-    m_actToggleDslEditor = viewMenu->addAction("DSL编辑器(&D)");
+    m_actToggleDslEditor = viewMenu->addAction("LH编辑器(&D)");
     m_actToggleDslEditor->setCheckable(true);
     m_actToggleDslEditor->setChecked(true);
     m_actToggleDslEditor->setShortcut(QKeySequence("Ctrl+D"));
-    m_actToggleDslEditor->setToolTip("显示或隐藏 DSL 编辑器窗口");
+    m_actToggleDslEditor->setToolTip("显示或隐藏 LH 编辑器窗口");
     connect(m_actToggleDslEditor, &QAction::toggled, this, &MainWindow::onToggleDslEditor);
 
     viewMenu->addSeparator();
@@ -540,7 +629,7 @@ void MainWindow::createMenus()
 
     QMenu* buildMenu = menuBar()->addMenu("构建(&B)");
 
-    m_actCompileConfig = buildMenu->addAction("编译DSL (F7)");
+    m_actCompileConfig = buildMenu->addAction("编译LH (F7)");
     m_actCompileConfig->setShortcut(Qt::Key_F7);
     connect(m_actCompileConfig, &QAction::triggered, this, &MainWindow::onCompileConfiguration);
 
@@ -612,6 +701,9 @@ void MainWindow::createMenus()
     m_actSettings->setShortcut(QKeySequence("Ctrl+,"));
     connect(m_actSettings, &QAction::triggered, this, &MainWindow::onOpenSettings);
 
+    m_actOpcServerSettings = toolsMenu->addAction("OPC 服务设置...");
+    connect(m_actOpcServerSettings, &QAction::triggered, this, &MainWindow::onOpenOpcServerSettings);
+
     QMenu* helpMenu = menuBar()->addMenu("帮助(&H)");
     QAction* actAbout = helpMenu->addAction("关于...");
     connect(actAbout, &QAction::triggered, this, &MainWindow::onAbout);
@@ -656,7 +748,7 @@ void MainWindow::createToolBars()
 
     m_fileToolBar->addSeparator();
 
-    m_actCompile = makeAction(":/icons/compile.svg", "编译", "编译 DSL (F7)", QKeySequence(Qt::Key_F7));
+    m_actCompile = makeAction(":/icons/compile.svg", "编译", "编译 LH (F7)", QKeySequence(Qt::Key_F7));
     connect(m_actCompile, &QAction::triggered, this, &MainWindow::onCompileConfiguration);
     m_fileToolBar->addAction(m_actCompile);
 
@@ -666,8 +758,8 @@ void MainWindow::createToolBars()
 
     m_fileToolBar->addSeparator();
 
-    m_actOpenDslEditorToolBar = makeAction(":/icons/output.svg", "DSL", "打开 DSL 编辑器 (Ctrl+D)", QKeySequence("Ctrl+D"));
-    m_actOpenDslEditorToolBar->setToolTip("打开 DSL 编辑器 (Ctrl+D)");
+    m_actOpenDslEditorToolBar = makeAction(":/icons/output.svg", "LH", "打开 LH 编辑器 (Ctrl+D)", QKeySequence("Ctrl+D"));
+    m_actOpenDslEditorToolBar->setToolTip("打开 LH 编辑器 (Ctrl+D)");
     m_actOpenDslEditorToolBar->setCheckable(true);
     m_actOpenDslEditorToolBar->setChecked(true);
     connect(m_actOpenDslEditorToolBar, &QAction::toggled, this, &MainWindow::onToggleDslEditor);
@@ -751,7 +843,7 @@ void MainWindow::createDockWidgets()
     m_mdiArea->setTabsClosable(true);
     m_mdiArea->setTabsMovable(true);
     dslLayout->addWidget(m_mdiArea);
-    m_workspaceTabs->addTab(m_workspaceDslPage, "DSL工作区");
+    m_workspaceTabs->addTab(m_workspaceDslPage, "LH工作区");
 
     createDslEditorSubWindow();
 
@@ -920,14 +1012,14 @@ void MainWindow::createDslEditorSubWindow()
         m_displayBlocksWidget->setCompletionEngine(m_dslEditor->completionEngine());
     }
 
-    // 鍚姩榛樿闅愯棌鍑芥暟鍒楄〃锛氫笉鍗犵敤缂栬緫鍣ㄥ乏渚т富绌洪棿
+    // 启动默认隐藏函数列表：不占用编辑器左侧主空间
     const bool functionListVisible = (m_actToggleFunctionList ? m_actToggleFunctionList->isChecked() : false);
     m_dslEditor->setFunctionListVisible(functionListVisible);
     
     m_projectController->setDslEditor(m_dslEditor);
 
     m_editorSubWindow = m_mdiArea->addSubWindow(m_dslEditor);
-    m_editorSubWindow->setWindowTitle("DSL脚本编辑器");
+    m_editorSubWindow->setWindowTitle("LH脚本编辑器");
     m_editorSubWindow->showMaximized();
 
     connect(m_editorSubWindow, &QObject::destroyed,
@@ -935,7 +1027,7 @@ void MainWindow::createDslEditorSubWindow()
 
     connectDslEditorSignals();
 
-    appendOutput(QString("[%1] DSL 脚本编辑器已打开")
+    appendOutput(QString("[%1] LH 脚本编辑器已打开")
                  .arg(QDateTime::currentDateTime().toString("HH:mm:ss")));
 }
 
@@ -967,7 +1059,7 @@ void MainWindow::initConnections()
             this, &MainWindow::onFocusChanged);
 }
 
-// ================= UI 杈呭姪鏂规硶 =================
+// ================= UI 辅助方法 =================
 
 void MainWindow::updateStatusBar(const QString& message)
 {
@@ -1057,9 +1149,19 @@ void MainWindow::refreshInspectorPanel(InspectorPanel* panel)
 
     panel->setProjectPath(m_projectController->currentProjectPath());
     panel->setCurrentFile(m_projectController->currentScriptFile());
-    panel->setRuntimeState(m_sessionController && m_sessionController->isRunning() ? "运行中" : "已停止");
-    panel->setBuildState(m_buildController && m_buildController->isBusy() ? "忙碌" : "空闲");
-    panel->setMonitoringState(m_monitorWidget && m_monitorWidget->isMonitoring() ? "活动" : "未活动");
+    panel->setRuntimeState(runtimeStateText(m_sessionController && m_sessionController->isRunning()));
+    panel->setBuildState(m_buildController && m_buildController->isBusy()
+                                 ? QStringLiteral("忙碌")
+                                 : QStringLiteral("空闲"));
+    panel->setMonitoringState(monitoringStateText(m_monitorWidget && m_monitorWidget->isMonitoring()));
+    QString opcStateText = m_opcRunning
+            ? QStringLiteral("运行中")
+            : (m_lastOpcError.isEmpty() ? QStringLiteral("关闭") : QStringLiteral("错误"));
+    if (m_sessionController && m_sessionController->opcServer()) {
+        const auto status = m_sessionController->opcServer()->statusSnapshot();
+        opcStateText += QStringLiteral(" | %1").arg(formatOpcStatusDetails(status));
+    }
+    panel->setOpcState(opcStateText);
     const auto& cfg = m_projectController->runtimeConfig();
 
     // 同步参数定义到状态机控制器（保留已有状态）
@@ -1250,7 +1352,7 @@ bool MainWindow::applyRuntimeConfigToMonitor()
 }
 
 
-// ================= 椤圭洰鎿嶄綔妲藉嚱鏁帮紙杞彂缁?ProjectController锛?================
+// ================= 项目操作槽函数（转发给 ProjectController） =================
 
 void MainWindow::onNewProject()
 {
@@ -1299,7 +1401,7 @@ void MainWindow::onSaveProject()
     m_projectController->syncDslMappingsFromEditor();
     m_projectController->syncDslMappingsToEditor();
 
-    // 鍏堜繚瀛?DSL 鑴氭湰鍐呭
+    // 先保存 DSL 脚本内容
     if (m_dslEditor && !m_projectController->currentScriptFile().isEmpty()) {
         const QString scriptForSave = m_dslEditor->scriptForSave();
         QFile scriptFile(m_projectController->currentScriptFile());
@@ -1336,7 +1438,7 @@ void MainWindow::onRecentProjectTriggered()
     }
 }
 
-// ================= 缂栬緫鎿嶄綔妲藉嚱鏁?=================
+// ================= 编辑操作槽函数 =================
 
 void MainWindow::onUndo()
 {
@@ -1583,7 +1685,33 @@ void MainWindow::onOpenSettings()
     m_settingsController->openSettingsDialog(this);
 }
 
-// ================= 缂栬瘧鎿嶄綔妲藉嚱鏁帮紙杞彂缁?BuildController锛?================
+void MainWindow::onOpenOpcServerSettings()
+{
+    if (!m_projectController || !m_projectController->hasOpenProject()) {
+        QMessageBox::warning(this, QStringLiteral("警告"), QStringLiteral("请先打开或创建项目。"));
+        return;
+    }
+
+    OpcServerSettingsDialog dialog(this);
+    ProjectRuntimeConfig& cfg = m_projectController->runtimeConfig();
+    dialog.setConfig(cfg.opcServer);
+    if (dialog.exec() != QDialog::Accepted) {
+        return;
+    }
+
+    cfg.opcServer = dialog.config();
+    m_projectController->setModified(true);
+
+    appendOutput(QStringLiteral("[%1] OPC 服务设置已更新：enabled=%2 channel=%3 device=%4 mode=%5")
+                 .arg(QDateTime::currentDateTime().toString(QStringLiteral("HH:mm:ss")),
+                      cfg.opcServer.enabled ? QStringLiteral("true") : QStringLiteral("false"),
+                      cfg.opcServer.channelName,
+                      cfg.opcServer.deviceName,
+                      cfg.opcServer.serialMode));
+    refreshInspectorPanel();
+}
+
+// ================= 编译操作槽函数（转发给 BuildController） =================
 
 void MainWindow::onCompileConfiguration()
 {
@@ -1614,7 +1742,7 @@ void MainWindow::onCompileAndRunProject()
     onRunProject();
 }
 
-// ================= 杩愯鎺у埗妲藉嚱鏁?=================
+// ================= 运行控制槽函数 =================
 
 void MainWindow::onRunProject()
 {
@@ -1625,7 +1753,7 @@ void MainWindow::onRunProject()
     }
 
     if (m_sessionController->isRunning()) {
-        QMessageBox::information(this, "提示", "项目已在运行中。");
+        QMessageBox::information(this, QStringLiteral("提示"), QStringLiteral("项目已在运行中。"));
         return;
     }
 
@@ -1687,9 +1815,9 @@ void MainWindow::onRunProject()
 
     // 更新 UI
     m_projectRunning = true;
-    updateStatusBar("项目运行中");
+    updateStatusBar(QStringLiteral("运行中"));
     if (m_globalStatusBar)
-        m_globalStatusBar->setBuildState("运行中");
+        m_globalStatusBar->setBuildState(QStringLiteral("运行中"));
     refreshInspectorPanel();
 }
 
@@ -1700,13 +1828,13 @@ void MainWindow::onStopProject()
 
     m_sessionController->requestStop();
     m_projectRunning = false;
-    updateStatusBar("项目已停止");
+    updateStatusBar(QStringLiteral("已停止"));
     if (m_globalStatusBar)
-        m_globalStatusBar->setBuildState("已停止");
+        m_globalStatusBar->setBuildState(QStringLiteral("已停止"));
     refreshInspectorPanel();
 }
 
-// ================= 鐩戞帶鎿嶄綔妲藉嚱鏁?=================
+// ================= 监控操作槽函数 =================
 
 void MainWindow::onOpenMonitor()
 {
@@ -1723,7 +1851,7 @@ void MainWindow::onOpenMonitor()
     startDemoModeIfNeeded(QStringLiteral("打开监控"));
 
     if (!demoWasActive && m_demoModeActive && m_monitorWidget && !m_monitorWidget->isMonitoring()) {
-        // Demo Mode 婵€娲诲悗锛岃嚜鍔ㄥ紑濮嬬洃鎺т互渚跨敤鎴蜂竴鎵撳紑闈㈡澘灏辫兘鐪嬪埌鏁版嵁鍙樺寲
+        // Demo Mode 激活后，自动开始监控，方便一打开面板就能看到数据变化
         m_monitorWidget->startMonitoring();
     }
     refreshInspectorPanel();
@@ -1767,7 +1895,7 @@ void MainWindow::onStopMonitoring()
         m_monitorWidget->stopMonitoring();
     }
 
-    // 鑻ュ浜?Demo Mode锛屽垯鍋滄婕旂ず鏁版嵁閲囬泦
+    // 若处于 Demo Mode，则停止演示数据采集
     stopDemoMode(QStringLiteral("停止监控"));
     refreshInspectorPanel();
 }
@@ -1786,7 +1914,7 @@ void MainWindow::onExportMonitorImage()
     }
 }
 
-// ================= 鍏朵粬妲藉嚱鏁?=================
+// ================= 其他槽函数 =================
 
 void MainWindow::onOpenLogDirectory()
 {
@@ -1804,11 +1932,51 @@ void MainWindow::onOpenDiagnosisWizard()
         m_bottomPanels->setCurrentWidget(m_problemsPanel);
     }
 
-    if (m_problemsPanel) {
-        m_problemsPanel->setDiagnosticSummary("诊断摘要：先看错误，再看警告；若问题面板为空，优先检查编译、下载和运行日志。");
+    QString snapshotPath;
+    QString snapshotError;
+    if (m_projectController && m_projectController->hasOpenProject()) {
+        QVariantMap opcStatus;
+        if (m_sessionController && m_sessionController->opcServer()) {
+            const auto status = m_sessionController->opcServer()->statusSnapshot();
+            opcStatus = status.extras;
+            opcStatus.insert(QStringLiteral("online"), status.online);
+            opcStatus.insert(QStringLiteral("backendType"), status.backendType);
+            opcStatus.insert(QStringLiteral("lastErrorCode"), static_cast<int>(status.lastErrorCode));
+            opcStatus.insert(QStringLiteral("lastErrorMessage"), status.lastErrorMessage);
+            opcStatus.insert(QStringLiteral("statusText"), formatOpcStatusDetails(status));
+            m_lastOpcStatusExtras = opcStatus;
+        }
+
+        const QString diagDir = QDir(m_projectController->currentProjectPath())
+                                        .filePath(QStringLiteral("diagnostics"));
+        DiagnosticSnapshotService::exportSnapshot(diagDir,
+                                                  m_projectController->runtimeConfig(),
+                                                  m_opcRunning,
+                                                  m_lastOpcError,
+                                                  m_lastOpcStatusExtras,
+                                                  &snapshotPath,
+                                                  &snapshotError);
     }
 
-    appendOutput("诊断向导：请优先查看问题面板中的错误和警告，再检查编译、下载和运行日志。");
+    if (m_problemsPanel) {
+        QString summary = QStringLiteral("诊断摘要：先看错误，再看警告；若问题面板为空，优先检查编译、下载和运行日志。");
+        summary += QStringLiteral("\nOPC 状态：%1").arg(m_opcRunning ? QStringLiteral("运行中") : QStringLiteral("关闭"));
+        if (!m_lastOpcError.isEmpty()) {
+            summary += QStringLiteral("\nOPC 最近错误：%1").arg(m_lastOpcError);
+        }
+        if (!snapshotPath.isEmpty()) {
+            summary += QStringLiteral("\n诊断快照：%1").arg(QDir::toNativeSeparators(snapshotPath));
+        } else if (!snapshotError.isEmpty()) {
+            summary += QStringLiteral("\n快照导出失败：%1").arg(snapshotError);
+        }
+        m_problemsPanel->setDiagnosticSummary(summary);
+    }
+
+    if (!snapshotPath.isEmpty()) {
+        appendOutput(QStringLiteral("诊断向导：已导出诊断快照 %1").arg(QDir::toNativeSeparators(snapshotPath)));
+    } else {
+        appendOutput("诊断向导：请优先查看问题面板中的错误和警告，再检查编译、下载和运行日志。");
+    }
     updateStatusBar("已打开诊断向导");
 }
 
@@ -1840,15 +2008,6 @@ void MainWindow::onEditParameterRequested(const QString& parameterName)
     }
 
     if (m_parameterController->editParameter(parameterName, value.trimmed())) {
-        // 同步写回 runtimeConfig（保持旧字段兼容）
-        auto& cfg = m_projectController->runtimeConfig();
-        for (auto& p : cfg.parameters) {
-            if (p.name == parameterName) {
-                p.currentValue = value.trimmed();
-                p.confirmed = false;
-                break;
-            }
-        }
         m_projectController->setModified(true);
         refreshInspectorPanel();
         appendOutput(QString("参数 %1 已更新为 %2").arg(parameterName, value.trimmed()));
@@ -1866,27 +2025,43 @@ void MainWindow::onApplyParametersRequested()
 
     IDeviceBackend* backend = Monitor::MonitorManager::instance().deviceBackend();
     if (!backend || !backend->isOnline()) {
-        appendOutput("设备后端未连接，无法应用参数。");
-        updateStatusBar("参数应用失败：设备离线");
+        appendOutput(QStringLiteral("设备后端未连接，无法应用参数。"));
+        updateStatusBar(QStringLiteral("参数应用失败：设备离线"));
         return;
     }
 
     QString errorMessage;
-    const bool ok = m_parameterController->applyModifiedParametersWithReadback(
+    const bool ok = m_parameterController->applyModifiedParametersWithReadbackAsync(
         backend,
         2,
         100,
         &errorMessage);
     if (ok) {
-        appendOutput("参数已下发并完成回读确认。");
-        updateStatusBar("参数下发与回读完成");
+        appendOutput(QStringLiteral("参数已下发，正在等待回读确认。"));
+        updateStatusBar(QStringLiteral("参数回读处理中"));
     } else {
         if (errorMessage.isEmpty()) {
             errorMessage = QStringLiteral("参数下发失败");
         }
         appendOutput(QString("参数下发/回读失败：%1").arg(errorMessage));
-        updateStatusBar("参数下发/回读失败");
+        updateStatusBar(QStringLiteral("参数下发/回读失败"));
     }
+    refreshInspectorPanel();
+}
+
+void MainWindow::onParameterReadbackFinished(bool success, const QString& message)
+{
+    if (success) {
+        appendOutput(QStringLiteral("参数已下发并完成回读确认。"));
+        updateStatusBar(QStringLiteral("参数下发与回读完成"));
+    } else {
+        const QString text = message.isEmpty()
+                ? QStringLiteral("参数回读失败")
+                : message;
+        appendOutput(QString("参数下发/回读失败：%1").arg(text));
+        updateStatusBar(QStringLiteral("参数下发/回读失败"));
+    }
+
     refreshInspectorPanel();
 }
 
@@ -1898,7 +2073,7 @@ void MainWindow::onAbout()
         "版权所有 (c) 2024-2026。");
 }
 
-// ================= 缂栬緫鍣ㄧ浉鍏虫Ы鍑芥暟 =================
+// ================= 编辑器相关槽函数 =================
 
 void MainWindow::onEditorCursorPositionChanged(int line, int column, int totalLines)
 {
@@ -1932,7 +2107,7 @@ void MainWindow::onDropError(const QString& errorMessage)
     addProblem("warning", "DSL编辑器", errorMessage);
 }
 
-// ================= 杈撳嚭绐楀彛鍙抽敭鑿滃崟妲藉嚱鏁?=================
+// ================= 输出窗口右键菜单槽函数 =================
 
 void MainWindow::onOutputContextMenu(const QPoint& pos)
 {
@@ -2029,7 +2204,7 @@ bool MainWindow::isSupportedTextFile(const QString& filePath) const
     const QString suffix = QFileInfo(filePath).suffix().toLower();
     static const QSet<QString> allowed = {
         "txt", "json", "xml", "yaml", "yml", "ini",
-        "dsl", "cpp", "c", "h", "hpp", "cc", "cxx",
+        "lh", "cpp", "c", "h", "hpp", "cc", "cxx",
         "ui", "qss", "pro", "pri", "cmake", "md", "log"
     };
     return allowed.contains(suffix) || QFileInfo(filePath).fileName() == "CMakeLists.txt";
@@ -2145,7 +2320,7 @@ void MainWindow::openFileFromExplorer(const QString& filePath)
         }
     }
 
-    if (info.suffix().compare("dsl", Qt::CaseInsensitive) == 0) {
+    if (info.suffix().compare("lh", Qt::CaseInsensitive) == 0) {
         if (loadTextFileToEditor(filePath)) {
             if (m_projectController) {
                 m_projectController->setCurrentScriptFile(filePath);
@@ -2206,7 +2381,7 @@ void MainWindow::onLocateCurrentFileInExplorer()
     }
 }
 
-// ================= ProjectController 淇″彿澶勭悊妲藉嚱鏁?=================
+// ================= ProjectController 信号处理槽函数 =================
 
 void MainWindow::onProjectCreated(const QString& projectPath, const QString& projectName)
 {
@@ -2330,16 +2505,16 @@ void MainWindow::onValidationFailed(const QStringList& errors)
     showValidationErrors(errors);
 }
 
-// ================= BuildController 淇″彿澶勭悊妲藉嚱鏁?=================
+// ================= BuildController 信号处理槽函数 =================
 
 void MainWindow::onCompileStarted(BuildType type)
 {
     Q_UNUSED(type);
     m_progressBar->setVisible(true);
     setCompileActionsEnabled(false);
-    updateStatusBar("编译中...");
+    updateStatusBar(QStringLiteral("编译中"));
     if (m_globalStatusBar) {
-        m_globalStatusBar->setBuildState("编译中");
+        m_globalStatusBar->setBuildState(QStringLiteral("编译中"));
     }
     refreshInspectorPanel();
 }
@@ -2348,9 +2523,9 @@ void MainWindow::onCompileSucceeded(BuildType type)
 {
     m_progressBar->setVisible(false);
     setCompileActionsEnabled(true);
-    updateStatusBar("编译成功");
+    updateStatusBar(QStringLiteral("编译成功"));
     if (m_globalStatusBar) {
-        m_globalStatusBar->setBuildState("成功");
+        m_globalStatusBar->setBuildState(QStringLiteral("成功"));
     }
 
     if (type == BuildType::Configuration && m_buildController && m_projectController) {
@@ -2375,9 +2550,9 @@ void MainWindow::onCompileSucceeded(BuildType type)
             m_projectRunning = true;
             if (m_monitorWidget)
                 m_monitorWidget->startMonitoring();
-            updateStatusBar("项目运行中");
+            updateStatusBar(runtimeStateText(true));
             if (m_globalStatusBar)
-                m_globalStatusBar->setBuildState("运行中");
+                m_globalStatusBar->setBuildState(runtimeStateText(true));
         } else {
             QMessageBox::warning(this,
                                  "运行条件不完整",
@@ -2394,9 +2569,9 @@ void MainWindow::onCompileFailed(BuildType type, const QString& errorMessage)
     m_sessionController->setPendingRunAfterCompile(false);
     m_progressBar->setVisible(false);
     setCompileActionsEnabled(true);
-    updateStatusBar("编译失败");
+    updateStatusBar(QStringLiteral("编译失败"));
     if (m_globalStatusBar) {
-        m_globalStatusBar->setBuildState("失败");
+        m_globalStatusBar->setBuildState(QStringLiteral("失败"));
     }
     addProblem("error", "构建", errorMessage.isEmpty() ? "编译失败" : errorMessage);
     refreshInspectorPanel();
@@ -2477,14 +2652,14 @@ bool MainWindow::onBuildValidation(BuildType type, QStringList& errors)
     return true;
 }
 
-// ================= SettingsController 淇″彿澶勭悊妲藉嚱鏁?=================
+// ================= SettingsController 信号处理槽函数 =================
 
 void MainWindow::onFontSizeChanged(int pointSize)
 {
     applyFontSize(pointSize);
 }
 
-// ================= 閫氱敤娑堟伅澶勭悊妲藉嚱鏁?=================
+// ================= 通用消息处理槽函数 =================
 
 void MainWindow::onLogMessage(const QString& message)
 {

@@ -1,2192 +1,2664 @@
 [
   {
-    "id": "_EXCATMaintain",
-    "name": "_EXCATMaintain",
+    "id": "EXCATMaintain",
+    "name": "EXCATMaintain",
     "category": "application",
     "description": "保养功能",
-    "templateCode": "excat_maintain_1 = _EXCATMaintain();",
+    "templateCode": "excat_maintain_1 = EXCATMaintain();",
     "unit": "",
     "defaultPeriodMs": 20,
     "metadata": {
-      "typeId": 42100,
+      "typeId": 151,
       "memorySize": 32,
       "parameterCount": 0,
-      "compilerName": "_EXCATMaintain"
+      "parameters": [],
+      "compilerName": "EXCATMaintain"
     }
   },
   {
-    "id": "_EXCAIntCheck",
-    "name": "_EXCAIntCheck",
+    "id": "EXCAIntCheck",
+    "name": "EXCAIntCheck",
     "category": "application",
     "description": "整型检查",
-    "templateCode": "exca_int_check_1 = _EXCAIntCheck();",
+    "templateCode": "exca_int_check_1 = EXCAIntCheck();",
     "unit": "",
     "defaultPeriodMs": 20,
     "metadata": {
-      "typeId": 42101,
+      "typeId": 152,
       "memorySize": 24,
       "parameterCount": 0,
-      "compilerName": "_EXCAIntCheck"
+      "parameters": [],
+      "compilerName": "EXCAIntCheck"
     }
   },
   {
-    "id": "_PasswordVerify2",
-    "name": "_PasswordVerify2",
+    "id": "PasswordVerify2",
+    "name": "PasswordVerify2",
     "category": "application",
     "description": "密码验证2",
-    "templateCode": "password_verify2_1 = _PasswordVerify2();",
+    "templateCode": "password_verify2_1 = PasswordVerify2();",
     "unit": "",
     "defaultPeriodMs": 20,
     "metadata": {
-      "typeId": 42102,
+      "typeId": 153,
       "memorySize": 32,
       "parameterCount": 0,
-      "compilerName": "_PasswordVerify2"
+      "parameters": [],
+      "compilerName": "PasswordVerify2"
     }
   },
   {
-    "id": "_LockCmdGenery",
-    "name": "_LockCmdGenery",
+    "id": "LockCmdGenery",
+    "name": "LockCmdGenery",
     "category": "application",
     "description": "锁定命令生成",
-    "templateCode": "lock_cmd_genery_1 = _LockCmdGenery();",
+    "templateCode": "lock_cmd_genery_1 = LockCmdGenery();",
     "unit": "",
     "defaultPeriodMs": 20,
     "metadata": {
-      "typeId": 42103,
+      "typeId": 154,
       "memorySize": 24,
       "parameterCount": 0,
-      "compilerName": "_LockCmdGenery"
+      "parameters": [],
+      "compilerName": "LockCmdGenery"
     }
   },
   {
-    "id": "_OutRealTime3",
-    "name": "_OutRealTime3",
+    "id": "OutRealTime3",
+    "name": "OutRealTime3",
     "category": "application",
     "description": "实时输出3",
-    "templateCode": "out_real_time3_1 = _OutRealTime3();",
+    "templateCode": "out_real_time3_1 = OutRealTime3();",
     "unit": "",
     "defaultPeriodMs": 20,
     "metadata": {
-      "typeId": 42104,
+      "typeId": 155,
       "memorySize": 32,
       "parameterCount": 0,
-      "compilerName": "_OutRealTime3"
+      "parameters": [],
+      "compilerName": "OutRealTime3"
     }
   },
   {
-    "id": "_CommCANInit",
-    "name": "_CommCANInit",
+    "id": "CommCANInit",
+    "name": "CommCANInit",
     "category": "comm",
     "description": "CAN总线初始化",
-    "templateCode": "comm_can_init_1 = _CommCANInit();",
+    "templateCode": "comm_can_init_1 = CommCANInit();",
     "unit": "",
     "defaultPeriodMs": 20,
     "metadata": {
-      "typeId": 42200,
+      "typeId": 601,
       "memorySize": 32,
       "parameterCount": 0,
-      "compilerName": "_CommCANInit"
+      "parameters": [],
+      "compilerName": "CommCANInit"
     }
   },
   {
-    "id": "_CommGPRS",
-    "name": "_CommGPRS",
+    "id": "CommGPRS",
+    "name": "CommGPRS",
     "category": "comm",
     "description": "GPRS远程通信",
-    "templateCode": "comm_gprs_1 = _CommGPRS();",
+    "templateCode": "comm_gprs_1 = CommGPRS();",
     "unit": "",
     "defaultPeriodMs": 20,
     "metadata": {
-      "typeId": 42201,
+      "typeId": 602,
       "memorySize": 48,
       "parameterCount": 0,
-      "compilerName": "_CommGPRS"
+      "parameters": [],
+      "compilerName": "CommGPRS"
     }
   },
   {
-    "id": "_CommJ1939Trans",
-    "name": "_CommJ1939Trans",
+    "id": "CommJ1939Trans",
+    "name": "CommJ1939Trans",
     "category": "comm",
     "description": "J1939车载网络传输",
-    "templateCode": "comm_j1939_trans_1 = _CommJ1939Trans();",
+    "templateCode": "comm_j1939_trans_1 = CommJ1939Trans();",
     "unit": "",
     "defaultPeriodMs": 20,
     "metadata": {
-      "typeId": 42202,
+      "typeId": 603,
       "memorySize": 32,
       "parameterCount": 0,
-      "compilerName": "_CommJ1939Trans"
+      "parameters": [],
+      "compilerName": "CommJ1939Trans"
     }
   },
   {
-    "id": "_CommTrans",
-    "name": "_CommTrans",
+    "id": "CommTrans",
+    "name": "CommTrans",
     "category": "comm",
     "description": "通用通信传输",
-    "templateCode": "comm_trans_1 = _CommTrans();",
+    "templateCode": "comm_trans_1 = CommTrans();",
     "unit": "",
     "defaultPeriodMs": 20,
     "metadata": {
-      "typeId": 42203,
+      "typeId": 604,
       "memorySize": 32,
       "parameterCount": 0,
-      "compilerName": "_CommTrans"
+      "parameters": [],
+      "compilerName": "CommTrans"
     }
   },
   {
-    "id": "_CommWatch",
-    "name": "_CommWatch",
+    "id": "CommWatch",
+    "name": "CommWatch",
     "category": "comm",
     "description": "通信链路监视",
-    "templateCode": "comm_watch_1 = _CommWatch();",
+    "templateCode": "comm_watch_1 = CommWatch();",
     "unit": "",
     "defaultPeriodMs": 20,
     "metadata": {
-      "typeId": 42204,
+      "typeId": 605,
       "memorySize": 24,
       "parameterCount": 0,
-      "compilerName": "_CommWatch"
+      "parameters": [],
+      "compilerName": "CommWatch"
     }
   },
   {
-    "id": "_GT",
-    "name": "_GT",
+    "id": "GT",
+    "name": "GT",
     "category": "compare",
     "description": "大于比较：Input1 > Input2",
-    "templateCode": "gt_1 = _GT();",
+    "templateCode": "gt_1 = GT();",
     "unit": "",
     "defaultPeriodMs": 20,
     "metadata": {
-      "typeId": 41300,
+      "typeId": 241,
       "memorySize": 16,
       "parameterCount": 0,
-      "compilerName": "_GT"
+      "parameters": [],
+      "compilerName": "GT"
     }
   },
   {
-    "id": "_LT",
-    "name": "_LT",
+    "id": "LT",
+    "name": "LT",
     "category": "compare",
     "description": "小于比较：Input1 < Input2",
-    "templateCode": "lt_1 = _LT();",
+    "templateCode": "lt_1 = LT();",
     "unit": "",
     "defaultPeriodMs": 20,
     "metadata": {
-      "typeId": 41301,
+      "typeId": 242,
       "memorySize": 16,
       "parameterCount": 0,
-      "compilerName": "_LT"
+      "parameters": [],
+      "compilerName": "LT"
     }
   },
   {
-    "id": "_LE",
-    "name": "_LE",
+    "id": "LE",
+    "name": "LE",
     "category": "compare",
     "description": "小于等于比较：Input1 <= Input2",
-    "templateCode": "le_1 = _LE();",
+    "templateCode": "le_1 = LE();",
     "unit": "",
     "defaultPeriodMs": 20,
     "metadata": {
-      "typeId": 41302,
+      "typeId": 243,
       "memorySize": 16,
       "parameterCount": 0,
-      "compilerName": "_LE"
+      "parameters": [],
+      "compilerName": "LE"
     }
   },
   {
-    "id": "_GE",
-    "name": "_GE",
+    "id": "GE",
+    "name": "GE",
     "category": "compare",
     "description": "大于等于比较：Input1 >= Input2",
-    "templateCode": "ge_1 = _GE();",
+    "templateCode": "ge_1 = GE();",
     "unit": "",
     "defaultPeriodMs": 20,
     "metadata": {
-      "typeId": 41303,
+      "typeId": 244,
       "memorySize": 16,
       "parameterCount": 0,
-      "compilerName": "_GE"
+      "parameters": [],
+      "compilerName": "GE"
     }
   },
   {
-    "id": "_EQ",
-    "name": "_EQ",
+    "id": "EQ",
+    "name": "EQ",
     "category": "compare",
     "description": "等于比较：Input1 = Input2",
-    "templateCode": "eq_1 = _EQ();",
+    "templateCode": "eq_1 = EQ();",
     "unit": "",
     "defaultPeriodMs": 20,
     "metadata": {
-      "typeId": 41304,
+      "typeId": 245,
       "memorySize": 16,
       "parameterCount": 0,
-      "compilerName": "_EQ"
+      "parameters": [],
+      "compilerName": "EQ"
     }
   },
   {
-    "id": "_NE",
-    "name": "_NE",
+    "id": "NE",
+    "name": "NE",
     "category": "compare",
     "description": "不等于比较：Input1 <> Input2",
-    "templateCode": "ne_1 = _NE();",
+    "templateCode": "ne_1 = NE();",
     "unit": "",
     "defaultPeriodMs": 20,
     "metadata": {
-      "typeId": 41305,
+      "typeId": 246,
       "memorySize": 16,
       "parameterCount": 0,
-      "compilerName": "_NE"
+      "parameters": [],
+      "compilerName": "NE"
     }
   },
   {
-    "id": "_IntConstBuild",
-    "name": "_IntConstBuild",
+    "id": "IntConstBuild",
+    "name": "IntConstBuild",
     "category": "constant",
     "description": "整数常量",
-    "templateCode": "int_const_build_1 = _IntConstBuild();",
+    "templateCode": "int_const_build_1 = IntConstBuild();",
     "unit": "",
     "defaultPeriodMs": 20,
     "metadata": {
-      "typeId": 41029,
+      "typeId": 121,
       "memorySize": 16,
       "parameterCount": 0,
-      "compilerName": "_IntConstBuild"
+      "parameters": [],
+      "compilerName": "IntConstBuild"
     }
   },
   {
-    "id": "_RealConstBuild",
-    "name": "_RealConstBuild",
+    "id": "RealConstBuild",
+    "name": "RealConstBuild",
     "category": "constant",
     "description": "浮点常量",
-    "templateCode": "real_const_build_1 = _RealConstBuild();",
+    "templateCode": "real_const_build_1 = RealConstBuild();",
     "unit": "",
     "defaultPeriodMs": 20,
     "metadata": {
-      "typeId": 41030,
+      "typeId": 122,
       "memorySize": 16,
       "parameterCount": 0,
-      "compilerName": "_RealConstBuild"
+      "parameters": [],
+      "compilerName": "RealConstBuild"
     }
   },
   {
-    "id": "_BoolConstBuild",
-    "name": "_BoolConstBuild",
+    "id": "BoolConstBuild",
+    "name": "BoolConstBuild",
     "category": "constant",
     "description": "布尔常量",
-    "templateCode": "bool_const_build_1 = _BoolConstBuild();",
+    "templateCode": "bool_const_build_1 = BoolConstBuild();",
     "unit": "",
     "defaultPeriodMs": 20,
     "metadata": {
-      "typeId": 41031,
+      "typeId": 123,
       "memorySize": 8,
       "parameterCount": 0,
-      "compilerName": "_BoolConstBuild"
+      "parameters": [],
+      "compilerName": "BoolConstBuild"
     }
   },
   {
-    "id": "_Switch1",
-    "name": "_Switch1",
+    "id": "Switch1",
+    "name": "Switch1",
     "category": "control",
     "description": "单分支选择",
-    "templateCode": "switch1_1 = _Switch1();",
+    "templateCode": "switch1_1 = Switch1();",
     "unit": "",
     "defaultPeriodMs": 20,
     "metadata": {
-      "typeId": 41100,
+      "typeId": 171,
       "memorySize": 16,
       "parameterCount": 0,
-      "compilerName": "_Switch1"
+      "parameters": [],
+      "compilerName": "Switch1"
     }
   },
   {
-    "id": "_Switch2",
-    "name": "_Switch2",
+    "id": "Switch2",
+    "name": "Switch2",
     "category": "control",
     "description": "双分支选择",
-    "templateCode": "switch2_1 = _Switch2();",
+    "templateCode": "switch2_1 = Switch2();",
     "unit": "",
     "defaultPeriodMs": 20,
     "metadata": {
-      "typeId": 41101,
+      "typeId": 172,
       "memorySize": 16,
       "parameterCount": 0,
-      "compilerName": "_Switch2"
+      "parameters": [],
+      "compilerName": "Switch2"
     }
   },
   {
-    "id": "_Switch3",
-    "name": "_Switch3",
+    "id": "Switch3",
+    "name": "Switch3",
     "category": "control",
     "description": "三分支选择",
-    "templateCode": "switch3_1 = _Switch3();",
+    "templateCode": "switch3_1 = Switch3();",
     "unit": "",
     "defaultPeriodMs": 20,
     "metadata": {
-      "typeId": 41102,
+      "typeId": 173,
       "memorySize": 16,
       "parameterCount": 0,
-      "compilerName": "_Switch3"
+      "parameters": [],
+      "compilerName": "Switch3"
     }
   },
   {
-    "id": "_Switch4",
-    "name": "_Switch4",
+    "id": "Switch4",
+    "name": "Switch4",
     "category": "control",
     "description": "四分支选择",
-    "templateCode": "switch4_1 = _Switch4();",
+    "templateCode": "switch4_1 = Switch4();",
     "unit": "",
     "defaultPeriodMs": 20,
     "metadata": {
-      "typeId": 41103,
+      "typeId": 174,
       "memorySize": 16,
       "parameterCount": 0,
-      "compilerName": "_Switch4"
+      "parameters": [],
+      "compilerName": "Switch4"
     }
   },
   {
-    "id": "_Switch5",
-    "name": "_Switch5",
+    "id": "Switch5",
+    "name": "Switch5",
     "category": "control",
     "description": "五分支选择",
-    "templateCode": "switch5_1 = _Switch5();",
+    "templateCode": "switch5_1 = Switch5();",
     "unit": "",
     "defaultPeriodMs": 20,
     "metadata": {
-      "typeId": 41104,
+      "typeId": 175,
       "memorySize": 16,
       "parameterCount": 0,
-      "compilerName": "_Switch5"
+      "parameters": [],
+      "compilerName": "Switch5"
     }
   },
   {
-    "id": "_SwitchCase",
-    "name": "_SwitchCase",
+    "id": "SwitchCase",
+    "name": "SwitchCase",
     "category": "control",
     "description": "Switch分支标记",
-    "templateCode": "switch_case_1 = _SwitchCase();",
+    "templateCode": "switch_case_1 = SwitchCase();",
     "unit": "",
     "defaultPeriodMs": 20,
     "metadata": {
-      "typeId": 41105,
+      "typeId": 176,
       "memorySize": 8,
       "parameterCount": 0,
-      "compilerName": "_SwitchCase"
+      "parameters": [],
+      "compilerName": "SwitchCase"
     }
   },
   {
-    "id": "_SwitchBreak",
-    "name": "_SwitchBreak",
+    "id": "SwitchBreak",
+    "name": "SwitchBreak",
     "category": "control",
     "description": "退出Switch",
-    "templateCode": "switch_break_1 = _SwitchBreak();",
+    "templateCode": "switch_break_1 = SwitchBreak();",
     "unit": "",
     "defaultPeriodMs": 20,
     "metadata": {
-      "typeId": 41106,
+      "typeId": 177,
       "memorySize": 8,
       "parameterCount": 0,
-      "compilerName": "_SwitchBreak"
+      "parameters": [],
+      "compilerName": "SwitchBreak"
     }
   },
   {
-    "id": "_SwitchEnd",
-    "name": "_SwitchEnd",
+    "id": "SwitchEnd",
+    "name": "SwitchEnd",
     "category": "control",
     "description": "Switch结束标志",
-    "templateCode": "switch_end_1 = _SwitchEnd();",
+    "templateCode": "switch_end_1 = SwitchEnd();",
     "unit": "",
     "defaultPeriodMs": 20,
     "metadata": {
-      "typeId": 41107,
+      "typeId": 178,
       "memorySize": 8,
       "parameterCount": 0,
-      "compilerName": "_SwitchEnd"
+      "parameters": [],
+      "compilerName": "SwitchEnd"
     }
   },
   {
-    "id": "_If1",
-    "name": "_If1",
+    "id": "If1",
+    "name": "If1",
     "category": "control",
     "description": "单条件判断",
-    "templateCode": "if1_1 = _If1();",
+    "templateCode": "if1_1 = If1();",
     "unit": "",
     "defaultPeriodMs": 20,
     "metadata": {
-      "typeId": 41110,
+      "typeId": 179,
       "memorySize": 16,
       "parameterCount": 0,
-      "compilerName": "_If1"
+      "parameters": [],
+      "compilerName": "If1"
     }
   },
   {
-    "id": "_If2",
-    "name": "_If2",
+    "id": "If2",
+    "name": "If2",
     "category": "control",
     "description": "双条件判断",
-    "templateCode": "if2_1 = _If2();",
+    "templateCode": "if2_1 = If2();",
     "unit": "",
     "defaultPeriodMs": 20,
     "metadata": {
-      "typeId": 41111,
+      "typeId": 180,
       "memorySize": 16,
       "parameterCount": 0,
-      "compilerName": "_If2"
+      "parameters": [],
+      "compilerName": "If2"
     }
   },
   {
-    "id": "_If3",
-    "name": "_If3",
+    "id": "If3",
+    "name": "If3",
     "category": "control",
     "description": "三条件判断",
-    "templateCode": "if3_1 = _If3();",
+    "templateCode": "if3_1 = If3();",
     "unit": "",
     "defaultPeriodMs": 20,
     "metadata": {
-      "typeId": 41112,
+      "typeId": 181,
       "memorySize": 16,
       "parameterCount": 0,
-      "compilerName": "_If3"
+      "parameters": [],
+      "compilerName": "If3"
     }
   },
   {
-    "id": "_IfElse",
-    "name": "_IfElse",
+    "id": "IfElse",
+    "name": "IfElse",
     "category": "control",
     "description": "If分支Else标记",
-    "templateCode": "if_else_1 = _IfElse();",
+    "templateCode": "if_else_1 = IfElse();",
     "unit": "",
     "defaultPeriodMs": 20,
     "metadata": {
-      "typeId": 41113,
+      "typeId": 182,
       "memorySize": 8,
       "parameterCount": 0,
-      "compilerName": "_IfElse"
+      "parameters": [],
+      "compilerName": "IfElse"
     }
   },
   {
-    "id": "_IfEnd",
-    "name": "_IfEnd",
+    "id": "IfEnd",
+    "name": "IfEnd",
     "category": "control",
     "description": "条件判断结束",
-    "templateCode": "if_end_1 = _IfEnd();",
+    "templateCode": "if_end_1 = IfEnd();",
     "unit": "",
     "defaultPeriodMs": 20,
     "metadata": {
-      "typeId": 41114,
+      "typeId": 183,
       "memorySize": 8,
       "parameterCount": 0,
-      "compilerName": "_IfEnd"
+      "parameters": [],
+      "compilerName": "IfEnd"
     }
   },
   {
-    "id": "_For",
-    "name": "_For",
+    "id": "For",
+    "name": "For",
     "category": "control",
     "description": "固定次数循环",
-    "templateCode": "for_1 = _For();",
+    "templateCode": "for_1 = For();",
     "unit": "",
     "defaultPeriodMs": 20,
     "metadata": {
-      "typeId": 41120,
+      "typeId": 184,
       "memorySize": 24,
       "parameterCount": 0,
-      "compilerName": "_For"
+      "parameters": [],
+      "compilerName": "For"
     }
   },
   {
-    "id": "_ForEnd",
-    "name": "_ForEnd",
+    "id": "ForEnd",
+    "name": "ForEnd",
     "category": "control",
     "description": "For循环结束",
-    "templateCode": "for_end_1 = _ForEnd();",
+    "templateCode": "for_end_1 = ForEnd();",
     "unit": "",
     "defaultPeriodMs": 20,
     "metadata": {
-      "typeId": 41121,
+      "typeId": 185,
       "memorySize": 8,
       "parameterCount": 0,
-      "compilerName": "_ForEnd"
+      "parameters": [],
+      "compilerName": "ForEnd"
     }
   },
   {
-    "id": "_While",
-    "name": "_While",
+    "id": "While",
+    "name": "While",
     "category": "control",
     "description": "条件循环",
-    "templateCode": "while_1 = _While();",
+    "templateCode": "while_1 = While();",
     "unit": "",
     "defaultPeriodMs": 20,
     "metadata": {
-      "typeId": 41122,
+      "typeId": 186,
       "memorySize": 16,
       "parameterCount": 0,
-      "compilerName": "_While"
+      "parameters": [],
+      "compilerName": "While"
     }
   },
   {
-    "id": "_WhileEnd",
-    "name": "_WhileEnd",
+    "id": "WhileEnd",
+    "name": "WhileEnd",
     "category": "control",
     "description": "While循环结束",
-    "templateCode": "while_end_1 = _WhileEnd();",
+    "templateCode": "while_end_1 = WhileEnd();",
     "unit": "",
     "defaultPeriodMs": 20,
     "metadata": {
-      "typeId": 41123,
+      "typeId": 187,
       "memorySize": 8,
       "parameterCount": 0,
-      "compilerName": "_WhileEnd"
+      "parameters": [],
+      "compilerName": "WhileEnd"
     }
   },
   {
-    "id": "_LoopBreak",
-    "name": "_LoopBreak",
+    "id": "LoopBreak",
+    "name": "LoopBreak",
     "category": "control",
     "description": "退出循环",
-    "templateCode": "loop_break_1 = _LoopBreak();",
+    "templateCode": "loop_break_1 = LoopBreak();",
     "unit": "",
     "defaultPeriodMs": 20,
     "metadata": {
-      "typeId": 41124,
+      "typeId": 188,
       "memorySize": 8,
       "parameterCount": 0,
-      "compilerName": "_LoopBreak"
+      "parameters": [],
+      "compilerName": "LoopBreak"
     }
   },
   {
-    "id": "_LoopContinue",
-    "name": "_LoopContinue",
+    "id": "LoopContinue",
+    "name": "LoopContinue",
     "category": "control",
     "description": "继续下次循环",
-    "templateCode": "loop_continue_1 = _LoopContinue();",
+    "templateCode": "loop_continue_1 = LoopContinue();",
     "unit": "",
     "defaultPeriodMs": 20,
     "metadata": {
-      "typeId": 41125,
+      "typeId": 189,
       "memorySize": 8,
       "parameterCount": 0,
-      "compilerName": "_LoopContinue"
+      "parameters": [],
+      "compilerName": "LoopContinue"
     }
   },
   {
-    "id": "_Return",
-    "name": "_Return",
+    "id": "Return",
+    "name": "Return",
     "category": "control",
     "description": "返回",
-    "templateCode": "return_1 = _Return();",
+    "templateCode": "return_1 = Return();",
     "unit": "",
     "defaultPeriodMs": 20,
     "metadata": {
-      "typeId": 41126,
+      "typeId": 190,
       "memorySize": 8,
       "parameterCount": 0,
-      "compilerName": "_Return"
+      "parameters": [],
+      "compilerName": "Return"
     }
   },
   {
-    "id": "_Counter",
-    "name": "_Counter",
+    "id": "Counter",
+    "name": "Counter",
     "category": "counter",
     "description": "通用计数器",
-    "templateCode": "counter_1 = _Counter();",
+    "templateCode": "counter_1 = Counter();",
     "unit": "",
     "defaultPeriodMs": 20,
     "metadata": {
-      "typeId": 41700,
+      "typeId": 311,
       "memorySize": 24,
       "parameterCount": 0,
-      "compilerName": "_Counter"
+      "parameters": [],
+      "compilerName": "Counter"
     }
   },
   {
-    "id": "_CTU",
-    "name": "_CTU",
+    "id": "CTU",
+    "name": "CTU",
     "category": "counter",
     "description": "加计数器",
-    "templateCode": "ctu_1 = _CTU();",
+    "templateCode": "ctu_1 = CTU();",
     "unit": "",
     "defaultPeriodMs": 20,
     "metadata": {
-      "typeId": 41701,
+      "typeId": 312,
       "memorySize": 24,
       "parameterCount": 0,
-      "compilerName": "_CTU"
+      "parameters": [],
+      "compilerName": "CTU"
     }
   },
   {
-    "id": "_CTD",
-    "name": "_CTD",
+    "id": "CTD",
+    "name": "CTD",
     "category": "counter",
     "description": "减计数器",
-    "templateCode": "ctd_1 = _CTD();",
+    "templateCode": "ctd_1 = CTD();",
     "unit": "",
     "defaultPeriodMs": 20,
     "metadata": {
-      "typeId": 41702,
+      "typeId": 313,
       "memorySize": 24,
       "parameterCount": 0,
-      "compilerName": "_CTD"
+      "parameters": [],
+      "compilerName": "CTD"
     }
   },
   {
-    "id": "_CTUD",
-    "name": "_CTUD",
+    "id": "CTUD",
+    "name": "CTUD",
     "category": "counter",
     "description": "加减计数器",
-    "templateCode": "ctud_1 = _CTUD();",
+    "templateCode": "ctud_1 = CTUD();",
     "unit": "",
     "defaultPeriodMs": 20,
     "metadata": {
-      "typeId": 41703,
+      "typeId": 314,
       "memorySize": 32,
       "parameterCount": 0,
-      "compilerName": "_CTUD"
+      "parameters": [],
+      "compilerName": "CTUD"
     }
   },
   {
-    "id": "_CounterReset",
-    "name": "_CounterReset",
+    "id": "CounterReset",
+    "name": "CounterReset",
     "category": "counter",
     "description": "复位计数器",
-    "templateCode": "counter_reset_1 = _CounterReset();",
+    "templateCode": "counter_reset_1 = CounterReset();",
     "unit": "",
     "defaultPeriodMs": 20,
     "metadata": {
-      "typeId": 41704,
+      "typeId": 315,
       "memorySize": 16,
       "parameterCount": 0,
-      "compilerName": "_CounterReset"
+      "parameters": [],
+      "compilerName": "CounterReset"
     }
   },
   {
-    "id": "_KeyScan",
-    "name": "_KeyScan",
+    "id": "KeyScan",
+    "name": "KeyScan",
     "category": "display",
     "description": "按键扫描",
-    "templateCode": "key_scan_1 = _KeyScan();",
+    "templateCode": "key_scan_1 = KeyScan();",
     "unit": "",
     "defaultPeriodMs": 20,
     "metadata": {
-      "typeId": 42000,
+      "typeId": 801,
       "memorySize": 16,
       "parameterCount": 0,
-      "compilerName": "_KeyScan"
+      "parameters": [],
+      "compilerName": "KeyScan"
     }
   },
   {
-    "id": "_SCIDispTrans",
-    "name": "_SCIDispTrans",
+    "id": "SCIDispTrans",
+    "name": "SCIDispTrans",
     "category": "display",
     "description": "串口显示发送",
-    "templateCode": "sci_disp_trans_1 = _SCIDispTrans();",
+    "templateCode": "sci_disp_trans_1 = SCIDispTrans();",
     "unit": "",
     "defaultPeriodMs": 20,
     "metadata": {
-      "typeId": 42001,
+      "typeId": 802,
       "memorySize": 16,
       "parameterCount": 0,
-      "compilerName": "_SCIDispTrans"
+      "parameters": [],
+      "compilerName": "SCIDispTrans"
     }
   },
   {
-    "id": "_SCIDispInit",
-    "name": "_SCIDispInit",
+    "id": "SCIDispInit",
+    "name": "SCIDispInit",
     "category": "display",
     "description": "串口显示初始化",
-    "templateCode": "sci_disp_init_1 = _SCIDispInit();",
+    "templateCode": "sci_disp_init_1 = SCIDispInit();",
     "unit": "",
     "defaultPeriodMs": 20,
     "metadata": {
-      "typeId": 42002,
+      "typeId": 803,
       "memorySize": 24,
       "parameterCount": 0,
-      "compilerName": "_SCIDispInit"
+      "parameters": [],
+      "compilerName": "SCIDispInit"
     }
   },
   {
-    "id": "_M600TextDisp",
-    "name": "_M600TextDisp",
+    "id": "M600TextDisp",
+    "name": "M600TextDisp",
     "category": "display",
     "description": "M600文本显示",
-    "templateCode": "m600_text_disp_1 = _M600TextDisp();",
+    "templateCode": "m600_text_disp_1 = M600TextDisp();",
     "unit": "",
     "defaultPeriodMs": 20,
     "metadata": {
-      "typeId": 42003,
+      "typeId": 804,
       "memorySize": 64,
       "parameterCount": 0,
-      "compilerName": "_M600TextDisp"
+      "parameters": [],
+      "compilerName": "M600TextDisp"
     }
   },
   {
-    "id": "_M600ProgressBar",
-    "name": "_M600ProgressBar",
+    "id": "M600ProgressBar",
+    "name": "M600ProgressBar",
     "category": "display",
     "description": "M600进度条",
-    "templateCode": "m600_progress_bar_1 = _M600ProgressBar();",
+    "templateCode": "m600_progress_bar_1 = M600ProgressBar();",
     "unit": "",
     "defaultPeriodMs": 20,
     "metadata": {
-      "typeId": 42004,
+      "typeId": 805,
       "memorySize": 64,
       "parameterCount": 0,
-      "compilerName": "_M600ProgressBar"
+      "parameters": [],
+      "compilerName": "M600ProgressBar"
     }
   },
   {
-    "id": "_EXCACycDisp",
-    "name": "_EXCACycDisp",
+    "id": "EXCACycDisp",
+    "name": "EXCACycDisp",
     "category": "display",
     "description": "EXCA循环显示",
-    "templateCode": "exca_cyc_disp_1 = _EXCACycDisp();",
+    "templateCode": "exca_cyc_disp_1 = EXCACycDisp();",
     "unit": "",
     "defaultPeriodMs": 20,
     "metadata": {
-      "typeId": 42005,
+      "typeId": 806,
       "memorySize": 32,
       "parameterCount": 0,
-      "compilerName": "_EXCACycDisp"
+      "parameters": [],
+      "compilerName": "EXCACycDisp"
     }
   },
   {
-    "id": "_FilterBW",
-    "name": "_FilterBW",
+    "id": "FilterBW",
+    "name": "FilterBW",
     "category": "filter",
     "description": "巴特沃斯滤波器",
-    "templateCode": "filter_bw_1 = _FilterBW();",
+    "templateCode": "filter_bw_1 = FilterBW();",
     "unit": "",
     "defaultPeriodMs": 20,
     "metadata": {
-      "typeId": 41900,
+      "typeId": 851,
       "memorySize": 48,
       "parameterCount": 0,
-      "compilerName": "_FilterBW"
+      "parameters": [],
+      "compilerName": "FilterBW"
     }
   },
   {
-    "id": "_DrvAI",
-    "name": "_DrvAI",
+    "id": "DrvAI",
+    "name": "DrvAI",
     "category": "io",
-    "description": "模拟量输入",
-    "templateCode": "drv_ai_1 = _DrvAI(\n    NumChannels = 1,\n    InputNum = 0,\n    DivisionNum = 4096\n);",
+    "description": "模拟量输入驱动",
+    "templateCode": "drv_ai_1 = DrvAI(\n    NumChannels = 1,\n    InputNum = 0,\n    DivisionNum = 4096\n);",
     "unit": "",
     "defaultPeriodMs": 20,
     "metadata": {
-      "typeId": 41200,
+      "typeId": 401,
       "memorySize": 32,
       "parameterCount": 3,
-      "compilerName": "_DrvAI"
+      "parameters": [
+        {
+          "name": "NumChannels",
+          "dataType": "INT",
+          "direction": "IN",
+          "offset": 0,
+          "defaultValue": 1,
+          "description": ""
+        },
+        {
+          "name": "InputNum",
+          "dataType": "INT",
+          "direction": "IN",
+          "offset": 0,
+          "defaultValue": 0,
+          "description": ""
+        },
+        {
+          "name": "DivisionNum",
+          "dataType": "INT",
+          "direction": "IN",
+          "offset": 0,
+          "defaultValue": 4096,
+          "description": ""
+        }
+      ],
+      "compilerName": "DrvAI"
     }
   },
   {
-    "id": "_DrvAO",
-    "name": "_DrvAO",
+    "id": "DrvAO",
+    "name": "DrvAO",
     "category": "io",
-    "description": "模拟量输出",
-    "templateCode": "drv_ao_1 = _DrvAO(\n    channel = 0,\n    value = 0\n);",
+    "description": "模拟量输出驱动",
+    "templateCode": "drv_ao_1 = DrvAO(\n    channel = 0,\n    value = 0\n);",
     "unit": "",
     "defaultPeriodMs": 20,
     "metadata": {
-      "typeId": 41201,
+      "typeId": 402,
       "memorySize": 32,
       "parameterCount": 2,
-      "compilerName": "_DrvAO"
+      "parameters": [
+        {
+          "name": "channel",
+          "dataType": "INT",
+          "direction": "IN",
+          "offset": 0,
+          "defaultValue": 0,
+          "description": ""
+        },
+        {
+          "name": "value",
+          "dataType": "REAL",
+          "direction": "IN",
+          "offset": 0,
+          "defaultValue": 0,
+          "description": ""
+        }
+      ],
+      "compilerName": "DrvAO"
     }
   },
   {
-    "id": "_DrvDI",
-    "name": "_DrvDI",
+    "id": "DrvDI",
+    "name": "DrvDI",
     "category": "io",
-    "description": "开关量输入",
-    "templateCode": "drv_di_1 = _DrvDI(\n    Port = 0,\n    Mask = 255,\n    Action = 1\n);",
+    "description": "开关量输入驱动",
+    "templateCode": "drv_di_1 = DrvDI(\n    Port = 0,\n    Mask = 255,\n    Action = 1\n);",
     "unit": "",
     "defaultPeriodMs": 20,
     "metadata": {
-      "typeId": 41202,
+      "typeId": 403,
       "memorySize": 16,
       "parameterCount": 3,
-      "compilerName": "_DrvDI"
+      "parameters": [
+        {
+          "name": "Port",
+          "dataType": "INT",
+          "direction": "IN",
+          "offset": 0,
+          "defaultValue": 0,
+          "description": ""
+        },
+        {
+          "name": "Mask",
+          "dataType": "INT",
+          "direction": "IN",
+          "offset": 0,
+          "defaultValue": 255,
+          "description": ""
+        },
+        {
+          "name": "Action",
+          "dataType": "BOOL",
+          "direction": "IN",
+          "offset": 0,
+          "defaultValue": 1,
+          "description": ""
+        }
+      ],
+      "compilerName": "DrvDI"
     }
   },
   {
-    "id": "_DrvDO",
-    "name": "_DrvDO",
+    "id": "DrvDO",
+    "name": "DrvDO",
     "category": "io",
-    "description": "开关量输出",
-    "templateCode": "drv_do_1 = _DrvDO(\n    OutputWord = 0,\n    Port = 0,\n    Mask = 255,\n    Action = 1\n);",
+    "description": "开关量输出驱动",
+    "templateCode": "drv_do_1 = DrvDO(\n    OutputWord = 0,\n    Port = 0,\n    Mask = 255,\n    Action = 1\n);",
     "unit": "",
     "defaultPeriodMs": 20,
     "metadata": {
-      "typeId": 41203,
+      "typeId": 404,
       "memorySize": 16,
       "parameterCount": 4,
-      "compilerName": "_DrvDO"
+      "parameters": [
+        {
+          "name": "OutputWord",
+          "dataType": "INT",
+          "direction": "IN",
+          "offset": 0,
+          "defaultValue": 0,
+          "description": ""
+        },
+        {
+          "name": "Port",
+          "dataType": "INT",
+          "direction": "IN",
+          "offset": 0,
+          "defaultValue": 0,
+          "description": ""
+        },
+        {
+          "name": "Mask",
+          "dataType": "INT",
+          "direction": "IN",
+          "offset": 0,
+          "defaultValue": 255,
+          "description": ""
+        },
+        {
+          "name": "Action",
+          "dataType": "BOOL",
+          "direction": "IN",
+          "offset": 0,
+          "defaultValue": 1,
+          "description": ""
+        }
+      ],
+      "compilerName": "DrvDO"
     }
   },
   {
-    "id": "_DrvT1PWMAO",
-    "name": "_DrvT1PWMAO",
-    "category": "io",
-    "description": "PWM输出（T1模块）",
-    "templateCode": "drv_t1_pwmao_1 = _DrvT1PWMAO(\n    Channel = 0,\n    Period = 1000,\n    Duty = 50\n);",
-    "unit": "",
-    "defaultPeriodMs": 20,
-    "metadata": {
-      "typeId": 41209,
-      "memorySize": 24,
-      "parameterCount": 3,
-      "compilerName": "_DrvT1PWMAO"
-    }
-  },
-  {
-    "id": "_PortSet",
-    "name": "_PortSet",
+    "id": "PortSet",
+    "name": "PortSet",
     "category": "io",
     "description": "端口置位",
-    "templateCode": "port_set_1 = _PortSet(\n    port = 0,\n    pin = 0\n);",
+    "templateCode": "port_set_1 = PortSet(\n    port = 0,\n    pin = 0\n);",
     "unit": "",
     "defaultPeriodMs": 20,
     "metadata": {
-      "typeId": 41204,
+      "typeId": 405,
       "memorySize": 16,
       "parameterCount": 2,
-      "compilerName": "_PortSet"
+      "parameters": [
+        {
+          "name": "port",
+          "dataType": "INT",
+          "direction": "IN",
+          "offset": 0,
+          "defaultValue": 0,
+          "description": ""
+        },
+        {
+          "name": "pin",
+          "dataType": "INT",
+          "direction": "IN",
+          "offset": 0,
+          "defaultValue": 0,
+          "description": ""
+        }
+      ],
+      "compilerName": "PortSet"
     }
   },
   {
-    "id": "_PortReset",
-    "name": "_PortReset",
+    "id": "PortReset",
+    "name": "PortReset",
     "category": "io",
     "description": "端口复位",
-    "templateCode": "port_reset_1 = _PortReset(\n    port = 0,\n    pin = 0\n);",
+    "templateCode": "port_reset_1 = PortReset(\n    port = 0,\n    pin = 0\n);",
     "unit": "",
     "defaultPeriodMs": 20,
     "metadata": {
-      "typeId": 41205,
+      "typeId": 406,
       "memorySize": 16,
       "parameterCount": 2,
-      "compilerName": "_PortReset"
+      "parameters": [
+        {
+          "name": "port",
+          "dataType": "INT",
+          "direction": "IN",
+          "offset": 0,
+          "defaultValue": 0,
+          "description": ""
+        },
+        {
+          "name": "pin",
+          "dataType": "INT",
+          "direction": "IN",
+          "offset": 0,
+          "defaultValue": 0,
+          "description": ""
+        }
+      ],
+      "compilerName": "PortReset"
     }
   },
   {
-    "id": "_PortToggle",
-    "name": "_PortToggle",
+    "id": "PortToggle",
+    "name": "PortToggle",
     "category": "io",
     "description": "端口翻转",
-    "templateCode": "port_toggle_1 = _PortToggle(\n    port = 0,\n    pin = 0\n);",
+    "templateCode": "port_toggle_1 = PortToggle(\n    port = 0,\n    pin = 0\n);",
     "unit": "",
     "defaultPeriodMs": 20,
     "metadata": {
-      "typeId": 41206,
+      "typeId": 407,
       "memorySize": 16,
       "parameterCount": 2,
-      "compilerName": "_PortToggle"
+      "parameters": [
+        {
+          "name": "port",
+          "dataType": "INT",
+          "direction": "IN",
+          "offset": 0,
+          "defaultValue": 0,
+          "description": ""
+        },
+        {
+          "name": "pin",
+          "dataType": "INT",
+          "direction": "IN",
+          "offset": 0,
+          "defaultValue": 0,
+          "description": ""
+        }
+      ],
+      "compilerName": "PortToggle"
     }
   },
   {
-    "id": "_DrvT2PeriodIn",
-    "name": "_DrvT2PeriodIn",
+    "id": "DrvT2PeriodIn",
+    "name": "DrvT2PeriodIn",
     "category": "io",
-    "description": "周期量输入（T2 CAP模块）",
-    "templateCode": "drv_t2_period_in_1 = _DrvT2PeriodIn(\n    Channel = 0,\n    Mode = 0,\n    Scale = 1000,\n    Mask = 65535\n);",
+    "description": "周期量输入",
+    "templateCode": "drv_t2_period_in_1 = DrvT2PeriodIn(\n    Channel = 0,\n    Mode = 0,\n    Scale = 1000,\n    Mask = 65535\n);",
     "unit": "",
     "defaultPeriodMs": 20,
     "metadata": {
-      "typeId": 41207,
+      "typeId": 408,
       "memorySize": 24,
       "parameterCount": 4,
-      "compilerName": "_DrvT2PeriodIn"
+      "parameters": [
+        {
+          "name": "Channel",
+          "dataType": "INT",
+          "direction": "IN",
+          "offset": 0,
+          "defaultValue": 0,
+          "description": ""
+        },
+        {
+          "name": "Mode",
+          "dataType": "INT",
+          "direction": "IN",
+          "offset": 0,
+          "defaultValue": 0,
+          "description": ""
+        },
+        {
+          "name": "Scale",
+          "dataType": "INT",
+          "direction": "IN",
+          "offset": 0,
+          "defaultValue": 1000,
+          "description": ""
+        },
+        {
+          "name": "Mask",
+          "dataType": "INT",
+          "direction": "IN",
+          "offset": 0,
+          "defaultValue": 65535,
+          "description": ""
+        }
+      ],
+      "compilerName": "DrvT2PeriodIn"
     }
   },
   {
-    "id": "_DrvTimeIn",
-    "name": "_DrvTimeIn",
+    "id": "DrvTimeIn",
+    "name": "DrvTimeIn",
     "category": "io",
-    "description": "脉冲量输入（TIME模块）",
-    "templateCode": "drv_time_in_1 = _DrvTimeIn(\n    Channel = 0,\n    Mode = 0,\n    Scale = 1,\n    Mask = 65535\n);",
+    "description": "脉冲量输入",
+    "templateCode": "drv_time_in_1 = DrvTimeIn(\n    Channel = 0,\n    Mode = 0,\n    Scale = 1,\n    Mask = 65535\n);",
     "unit": "",
     "defaultPeriodMs": 20,
     "metadata": {
-      "typeId": 41208,
+      "typeId": 409,
       "memorySize": 24,
       "parameterCount": 4,
-      "compilerName": "_DrvTimeIn"
+      "parameters": [
+        {
+          "name": "Channel",
+          "dataType": "INT",
+          "direction": "IN",
+          "offset": 0,
+          "defaultValue": 0,
+          "description": ""
+        },
+        {
+          "name": "Mode",
+          "dataType": "INT",
+          "direction": "IN",
+          "offset": 0,
+          "defaultValue": 0,
+          "description": ""
+        },
+        {
+          "name": "Scale",
+          "dataType": "INT",
+          "direction": "IN",
+          "offset": 0,
+          "defaultValue": 1,
+          "description": ""
+        },
+        {
+          "name": "Mask",
+          "dataType": "INT",
+          "direction": "IN",
+          "offset": 0,
+          "defaultValue": 65535,
+          "description": ""
+        }
+      ],
+      "compilerName": "DrvTimeIn"
     }
   },
   {
-    "id": "_DrvT2PulseIn",
-    "name": "_DrvT2PulseIn",
-    "category": "io",
-    "description": "脉冲量输入（T2脉冲模块）",
-    "templateCode": "drv_t2_pulse_in_1 = _DrvT2PulseIn(\n    Channel = 0,\n    Mode = 0,\n    Scale = 1,\n    Mask = 65535\n);",
-    "unit": "",
-    "defaultPeriodMs": 20,
-    "metadata": {
-      "typeId": 41214,
-      "memorySize": 24,
-      "parameterCount": 4,
-      "compilerName": "_DrvT2PulseIn"
-    }
-  },
-  {
-    "id": "_DrvQEPIn",
-    "name": "_DrvQEPIn",
-    "category": "io",
-    "description": "正交编码器输入（QEP模块）",
-    "templateCode": "drv_qep_in_1 = _DrvQEPIn(\n    Channel = 0,\n    Mode = 0,\n    Scale = 1,\n    Mask = 65535\n);",
-    "unit": "",
-    "defaultPeriodMs": 20,
-    "metadata": {
-      "typeId": 41215,
-      "memorySize": 24,
-      "parameterCount": 4,
-      "compilerName": "_DrvQEPIn"
-    }
-  },
-  {
-    "id": "_And",
-    "name": "_And",
+    "id": "And",
+    "name": "And",
     "category": "logic",
     "description": "逻辑与",
-    "templateCode": "and_1 = _And();",
+    "templateCode": "and_1 = And();",
     "unit": "",
     "defaultPeriodMs": 20,
     "metadata": {
-      "typeId": 41400,
+      "typeId": 271,
       "memorySize": 16,
       "parameterCount": 0,
-      "compilerName": "_And"
+      "parameters": [],
+      "compilerName": "And"
     }
   },
   {
-    "id": "_Or",
-    "name": "_Or",
+    "id": "Or",
+    "name": "Or",
     "category": "logic",
     "description": "逻辑或",
-    "templateCode": "or_1 = _Or();",
+    "templateCode": "or_1 = Or();",
     "unit": "",
     "defaultPeriodMs": 20,
     "metadata": {
-      "typeId": 41401,
+      "typeId": 272,
       "memorySize": 16,
       "parameterCount": 0,
-      "compilerName": "_Or"
+      "parameters": [],
+      "compilerName": "Or"
     }
   },
   {
-    "id": "_Not",
-    "name": "_Not",
+    "id": "Not",
+    "name": "Not",
     "category": "logic",
     "description": "逻辑非",
-    "templateCode": "not_1 = _Not();",
+    "templateCode": "not_1 = Not();",
     "unit": "",
     "defaultPeriodMs": 20,
     "metadata": {
-      "typeId": 41402,
+      "typeId": 273,
       "memorySize": 16,
       "parameterCount": 0,
-      "compilerName": "_Not"
+      "parameters": [],
+      "compilerName": "Not"
     }
   },
   {
-    "id": "_Xor",
-    "name": "_Xor",
+    "id": "Xor",
+    "name": "Xor",
     "category": "logic",
     "description": "异或",
-    "templateCode": "xor_1 = _Xor();",
+    "templateCode": "xor_1 = Xor();",
     "unit": "",
     "defaultPeriodMs": 20,
     "metadata": {
-      "typeId": 41403,
+      "typeId": 274,
       "memorySize": 16,
       "parameterCount": 0,
-      "compilerName": "_Xor"
+      "parameters": [],
+      "compilerName": "Xor"
     }
   },
   {
-    "id": "_Shl",
-    "name": "_Shl",
+    "id": "Shl",
+    "name": "Shl",
     "category": "logic",
     "description": "左移",
-    "templateCode": "shl_1 = _Shl();",
+    "templateCode": "shl_1 = Shl();",
     "unit": "",
     "defaultPeriodMs": 20,
     "metadata": {
-      "typeId": 41404,
+      "typeId": 275,
       "memorySize": 16,
       "parameterCount": 0,
-      "compilerName": "_Shl"
+      "parameters": [],
+      "compilerName": "Shl"
     }
   },
   {
-    "id": "_Shr",
-    "name": "_Shr",
+    "id": "Shr",
+    "name": "Shr",
     "category": "logic",
     "description": "右移",
-    "templateCode": "shr_1 = _Shr();",
+    "templateCode": "shr_1 = Shr();",
     "unit": "",
     "defaultPeriodMs": 20,
     "metadata": {
-      "typeId": 41405,
+      "typeId": 276,
       "memorySize": 16,
       "parameterCount": 0,
-      "compilerName": "_Shr"
+      "parameters": [],
+      "compilerName": "Shr"
     }
   },
   {
-    "id": "_Rol",
-    "name": "_Rol",
+    "id": "Rol",
+    "name": "Rol",
     "category": "logic",
     "description": "循环左移",
-    "templateCode": "rol_1 = _Rol();",
+    "templateCode": "rol_1 = Rol();",
     "unit": "",
     "defaultPeriodMs": 20,
     "metadata": {
-      "typeId": 41406,
+      "typeId": 277,
       "memorySize": 16,
       "parameterCount": 0,
-      "compilerName": "_Rol"
+      "parameters": [],
+      "compilerName": "Rol"
     }
   },
   {
-    "id": "_Ror",
-    "name": "_Ror",
+    "id": "Ror",
+    "name": "Ror",
     "category": "logic",
     "description": "循环右移",
-    "templateCode": "ror_1 = _Ror();",
+    "templateCode": "ror_1 = Ror();",
     "unit": "",
     "defaultPeriodMs": 20,
     "metadata": {
-      "typeId": 41407,
+      "typeId": 278,
       "memorySize": 16,
       "parameterCount": 0,
-      "compilerName": "_Ror"
+      "parameters": [],
+      "compilerName": "Ror"
     }
   },
   {
-    "id": "_Add",
-    "name": "_Add",
+    "id": "Add",
+    "name": "Add",
     "category": "math",
     "description": "加法",
-    "templateCode": "add_1 = _Add();",
+    "templateCode": "add_1 = Add();",
     "unit": "",
     "defaultPeriodMs": 20,
     "metadata": {
-      "typeId": 41300,
+      "typeId": 201,
       "memorySize": 16,
       "parameterCount": 0,
-      "compilerName": "_Add"
+      "parameters": [],
+      "compilerName": "Add"
     }
   },
   {
-    "id": "_Sub",
-    "name": "_Sub",
+    "id": "Sub",
+    "name": "Sub",
     "category": "math",
     "description": "减法",
-    "templateCode": "sub_1 = _Sub();",
+    "templateCode": "sub_1 = Sub();",
     "unit": "",
     "defaultPeriodMs": 20,
     "metadata": {
-      "typeId": 41301,
+      "typeId": 202,
       "memorySize": 16,
       "parameterCount": 0,
-      "compilerName": "_Sub"
+      "parameters": [],
+      "compilerName": "Sub"
     }
   },
   {
-    "id": "_Mul",
-    "name": "_Mul",
+    "id": "Mul",
+    "name": "Mul",
     "category": "math",
     "description": "乘法",
-    "templateCode": "mul_1 = _Mul();",
+    "templateCode": "mul_1 = Mul();",
     "unit": "",
     "defaultPeriodMs": 20,
     "metadata": {
-      "typeId": 41302,
+      "typeId": 203,
       "memorySize": 16,
       "parameterCount": 0,
-      "compilerName": "_Mul"
+      "parameters": [],
+      "compilerName": "Mul"
     }
   },
   {
-    "id": "_Div",
-    "name": "_Div",
+    "id": "Div",
+    "name": "Div",
     "category": "math",
     "description": "除法",
-    "templateCode": "div_1 = _Div();",
+    "templateCode": "div_1 = Div();",
     "unit": "",
     "defaultPeriodMs": 20,
     "metadata": {
-      "typeId": 41303,
+      "typeId": 204,
       "memorySize": 16,
       "parameterCount": 0,
-      "compilerName": "_Div"
+      "parameters": [],
+      "compilerName": "Div"
     }
   },
   {
-    "id": "_Mod",
-    "name": "_Mod",
+    "id": "Mod",
+    "name": "Mod",
     "category": "math",
     "description": "取模",
-    "templateCode": "mod_1 = _Mod();",
+    "templateCode": "mod_1 = Mod();",
     "unit": "",
     "defaultPeriodMs": 20,
     "metadata": {
-      "typeId": 41304,
+      "typeId": 205,
       "memorySize": 16,
       "parameterCount": 0,
-      "compilerName": "_Mod"
+      "parameters": [],
+      "compilerName": "Mod"
     }
   },
   {
-    "id": "_Abs",
-    "name": "_Abs",
+    "id": "Abs",
+    "name": "Abs",
     "category": "math",
     "description": "绝对值",
-    "templateCode": "abs_1 = _Abs();",
+    "templateCode": "abs_1 = Abs();",
     "unit": "",
     "defaultPeriodMs": 20,
     "metadata": {
-      "typeId": 41305,
+      "typeId": 206,
       "memorySize": 16,
       "parameterCount": 0,
-      "compilerName": "_Abs"
+      "parameters": [],
+      "compilerName": "Abs"
     }
   },
   {
-    "id": "_Sqrt",
-    "name": "_Sqrt",
+    "id": "Sqrt",
+    "name": "Sqrt",
     "category": "math",
     "description": "平方根",
-    "templateCode": "sqrt_1 = _Sqrt();",
+    "templateCode": "sqrt_1 = Sqrt();",
     "unit": "",
     "defaultPeriodMs": 20,
     "metadata": {
-      "typeId": 41306,
+      "typeId": 207,
       "memorySize": 16,
       "parameterCount": 0,
-      "compilerName": "_Sqrt"
+      "parameters": [],
+      "compilerName": "Sqrt"
     }
   },
   {
-    "id": "_Exp",
-    "name": "_Exp",
+    "id": "Exp",
+    "name": "Exp",
     "category": "math",
     "description": "指数",
-    "templateCode": "exp_1 = _Exp();",
+    "templateCode": "exp_1 = Exp();",
     "unit": "",
     "defaultPeriodMs": 20,
     "metadata": {
-      "typeId": 41307,
+      "typeId": 208,
       "memorySize": 16,
       "parameterCount": 0,
-      "compilerName": "_Exp"
+      "parameters": [],
+      "compilerName": "Exp"
     }
   },
   {
-    "id": "_Ln",
-    "name": "_Ln",
+    "id": "Ln",
+    "name": "Ln",
     "category": "math",
     "description": "自然对数",
-    "templateCode": "ln_1 = _Ln();",
+    "templateCode": "ln_1 = Ln();",
     "unit": "",
     "defaultPeriodMs": 20,
     "metadata": {
-      "typeId": 41308,
+      "typeId": 209,
       "memorySize": 16,
       "parameterCount": 0,
-      "compilerName": "_Ln"
+      "parameters": [],
+      "compilerName": "Ln"
     }
   },
   {
-    "id": "_Log",
-    "name": "_Log",
+    "id": "Log",
+    "name": "Log",
     "category": "math",
     "description": "常用对数",
-    "templateCode": "log_1 = _Log();",
+    "templateCode": "log_1 = Log();",
     "unit": "",
     "defaultPeriodMs": 20,
     "metadata": {
-      "typeId": 41309,
+      "typeId": 210,
       "memorySize": 16,
       "parameterCount": 0,
-      "compilerName": "_Log"
+      "parameters": [],
+      "compilerName": "Log"
     }
   },
   {
-    "id": "_Sin",
-    "name": "_Sin",
+    "id": "Sin",
+    "name": "Sin",
     "category": "math",
     "description": "正弦",
-    "templateCode": "sin_1 = _Sin();",
+    "templateCode": "sin_1 = Sin();",
     "unit": "",
     "defaultPeriodMs": 20,
     "metadata": {
-      "typeId": 41310,
+      "typeId": 211,
       "memorySize": 16,
       "parameterCount": 0,
-      "compilerName": "_Sin"
+      "parameters": [],
+      "compilerName": "Sin"
     }
   },
   {
-    "id": "_Cos",
-    "name": "_Cos",
+    "id": "Cos",
+    "name": "Cos",
     "category": "math",
     "description": "余弦",
-    "templateCode": "cos_1 = _Cos();",
+    "templateCode": "cos_1 = Cos();",
     "unit": "",
     "defaultPeriodMs": 20,
     "metadata": {
-      "typeId": 41311,
+      "typeId": 212,
       "memorySize": 16,
       "parameterCount": 0,
-      "compilerName": "_Cos"
+      "parameters": [],
+      "compilerName": "Cos"
     }
   },
   {
-    "id": "_Tan",
-    "name": "_Tan",
+    "id": "Tan",
+    "name": "Tan",
     "category": "math",
     "description": "正切",
-    "templateCode": "tan_1 = _Tan();",
+    "templateCode": "tan_1 = Tan();",
     "unit": "",
     "defaultPeriodMs": 20,
     "metadata": {
-      "typeId": 41312,
+      "typeId": 213,
       "memorySize": 16,
       "parameterCount": 0,
-      "compilerName": "_Tan"
+      "parameters": [],
+      "compilerName": "Tan"
     }
   },
   {
-    "id": "_Limit",
-    "name": "_Limit",
+    "id": "Limit",
+    "name": "Limit",
     "category": "math",
     "description": "限幅",
-    "templateCode": "limit_1 = _Limit();",
+    "templateCode": "limit_1 = Limit();",
     "unit": "",
     "defaultPeriodMs": 20,
     "metadata": {
-      "typeId": 41313,
+      "typeId": 214,
       "memorySize": 24,
       "parameterCount": 0,
-      "compilerName": "_Limit"
+      "parameters": [],
+      "compilerName": "Limit"
     }
   },
   {
-    "id": "_Min",
-    "name": "_Min",
+    "id": "Min",
+    "name": "Min",
     "category": "math",
     "description": "最小值",
-    "templateCode": "min_1 = _Min();",
+    "templateCode": "min_1 = Min();",
     "unit": "",
     "defaultPeriodMs": 20,
     "metadata": {
-      "typeId": 41314,
+      "typeId": 215,
       "memorySize": 24,
       "parameterCount": 0,
-      "compilerName": "_Min"
+      "parameters": [],
+      "compilerName": "Min"
     }
   },
   {
-    "id": "_Max",
-    "name": "_Max",
+    "id": "Max",
+    "name": "Max",
     "category": "math",
     "description": "最大值",
-    "templateCode": "max_1 = _Max();",
+    "templateCode": "max_1 = Max();",
     "unit": "",
     "defaultPeriodMs": 20,
     "metadata": {
-      "typeId": 41315,
+      "typeId": 216,
       "memorySize": 24,
       "parameterCount": 0,
-      "compilerName": "_Max"
+      "parameters": [],
+      "compilerName": "Max"
     }
   },
   {
-    "id": "_PID",
-    "name": "_PID",
+    "id": "PID",
+    "name": "PID",
     "category": "pid",
-    "description": "PID控制器",
-    "templateCode": "pid_1 = _PID();",
+    "description": "增量式PID控制器",
+    "templateCode": "pid_1 = PID(\n    Setpoint = 0.0,\n    Feedback = 0.0,\n    Kp = 1.0,\n    Ki = 0.0,\n    Kd = 0.0,\n    OutMax = 100.0,\n    OutMin = -100.0,\n    SampleTime = 1000,\n    Enable = 1,\n    Reset = 0\n);",
     "unit": "",
     "defaultPeriodMs": 20,
     "metadata": {
-      "typeId": 41800,
+      "typeId": 501,
       "memorySize": 64,
-      "parameterCount": 0,
-      "compilerName": "_PID"
+      "parameterCount": 10,
+      "parameters": [
+        {
+          "name": "Setpoint",
+          "dataType": "REAL",
+          "direction": "IN",
+          "offset": 0,
+          "defaultValue": 0.0,
+          "description": ""
+        },
+        {
+          "name": "Feedback",
+          "dataType": "REAL",
+          "direction": "IN",
+          "offset": 0,
+          "defaultValue": 0.0,
+          "description": ""
+        },
+        {
+          "name": "Kp",
+          "dataType": "REAL",
+          "direction": "IN",
+          "offset": 0,
+          "defaultValue": 1.0,
+          "description": ""
+        },
+        {
+          "name": "Ki",
+          "dataType": "REAL",
+          "direction": "IN",
+          "offset": 0,
+          "defaultValue": 0.0,
+          "description": ""
+        },
+        {
+          "name": "Kd",
+          "dataType": "REAL",
+          "direction": "IN",
+          "offset": 0,
+          "defaultValue": 0.0,
+          "description": ""
+        },
+        {
+          "name": "OutMax",
+          "dataType": "REAL",
+          "direction": "IN",
+          "offset": 0,
+          "defaultValue": 100.0,
+          "description": ""
+        },
+        {
+          "name": "OutMin",
+          "dataType": "REAL",
+          "direction": "IN",
+          "offset": 0,
+          "defaultValue": -100.0,
+          "description": ""
+        },
+        {
+          "name": "SampleTime",
+          "dataType": "INT",
+          "direction": "IN",
+          "offset": 0,
+          "defaultValue": 1000,
+          "description": ""
+        },
+        {
+          "name": "Enable",
+          "dataType": "BOOL",
+          "direction": "IN",
+          "offset": 0,
+          "defaultValue": 1,
+          "description": ""
+        },
+        {
+          "name": "Reset",
+          "dataType": "BOOL",
+          "direction": "IN",
+          "offset": 0,
+          "defaultValue": 0,
+          "description": ""
+        }
+      ],
+      "compilerName": "PID"
     }
   },
   {
-    "id": "_PIDAutoTune",
-    "name": "_PIDAutoTune",
+    "id": "PIDAutoTune",
+    "name": "PIDAutoTune",
     "category": "pid",
-    "description": "自整定PID",
-    "templateCode": "pid_auto_tune_1 = _PIDAutoTune();",
+    "description": "基于继电反馈法的PID自整定",
+    "templateCode": "pid_auto_tune_1 = PIDAutoTune(\n    Setpoint = 0.0,\n    Feedback = 0.0,\n    Amplitude = 10.0,\n    Hysteresis = 0.5,\n    Cycles = 5,\n    Start = 0\n);",
     "unit": "",
     "defaultPeriodMs": 20,
     "metadata": {
-      "typeId": 41801,
+      "typeId": 502,
       "memorySize": 64,
-      "parameterCount": 0,
-      "compilerName": "_PIDAutoTune"
+      "parameterCount": 6,
+      "parameters": [
+        {
+          "name": "Setpoint",
+          "dataType": "REAL",
+          "direction": "IN",
+          "offset": 0,
+          "defaultValue": 0.0,
+          "description": ""
+        },
+        {
+          "name": "Feedback",
+          "dataType": "REAL",
+          "direction": "IN",
+          "offset": 0,
+          "defaultValue": 0.0,
+          "description": ""
+        },
+        {
+          "name": "Amplitude",
+          "dataType": "REAL",
+          "direction": "IN",
+          "offset": 0,
+          "defaultValue": 10.0,
+          "description": ""
+        },
+        {
+          "name": "Hysteresis",
+          "dataType": "REAL",
+          "direction": "IN",
+          "offset": 0,
+          "defaultValue": 0.5,
+          "description": ""
+        },
+        {
+          "name": "Cycles",
+          "dataType": "INT",
+          "direction": "IN",
+          "offset": 0,
+          "defaultValue": 5,
+          "description": ""
+        },
+        {
+          "name": "Start",
+          "dataType": "BOOL",
+          "direction": "IN",
+          "offset": 0,
+          "defaultValue": 0,
+          "description": ""
+        }
+      ],
+      "compilerName": "PIDAutoTune"
     }
   },
   {
-    "id": "_System",
-    "name": "_System",
+    "id": "System",
+    "name": "System",
     "category": "system",
-    "description": "系统初始化",
-    "templateCode": "system_1 = _System();",
+    "description": "系统初始化与全局配置",
+    "templateCode": "system_1 = System(\n    Author = 0,\n    Config = 0,\n    Date = 0,\n    Version = 1,\n    CycleTime = 1000\n);",
     "unit": "",
     "defaultPeriodMs": 20,
     "metadata": {
-      "typeId": 40961,
+      "typeId": 101,
       "memorySize": 38,
-      "parameterCount": 0,
-      "compilerName": "_System"
+      "parameterCount": 5,
+      "parameters": [
+        {
+          "name": "Author",
+          "dataType": "INT",
+          "direction": "IN",
+          "offset": 0,
+          "defaultValue": 0,
+          "description": ""
+        },
+        {
+          "name": "Config",
+          "dataType": "INT",
+          "direction": "IN",
+          "offset": 0,
+          "defaultValue": 0,
+          "description": ""
+        },
+        {
+          "name": "Date",
+          "dataType": "INT",
+          "direction": "IN",
+          "offset": 0,
+          "defaultValue": 0,
+          "description": ""
+        },
+        {
+          "name": "Version",
+          "dataType": "INT",
+          "direction": "IN",
+          "offset": 0,
+          "defaultValue": 1,
+          "description": ""
+        },
+        {
+          "name": "CycleTime",
+          "dataType": "INT",
+          "direction": "IN",
+          "offset": 0,
+          "defaultValue": 1000,
+          "description": ""
+        }
+      ],
+      "compilerName": "System"
     }
   },
   {
-    "id": "_SystemEnd",
-    "name": "_SystemEnd",
+    "id": "SystemEnd",
+    "name": "SystemEnd",
     "category": "system",
     "description": "系统结束标志",
-    "templateCode": "system_end_1 = _SystemEnd();",
+    "templateCode": "system_end_1 = SystemEnd(\n    Status = 0\n);",
     "unit": "",
     "defaultPeriodMs": 20,
     "metadata": {
-      "typeId": 40962,
+      "typeId": 102,
       "memorySize": 8,
-      "parameterCount": 0,
-      "compilerName": "_SystemEnd"
+      "parameterCount": 1,
+      "parameters": [
+        {
+          "name": "Status",
+          "dataType": "INT",
+          "direction": "IN",
+          "offset": 0,
+          "defaultValue": 0,
+          "description": ""
+        }
+      ],
+      "compilerName": "SystemEnd"
     }
   },
   {
-    "id": "_Exception",
-    "name": "_Exception",
+    "id": "Exception",
+    "name": "Exception",
     "category": "system",
     "description": "异常处理",
-    "templateCode": "exception_1 = _Exception();",
+    "templateCode": "exception_1 = Exception(\n    Code = 0,\n    Action = 0,\n    Enable = 1\n);",
     "unit": "",
     "defaultPeriodMs": 20,
     "metadata": {
-      "typeId": 40963,
+      "typeId": 103,
       "memorySize": 16,
-      "parameterCount": 0,
-      "compilerName": "_Exception"
+      "parameterCount": 3,
+      "parameters": [
+        {
+          "name": "Code",
+          "dataType": "INT",
+          "direction": "IN",
+          "offset": 0,
+          "defaultValue": 0,
+          "description": ""
+        },
+        {
+          "name": "Action",
+          "dataType": "INT",
+          "direction": "IN",
+          "offset": 0,
+          "defaultValue": 0,
+          "description": ""
+        },
+        {
+          "name": "Enable",
+          "dataType": "BOOL",
+          "direction": "IN",
+          "offset": 0,
+          "defaultValue": 1,
+          "description": ""
+        }
+      ],
+      "compilerName": "Exception"
     }
   },
   {
-    "id": "_Nop",
-    "name": "_Nop",
+    "id": "Nop",
+    "name": "Nop",
     "category": "system",
     "description": "空操作",
-    "templateCode": "nop_1 = _Nop();",
+    "templateCode": "nop_1 = Nop();",
     "unit": "",
     "defaultPeriodMs": 20,
     "metadata": {
-      "typeId": 40964,
+      "typeId": 104,
       "memorySize": 8,
       "parameterCount": 0,
-      "compilerName": "_Nop"
+      "parameters": [],
+      "compilerName": "Nop"
     }
   },
   {
-    "id": "_Task",
-    "name": "_Task",
+    "id": "Task",
+    "name": "Task",
     "category": "task",
     "description": "创建时间触发任务",
-    "templateCode": "task_1 = _Task();",
+    "templateCode": "task_1 = Task();",
     "unit": "",
     "defaultPeriodMs": 20,
     "metadata": {
-      "typeId": 41000,
+      "typeId": 751,
       "memorySize": 16,
       "parameterCount": 0,
-      "compilerName": "_Task"
+      "parameters": [],
+      "compilerName": "Task"
     }
   },
   {
-    "id": "_TaskPeriodic",
-    "name": "_TaskPeriodic",
+    "id": "TaskPeriodic",
+    "name": "TaskPeriodic",
     "category": "task",
     "description": "创建周期性任务",
-    "templateCode": "task_periodic_1 = _TaskPeriodic();",
+    "templateCode": "task_periodic_1 = TaskPeriodic();",
     "unit": "",
     "defaultPeriodMs": 20,
     "metadata": {
-      "typeId": 41001,
+      "typeId": 752,
       "memorySize": 16,
       "parameterCount": 0,
-      "compilerName": "_TaskPeriodic"
+      "parameters": [],
+      "compilerName": "TaskPeriodic"
     }
   },
   {
-    "id": "_TaskWake",
-    "name": "_TaskWake",
+    "id": "TaskWake",
+    "name": "TaskWake",
     "category": "task",
     "description": "唤醒任务",
-    "templateCode": "task_wake_1 = _TaskWake();",
+    "templateCode": "task_wake_1 = TaskWake();",
     "unit": "",
     "defaultPeriodMs": 20,
     "metadata": {
-      "typeId": 41002,
+      "typeId": 753,
       "memorySize": 8,
       "parameterCount": 0,
-      "compilerName": "_TaskWake"
+      "parameters": [],
+      "compilerName": "TaskWake"
     }
   },
   {
-    "id": "_TaskDataWake",
-    "name": "_TaskDataWake",
+    "id": "TaskDataWake",
+    "name": "TaskDataWake",
     "category": "task",
     "description": "数据唤醒任务",
-    "templateCode": "task_data_wake_1 = _TaskDataWake();",
+    "templateCode": "task_data_wake_1 = TaskDataWake();",
     "unit": "",
     "defaultPeriodMs": 20,
     "metadata": {
-      "typeId": 41003,
+      "typeId": 754,
       "memorySize": 16,
       "parameterCount": 0,
-      "compilerName": "_TaskDataWake"
+      "parameters": [],
+      "compilerName": "TaskDataWake"
     }
   },
   {
-    "id": "_TaskLock",
-    "name": "_TaskLock",
+    "id": "TaskLock",
+    "name": "TaskLock",
     "category": "task",
     "description": "任务上锁",
-    "templateCode": "task_lock_1 = _TaskLock();",
+    "templateCode": "task_lock_1 = TaskLock();",
     "unit": "",
     "defaultPeriodMs": 20,
     "metadata": {
-      "typeId": 41004,
+      "typeId": 755,
       "memorySize": 8,
       "parameterCount": 0,
-      "compilerName": "_TaskLock"
+      "parameters": [],
+      "compilerName": "TaskLock"
     }
   },
   {
-    "id": "_TaskUnlock",
-    "name": "_TaskUnlock",
+    "id": "TaskUnlock",
+    "name": "TaskUnlock",
     "category": "task",
     "description": "任务解锁",
-    "templateCode": "task_unlock_1 = _TaskUnlock();",
+    "templateCode": "task_unlock_1 = TaskUnlock();",
     "unit": "",
     "defaultPeriodMs": 20,
     "metadata": {
-      "typeId": 41005,
+      "typeId": 756,
       "memorySize": 8,
       "parameterCount": 0,
-      "compilerName": "_TaskUnlock"
+      "parameters": [],
+      "compilerName": "TaskUnlock"
     }
   },
   {
-    "id": "_TaskSemDef",
-    "name": "_TaskSemDef",
+    "id": "TaskSemDef",
+    "name": "TaskSemDef",
     "category": "task",
     "description": "信号量定义",
-    "templateCode": "task_sem_def_1 = _TaskSemDef();",
+    "templateCode": "task_sem_def_1 = TaskSemDef();",
     "unit": "",
     "defaultPeriodMs": 20,
     "metadata": {
-      "typeId": 41006,
+      "typeId": 757,
       "memorySize": 16,
       "parameterCount": 0,
-      "compilerName": "_TaskSemDef"
+      "parameters": [],
+      "compilerName": "TaskSemDef"
     }
   },
   {
-    "id": "_TaskSemWait",
-    "name": "_TaskSemWait",
+    "id": "TaskSemWait",
+    "name": "TaskSemWait",
     "category": "task",
     "description": "信号量等待",
-    "templateCode": "task_sem_wait_1 = _TaskSemWait();",
+    "templateCode": "task_sem_wait_1 = TaskSemWait();",
     "unit": "",
     "defaultPeriodMs": 20,
     "metadata": {
-      "typeId": 41007,
+      "typeId": 758,
       "memorySize": 16,
       "parameterCount": 0,
-      "compilerName": "_TaskSemWait"
+      "parameters": [],
+      "compilerName": "TaskSemWait"
     }
   },
   {
-    "id": "_TaskSemPost",
-    "name": "_TaskSemPost",
+    "id": "TaskSemPost",
+    "name": "TaskSemPost",
     "category": "task",
     "description": "信号量发送",
-    "templateCode": "task_sem_post_1 = _TaskSemPost();",
+    "templateCode": "task_sem_post_1 = TaskSemPost();",
     "unit": "",
     "defaultPeriodMs": 20,
     "metadata": {
-      "typeId": 41008,
+      "typeId": 759,
       "memorySize": 16,
       "parameterCount": 0,
-      "compilerName": "_TaskSemPost"
+      "parameters": [],
+      "compilerName": "TaskSemPost"
     }
   },
   {
-    "id": "_TaskEnd",
-    "name": "_TaskEnd",
+    "id": "TaskEnd",
+    "name": "TaskEnd",
     "category": "task",
     "description": "任务结束标志",
-    "templateCode": "task_end_1 = _TaskEnd();",
+    "templateCode": "task_end_1 = TaskEnd();",
     "unit": "",
     "defaultPeriodMs": 20,
     "metadata": {
-      "typeId": 41009,
+      "typeId": 760,
       "memorySize": 8,
       "parameterCount": 0,
-      "compilerName": "_TaskEnd"
+      "parameters": [],
+      "compilerName": "TaskEnd"
     }
   },
   {
-    "id": "_Timer",
-    "name": "_Timer",
+    "id": "Timer",
+    "name": "Timer",
     "category": "timer",
     "description": "通用定时器",
-    "templateCode": "timer_1 = _Timer();",
+    "templateCode": "timer_1 = Timer();",
     "unit": "",
     "defaultPeriodMs": 20,
     "metadata": {
-      "typeId": 41600,
+      "typeId": 301,
       "memorySize": 24,
       "parameterCount": 0,
-      "compilerName": "_Timer"
+      "parameters": [],
+      "compilerName": "Timer"
     }
   },
   {
-    "id": "_TON",
-    "name": "_TON",
+    "id": "TON",
+    "name": "TON",
     "category": "timer",
     "description": "接通延时",
-    "templateCode": "ton_1 = _TON();",
+    "templateCode": "ton_1 = TON();",
     "unit": "",
     "defaultPeriodMs": 20,
     "metadata": {
-      "typeId": 41601,
+      "typeId": 302,
       "memorySize": 24,
       "parameterCount": 0,
-      "compilerName": "_TON"
+      "parameters": [],
+      "compilerName": "TON"
     }
   },
   {
-    "id": "_TOF",
-    "name": "_TOF",
+    "id": "TOF",
+    "name": "TOF",
     "category": "timer",
     "description": "断开延时",
-    "templateCode": "tof_1 = _TOF();",
+    "templateCode": "tof_1 = TOF();",
     "unit": "",
     "defaultPeriodMs": 20,
     "metadata": {
-      "typeId": 41602,
+      "typeId": 303,
       "memorySize": 24,
       "parameterCount": 0,
-      "compilerName": "_TOF"
+      "parameters": [],
+      "compilerName": "TOF"
     }
   },
   {
-    "id": "_TP",
-    "name": "_TP",
+    "id": "TP",
+    "name": "TP",
     "category": "timer",
     "description": "脉冲定时器",
-    "templateCode": "tp_1 = _TP();",
+    "templateCode": "tp_1 = TP();",
     "unit": "",
     "defaultPeriodMs": 20,
     "metadata": {
-      "typeId": 41603,
+      "typeId": 304,
       "memorySize": 24,
       "parameterCount": 0,
-      "compilerName": "_TP"
+      "parameters": [],
+      "compilerName": "TP"
     }
   },
   {
-    "id": "_TimerStop",
-    "name": "_TimerStop",
+    "id": "TimerStop",
+    "name": "TimerStop",
     "category": "timer",
     "description": "停止定时器",
-    "templateCode": "timer_stop_1 = _TimerStop();",
+    "templateCode": "timer_stop_1 = TimerStop();",
     "unit": "",
     "defaultPeriodMs": 20,
     "metadata": {
-      "typeId": 41604,
+      "typeId": 305,
       "memorySize": 16,
       "parameterCount": 0,
-      "compilerName": "_TimerStop"
+      "parameters": [],
+      "compilerName": "TimerStop"
     }
   },
   {
-    "id": "_TSO",
-    "name": "_TSO",
+    "id": "TSO",
+    "name": "TSO",
     "category": "tso",
     "description": "TSO控制器",
-    "templateCode": "tso_1 = _TSO();",
+    "templateCode": "tso_1 = TSO();",
     "unit": "",
     "defaultPeriodMs": 20,
     "metadata": {
-      "typeId": 41850,
+      "typeId": 891,
       "memorySize": 64,
       "parameterCount": 0,
-      "compilerName": "_TSO"
+      "parameters": [],
+      "compilerName": "TSO"
     }
   },
   {
-    "id": "_TSOAutoTune",
-    "name": "_TSOAutoTune",
+    "id": "TSOAutoTune",
+    "name": "TSOAutoTune",
     "category": "tso",
     "description": "自整定TSO",
-    "templateCode": "tso_auto_tune_1 = _TSOAutoTune();",
+    "templateCode": "tso_auto_tune_1 = TSOAutoTune();",
     "unit": "",
     "defaultPeriodMs": 20,
     "metadata": {
-      "typeId": 41851,
+      "typeId": 892,
       "memorySize": 64,
       "parameterCount": 0,
-      "compilerName": "_TSOAutoTune"
+      "parameters": [],
+      "compilerName": "TSOAutoTune"
     }
   },
   {
-    "id": "_TwoPosition",
-    "name": "_TwoPosition",
+    "id": "TwoPosition",
+    "name": "TwoPosition",
     "category": "tso",
     "description": "两位继电控制",
-    "templateCode": "two_position_1 = _TwoPosition();",
+    "templateCode": "two_position_1 = TwoPosition();",
     "unit": "",
     "defaultPeriodMs": 20,
     "metadata": {
-      "typeId": 41852,
+      "typeId": 893,
       "memorySize": 32,
       "parameterCount": 0,
-      "compilerName": "_TwoPosition"
+      "parameters": [],
+      "compilerName": "TwoPosition"
     }
   },
   {
-    "id": "_RelayCtrl2",
-    "name": "_RelayCtrl2",
+    "id": "RelayCtrl2",
+    "name": "RelayCtrl2",
     "category": "tso",
     "description": "继电器控制2",
-    "templateCode": "relay_ctrl2_1 = _RelayCtrl2();",
+    "templateCode": "relay_ctrl2_1 = RelayCtrl2();",
     "unit": "",
     "defaultPeriodMs": 20,
     "metadata": {
-      "typeId": 41853,
+      "typeId": 894,
       "memorySize": 32,
       "parameterCount": 0,
-      "compilerName": "_RelayCtrl2"
+      "parameters": [],
+      "compilerName": "RelayCtrl2"
     }
   },
   {
-    "id": "_EXCAKeyParamt",
-    "name": "_EXCAKeyParamt",
+    "id": "EXCAKeyParamt",
+    "name": "EXCAKeyParamt",
     "category": "exca",
     "description": "工程机械关键参数管理",
-    "templateCode": "exca_key_paramt_1 = _EXCAKeyParamt();",
+    "templateCode": "exca_key_paramt_1 = EXCAKeyParamt();",
     "unit": "",
     "defaultPeriodMs": 20,
     "metadata": {
-      "typeId": 41209,
+      "typeId": 831,
       "memorySize": 32,
       "parameterCount": 0,
-      "compilerName": "_EXCAKeyParamt"
+      "parameters": [],
+      "compilerName": "EXCAKeyParamt"
     }
   },
   {
-    "id": "_EXCAModifyParamt",
-    "name": "_EXCAModifyParamt",
+    "id": "EXCAModifyParamt",
+    "name": "EXCAModifyParamt",
     "category": "exca",
     "description": "工程机械参数修改",
-    "templateCode": "exca_modify_paramt_1 = _EXCAModifyParamt();",
+    "templateCode": "exca_modify_paramt_1 = EXCAModifyParamt();",
     "unit": "",
     "defaultPeriodMs": 20,
     "metadata": {
-      "typeId": 41210,
+      "typeId": 832,
       "memorySize": 32,
       "parameterCount": 0,
-      "compilerName": "_EXCAModifyParamt"
+      "parameters": [],
+      "compilerName": "EXCAModifyParamt"
     }
   },
   {
-    "id": "_EXCAOperComp",
-    "name": "_EXCAOperComp",
+    "id": "EXCAOperComp",
+    "name": "EXCAOperComp",
     "category": "exca",
     "description": "工程机械操作补偿",
-    "templateCode": "exca_oper_comp_1 = _EXCAOperComp();",
+    "templateCode": "exca_oper_comp_1 = EXCAOperComp();",
     "unit": "",
     "defaultPeriodMs": 20,
     "metadata": {
-      "typeId": 41211,
+      "typeId": 833,
       "memorySize": 32,
       "parameterCount": 0,
-      "compilerName": "_EXCAOperComp"
+      "parameters": [],
+      "compilerName": "EXCAOperComp"
     }
   },
   {
-    "id": "_EXCASpdUnify",
-    "name": "_EXCASpdUnify",
+    "id": "EXCASpdUnify",
+    "name": "EXCASpdUnify",
     "category": "exca",
     "description": "工程机械速度统一协调",
-    "templateCode": "exca_spd_unify_1 = _EXCASpdUnify();",
+    "templateCode": "exca_spd_unify_1 = EXCASpdUnify();",
     "unit": "",
     "defaultPeriodMs": 20,
     "metadata": {
-      "typeId": 41212,
+      "typeId": 834,
       "memorySize": 32,
       "parameterCount": 0,
-      "compilerName": "_EXCASpdUnify"
+      "parameters": [],
+      "compilerName": "EXCASpdUnify"
     }
   },
   {
-    "id": "_EXCATMaintain",
-    "name": "_EXCATMaintain",
-    "category": "exca",
-    "description": "工程机械定时维护管理",
-    "templateCode": "excat_maintain_1 = _EXCATMaintain();",
-    "unit": "",
-    "defaultPeriodMs": 20,
-    "metadata": {
-      "typeId": 41213,
-      "memorySize": 24,
-      "parameterCount": 0,
-      "compilerName": "_EXCATMaintain"
-    }
-  },
-  {
-    "id": "_IntBuild",
-    "name": "_IntBuild",
+    "id": "IntBuild",
+    "name": "IntBuild",
     "category": "data",
     "description": "整数数据构建",
-    "templateCode": "int_build_1 = _IntBuild();",
+    "templateCode": "int_build_1 = IntBuild();",
     "unit": "",
     "defaultPeriodMs": 20,
     "metadata": {
-      "typeId": 42200,
+      "typeId": 701,
       "memorySize": 16,
       "parameterCount": 0,
-      "compilerName": "_IntBuild"
+      "parameters": [],
+      "compilerName": "IntBuild"
     }
   },
   {
-    "id": "_IntDirectBuild",
-    "name": "_IntDirectBuild",
+    "id": "IntDirectBuild",
+    "name": "IntDirectBuild",
     "category": "data",
     "description": "直接整数构建",
-    "templateCode": "int_direct_build_1 = _IntDirectBuild();",
+    "templateCode": "int_direct_build_1 = IntDirectBuild();",
     "unit": "",
     "defaultPeriodMs": 20,
     "metadata": {
-      "typeId": 42201,
+      "typeId": 702,
       "memorySize": 16,
       "parameterCount": 0,
-      "compilerName": "_IntDirectBuild"
+      "parameters": [],
+      "compilerName": "IntDirectBuild"
     }
   },
   {
-    "id": "_FloatBuild",
-    "name": "_FloatBuild",
+    "id": "FloatBuild",
+    "name": "FloatBuild",
     "category": "data",
     "description": "浮点数据构建",
-    "templateCode": "float_build_1 = _FloatBuild();",
+    "templateCode": "float_build_1 = FloatBuild();",
     "unit": "",
     "defaultPeriodMs": 20,
     "metadata": {
-      "typeId": 42202,
+      "typeId": 703,
       "memorySize": 16,
       "parameterCount": 0,
-      "compilerName": "_FloatBuild"
+      "parameters": [],
+      "compilerName": "FloatBuild"
     }
   },
   {
-    "id": "_FloatConstBuild",
-    "name": "_FloatConstBuild",
+    "id": "FloatConstBuild",
+    "name": "FloatConstBuild",
     "category": "data",
     "description": "浮点常量构建",
-    "templateCode": "float_const_build_1 = _FloatConstBuild();",
+    "templateCode": "float_const_build_1 = FloatConstBuild();",
     "unit": "",
     "defaultPeriodMs": 20,
     "metadata": {
-      "typeId": 42203,
+      "typeId": 704,
       "memorySize": 16,
       "parameterCount": 0,
-      "compilerName": "_FloatConstBuild"
+      "parameters": [],
+      "compilerName": "FloatConstBuild"
     }
   },
   {
-    "id": "_IntComp",
-    "name": "_IntComp",
+    "id": "IntComp",
+    "name": "IntComp",
     "category": "data",
     "description": "整数比较运算",
-    "templateCode": "int_comp_1 = _IntComp();",
+    "templateCode": "int_comp_1 = IntComp();",
     "unit": "",
     "defaultPeriodMs": 20,
     "metadata": {
-      "typeId": 42204,
+      "typeId": 705,
       "memorySize": 16,
       "parameterCount": 0,
-      "compilerName": "_IntComp"
+      "parameters": [],
+      "compilerName": "IntComp"
     }
   },
   {
-    "id": "_FloatComp",
-    "name": "_FloatComp",
+    "id": "FloatComp",
+    "name": "FloatComp",
     "category": "data",
     "description": "浮点比较运算",
-    "templateCode": "float_comp_1 = _FloatComp();",
+    "templateCode": "float_comp_1 = FloatComp();",
     "unit": "",
     "defaultPeriodMs": 20,
     "metadata": {
-      "typeId": 42205,
+      "typeId": 706,
       "memorySize": 16,
       "parameterCount": 0,
-      "compilerName": "_FloatComp"
+      "parameters": [],
+      "compilerName": "FloatComp"
     }
   },
   {
-    "id": "_IntMax",
-    "name": "_IntMax",
+    "id": "IntMax",
+    "name": "IntMax",
     "category": "data",
     "description": "整数最大值选择",
-    "templateCode": "int_max_1 = _IntMax();",
+    "templateCode": "int_max_1 = IntMax();",
     "unit": "",
     "defaultPeriodMs": 20,
     "metadata": {
-      "typeId": 42206,
+      "typeId": 707,
       "memorySize": 16,
       "parameterCount": 0,
-      "compilerName": "_IntMax"
+      "parameters": [],
+      "compilerName": "IntMax"
     }
   },
   {
-    "id": "_IntMin",
-    "name": "_IntMin",
+    "id": "IntMin",
+    "name": "IntMin",
     "category": "data",
     "description": "整数最小值选择",
-    "templateCode": "int_min_1 = _IntMin();",
+    "templateCode": "int_min_1 = IntMin();",
     "unit": "",
     "defaultPeriodMs": 20,
     "metadata": {
-      "typeId": 42207,
+      "typeId": 708,
       "memorySize": 16,
       "parameterCount": 0,
-      "compilerName": "_IntMin"
+      "parameters": [],
+      "compilerName": "IntMin"
     }
   },
   {
-    "id": "_FloatMax",
-    "name": "_FloatMax",
+    "id": "FloatMax",
+    "name": "FloatMax",
     "category": "data",
     "description": "浮点最大值选择",
-    "templateCode": "float_max_1 = _FloatMax();",
+    "templateCode": "float_max_1 = FloatMax();",
     "unit": "",
     "defaultPeriodMs": 20,
     "metadata": {
-      "typeId": 42208,
+      "typeId": 709,
       "memorySize": 16,
       "parameterCount": 0,
-      "compilerName": "_FloatMax"
+      "parameters": [],
+      "compilerName": "FloatMax"
     }
   },
   {
-    "id": "_FloatMin",
-    "name": "_FloatMin",
+    "id": "FloatMin",
+    "name": "FloatMin",
     "category": "data",
     "description": "浮点最小值选择",
-    "templateCode": "float_min_1 = _FloatMin();",
+    "templateCode": "float_min_1 = FloatMin();",
     "unit": "",
     "defaultPeriodMs": 20,
     "metadata": {
-      "typeId": 42209,
+      "typeId": 710,
       "memorySize": 16,
       "parameterCount": 0,
-      "compilerName": "_FloatMin"
+      "parameters": [],
+      "compilerName": "FloatMin"
     }
   },
   {
-    "id": "_IntLimt",
-    "name": "_IntLimt",
+    "id": "IntLimt",
+    "name": "IntLimt",
     "category": "data",
     "description": "整数限幅功能",
-    "templateCode": "int_limt_1 = _IntLimt();",
+    "templateCode": "int_limt_1 = IntLimt();",
     "unit": "",
     "defaultPeriodMs": 20,
     "metadata": {
-      "typeId": 42210,
+      "typeId": 711,
       "memorySize": 16,
       "parameterCount": 0,
-      "compilerName": "_IntLimt"
+      "parameters": [],
+      "compilerName": "IntLimt"
     }
   },
   {
-    "id": "_FloatLimt",
-    "name": "_FloatLimt",
+    "id": "FloatLimt",
+    "name": "FloatLimt",
     "category": "data",
     "description": "浮点限幅功能",
-    "templateCode": "float_limt_1 = _FloatLimt();",
+    "templateCode": "float_limt_1 = FloatLimt();",
     "unit": "",
     "defaultPeriodMs": 20,
     "metadata": {
-      "typeId": 42211,
+      "typeId": 712,
       "memorySize": 16,
       "parameterCount": 0,
-      "compilerName": "_FloatLimt"
+      "parameters": [],
+      "compilerName": "FloatLimt"
     }
   },
   {
-    "id": "_FloatVariLimt",
-    "name": "_FloatVariLimt",
+    "id": "FloatVariLimt",
+    "name": "FloatVariLimt",
     "category": "data",
     "description": "浮点可变限幅功能",
-    "templateCode": "float_vari_limt_1 = _FloatVariLimt();",
+    "templateCode": "float_vari_limt_1 = FloatVariLimt();",
     "unit": "",
     "defaultPeriodMs": 20,
     "metadata": {
-      "typeId": 42212,
+      "typeId": 713,
       "memorySize": 24,
       "parameterCount": 0,
-      "compilerName": "_FloatVariLimt"
+      "parameters": [],
+      "compilerName": "FloatVariLimt"
     }
   },
   {
-    "id": "_IntBuffOper",
-    "name": "_IntBuffOper",
+    "id": "IntBuffOper",
+    "name": "IntBuffOper",
     "category": "data",
     "description": "整数缓冲区操作",
-    "templateCode": "int_buff_oper_1 = _IntBuffOper();",
+    "templateCode": "int_buff_oper_1 = IntBuffOper();",
     "unit": "",
     "defaultPeriodMs": 20,
     "metadata": {
-      "typeId": 42213,
+      "typeId": 714,
       "memorySize": 32,
       "parameterCount": 0,
-      "compilerName": "_IntBuffOper"
+      "parameters": [],
+      "compilerName": "IntBuffOper"
     }
   },
   {
-    "id": "_FloatBuffOper",
-    "name": "_FloatBuffOper",
+    "id": "FloatBuffOper",
+    "name": "FloatBuffOper",
     "category": "data",
     "description": "浮点缓冲区操作",
-    "templateCode": "float_buff_oper_1 = _FloatBuffOper();",
+    "templateCode": "float_buff_oper_1 = FloatBuffOper();",
     "unit": "",
     "defaultPeriodMs": 20,
     "metadata": {
-      "typeId": 42214,
+      "typeId": 715,
       "memorySize": 32,
       "parameterCount": 0,
-      "compilerName": "_FloatBuffOper"
+      "parameters": [],
+      "compilerName": "FloatBuffOper"
     }
   },
   {
-    "id": "_IntBuffLogicOper",
-    "name": "_IntBuffLogicOper",
+    "id": "IntBuffLogicOper",
+    "name": "IntBuffLogicOper",
     "category": "data",
     "description": "整数逻辑缓冲区操作",
-    "templateCode": "int_buff_logic_oper_1 = _IntBuffLogicOper();",
+    "templateCode": "int_buff_logic_oper_1 = IntBuffLogicOper();",
     "unit": "",
     "defaultPeriodMs": 20,
     "metadata": {
-      "typeId": 42215,
+      "typeId": 716,
       "memorySize": 32,
       "parameterCount": 0,
-      "compilerName": "_IntBuffLogicOper"
+      "parameters": [],
+      "compilerName": "IntBuffLogicOper"
     }
   },
   {
-    "id": "_IntModOper",
-    "name": "_IntModOper",
+    "id": "IntModOper",
+    "name": "IntModOper",
     "category": "data",
     "description": "整数模运算",
-    "templateCode": "int_mod_oper_1 = _IntModOper();",
+    "templateCode": "int_mod_oper_1 = IntModOper();",
     "unit": "",
     "defaultPeriodMs": 20,
     "metadata": {
-      "typeId": 42216,
+      "typeId": 717,
       "memorySize": 16,
       "parameterCount": 0,
-      "compilerName": "_IntModOper"
+      "parameters": [],
+      "compilerName": "IntModOper"
     }
   },
   {
-    "id": "_FloatRoughFilter",
-    "name": "_FloatRoughFilter",
+    "id": "FloatRoughFilter",
+    "name": "FloatRoughFilter",
     "category": "data",
     "description": "浮点粗滤波",
-    "templateCode": "float_rough_filter_1 = _FloatRoughFilter();",
+    "templateCode": "float_rough_filter_1 = FloatRoughFilter();",
     "unit": "",
     "defaultPeriodMs": 20,
     "metadata": {
-      "typeId": 42217,
+      "typeId": 718,
       "memorySize": 24,
       "parameterCount": 0,
-      "compilerName": "_FloatRoughFilter"
+      "parameters": [],
+      "compilerName": "FloatRoughFilter"
     }
   },
   {
-    "id": "_DataRedundancy",
-    "name": "_DataRedundancy",
+    "id": "DataRedundancy",
+    "name": "DataRedundancy",
     "category": "data",
     "description": "数据冗余处理",
-    "templateCode": "data_redundancy_1 = _DataRedundancy();",
+    "templateCode": "data_redundancy_1 = DataRedundancy();",
     "unit": "",
     "defaultPeriodMs": 20,
     "metadata": {
-      "typeId": 42218,
+      "typeId": 719,
       "memorySize": 32,
       "parameterCount": 0,
-      "compilerName": "_DataRedundancy"
+      "parameters": [],
+      "compilerName": "DataRedundancy"
     }
   },
   {
-    "id": "_DealInUnify",
-    "name": "_DealInUnify",
+    "id": "DealInUnify",
+    "name": "DealInUnify",
     "category": "data",
     "description": "输入数据统一处理",
-    "templateCode": "deal_in_unify_1 = _DealInUnify();",
+    "templateCode": "deal_in_unify_1 = DealInUnify();",
     "unit": "",
     "defaultPeriodMs": 20,
     "metadata": {
-      "typeId": 42219,
+      "typeId": 720,
       "memorySize": 24,
       "parameterCount": 0,
-      "compilerName": "_DealInUnify"
+      "parameters": [],
+      "compilerName": "DealInUnify"
     }
   },
   {
-    "id": "_DealOutUnify",
-    "name": "_DealOutUnify",
+    "id": "DealOutUnify",
+    "name": "DealOutUnify",
     "category": "data",
     "description": "输出数据统一处理",
-    "templateCode": "deal_out_unify_1 = _DealOutUnify();",
+    "templateCode": "deal_out_unify_1 = DealOutUnify();",
     "unit": "",
     "defaultPeriodMs": 20,
     "metadata": {
-      "typeId": 42220,
+      "typeId": 721,
       "memorySize": 24,
       "parameterCount": 0,
-      "compilerName": "_DealOutUnify"
+      "parameters": [],
+      "compilerName": "DealOutUnify"
     }
   },
   {
-    "id": "_DealToData",
-    "name": "_DealToData",
+    "id": "DealToData",
+    "name": "DealToData",
     "category": "data",
     "description": "切换到数据模式",
-    "templateCode": "deal_to_data_1 = _DealToData();",
+    "templateCode": "deal_to_data_1 = DealToData();",
     "unit": "",
     "defaultPeriodMs": 20,
     "metadata": {
-      "typeId": 42221,
+      "typeId": 722,
       "memorySize": 16,
       "parameterCount": 0,
-      "compilerName": "_DealToData"
+      "parameters": [],
+      "compilerName": "DealToData"
     }
   },
   {
-    "id": "_DealToSwit",
-    "name": "_DealToSwit",
+    "id": "DealToSwit",
+    "name": "DealToSwit",
     "category": "data",
     "description": "切换到开关模式",
-    "templateCode": "deal_to_swit_1 = _DealToSwit();",
+    "templateCode": "deal_to_swit_1 = DealToSwit();",
     "unit": "",
     "defaultPeriodMs": 20,
     "metadata": {
-      "typeId": 42222,
+      "typeId": 723,
       "memorySize": 16,
       "parameterCount": 0,
-      "compilerName": "_DealToSwit"
+      "parameters": [],
+      "compilerName": "DealToSwit"
     }
   },
   {
-    "id": "_FloatBelowWatch",
-    "name": "_FloatBelowWatch",
+    "id": "FloatBelowWatch",
+    "name": "FloatBelowWatch",
     "category": "safety",
     "description": "浮点数下限监视",
-    "templateCode": "float_below_watch_1 = _FloatBelowWatch();",
+    "templateCode": "float_below_watch_1 = FloatBelowWatch();",
     "unit": "",
     "defaultPeriodMs": 20,
     "metadata": {
-      "typeId": 42300,
+      "typeId": 781,
       "memorySize": 24,
       "parameterCount": 0,
-      "compilerName": "_FloatBelowWatch"
+      "parameters": [],
+      "compilerName": "FloatBelowWatch"
     }
   },
   {
-    "id": "_FloatOverWatch",
-    "name": "_FloatOverWatch",
+    "id": "FloatOverWatch",
+    "name": "FloatOverWatch",
     "category": "safety",
     "description": "浮点数上限监视",
-    "templateCode": "float_over_watch_1 = _FloatOverWatch();",
+    "templateCode": "float_over_watch_1 = FloatOverWatch();",
     "unit": "",
     "defaultPeriodMs": 20,
     "metadata": {
-      "typeId": 42301,
+      "typeId": 782,
       "memorySize": 24,
       "parameterCount": 0,
-      "compilerName": "_FloatOverWatch"
+      "parameters": [],
+      "compilerName": "FloatOverWatch"
     }
   },
   {
-    "id": "_PasswordVerify2",
-    "name": "_PasswordVerify2",
-    "category": "safety",
-    "description": "密码验证（带重试次数限制）",
-    "templateCode": "password_verify2_1 = _PasswordVerify2();",
-    "unit": "",
-    "defaultPeriodMs": 20,
-    "metadata": {
-      "typeId": 42302,
-      "memorySize": 24,
-      "parameterCount": 0,
-      "compilerName": "_PasswordVerify2"
-    }
-  },
-  {
-    "id": "_EXCASFC",
-    "name": "_EXCASFC",
+    "id": "EXCASFC",
+    "name": "EXCASFC",
     "category": "safety",
     "description": "工程机械安全功能控制",
-    "templateCode": "excasfc_1 = _EXCASFC();",
+    "templateCode": "excasfc_1 = EXCASFC();",
     "unit": "",
     "defaultPeriodMs": 20,
     "metadata": {
-      "typeId": 42303,
+      "typeId": 783,
       "memorySize": 32,
       "parameterCount": 0,
-      "compilerName": "_EXCASFC"
+      "parameters": [],
+      "compilerName": "EXCASFC"
     }
   },
   {
-    "id": "_EXCAIntCheck",
-    "name": "_EXCAIntCheck",
-    "category": "safety",
-    "description": "工程机械完整性检查",
-    "templateCode": "exca_int_check_1 = _EXCAIntCheck();",
-    "unit": "",
-    "defaultPeriodMs": 20,
-    "metadata": {
-      "typeId": 42304,
-      "memorySize": 24,
-      "parameterCount": 0,
-      "compilerName": "_EXCAIntCheck"
-    }
-  },
-  {
-    "id": "_ParamtEngBuild",
-    "name": "_ParamtEngBuild",
+    "id": "ParamtEngBuild",
+    "name": "ParamtEngBuild",
     "category": "param",
     "description": "工程参数引擎构建",
-    "templateCode": "paramt_eng_build_1 = _ParamtEngBuild();",
+    "templateCode": "paramt_eng_build_1 = ParamtEngBuild();",
     "unit": "",
     "defaultPeriodMs": 20,
     "metadata": {
-      "typeId": 42400,
+      "typeId": 871,
       "memorySize": 32,
       "parameterCount": 0,
-      "compilerName": "_ParamtEngBuild"
+      "parameters": [],
+      "compilerName": "ParamtEngBuild"
     }
   }
 ]

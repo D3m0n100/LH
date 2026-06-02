@@ -3,9 +3,9 @@ requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "lm-compiler"
+name = "lh-compiler"
 version = "0.1.0"
-description = "A CODESYS-style compiler for LM assembly language"
+description = "A CODESYS-style compiler for LH assembly language"
 readme = "README.md"
 requires-python = ">=3.8"
 license = {text = "MIT"}
@@ -53,16 +53,16 @@ docs = [
 ]
 
 [project.scripts]
-lmc = "lm_compiler.cli.commands:main"
+lmc = "lh_compiler.cli.commands:main"
 
 [project.urls]
-Homepage = "https://github.com/yourusername/lm-compiler"
-Documentation = "https://lm-compiler.readthedocs.io"
-Repository = "https://github.com/yourusername/lm-compiler"
-"Bug Tracker" = "https://github.com/yourusername/lm-compiler/issues"
+Homepage = "https://github.com/yourusername/lh-compiler"
+Documentation = "https://lh-compiler.readthedocs.io"
+Repository = "https://github.com/yourusername/lh-compiler"
+"Bug Tracker" = "https://github.com/yourusername/lh-compiler/issues"
 
 [tool.setuptools]
-packages = ["lm_compiler"]
+packages = ["lh_compiler"]
 package-dir = {"" = "src"}
 
 [tool.pytest.ini_options]
@@ -70,7 +70,7 @@ testpaths = ["tests"]
 python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
-addopts = "-v --strict-markers --cov=lm_compiler --cov-report=term-missing"
+addopts = "-v --strict-markers --cov=lh_compiler --cov-report=term-missing"
 
 [tool.black]
 line-length = 100

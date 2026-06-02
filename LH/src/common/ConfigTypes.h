@@ -427,6 +427,73 @@ struct DownloadArtifactConfig
     }
 };
 
+struct OpcServerConfig
+{
+    bool enabled = false;
+    int publishIntervalMs = 200;
+    bool exposeVariables = true;
+    bool exposeParameters = true;
+    bool exposeStatus = true;
+    bool exposeAlarms = false;
+    QString channelName = "CommPort";
+    QString deviceName = "COM1";
+    QString serialMode = "19200,N,8,1";
+    int timeoutMs = 2000;
+    int reconnectDelayMs = 10;
+    int retries = 2;
+    int maxRegistersPerRequest = 1;
+    QString rootDescription = "Modbus Root";
+    QString classicServerName = "LM Compatible OPC";
+    bool exposeTagTable = true;
+    QVariantMap metadata;
+
+    QJsonObject toJson() const
+    {
+        QJsonObject obj;
+        obj["enabled"] = enabled;
+        obj["publishIntervalMs"] = publishIntervalMs;
+        obj["exposeVariables"] = exposeVariables;
+        obj["exposeParameters"] = exposeParameters;
+        obj["exposeStatus"] = exposeStatus;
+        obj["exposeAlarms"] = exposeAlarms;
+        obj["channelName"] = channelName;
+        obj["deviceName"] = deviceName;
+        obj["serialMode"] = serialMode;
+        obj["timeoutMs"] = timeoutMs;
+        obj["reconnectDelayMs"] = reconnectDelayMs;
+        obj["retries"] = retries;
+        obj["maxRegistersPerRequest"] = maxRegistersPerRequest;
+        obj["rootDescription"] = rootDescription;
+        obj["classicServerName"] = classicServerName;
+        obj["exposeTagTable"] = exposeTagTable;
+        obj["metadata"] = QJsonObject::fromVariantMap(metadata);
+        return obj;
+    }
+
+    static OpcServerConfig fromJson(const QJsonObject& obj)
+    {
+        OpcServerConfig cfg;
+        cfg.enabled = obj["enabled"].toBool(false);
+        cfg.publishIntervalMs = obj["publishIntervalMs"].toInt(200);
+        cfg.exposeVariables = obj["exposeVariables"].toBool(true);
+        cfg.exposeParameters = obj["exposeParameters"].toBool(true);
+        cfg.exposeStatus = obj["exposeStatus"].toBool(true);
+        cfg.exposeAlarms = obj["exposeAlarms"].toBool(false);
+        cfg.channelName = obj["channelName"].toString("CommPort");
+        cfg.deviceName = obj["deviceName"].toString("COM1");
+        cfg.serialMode = obj["serialMode"].toString("19200,N,8,1");
+        cfg.timeoutMs = obj["timeoutMs"].toInt(2000);
+        cfg.reconnectDelayMs = obj["reconnectDelayMs"].toInt(10);
+        cfg.retries = obj["retries"].toInt(2);
+        cfg.maxRegistersPerRequest = obj["maxRegistersPerRequest"].toInt(1);
+        cfg.rootDescription = obj["rootDescription"].toString("Modbus Root");
+        cfg.classicServerName = obj["classicServerName"].toString("LM Compatible OPC");
+        cfg.exposeTagTable = obj["exposeTagTable"].toBool(true);
+        cfg.metadata = obj["metadata"].toObject().toVariantMap();
+        return cfg;
+    }
+};
+
 /**
  * @brief ProjectRuntimeConfig
  * 项目运行时配置，支持 JSON 序列化
@@ -439,6 +506,7 @@ struct ProjectRuntimeConfig
     TransportConfig transport;
     BridgeConfig bridge;
     DownloadArtifactConfig downloadArtifact;
+    OpcServerConfig opcServer;
     QString projectName;                           ///< 项目名称
     QString protocol;                              ///< 通信协议（CAN/RS485/Ethernet）
     QVariantMap commParameters;                    ///< 通信参数
@@ -473,6 +541,7 @@ struct ProjectRuntimeConfig
         obj["transport"] = transport.toJson();
         obj["bridge"] = bridge.toJson();
         obj["downloadArtifact"] = downloadArtifact.toJson();
+        obj["opcServer"] = opcServer.toJson();
 
         QJsonArray providersArray;
         for (const auto& p : providers) {
@@ -538,6 +607,7 @@ struct ProjectRuntimeConfig
         cfg.transport = TransportConfig::fromJson(obj["transport"].toObject());
         cfg.bridge = BridgeConfig::fromJson(obj["bridge"].toObject());
         cfg.downloadArtifact = DownloadArtifactConfig::fromJson(obj["downloadArtifact"].toObject());
+        cfg.opcServer = OpcServerConfig::fromJson(obj["opcServer"].toObject());
         if (cfg.protocol.isEmpty()) {
             cfg.protocol = cfg.transport.protocol;
         }
@@ -579,6 +649,7 @@ struct ProjectRuntimeConfig
         transport = TransportConfig();
         bridge = BridgeConfig();
         downloadArtifact = DownloadArtifactConfig();
+        opcServer = OpcServerConfig();
         projectName.clear();
         protocol.clear();
         commParameters.clear();

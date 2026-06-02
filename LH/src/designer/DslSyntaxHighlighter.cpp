@@ -58,7 +58,7 @@ void DslSyntaxHighlighter::setupHighlightingRules()
         m_highlightingRules.append(rule);
     }
     
-    // ===== 鍏抽敭瀛楁牸寮忥紙鎺у埗娴侊級=====
+    // ===== 关键字格式（控制流）=====
     m_keywordFormat.setForeground(QColor("#af00db"));
     
     QStringList keywordPatterns = {
@@ -81,7 +81,7 @@ void DslSyntaxHighlighter::setupHighlightingRules()
         m_highlightingRules.append(rule);
     }
     
-    // ===== 鍙傛暟鍚嶆牸寮忥紙name = value 涓殑 name锛?====
+    // ===== 参数名格式（name = value 中的 name）=====
     m_parameterFormat.setForeground(QColor("#5f6a72"));
     {
         HighlightingRule rule;
@@ -94,13 +94,13 @@ void DslSyntaxHighlighter::setupHighlightingRules()
     m_numberFormat.setForeground(QColor("#098658"));
     {
         HighlightingRule rule;
-        // 鍖归厤鏁存暟鍜屾诞鐐规暟
+        // 匹配整数和浮点数
         rule.pattern = QRegularExpression("\\b[0-9]+\\.?[0-9]*([eE][+-]?[0-9]+)?\\b");
         rule.format = m_numberFormat;
         m_highlightingRules.append(rule);
     }
     
-    // ===== 杩愮畻绗︽牸寮?=====
+    // ===== 运算符格式 =====
     m_operatorFormat.setForeground(QColor("#1f1f1f"));
     m_operatorFormat.setFontWeight(QFont::Bold);
     {
@@ -110,34 +110,34 @@ void DslSyntaxHighlighter::setupHighlightingRules()
         m_highlightingRules.append(rule);
     }
     
-    // ===== 瀛楃涓叉牸寮?=====
+    // ===== 字符串格式 =====
     m_stringFormat.setForeground(QColor("#a31515"));
     {
         HighlightingRule rule;
-        // 鍙屽紩鍙峰瓧绗︿覆
+        // 双引号字符串
         rule.pattern = QRegularExpression("\"[^\"]*\"");
         rule.format = m_stringFormat;
         m_highlightingRules.append(rule);
     }
     {
         HighlightingRule rule;
-        // 鍗曞紩鍙峰瓧绗︿覆
+        // 单引号字符串
         rule.pattern = QRegularExpression("'[^']*'");
         rule.format = m_stringFormat;
         m_highlightingRules.append(rule);
     }
     
-    // ===== 鍑芥暟璋冪敤鏍煎紡 =====
+    // ===== 函数调用格式 =====
     m_functionFormat.setForeground(QColor("#795e26"));
     {
         HighlightingRule rule;
-        // 鍖归厤鍑芥暟璋冪敤 name(
+        // 匹配函数调用 name(
         rule.pattern = QRegularExpression("\\b([a-zA-Z_][a-zA-Z0-9_]*)\\s*\\(");
         rule.format = m_functionFormat;
         m_highlightingRules.append(rule);
     }
     
-    // ===== 鍗曡娉ㄩ噴鏍煎紡 =====
+    // ===== 单行注释格式 =====
     m_singleLineCommentFormat.setForeground(QColor("#008000"));
     m_singleLineCommentFormat.setFontItalic(true);
     {
@@ -157,7 +157,7 @@ void DslSyntaxHighlighter::setupHighlightingRules()
         m_highlightingRules.append(rule);
     }
     
-    // ===== 澶氳娉ㄩ噴鏍煎紡 =====
+    // ===== 多行注释格式 =====
     m_multiLineCommentFormat.setForeground(QColor("#008000"));
     m_multiLineCommentFormat.setFontItalic(true);
     
@@ -169,7 +169,7 @@ void DslSyntaxHighlighter::updateKeywords(const QStringList& keywords)
 {
     m_customKeywords = keywords;
     
-    // 绉婚櫎鏃х殑鑷畾涔夊叧閿瓧瑙勫垯锛堜繚鐣欏墠闈㈠浐瀹氭暟閲忕殑瑙勫垯锛?    // 閲嶆柊娣诲姞鑷畾涔夊叧閿瓧
+    // 重新追加自定义关键字规则，保留前面固定数量的内置规则
     for (const QString& keyword : keywords) {
         HighlightingRule rule;
         rule.pattern = QRegularExpression("\\b" + QRegularExpression::escape(keyword) + "\\b");
@@ -177,7 +177,7 @@ void DslSyntaxHighlighter::updateKeywords(const QStringList& keywords)
         m_highlightingRules.append(rule);
     }
     
-    // 瑙﹀彂閲嶆柊楂樹寒
+    // 触发重新高亮
     rehighlight();
 }
 
@@ -215,7 +215,7 @@ void DslSyntaxHighlighter::highlightBlock(const QString& text)
         }
     }
     
-    // 澶勭悊澶氳娉ㄩ噴
+    // 处理多行注释
     setCurrentBlockState(0);
     
     int startIndex = 0;

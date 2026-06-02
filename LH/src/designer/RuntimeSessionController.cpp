@@ -4,23 +4,106 @@
 #include "RunController.h"
 #include "ProjectController.h"
 #include "BuildController.h"
+#include "ParameterController.h"
 #include "../communication/IDeviceBackend.h"
+#include "../communication/IOpcServer.h"
+#include "../communication/OpcServerFactory.h"
 #include "../monitor/MonitorManager.h"
 #include "../monitor/SampleDataProvider.h"
+#include "../common/RuntimePointTypes.h"
 
 #include <QDateTime>
 #include <QDir>
 #include <QFileInfo>
 
+namespace {
+bool isDownloadTransportFailure(CommErrorCode code)
+{
+    return code == CommErrorCode::ConnectionLost
+            || code == CommErrorCode::ConnectionFailed
+            || code == CommErrorCode::ConnectionTimeout
+            || code == CommErrorCode::ReceiveTimeout
+            || code == CommErrorCode::SendFailed
+            || code == CommErrorCode::ReceiveFailed;
+}
+
+bool isDownloadVerifyFailure(CommErrorCode code)
+{
+    return code == CommErrorCode::InvalidResponse
+            || code == CommErrorCode::ProtocolError
+            || code == CommErrorCode::CrcError
+            || code == CommErrorCode::FrameError
+            || code == CommErrorCode::AddressMismatch;
+}
+
+bool isDownloadRetryable(DownloadState state)
+{
+    return state == DownloadState::TransportFailed
+            || state == DownloadState::VerifyFailed;
+}
+
+QString downloadStateLabel(DownloadState state)
+{
+    switch (state) {
+    case DownloadState::Idle:
+        return QStringLiteral("Idle");
+    case DownloadState::Precheck:
+        return QStringLiteral("Precheck");
+    case DownloadState::PrecheckFailed:
+        return QStringLiteral("PrecheckFailed");
+    case DownloadState::Downloading:
+        return QStringLiteral("Downloading");
+    case DownloadState::Retrying:
+        return QStringLiteral("Retrying");
+    case DownloadState::Verifying:
+        return QStringLiteral("Verifying");
+    case DownloadState::Succeeded:
+        return QStringLiteral("Succeeded");
+    case DownloadState::TransportFailed:
+        return QStringLiteral("TransportFailed");
+    case DownloadState::DeviceRejected:
+        return QStringLiteral("DeviceRejected");
+    case DownloadState::VerifyFailed:
+        return QStringLiteral("VerifyFailed");
+    case DownloadState::Failed:
+    default:
+        return QStringLiteral("Failed");
+    }
+}
+
+bool isDownloadVerificationPassed(const BackendStatusSnapshot& snapshot)
+{
+    return snapshot.online
+            && !snapshot.downloading
+            && snapshot.lastErrorCode == CommErrorCode::NoError;
+}
+}
+
 RuntimeSessionController::RuntimeSessionController(QObject* parent)
     : QObject(parent)
 {
+    m_opcServer = OpcServerFactory::createDefault(this);
+    connectOpcServerSignals();
 }
 
 void RuntimeSessionController::setDeviceBackend(IDeviceBackend* backend)
 {
     m_backend = backend;
     Monitor::MonitorManager::instance().setDeviceBackend(backend);
+}
+
+void RuntimeSessionController::setOpcServer(IOpcServer* opcServer)
+{
+    if (m_opcServer == opcServer) {
+        return;
+    }
+
+    if (m_opcServer && m_opcServer->parent() == this) {
+        m_opcServer->deleteLater();
+    }
+
+    m_opcServer = opcServer;
+    connectOpcServerSignals();
 }
 
 void RuntimeSessionController::setSampleDataProvider(SampleDataProvider* provider)
@@ -36,6 +119,11 @@ void RuntimeSessionController::setProjectController(ProjectController* controlle
 void RuntimeSessionController::setBuildController(BuildController* controller)
 {
     m_buildController = controller;
+}
+
+void RuntimeSessionController::setParameterController(ParameterController* controller)
+{
+    m_parameterController = controller;
 }
 
 bool RuntimeSessionController::prepareRun()
@@ -97,6 +185,8 @@ bool RuntimeSessionController::applyRuntimeConfig()
 
     emit logMessage(QStringLiteral("[%1] 运行时配置已应用到监控系统")
                     .arg(QDateTime::currentDateTime().toString(QStringLiteral("HH:mm:ss"))));
+
+    syncOpcRuntimePoints();
     return true;
 }
 
@@ -111,6 +201,8 @@ void RuntimeSessionController::executeRun()
                     .arg(QDateTime::currentDateTime().toString(QStringLiteral("HH:mm:ss")),
                          QDir::toNativeSeparators(m_artifactPath)));
 
+    startOpcServerIfEnabled();
+
     if (shouldAutoDownload()) {
         requestDownload(m_artifactPath);
     }
@@ -121,6 +213,8 @@ void RuntimeSessionController::requestStop()
     if (m_state == RuntimeSessionState::Idle)
         return;
 
+    setDownloadState(DownloadState::Idle);
+    stopOpcServer();
     Monitor::MonitorManager::instance().stopMonitoring();
     m_monitoringActive = false;
     emit monitoringChanged(false);
@@ -230,36 +324,141 @@ void RuntimeSessionController::stopMonitoring()
 
 bool RuntimeSessionController::requestDownload(const QString& artifactPath, const QVariantMap& options)
 {
+    setDownloadState(DownloadState::Precheck);
+    emit downloadProgressChanged(0);
+
+    const QString trimmedArtifactPath = artifactPath.trimmed();
+    const RuntimeSessionState prevState = m_state;
     if (m_state != RuntimeSessionState::Running && m_state != RuntimeSessionState::Connected) {
-        emit runtimeError(QStringLiteral("当前状态不允许下载。"));
+        setDownloadState(DownloadState::PrecheckFailed);
+        const QString message = QStringLiteral("当前状态不允许下载。");
+        emit downloadFinished(false, message);
+        emit runtimeError(message);
+        setState(prevState);
+        return false;
+    }
+
+    if (trimmedArtifactPath.isEmpty() || !QFileInfo::exists(trimmedArtifactPath)) {
+        setDownloadState(DownloadState::PrecheckFailed);
+        const QString message = trimmedArtifactPath.isEmpty()
+                ? QStringLiteral("下载前置校验失败：产物路径为空。")
+                : QStringLiteral("下载前置校验失败：未找到产物文件。");
+        emit downloadFinished(false, message);
+        emit runtimeError(message);
+        setState(prevState);
         return false;
     }
 
     if (!m_backend || !m_backend->isOnline()) {
-        emit runtimeError(QStringLiteral("设备后端未连接，无法下载。"));
-        if (m_state == RuntimeSessionState::Running) {
-            setState(RuntimeSessionState::Fault);
-        }
+        setDownloadState(DownloadState::PrecheckFailed);
+        const QString message = QStringLiteral("设备后端未连接，无法下载。");
+        emit downloadFinished(false, message);
+        emit runtimeError(message);
+        setState(prevState);
         return false;
     }
 
-    const RuntimeSessionState prevState = m_state;
-    setState(RuntimeSessionState::Downloading);
+    const int maxAttempts = qMax(1, options.value(QStringLiteral("retryCount"), 1).toInt());
 
-    QString errorMsg;
-    const bool ok = m_backend->downloadArtifact(artifactPath, options, &errorMsg);
+    QString lastErrorMsg;
+    DownloadState lastFailureState = DownloadState::Failed;
+    int attemptsUsed = 0;
 
-    if (ok) {
-        emit downloadFinished(true, QStringLiteral("下载成功：%1").arg(artifactPath));
-        emit logMessage(QStringLiteral("[%1] 编译产物下载成功")
-                        .arg(QDateTime::currentDateTime().toString(QStringLiteral("HH:mm:ss"))));
+    for (int attempt = 1; attempt <= maxAttempts; ++attempt) {
+        attemptsUsed = attempt;
+        if (attempt > 1) {
+            setDownloadState(DownloadState::Retrying);
+            emit logMessage(QStringLiteral("[%1] 下载重试 %2/%3")
+                            .arg(QDateTime::currentDateTime().toString(QStringLiteral("HH:mm:ss")),
+                                 QString::number(attempt),
+                                 QString::number(maxAttempts)));
+        }
+
+        setState(RuntimeSessionState::Downloading);
+        setDownloadState(DownloadState::Downloading);
+        emit downloadProgressChanged(25);
+
+        QString errorMsg;
+        CommError operationError;
+        const bool ok = m_backend->downloadArtifact(trimmedArtifactPath, options, &errorMsg, &operationError);
+
+        if (ok) {
+            setDownloadState(DownloadState::Verifying);
+            emit downloadProgressChanged(75);
+
+            const BackendStatusSnapshot snapshot = m_backend->statusSnapshot();
+            if (!isDownloadVerificationPassed(snapshot)) {
+                lastFailureState = DownloadState::VerifyFailed;
+                lastErrorMsg = QStringLiteral("下载后校验失败：后端状态未达成成功条件。");
+                if (attempt < maxAttempts) {
+                    setDownloadState(DownloadState::Retrying);
+                    continue;
+                }
+
+                setDownloadState(lastFailureState);
+                lastErrorMsg = QStringLiteral("下载失败[%1/%2,%3]：%4")
+                        .arg(QString::number(attemptsUsed),
+                             QString::number(maxAttempts),
+                             downloadStateLabel(lastFailureState),
+                             lastErrorMsg);
+                emit downloadFinished(false, lastErrorMsg);
+                emit runtimeError(lastErrorMsg);
+                emit logMessage(QStringLiteral("[%1] 下载失败并回退到原状态：%2")
+                                .arg(QDateTime::currentDateTime().toString(QStringLiteral("HH:mm:ss")),
+                                     lastErrorMsg));
+                setState(prevState);
+                return false;
+            }
+
+            emit downloadProgressChanged(100);
+            setDownloadState(DownloadState::Succeeded);
+            emit downloadFinished(true, QStringLiteral("下载成功：%1").arg(trimmedArtifactPath));
+            emit logMessage(QStringLiteral("[%1] 编译产物下载成功")
+                            .arg(QDateTime::currentDateTime().toString(QStringLiteral("HH:mm:ss"))));
+            setState(prevState);
+            return true;
+        }
+
+        lastFailureState = classifyDownloadFailure(&operationError, errorMsg);
+        lastErrorMsg = QStringLiteral("下载失败：%1").arg(errorMsg.isEmpty()
+                                                                 ? QStringLiteral("未知错误")
+                                                                 : errorMsg);
+
+        if (attempt < maxAttempts && isDownloadRetryable(lastFailureState)) {
+            setDownloadState(DownloadState::Retrying);
+            emit logMessage(QStringLiteral("[%1] 下载失败，准备重试：%2")
+                            .arg(QDateTime::currentDateTime().toString(QStringLiteral("HH:mm:ss")),
+                                 lastErrorMsg));
+            continue;
+        }
+
+        setDownloadState(lastFailureState);
+        lastErrorMsg = QStringLiteral("下载失败[%1/%2,%3]：%4")
+                .arg(QString::number(attemptsUsed),
+                     QString::number(maxAttempts),
+                     downloadStateLabel(lastFailureState),
+                     lastErrorMsg);
+        emit downloadFinished(false, lastErrorMsg);
+        emit runtimeError(lastErrorMsg);
+        emit logMessage(QStringLiteral("[%1] 下载失败并回退到原状态：%2")
+                        .arg(QDateTime::currentDateTime().toString(QStringLiteral("HH:mm:ss")),
+                             lastErrorMsg));
         setState(prevState);
-        return true;
+        return false;
     }
 
-    emit downloadFinished(false, QStringLiteral("下载失败：%1").arg(errorMsg));
-    emit runtimeError(QStringLiteral("下载失败：%1").arg(errorMsg));
-    setState(RuntimeSessionState::Fault);
+    setDownloadState(lastFailureState);
+    lastErrorMsg = QStringLiteral("下载失败[%1/%2,%3]：%4")
+            .arg(QString::number(attemptsUsed),
+                 QString::number(maxAttempts),
+                 downloadStateLabel(lastFailureState),
+                 lastErrorMsg);
+    emit downloadFinished(false, lastErrorMsg);
+    emit runtimeError(lastErrorMsg);
+    emit logMessage(QStringLiteral("[%1] 下载失败并回退到原状态：%2")
+                    .arg(QDateTime::currentDateTime().toString(QStringLiteral("HH:mm:ss")),
+                         lastErrorMsg));
+    setState(prevState);
     return false;
 }
 
@@ -273,7 +472,174 @@ void RuntimeSessionController::setState(RuntimeSessionState newState)
     emit stateChanged(oldState, newState);
 }
 
+void RuntimeSessionController::setDownloadState(DownloadState newState)
+{
+    if (m_downloadState == newState)
+        return;
+
+    const DownloadState oldState = m_downloadState;
+    m_downloadState = newState;
+    emit downloadStateChanged(oldState, newState);
+}
+
 bool RuntimeSessionController::shouldAutoDownload() const
 {
     return !m_artifactPath.isEmpty() && m_backend && m_backend->isOnline();
+}
+
+DownloadState RuntimeSessionController::classifyDownloadFailure(const CommError* operationError,
+                                                                const QString& errorMessage) const
+{
+    Q_UNUSED(errorMessage)
+
+    if (!operationError || !operationError->isError()) {
+        return DownloadState::Failed;
+    }
+
+    if (operationError->code == CommErrorCode::PermissionDenied) {
+        return DownloadState::DeviceRejected;
+    }
+
+    if (isDownloadTransportFailure(operationError->code)) {
+        return DownloadState::TransportFailed;
+    }
+
+    if (isDownloadVerifyFailure(operationError->code)) {
+        return DownloadState::VerifyFailed;
+    }
+
+    return DownloadState::Failed;
+}
+
+void RuntimeSessionController::syncOpcRuntimePoints()
+{
+    if (!m_opcServer || !m_projectController) {
+        return;
+    }
+
+    const auto& cfg = m_projectController->runtimeConfig();
+    const QList<RuntimePointDefinition> points = RuntimePointConverter::fromProjectConfig(cfg);
+    m_opcServer->setRuntimePoints(points);
+    m_opcServer->setOpcTags(RuntimePointConverter::runtimePointsToOpcTags(points));
+}
+
+void RuntimeSessionController::startOpcServerIfEnabled()
+{
+    if (!m_opcServer || !m_projectController) {
+        return;
+    }
+
+    const auto& opcConfig = m_projectController->runtimeConfig().opcServer;
+    if (!opcConfig.enabled) {
+        stopOpcServer();
+        return;
+    }
+
+    QString errorMessage;
+    if (!m_opcServer->applyConfig(opcConfig, &errorMessage)) {
+        emit runtimeError(QStringLiteral("OPC 服务配置失败：%1").arg(errorMessage));
+        return;
+    }
+
+    if (!m_opcServer->start(&errorMessage)) {
+        emit runtimeError(QStringLiteral("OPC 服务启动失败：%1").arg(errorMessage));
+        return;
+    }
+
+    emit logMessage(QStringLiteral("[%1] OPC 服务已启动：channel=%2 device=%3 mode=%4")
+                    .arg(QDateTime::currentDateTime().toString(QStringLiteral("HH:mm:ss")),
+                         opcConfig.channelName,
+                         opcConfig.deviceName,
+                         opcConfig.serialMode));
+}
+
+void RuntimeSessionController::stopOpcServer()
+{
+    if (!m_opcServer || !m_opcServer->isRunning()) {
+        return;
+    }
+
+    m_opcServer->stop();
+    emit logMessage(QStringLiteral("[%1] OPC 服务已停止")
+                    .arg(QDateTime::currentDateTime().toString(QStringLiteral("HH:mm:ss"))));
+}
+
+void RuntimeSessionController::connectOpcServerSignals()
+{
+    if (!m_opcServer) {
+        return;
+    }
+
+    connect(m_opcServer, &IOpcServer::runningStateChanged,
+            this, &RuntimeSessionController::opcRunningChanged,
+            Qt::UniqueConnection);
+    connect(m_opcServer, &IOpcServer::errorOccurred,
+            this, &RuntimeSessionController::opcErrorOccurred,
+            Qt::UniqueConnection);
+    connect(m_opcServer, &IOpcServer::writeRequestReceived,
+            this, &RuntimeSessionController::handleOpcWriteRequest,
+            Qt::UniqueConnection);
+}
+
+void RuntimeSessionController::handleOpcWriteRequest(const QString& pointId, const QVariant& value)
+{
+    if (!m_opcServer) {
+        return;
+    }
+
+    if (!m_parameterController) {
+        const QString message = QStringLiteral("OPC 写入失败：参数控制器不可用");
+        m_opcServer->recordWriteResult(pointId, false, message);
+        emit runtimeError(message);
+        return;
+    }
+
+    const ParameterStateInfo stateInfo = m_parameterController->parameterStateByPointId(pointId);
+    if (stateInfo.name.isEmpty()) {
+        const QString message = QStringLiteral("OPC 写入失败：未找到点位 %1").arg(pointId);
+        m_opcServer->recordWriteResult(pointId, false, message);
+        emit runtimeError(message);
+        return;
+    }
+
+    if (!stateInfo.onlineEditable) {
+        const QString message = QStringLiteral("OPC 写入失败：参数 %1 只读").arg(stateInfo.name);
+        m_opcServer->recordWriteResult(pointId, false, message);
+        emit runtimeError(message);
+        return;
+    }
+
+    const QString valueText = value.toString();
+    if (!m_parameterController->editParameterByPointId(pointId, valueText)) {
+        const QString message = QStringLiteral("OPC 写入失败：参数 %1 编辑失败").arg(stateInfo.name);
+        m_opcServer->recordWriteResult(pointId, false, message);
+        emit runtimeError(message);
+        return;
+    }
+
+    QString applyError;
+    const bool ok = m_parameterController->applyModifiedParametersWithReadbackAsync(
+            m_backend, 1, 0, &applyError);
+    if (!ok) {
+        const QString message = applyError.isEmpty()
+                ? QStringLiteral("OPC 写入失败：参数 %1 下发失败").arg(stateInfo.name)
+                : QStringLiteral("OPC 写入失败：%1").arg(applyError);
+        m_opcServer->recordWriteResult(pointId, false, message);
+        emit runtimeError(message);
+        return;
+    }
+
+    const QString successMessage = QStringLiteral("OPC 写入成功：%1=%2")
+            .arg(stateInfo.name, valueText);
+    m_opcServer->recordWriteResult(pointId, true, successMessage);
+    RuntimePointValue syncedValue;
+    syncedValue.pointId = pointId;
+    syncedValue.value = stateInfo.appliedValue.isEmpty() ? valueText : stateInfo.appliedValue;
+    syncedValue.quality = RuntimePointQuality::Good;
+    syncedValue.timestamp = QDateTime::currentDateTime();
+    syncedValue.origin = QStringLiteral("opc-write");
+    m_opcServer->updatePointValues({syncedValue});
+    emit logMessage(QStringLiteral("[%1] %2")
+                    .arg(QDateTime::currentDateTime().toString(QStringLiteral("HH:mm:ss")),
+                         successMessage));
 }

@@ -5,7 +5,7 @@
  *
  * 本文件为 DSL 编辑器的总控实现，主要职责：
  * - UI 组件的创建和布局
- * - 模块的初始化和协调
+ * - 模块的初始化和协作
  * - 信号槽连接
  * - 查找/替换功能
  *
@@ -44,8 +44,7 @@
 #include <QRegularExpression>
 
 // ============================================================================
-// FunctionListWidget 瀹炵幇
-// ============================================================================
+// FunctionListWidget 实现
 
 FunctionListWidget::FunctionListWidget(QWidget* parent)
     : QListWidget(parent)
@@ -53,9 +52,8 @@ FunctionListWidget::FunctionListWidget(QWidget* parent)
     setDragEnabled(true);
     setDragDropMode(QAbstractItemView::DragOnly);
     setDefaultDropAction(Qt::CopyAction);
-    
-    // 鍚敤榧犳爣杩借釜浠ユ敮鎸?Tooltip
-    setMouseTracking(true);
+
+    // 启用鼠标跟踪以支持 Tooltip
 }
 
 void FunctionListWidget::setSnippets(const QList<FunctionSnippet>& snippets)
@@ -68,7 +66,7 @@ void FunctionListWidget::setSnippets(const QList<FunctionSnippet>& snippets)
         item->setData(Qt::UserRole, snippet.id);
         item->setData(Qt::UserRole + 1, snippet.templateCode);
         
-        // 璁剧疆 Tooltip
+        // 设置 Tooltip
         QString tooltip = QString("<b>%1</b><br/>"
                                   "<i>%2</i><br/><br/>"
                                   "分类: %3<br/>"
@@ -134,10 +132,10 @@ void FunctionListWidget::startDrag(Qt::DropActions supportedActions)
     QString snippetId = items.first()->data(Qt::UserRole).toString();
     emit dragStarted(snippetId);
     
-    // 楂樹寒琚嫋鎷界殑鏉＄洰
+    // 高亮被拖拽的条目
     items.first()->setBackground(QColor("#cce7ff"));
     
-    // 鍒涘缓鎷栨嫿
+    // 创建拖拽
     QMimeData* mimeData = this->mimeData(items);
     if (!mimeData)
         return;
@@ -145,7 +143,7 @@ void FunctionListWidget::startDrag(Qt::DropActions supportedActions)
     QDrag* drag = new QDrag(this);
     drag->setMimeData(mimeData);
     
-    // 璁剧疆鎷栨嫿鏃剁殑榧犳爣鍏夋爣
+    // 设置拖拽时的鼠标光标
     QPixmap pixmap(150, 30);
     pixmap.fill(QColor("#e8f3ff"));
     QPainter painter(&pixmap);
@@ -155,11 +153,11 @@ void FunctionListWidget::startDrag(Qt::DropActions supportedActions)
     drag->setPixmap(pixmap);
     drag->setHotSpot(QPoint(10, 15));
     
-    // 鎵ц鎷栨嫿
+    // 执行拖拽
     Qt::DropAction result = drag->exec(supportedActions);
     Q_UNUSED(result);
     
-    // 鎭㈠鏉＄洰澶栬
+    // 恢复条目外观
     items.first()->setBackground(Qt::transparent);
     
     emit dragEnded();
@@ -167,8 +165,7 @@ void FunctionListWidget::startDrag(Qt::DropActions supportedActions)
 
 
 // ============================================================================
-// CodeEditor 瀹炵幇
-// ============================================================================
+// CodeEditor 实现
 
 CodeEditor::CodeEditor(QWidget* parent)
     : QPlainTextEdit(parent)
@@ -180,7 +177,7 @@ CodeEditor::CodeEditor(QWidget* parent)
     , m_dragTargetLine(-1)
     , m_dragHighlightColor(QColor(204, 231, 255, 120))
 {
-    // 鍚敤鎷栨斁
+    // 启用拖放
     setAcceptDrops(true);
     
     connect(this, &CodeEditor::blockCountChanged,
@@ -196,7 +193,7 @@ CodeEditor::CodeEditor(QWidget* parent)
             this, &CodeEditor::modificationChanged);
 
     updateLineNumberAreaWidth(0);
-    // 鍒濆鍖栧綋鍓嶈楂樹寒
+    // 初始化当前行高亮
     highlightCurrentLine();
 }
 
@@ -489,7 +486,7 @@ int CodeEditor::findMatchingBracket(int position, QChar openBracket, QChar close
     return -1;
 }
 
-// ===== 鎷栨嫿浜嬩欢澶勭悊锛堝鎵樼粰 DslDragDropHandler锛?====
+// ===== 拖拽事件处理（委托给 DslDragDropHandler） =====
 
 void CodeEditor::dragEnterEvent(QDragEnterEvent* event)
 {
@@ -499,7 +496,8 @@ void CodeEditor::dragEnterEvent(QDragEnterEvent* event)
         }
     }
     
-    // 鍥為€€鍒伴粯璁ゅ鐞?    QPlainTextEdit::dragEnterEvent(event);
+    // 回退到默认处理
+    QPlainTextEdit::dragEnterEvent(event);
 }
 
 void CodeEditor::dragMoveEvent(QDragMoveEvent* event)
@@ -541,8 +539,7 @@ void CodeEditor::dropEvent(QDropEvent* event)
 
 
 // ============================================================================
-// DslScriptEditor 瀹炵幇
-// ============================================================================
+// DslScriptEditor 实现
 
 DslScriptEditor::DslScriptEditor(QWidget* parent)
     : QWidget(parent)
@@ -569,13 +566,13 @@ DslScriptEditor::DslScriptEditor(QWidget* parent)
     initCompletion();
     connectModuleSignals();
 
-    // 鍒濆鍙戝皠涓€娆″厜鏍囦綅缃俊鍙凤紙鍒濆鐘舵€侊級
+    // 初始化时主动发射一次光标位置信号
     onEditorCursorPositionChanged();
 }
 
 DslScriptEditor::~DslScriptEditor()
 {
-    // 妯″潡鐢?QObject 鐖跺瓙鍏崇郴鑷姩绠＄悊
+    // 模块由 QObject 父子关系自动管理
 }
 
 void DslScriptEditor::setupUi()
@@ -595,11 +592,17 @@ void DslScriptEditor::setupUi()
 
     m_editor->setAcceptDrops(true);
     m_editor->setTabStopDistance(4 * m_editor->fontMetrics().horizontalAdvance(' '));
-    m_editor->setPlaceholderText("// 在这里编写 DSL 脚本，例如:\n"
-                                 "// drv_ai_1 = _DrvAI(...);\n"
-                                 "// add_1 = _Add();\n"
-                                 "// \n"
-                                  "// 提示: 从左侧函数列表拖拽功能块到这里即可快速插入。");
+    m_editor->setPlaceholderText("// 在这里编写 LH 脚本，例如:\n"
+                                 "PROGRAM Main\n"
+                                 "VAR\n"
+                                 "    system_1 : System;\n"
+                                 "    drv_ai_1 : DrvAI;\n"
+                                 "    add_1 : Add;\n"
+                                 "END_VAR\n\n"
+                                 "system_1(Author := 1, Config := 100, Date := 2601);\n"
+                                 "drv_ai_1(NumChannels := 1, InputNum := 0, DivisionNum := 4096);\n"
+                                 "add_1();\n\n"
+                                 "END_PROGRAM");
 
     m_splitter->addWidget(m_functionList);
     m_splitter->addWidget(m_editor);
@@ -666,9 +669,9 @@ void DslScriptEditor::setupFindReplaceBar()
     m_replaceAllButton = new QPushButton("全部替换", m_findReplaceBar);
     m_replaceAllButton->setToolTip("替换所有匹配项");
 
-    m_closeFindBarButton = new QPushButton("×", m_findReplaceBar);
+    m_closeFindBarButton = new QPushButton("脳", m_findReplaceBar);
     m_closeFindBarButton->setFixedSize(24, 24);
-    m_closeFindBarButton->setToolTip("关闭查找工具条 (Escape)");
+    m_closeFindBarButton->setToolTip("关闭查找工具栏 (Escape)");
     m_closeFindBarButton->setFlat(true);
     m_closeFindBarButton->setStyleSheet(
         "QPushButton { border: none; background: transparent; font-weight: bold; font-size: 14px; }"
@@ -721,13 +724,13 @@ void DslScriptEditor::setupShortcuts()
 
 void DslScriptEditor::setupModules()
 {
-    // 鍒涘缓琛ュ叏寮曟搸
+    // 创建补全引擎
     m_completionEngine = new DslCompletionEngine(this);
     m_completionEngine->initBuiltinSnippets();
     
     m_syntaxHighlighter = new DslSyntaxHighlighter(m_editor->document());
     
-    // 鏇存柊楂樹寒鍣ㄧ殑鍏抽敭瀛楋紙浠庤ˉ鍏ㄥ紩鎿庤幏鍙栵級
+    // 更新高亮器关键字，从补全引擎获取
     m_syntaxHighlighter->updateKeywords(m_completionEngine->componentNames());
     
     m_dragDropHandler = new DslDragDropHandler(this);
@@ -735,7 +738,7 @@ void DslScriptEditor::setupModules()
     
     m_editor->setDragDropHandler(m_dragDropHandler);
     
-    // 鏇存柊鍑芥暟鍒楄〃
+    // 更新函数列表
     m_functionList->setSnippets(m_completionEngine->availableSnippets());
 }
 
@@ -771,17 +774,17 @@ void DslScriptEditor::connectModuleSignals()
                 this, &DslScriptEditor::onHighlightUpdateRequested);
     }
     
-    // 杩炴帴鍑芥暟鍒楄〃鎷栨嫿淇″彿
+    // 连接函数列表拖拽信号
     connect(m_functionList, &FunctionListWidget::dragStarted,
             this, &DslScriptEditor::onDragStarted);
     connect(m_functionList, &FunctionListWidget::dragEnded,
             this, &DslScriptEditor::onDragEnded);
     
-    // 杩炴帴琛ュ叏寮曟搸淇″彿
+    // 连接补全引擎信号
     if (m_completionEngine) {
         connect(m_completionEngine, &DslCompletionEngine::snippetsChanged,
                 this, [this]() {
-            // 鏇存柊鍑芥暟鍒楄〃
+            // 更新函数列表
             m_functionList->setSnippets(m_completionEngine->availableSnippets());
             if (m_syntaxHighlighter) {
                 m_syntaxHighlighter->updateKeywords(m_completionEngine->componentNames());
@@ -837,7 +840,7 @@ void DslScriptEditor::gotoLine(int lineNumber)
     m_editor->setFocus();
 }
 
-// ===== DSL 鏄犲皠绋冲畾锛堟彃鍏ユ爣璁版硶锛?=====
+// ===== DSL 映射稳定化（插入标记法） =====
 
 namespace {
 
@@ -910,7 +913,8 @@ void DslScriptEditor::gotoMappingId(const QString& mappingId)
 
     int markerLine = findDslMappingMarkerLine(mappingId);
     if (markerLine > 0) {
-        // 榛樿璺冲埌 marker 涓嬩竴琛岋紙閫氬父鏄?snippet 浠ｇ爜鎵€鍦ㄨ锛?        gotoLine(markerLine + 1);
+        // 默认跳到 marker 下一行，通常是 snippet 代码所在行
+        gotoLine(markerLine + 1);
         return;
     }
 
@@ -1081,7 +1085,7 @@ void DslScriptEditor::onFunctionItemActivated(QListWidgetItem* item)
     // 鎻掑叆 snippet 浠ｇ爜
     insertSnippet(snippetCode);
 
-    // 璁板綍鎻掑叆锛坙ineNumber 璁板綍浠ｇ爜琛岋紝鑰岄潪 marker 琛岋級
+    // 记录插入：lineNumber 记录代码行而非 marker 行
     DslInsertRecord record;
     record.snippetId = snippetId;
     record.snippetName = item->text();
@@ -1114,13 +1118,13 @@ void DslScriptEditor::insertSnippet(const QString& text)
     m_editor->setFocus();
 }
 
-// ===== 鎷栨嫿鐩稿叧妲藉嚱鏁?=====
+// ===== 拖拽相关槽函数 =====
 
 void DslScriptEditor::onDropSucceeded(const DragDropResult& result)
 {
     const QString mappingId = QUuid::createUuid().toString(QUuid::WithoutBraces);
 
-    // 璁板綍鎻掑叆锛坙ineNumber 璁板綍浠ｇ爜琛岋紝鑰岄潪 marker 琛岋級
+    // 记录插入：lineNumber 记录代码行而非 marker 行
     DslInsertRecord record;
     record.snippetId = result.snippetId;
     record.snippetName = result.snippetName;
@@ -1162,7 +1166,7 @@ void DslScriptEditor::onDragStarted(const QString& snippetId)
 void DslScriptEditor::onDragEnded()
 {
     if (m_statusCallback) {
-        m_statusCallback("就绪");
+        m_statusCallback("灏辩华");
     }
 }
 
@@ -1173,8 +1177,7 @@ void DslScriptEditor::onHighlightUpdateRequested(int lineNumber, bool highlight)
     }
 }
 
-// ===== 鏌ユ壘/鏇挎崲瀹炵幇 =====
-
+// ===== 查找/替换实现 =====
 void DslScriptEditor::onFindNext()
 {
     QString text = m_findEdit->text();
@@ -1341,7 +1344,7 @@ void DslScriptEditor::highlightAllMatches(const QString& text, bool caseSensitiv
     }
 }
 
-// ===== 鑷姩琛ュ叏鐩稿叧 =====
+// ===== 自动补全相关 =====
 
 
 void DslScriptEditor::onShowDslMappings()
@@ -1350,7 +1353,7 @@ void DslScriptEditor::onShowDslMappings()
         return;
     }
 
-    // 濡傛灉娌℃湁 mappings锛屽垯鑷冲皯鎻愮ず鐢ㄦ埛
+    // 如果没有 mappings，至少给用户一个提示
     QDialog dlg(this);
     dlg.setWindowTitle("DSL 映射导航");
     dlg.resize(520, 360);
@@ -1358,8 +1361,8 @@ void DslScriptEditor::onShowDslMappings()
     QVBoxLayout* layout = new QVBoxLayout(&dlg);
 
     QLabel* hint = new QLabel(
-        "选择一条映射后跳转到对应位置（兼容旧 marker）。\n"
-        "提示: 旧版本脚本中的 // @dsl_mapping_id: <uuid> 会在保存时自动清理。",
+        "选择一条映射后将跳转到对应位置（兼容旧 marker）。\n"
+        "提示：旧版本脚本中的 // @dsl_mapping_id: <uuid> 会在保存时自动清理。",
         &dlg
     );
     hint->setWordWrap(true);
@@ -1390,7 +1393,7 @@ void DslScriptEditor::onShowDslMappings()
         gotoMappingId(id);
     });
 
-    // 娌℃湁 mapping 鏃剁粰涓€涓┖鎻愮ず
+    // 没有 mapping 时给一个空提示
     if (m_dslMappings.isEmpty()) {
         QListWidgetItem* item = new QListWidgetItem("（暂无映射）请先从左侧函数列表插入 snippet。", list);
         item->setFlags(item->flags() & ~Qt::ItemIsSelectable);
@@ -1410,8 +1413,8 @@ void DslScriptEditor::insertCompletion(const QString& completion)
         return;
     }
     
-    // 1) 濡傛灉琛ュ叏椤瑰搴斾竴涓?Snippet锛屽垯鎻掑叆鏁翠釜妯℃澘浠ｇ爜锛堣€屼笉浠呮槸鍚嶇О锛?    // 2) 鍚﹀垯鍥為€€鍒扳€滆ˉ鍏ㄥ崟璇嶁€濈殑鏃ч€昏緫
-
+    // 1) 若补全项对应一个 Snippet，则插入整个模板代码，而不是仅插入名称
+    // 2) 否则回退到“补全单词”的旧逻辑
     const FunctionSnippet snippet = m_completionEngine->snippetByName(completion);
     if (snippet.isValid() && !snippet.templateCode.isEmpty()) {
         QTextCursor cursor = m_editor->textCursor();
@@ -1428,7 +1431,7 @@ void DslScriptEditor::insertCompletion(const QString& completion)
             ++end;
         }
 
-        // 鍙栧綋鍓嶈鐨勫熀纭€缂╄繘锛堣棣栫┖鐧斤級锛岀敤浜庡琛屾ā鏉跨殑瀵归綈
+        // 取当前行的基础缩进，用于多行模板的对齐
         int indentLen = 0;
         while (indentLen < blockText.size() && (blockText[indentLen] == ' ' || blockText[indentLen] == '\t')) {
             ++indentLen;

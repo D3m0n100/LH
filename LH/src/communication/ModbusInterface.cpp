@@ -184,10 +184,22 @@ QMap<int, QVector<quint16>> ModbusInterface::holdingRegisters() const
     return m_holdingRegisters;
 }
 
+QMap<int, QVector<quint16>> ModbusInterface::inputRegisters() const
+{
+    QMutexLocker locker(&m_dataMutex);
+    return m_inputRegisters;
+}
+
 QMap<int, QVector<bool>> ModbusInterface::coils() const
 {
     QMutexLocker locker(&m_dataMutex);
     return m_coils;
+}
+
+QMap<int, QVector<bool>> ModbusInterface::discreteInputs() const
+{
+    QMutexLocker locker(&m_dataMutex);
+    return m_discreteInputs;
 }
 
 // ========================= Fun3 Read =========================

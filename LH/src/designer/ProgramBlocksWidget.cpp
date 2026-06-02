@@ -23,7 +23,7 @@
 #include <algorithm>
 
 // ============================================================================
-// 鍐呴儴锛氭敮鎸佹嫋鎷界殑 Tree
+// 内部：支持拖拽的 Tree
 // ============================================================================
 
 class ProgramBlocksTreeWidget final : public QTreeWidget
@@ -51,7 +51,7 @@ protected:
         }
 
         const QTreeWidgetItem* item = items.first();
-        // 涓€绾у垎绫昏妭鐐逛笉鍏佽鎷栨嫿
+        // 一级分类节点不允许拖拽
         if (!item || item->childCount() > 0) {
             return nullptr;
         }
@@ -63,7 +63,7 @@ protected:
         }
 
         auto* mime = new QMimeData;
-        // 鍏煎锛氱函鏂囨湰
+        // 兼容：纯文本
         mime->setText(snippetCode);
         QByteArray data;
         QDataStream stream(&data, QIODevice::WriteOnly);
@@ -88,7 +88,7 @@ protected:
         QDrag* drag = new QDrag(this);
         drag->setMimeData(md);
 
-        // 绠€鍗曟嫋鎷介瑙堬紙瀵归綈 FunctionListWidget 鐨勪綋楠岋級
+        // 简单拖拽预览，与 FunctionListWidget 保持一致体验
         const QString text = items.first()->text(0);
         QPixmap pixmap(180, 30);
         pixmap.fill(QColor("#e8f3ff"));
@@ -235,7 +235,7 @@ void ProgramBlocksWidget::rebuildTree(const QList<FunctionSnippet>& snippets)
     // category -> parent item
     QMap<QString, QTreeWidgetItem*> categoryItems;
 
-    // 绋冲畾鎺掑簭锛氬厛鎸?category锛屽啀鎸?name
+    // 稳定排序：先按 category，再按 name
     QList<FunctionSnippet> sorted = snippets;
     std::sort(sorted.begin(), sorted.end(), [](const FunctionSnippet& a, const FunctionSnippet& b) {
         const QString ca = a.category.toLower();
@@ -261,7 +261,7 @@ void ProgramBlocksWidget::rebuildTree(const QList<FunctionSnippet>& snippets)
         leaf->setData(0, Qt::UserRole + 2, sn.description);
         leaf->setToolTip(0, makeSnippetTooltip(sn));
 
-        // 绠€鍗曞垎绫婚厤鑹诧紙娌跨敤 FunctionListWidget 鐨勮瑙夎涔夛級
+        // 简单分类配色，沿用 FunctionListWidget 的视觉语义
         if (sn.category == "input") {
             leaf->setForeground(0, QColor("#16825d"));
         } else if (sn.category == "output") {

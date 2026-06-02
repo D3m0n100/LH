@@ -12,12 +12,14 @@ add_library(designer_module STATIC
     DslDragDropHandler.cpp
     SnippetRepository.cpp
     SettingsDialog.cpp
+    OpcServerSettingsDialog.cpp
     OutputPaneController.cpp
     MonitorController.cpp
     ProjectController.cpp
     BuildController.cpp
     RunController.cpp
     SettingsController.cpp
+    ../diagnostics/DiagnosticSnapshotService.cpp
     ui/ThemeManager.cpp
     ui/GlobalStatusBar.cpp
     ui/InspectorPanel.cpp

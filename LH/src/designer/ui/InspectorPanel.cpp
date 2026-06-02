@@ -1,5 +1,6 @@
 ﻿#include "InspectorPanel.h"
 #include "ParameterController.h"
+#include "StatusTextHelper.h"
 
 #include <QFormLayout>
 #include <QGroupBox>
@@ -140,12 +141,21 @@ QToolButton:pressed {
     m_runtimeValue = makeStateLabel(this);
     m_buildValue = makeStateLabel(this);
     m_monitorValue = makeStateLabel(this);
+    m_opcValue = makeStateLabel(this);
     m_variableValue = makeValueLabel(this);
     m_parameterValue = makeValueLabel(this);
     m_resourceValue = makeValueLabel(this);
     m_parameterTable = new QTableWidget(this);
     m_parameterTable->setColumnCount(7);
-    m_parameterTable->setHorizontalHeaderLabels({ "名称", "默认值", "当前值", "状态", "确认", "回读", "偏差" });
+    m_parameterTable->setHorizontalHeaderLabels({
+        QStringLiteral("名称"),
+        QStringLiteral("默认值"),
+        QStringLiteral("当前值"),
+        QStringLiteral("状态"),
+        QStringLiteral("确认"),
+        QStringLiteral("回读"),
+        QStringLiteral("偏差")
+    });
     m_parameterTable->horizontalHeader()->setStretchLastSection(false);
     m_parameterTable->horizontalHeader()->setSectionResizeMode(0, QHeaderView::Stretch);
     m_parameterTable->horizontalHeader()->setSectionResizeMode(1, QHeaderView::ResizeToContents);
@@ -164,31 +174,32 @@ QToolButton:pressed {
     m_parameterTable->setAlternatingRowColors(true);
     m_parameterTable->verticalHeader()->setDefaultSectionSize(28);
     m_parameterTable->setMinimumHeight(80);
-    m_contextGroup = new QGroupBox("上下文概览", content);
+    m_contextGroup = new QGroupBox(QStringLiteral("上下文概览"), content);
     auto* contextLayout = new QFormLayout(m_contextGroup);
     contextLayout->setContentsMargins(4, 2, 4, 4);
     contextLayout->setHorizontalSpacing(8);
     contextLayout->setVerticalSpacing(6);
-    contextLayout->addRow("项目路径", m_projectPathValue);
-    contextLayout->addRow("当前文件", m_currentFileValue);
-    contextLayout->addRow("工作区", m_workspaceValue);
-    contextLayout->addRow("运行状态", m_runtimeValue);
-    contextLayout->addRow("构建状态", m_buildValue);
-    contextLayout->addRow("监控状态", m_monitorValue);
-    contextLayout->addRow("变量摘要", m_variableValue);
-    contextLayout->addRow("参数摘要", m_parameterValue);
-    contextLayout->addRow("资源摘要", m_resourceValue);
+    contextLayout->addRow(QStringLiteral("项目路径"), m_projectPathValue);
+    contextLayout->addRow(QStringLiteral("当前文件"), m_currentFileValue);
+    contextLayout->addRow(QStringLiteral("工作区"), m_workspaceValue);
+    contextLayout->addRow(QStringLiteral("运行状态"), m_runtimeValue);
+    contextLayout->addRow(QStringLiteral("构建状态"), m_buildValue);
+    contextLayout->addRow(QStringLiteral("监控状态"), m_monitorValue);
+    contextLayout->addRow(QStringLiteral("OPC 状态"), m_opcValue);
+    contextLayout->addRow(QStringLiteral("变量摘要"), m_variableValue);
+    contextLayout->addRow(QStringLiteral("参数摘要"), m_parameterValue);
+    contextLayout->addRow(QStringLiteral("资源摘要"), m_resourceValue);
     contentLayout->addWidget(m_contextGroup);
 
-    m_paramGroup = new QGroupBox("在线参数", content);
+    m_paramGroup = new QGroupBox(QStringLiteral("在线参数"), content);
     auto* paramLayout = new QVBoxLayout(m_paramGroup);
     paramLayout->setContentsMargins(0, 2, 0, 0);
     paramLayout->setSpacing(6);
-    auto* paramHint = new QLabel("双击参数行可直接修改当前值。", this);
+    auto* paramHint = new QLabel(QStringLiteral("双击参数行可直接修改当前值。"), this);
     paramHint->setStyleSheet("QLabel { color: #57606a; }");
     paramLayout->addWidget(paramHint);
     paramLayout->addWidget(m_parameterTable, 1);
-    m_parameterEditButton = makeActionButton("编辑选中参数", ":/icons/settings.svg", this);
+    m_parameterEditButton = makeActionButton(QStringLiteral("编辑选中参数"), ":/icons/settings.svg", this);
     connect(m_parameterEditButton, &QToolButton::clicked, this, [this]() {
         if (!m_parameterTable || !m_parameterTable->currentItem()) {
             return;
@@ -196,7 +207,7 @@ QToolButton:pressed {
         onParameterItemDoubleClicked(m_parameterTable->currentItem());
     });
     paramLayout->addWidget(m_parameterEditButton);
-    m_applyParametersButton = makeActionButton("应用参数到监控", ":/icons/run.svg", this);
+    m_applyParametersButton = makeActionButton(QStringLiteral("应用参数到监控"), ":/icons/run.svg", this);
     connect(m_applyParametersButton, &QToolButton::clicked, this, &InspectorPanel::requestApplyParameters);
     paramLayout->addWidget(m_applyParametersButton);
     contentLayout->addWidget(m_paramGroup, 1);
@@ -225,7 +236,11 @@ void InspectorPanel::setPanelMode(PanelMode mode)
     if (m_parameterTable) {
         if (inspectionMode) {
             m_parameterTable->setColumnCount(3);
-            m_parameterTable->setHorizontalHeaderLabels({ "名称", "当前值", "详情" });
+            m_parameterTable->setHorizontalHeaderLabels({
+                QStringLiteral("名称"),
+                QStringLiteral("当前值"),
+                QStringLiteral("详情")
+            });
             m_parameterTable->horizontalHeader()->setSectionResizeMode(0, QHeaderView::Stretch);
             m_parameterTable->horizontalHeader()->setSectionResizeMode(1, QHeaderView::ResizeToContents);
             m_parameterTable->horizontalHeader()->setSectionResizeMode(2, QHeaderView::Stretch);
@@ -233,7 +248,15 @@ void InspectorPanel::setPanelMode(PanelMode mode)
             m_parameterTable->setWordWrap(true);
         } else {
             m_parameterTable->setColumnCount(7);
-            m_parameterTable->setHorizontalHeaderLabels({ "名称", "默认值", "当前值", "状态", "确认", "回读", "偏差" });
+            m_parameterTable->setHorizontalHeaderLabels({
+                QStringLiteral("名称"),
+                QStringLiteral("默认值"),
+                QStringLiteral("当前值"),
+                QStringLiteral("状态"),
+                QStringLiteral("确认"),
+                QStringLiteral("回读"),
+                QStringLiteral("偏差")
+            });
             m_parameterTable->horizontalHeader()->setSectionResizeMode(0, QHeaderView::Stretch);
             m_parameterTable->horizontalHeader()->setSectionResizeMode(1, QHeaderView::ResizeToContents);
             m_parameterTable->horizontalHeader()->setSectionResizeMode(2, QHeaderView::ResizeToContents);
@@ -284,6 +307,13 @@ void InspectorPanel::setMonitoringState(const QString& monitoringState)
     applyStateStyle(m_monitorValue, state);
 }
 
+void InspectorPanel::setOpcState(const QString& opcState)
+{
+    const QString state = opcState.isEmpty() ? "-" : opcState;
+    m_opcValue->setText(state);
+    applyStateStyle(m_opcValue, state);
+}
+
 void InspectorPanel::setVariableSummary(const QString& summary)
 {
     m_variableValue->setText(summary.isEmpty() ? "-" : summary);
@@ -323,21 +353,6 @@ void InspectorPanel::setParameterStateMap(const QMap<QString, ParameterStateInfo
     refreshParameterTable();
 }
 
-static QString parameterStateDisplayText(ParameterState state)
-{
-    switch (state) {
-    case ParameterState::Clean:           return QStringLiteral("未修改");
-    case ParameterState::Modified:        return QStringLiteral("已修改");
-    case ParameterState::PendingApply:    return QStringLiteral("待下发");
-    case ParameterState::Applying:        return QStringLiteral("下发中");
-    case ParameterState::PendingReadback: return QStringLiteral("待回读");
-    case ParameterState::Confirmed:       return QStringLiteral("已确认");
-    case ParameterState::Mismatch:        return QStringLiteral("不匹配");
-    case ParameterState::ApplyFailed:     return QStringLiteral("下发失败");
-    default:                              return QStringLiteral("未知");
-    }
-}
-
 void InspectorPanel::refreshParameterTable()
 {
     if (!m_parameterTable) {
@@ -354,10 +369,10 @@ void InspectorPanel::refreshParameterTable()
         auto* valueItem = new QTableWidgetItem(current);
         m_parameterTable->setItem(row, 0, nameItem);
         if (m_panelMode == PanelMode::Inspection) {
-            const QString detailText = QString("默认值: %1\n变更: %2\n确认: %3\n回读: %4\n偏差: %5")
+            const QString detailText = QStringLiteral("默认值: %1\n变更: %2\n确认: %3\n回读: %4\n偏差: %5")
                                            .arg(p.defaultValue,
-                                                current == p.defaultValue ? "未变更" : "已变更",
-                                                p.confirmed ? "已确认" : "待确认",
+                                                current == p.defaultValue ? QStringLiteral("未变更") : QStringLiteral("已变更"),
+                                                p.confirmed ? QStringLiteral("已确认") : QStringLiteral("待确认"),
                                                 readbackStateFor(p),
                                                 deviationStateFor(p));
             auto* detailItem = new QTableWidgetItem(detailText);
@@ -371,17 +386,18 @@ void InspectorPanel::refreshParameterTable()
             bool stateIsError = false;
             auto stIt = m_parameterStateMap.constFind(p.name);
             if (stIt != m_parameterStateMap.constEnd()) {
-                stateText = parameterStateDisplayText(stIt->state);
+                stateText = parameterStateText(stIt->state);
                 stateIsError = (stIt->state == ParameterState::Modified
                                 || stIt->state == ParameterState::ApplyFailed
-                                || stIt->state == ParameterState::Mismatch);
+                                || stIt->state == ParameterState::Mismatch
+                                || stIt->state == ParameterState::Timeout);
             } else {
-                stateText = current == p.defaultValue ? "未变更" : "已变更";
+                stateText = current == p.defaultValue ? QStringLiteral("未变更") : QStringLiteral("已变更");
                 stateIsError = (current != p.defaultValue);
             }
 
             auto* stateItem = new QTableWidgetItem(stateText);
-            auto* confirmItem = new QTableWidgetItem(p.confirmed ? "已确认" : "待确认");
+            auto* confirmItem = new QTableWidgetItem(p.confirmed ? QStringLiteral("已确认") : QStringLiteral("待确认"));
             auto* readbackItem = new QTableWidgetItem(readbackStateFor(p));
             auto* deviationItem = new QTableWidgetItem(deviationStateFor(p));
             if (stateIsError) {
@@ -390,10 +406,10 @@ void InspectorPanel::refreshParameterTable()
             if (!p.confirmed) {
                 confirmItem->setForeground(QColor("#cf222e"));
             }
-            if (readbackItem->text() == "待回读") {
+            if (readbackItem->text() == QStringLiteral("待回读")) {
                 readbackItem->setForeground(QColor("#cf222e"));
             }
-            if (deviationItem->text() != "无") {
+            if (deviationItem->text() != QStringLiteral("无")) {
                 deviationItem->setForeground(QColor("#cf222e"));
             }
             auto* defaultItem = new QTableWidgetItem(p.defaultValue);
@@ -466,4 +482,3 @@ void InspectorPanel::applyStateStyle(QLabel* label, const QString& state)
     label->style()->unpolish(label);
     label->style()->polish(label);
 }
-

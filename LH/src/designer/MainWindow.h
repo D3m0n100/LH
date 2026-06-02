@@ -154,6 +154,7 @@ private slots:
 
     // ===== 设置相关（转发给 SettingsController）=====
     void onOpenSettings();
+    void onOpenOpcServerSettings();
 
     // ===== 编译相关（转发给 BuildController）=====
     void onCompileConfiguration();
@@ -178,6 +179,7 @@ private slots:
     void onOpenDiagnosisWizard();
     void onEditParameterRequested(const QString& parameterName);
     void onApplyParametersRequested();
+    void onParameterReadbackFinished(bool success, const QString& message);
     void onAbout();
 
     // ===== 内部辅助槽函数 =====
@@ -373,6 +375,7 @@ private:
 
     // ================= 设置相关 QAction =================
     QAction*      m_actSettings;
+    QAction*      m_actOpcServerSettings = nullptr;
 
     // ================= 模块封装 =================
     MonitorWidget* m_monitorWidget;
@@ -386,6 +389,9 @@ private:
     int m_alarmCount = 0;
     QStringList m_runtimeProviderIds;
     bool m_refreshingInspector = false;
+    bool m_opcRunning = false;
+    QString m_lastOpcError;
+    QVariantMap m_lastOpcStatusExtras;
 };
 
 #endif // MAINWINDOW_H

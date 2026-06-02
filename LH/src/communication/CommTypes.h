@@ -57,6 +57,60 @@ enum class CommErrorCode
     UnknownError = 999
 };
 
+inline QString commErrorCodeToString(CommErrorCode code)
+{
+    switch (code) {
+    case CommErrorCode::NoError: return QStringLiteral("NoError");
+    case CommErrorCode::ConnectionFailed: return QStringLiteral("ConnectionFailed");
+    case CommErrorCode::ConnectionLost: return QStringLiteral("ConnectionLost");
+    case CommErrorCode::ConnectionTimeout: return QStringLiteral("ConnectionTimeout");
+    case CommErrorCode::DeviceNotFound: return QStringLiteral("DeviceNotFound");
+    case CommErrorCode::DeviceBusy: return QStringLiteral("DeviceBusy");
+    case CommErrorCode::PermissionDenied: return QStringLiteral("PermissionDenied");
+    case CommErrorCode::InvalidConfig: return QStringLiteral("InvalidConfig");
+    case CommErrorCode::UnsupportedBaudRate: return QStringLiteral("UnsupportedBaudRate");
+    case CommErrorCode::UnsupportedProtocol: return QStringLiteral("UnsupportedProtocol");
+    case CommErrorCode::InvalidAddress: return QStringLiteral("InvalidAddress");
+    case CommErrorCode::InvalidParameter: return QStringLiteral("InvalidParameter");
+    case CommErrorCode::SendFailed: return QStringLiteral("SendFailed");
+    case CommErrorCode::ReceiveTimeout: return QStringLiteral("ReceiveTimeout");
+    case CommErrorCode::ReceiveFailed: return QStringLiteral("ReceiveFailed");
+    case CommErrorCode::BufferOverflow: return QStringLiteral("BufferOverflow");
+    case CommErrorCode::DataTooLarge: return QStringLiteral("DataTooLarge");
+    case CommErrorCode::CrcError: return QStringLiteral("CrcError");
+    case CommErrorCode::FrameError: return QStringLiteral("FrameError");
+    case CommErrorCode::ProtocolError: return QStringLiteral("ProtocolError");
+    case CommErrorCode::InvalidResponse: return QStringLiteral("InvalidResponse");
+    case CommErrorCode::AddressMismatch: return QStringLiteral("AddressMismatch");
+    case CommErrorCode::ResourceError: return QStringLiteral("ResourceError");
+    case CommErrorCode::InternalError: return QStringLiteral("InternalError");
+    case CommErrorCode::NotImplemented: return QStringLiteral("NotImplemented");
+    case CommErrorCode::OperationCancelled: return QStringLiteral("OperationCancelled");
+    case CommErrorCode::UnknownError:
+    default:
+        return QStringLiteral("UnknownError");
+    }
+}
+
+inline bool commErrorCodeIsTransportFailure(CommErrorCode code)
+{
+    return code == CommErrorCode::ConnectionLost
+            || code == CommErrorCode::ConnectionFailed
+            || code == CommErrorCode::ConnectionTimeout
+            || code == CommErrorCode::ReceiveTimeout
+            || code == CommErrorCode::SendFailed
+            || code == CommErrorCode::ReceiveFailed;
+}
+
+inline bool commErrorCodeIsVerificationFailure(CommErrorCode code)
+{
+    return code == CommErrorCode::InvalidResponse
+            || code == CommErrorCode::ProtocolError
+            || code == CommErrorCode::CrcError
+            || code == CommErrorCode::FrameError
+            || code == CommErrorCode::AddressMismatch;
+}
+
 // ============================================================================
 // 协议类型枚举
 // ============================================================================
@@ -125,6 +179,24 @@ struct CommError
             default:                            return "Unknown";
         }
     }
+};
+
+// ============================================================================
+// 设备后端状态快照
+// ============================================================================
+
+struct BackendStatusSnapshot
+{
+    bool online = false;
+    QString backendType;
+    bool downloading = false;
+    int downloadPercent = 0;
+    CommErrorCode lastErrorCode = CommErrorCode::NoError;
+    QString lastErrorMessage;
+    QString lastErrorDetails;
+    bool partialSuccess = false;
+    QDateTime timestamp = QDateTime::currentDateTimeUtc();
+    QVariantMap extras;
 };
 
 // ============================================================================
@@ -468,5 +540,6 @@ struct EthernetConfig : public CommConfigBase
 Q_DECLARE_METATYPE(CommError)
 Q_DECLARE_METATYPE(CommErrorCode)
 Q_DECLARE_METATYPE(CommProtocolType)
+Q_DECLARE_METATYPE(BackendStatusSnapshot)
 
 #endif // COMMTYPES_H

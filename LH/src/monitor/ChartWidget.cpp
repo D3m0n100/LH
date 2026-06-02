@@ -97,7 +97,7 @@ void ChartWidget::setupControlButtons()
     m_toolbarLayout->setContentsMargins(8, 4, 8, 4);
     m_toolbarLayout->setSpacing(10);
 
-    // 閲嶇疆缂╂斁鎸夐挳
+    // 重置缩放按钮
     m_resetZoomButton = new QPushButton("重置缩放", m_toolbarWidget);
     m_resetZoomButton->setToolTip("重置图表缩放到默认状态");
     m_resetZoomButton->setFixedHeight(26);
@@ -106,7 +106,7 @@ void ChartWidget::setupControlButtons()
 
     m_toolbarLayout->addSpacing(10);
 
-    // 鑷姩缂╂斁澶嶉€夋
+    // 自动缩放复选框
     m_autoScaleCheck = new QCheckBox("自动缩放 Y 轴", m_toolbarWidget);
     m_autoScaleCheck->setToolTip("勾选后 Y 轴将根据当前可见数据自动调整范围");
     m_autoScaleCheck->setChecked(m_autoScale);
@@ -116,7 +116,7 @@ void ChartWidget::setupControlButtons()
 
     m_toolbarLayout->addSpacing(10);
 
-    // 瀵煎嚭鎸夐挳
+    // 导出按钮
     m_exportImageButton = new QPushButton("导出图像", m_toolbarWidget);
     m_exportImageButton->setToolTip("导出当前图表为 PNG 图像");
     m_exportImageButton->setFixedHeight(26);
@@ -125,7 +125,7 @@ void ChartWidget::setupControlButtons()
 
     m_toolbarLayout->addStretch();
 
-    // 淇℃伅鏍囩
+    // 信息标签
     m_infoLabel = new QLabel(m_toolbarWidget);
     m_toolbarLayout->addWidget(m_infoLabel);
 
@@ -179,7 +179,7 @@ void ChartWidget::setupChart()
 }
 
 // ============================================================================
-// 澶氶€氶亾绠＄悊
+// 多通道管理
 // ============================================================================
 
 bool ChartWidget::addChannelSeries(const QString& channelId,
@@ -203,7 +203,8 @@ bool ChartWidget::addChannelSeries(const QString& channelId,
     info.series->setPen(pen);
     info.series->setName(info.displayName);
     
-    // 浣跨敤 OpenGL 鍔犻€燂紙濡傛灉鍙敤锛?    info.series->setUseOpenGL(true);
+    // 使用 OpenGL 加速（如果可用）
+    info.series->setUseOpenGL(true);
 
     m_chart->addSeries(info.series);
     info.series->attachAxis(m_axisX);
@@ -214,7 +215,7 @@ bool ChartWidget::addChannelSeries(const QString& channelId,
 
     m_channels.insert(channelId, info);
 
-    // 杩炴帴鍥句緥鏍囪鐐瑰嚮
+    // 连接图例标记点击
     const auto markers = m_chart->legend()->markers(info.series);
     for (QLegendMarker* marker : markers) {
         connect(marker, &QLegendMarker::clicked,
@@ -331,7 +332,7 @@ void ChartWidget::setChannelDisplayName(const QString& channelId,
 }
 
 // ============================================================================
-// 澧為噺鏁版嵁鏇存柊锛堟牳蹇冧紭鍖栵級
+// 增量数据更新（核心优化）
 // ============================================================================
 
 void ChartWidget::appendPoint(const QString& channelId, const QPointF& point)
@@ -345,7 +346,7 @@ void ChartWidget::appendPoint(const QString& channelId, const QPointF& point)
         return;
     }
 
-    // 鐩存帴杩藉姞鍒?series
+    // 直接追加到 series
     info.series->append(point);
     info.pointCount++;
     
@@ -379,7 +380,7 @@ void ChartWidget::appendPoints(const QString& channelId, const QVector<QPointF>&
         return;
     }
 
-    // 鎵归噺杩藉姞
+    // 批量追加
     for (const QPointF& pt : points) {
         info.series->append(pt);
         
@@ -419,7 +420,8 @@ void ChartWidget::addSamplesToChannel(const QString& channelId,
 }
 
 // ============================================================================
-// 鍏ㄩ噺鏁版嵁鏇存柊锛堝吋瀹规棫鎺ュ彛锛?// ============================================================================
+// 全量数据更新（兼容旧接口）
+// ============================================================================
 
 void ChartWidget::updateChannelData(const QString& channelId,
                                      const QList<Monitor::Sample>& samples)
@@ -444,7 +446,7 @@ void ChartWidget::updateChannelData(const QString& channelId,
         return;
     }
 
-    // 鍏ㄩ噺鏇挎崲
+    // 全量替换
     info.series->replace(points);
     info.pointCount = points.size();
     
@@ -514,7 +516,7 @@ void ChartWidget::addSample(const Monitor::Sample& sample)
 }
 
 // ============================================================================
-// 婊戝姩绐楀彛鎺у埗
+// 滑动窗口控制
 // ============================================================================
 
 int ChartWidget::trimOldPoints(const QString& channelId)
@@ -541,11 +543,10 @@ int ChartWidget::trimOldPoints(const QString& channelId)
     }
     
     if (removeCount > 0) {
-        // 绉婚櫎鏃х偣
-        info.series->removePoints(0, removeCount);
+        // 移除旧点
         info.pointCount -= removeCount;
         
-        // 鏇存柊鏈€鑰佹椂闂存埑
+        // 更新最老时间戳
         if (info.pointCount > 0) {
             QList<QPointF> remaining = info.series->points();
             if (!remaining.isEmpty()) {
@@ -574,7 +575,8 @@ void ChartWidget::setMaxPointsPerSeries(int maxPoints)
 }
 
 // ============================================================================
-// 鍧愭爣杞存帶鍒?// ============================================================================
+// 坐标轴控制
+// ============================================================================
 
 void ChartWidget::setYAxisRange(double min, double max)
 {
@@ -620,7 +622,7 @@ void ChartWidget::setAutoScaleEnabled(bool enabled)
 }
 
 // ============================================================================
-// 鍥句緥鎺у埗
+// 图例控制
 // ============================================================================
 
 void ChartWidget::setLegendVisible(bool visible)
@@ -639,7 +641,7 @@ void ChartWidget::setLegendAlignment(Qt::Alignment alignment)
 }
 
 // ============================================================================
-// 瀵煎嚭鍔熻兘
+// 导出功能
 // ============================================================================
 
 bool ChartWidget::exportAsPng(const QString& filePath)
@@ -653,20 +655,19 @@ bool ChartWidget::exportAsPng(const QString& filePath)
 void ChartWidget::onExportImage()
 {
     QString filePath = QFileDialog::getSaveFileName(
-        this, tr("瀵煎嚭鍥捐〃鍥惧儚"),
+        this, tr("导出图表图像"),
         QString("chart_%1.png").arg(QDateTime::currentDateTime().toString("yyyyMMdd_hhmmss")),
-        tr("PNG 鍥惧儚 (*.png)")
+        tr("PNG 图像 (*.png)")
     );
 
     if (!filePath.isEmpty() && exportAsPng(filePath)) {
-        QMessageBox::information(this, tr("瀵煎嚭鎴愬姛"),
-                                 tr("鍥捐〃宸插鍑哄埌锛?1").arg(filePath));
+        QMessageBox::information(this, tr("导出成功"),
+                                 tr("图表已导出到：%1").arg(filePath));
     }
 }
 
 // ============================================================================
-// 鎬ц兘缁熻
-// ============================================================================
+// 性能统计
 
 int ChartWidget::totalPointCount() const
 {
@@ -691,7 +692,8 @@ void ChartWidget::requestAxisUpdate()
 }
 
 // ============================================================================
-// 绉佹湁妲藉嚱鏁?// ============================================================================
+// 私有槽函数
+// ============================================================================
 
 void ChartWidget::onUpdateTimer()
 {
@@ -738,8 +740,7 @@ void ChartWidget::onLegendMarkerClicked()
 }
 
 // ============================================================================
-// 绉佹湁鏂规硶
-// ============================================================================
+// 私有方法
 
 void ChartWidget::updateAxisRanges()
 {
@@ -814,8 +815,7 @@ void ChartWidget::updateInfoLabel()
         totalPoints += info.pointCount;
     }
 
-    m_infoLabel->setText(QString("閫氶亾: %1/%2 | 鏁版嵁鐐? %3")
-                         .arg(visibleChannels)
+    m_infoLabel->setText(QString("通道: %1/%2 | 数据点: %3")
                          .arg(totalChannels)
                          .arg(totalPoints));
 }
@@ -836,7 +836,7 @@ void ChartWidget::enforcePointLimit(const QString& channelId)
     info.series->removePoints(0, removeCount);
     info.pointCount = m_maxPointsPerSeries;
     
-    // 鏇存柊鏈€鑰佹椂闂存埑
+    // 更新最老时间戳
     QList<QPointF> remaining = info.series->points();
     if (!remaining.isEmpty()) {
         info.oldestTimestampMs = static_cast<qint64>(remaining.first().x());

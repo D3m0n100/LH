@@ -9,6 +9,7 @@
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QFileInfo>
+#include <QDateTime>
 #include <QDir>
 #include <QStyle>
 #include <QRegularExpression>
@@ -395,7 +396,7 @@ void ProjectExplorerWidget::createFileInDirectory(const QString& directoryPath)
         tr("新建文件"),
         tr("文件名:"),
         QLineEdit::Normal,
-        QStringLiteral("main.dsl"),
+        QStringLiteral("main.lh"),
         &accepted).trimmed();
     if (!accepted || fileName.isEmpty()) {
         return;
@@ -415,10 +416,28 @@ void ProjectExplorerWidget::createFileInDirectory(const QString& directoryPath)
     }
 
     QFile file(absoluteFilePath);
-    if (!file.open(QIODevice::WriteOnly)) {
+    if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
         QMessageBox::warning(this, tr("创建失败"),
                              tr("无法创建文件:\n%1").arg(absoluteFilePath));
         return;
+    }
+    if (QFileInfo(absoluteFilePath).suffix().compare(QStringLiteral("lh"), Qt::CaseInsensitive) == 0) {
+        const QString text =
+                QString::fromUtf8(u8"// LH脚本\n")
+                + QString::fromUtf8(u8"// 创建时间: ")
+                + QDateTime::currentDateTime().toString(Qt::ISODate)
+                + QString::fromUtf8(u8"\n\n")
+                + QString::fromUtf8(u8"PROGRAM Main\n")
+                + QString::fromUtf8(u8"VAR\n")
+                + QString::fromUtf8(u8"    system_1 : System;\n")
+                + QString::fromUtf8(u8"    drv_ai_1 : DrvAI;\n")
+                + QString::fromUtf8(u8"    add_1 : Add;\n")
+                + QString::fromUtf8(u8"END_VAR\n\n")
+                + QString::fromUtf8(u8"system_1(Author := 1, Config := 100, Date := 2601);\n")
+                + QString::fromUtf8(u8"drv_ai_1(NumChannels := 1, InputNum := 0, DivisionNum := 4096);\n")
+                + QString::fromUtf8(u8"add_1();\n\n")
+                + QString::fromUtf8(u8"END_PROGRAM\n");
+        file.write(text.toUtf8());
     }
     file.close();
 

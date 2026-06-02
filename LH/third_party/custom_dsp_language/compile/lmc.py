@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-lmc - LM Compiler 命令行工具
+lmc - LH Compiler 命令行工具
 
 用法:
-    lmc program.lm              # 编译单个文件
-    lmc program.lm -o out.code  # 指定输出文件
-    lmc *.lm -d output/         # 批量编译到指定目录
-    lmc program.lm -v           # 显示详细信息
-    lmc program.lm -d           # 显示调试信息
+    lmc program.lh              # 编译单个文件
+    lmc program.lh -o out.code  # 指定输出文件
+    lmc *.lh -d output/         # 批量编译到指定目录
+    lmc program.lh -v           # 显示详细信息
+    lmc program.lh -d           # 显示调试信息
 """
 
 import sys
@@ -19,26 +19,20 @@ import glob
 # 添加路径
 sys.path.insert(0, str(Path(__file__).parent / "src"))
 
-from lm_compiler.compiler import LMCompiler
+from lh_compiler.compiler import LHCompiler
 
 
 def main():
     parser = argparse.ArgumentParser(
         prog='lmc',
-        description='LM编译器 - 将LM源代码编译为.code字节码',
-        epilog='示例: lmc program.lm -o output.code -v'
+        description='LH编译器 - 将LM源代码编译为.code字节码',
+        epilog='示例: lmc program.lh -o output.code -v'
     )
     
     parser.add_argument(
         'input',
-        nargs='*',
+        nargs='+',
         help='输入的.lm源文件（支持通配符）'
-    )
-
-    parser.add_argument(
-        '--describe-blocks',
-        action='store_true',
-        help='输出所有功能块的元数据（JSON格式）'
     )
     
     parser.add_argument(
@@ -75,40 +69,7 @@ def main():
     )
     
     args = parser.parse_args()
-
-    # --describe-blocks: 输出所有功能块元数据
-    if args.describe_blocks:
-        import json
-        from lm_compiler.function_blocks.registry import FunctionBlockRegistry
-        registry = FunctionBlockRegistry()
-        registry.load_defaults()
-        blocks = []
-        for name, meta in sorted(registry.all_blocks().items()):
-            params = []
-            for p in meta.parameters:
-                params.append({
-                    "name": p.name,
-                    "data_type": p.data_type,
-                    "direction": p.direction,
-                    "offset": p.offset,
-                    "default_value": p.default_value,
-                    "description": p.description,
-                })
-            blocks.append({
-                "name": meta.name,
-                "type_id": meta.type_id,
-                "memory_size": meta.memory_size,
-                "category": meta.category,
-                "description": meta.description,
-                "parameters": params,
-            })
-        print(json.dumps(blocks, ensure_ascii=False))
-        return 0
-
-    if not args.input:
-        print("错误: 未指定输入文件")
-        return 1
-
+    
     # 展开通配符
     input_files = []
     for pattern in args.input:
@@ -123,7 +84,7 @@ def main():
     
     # 创建编译器
     try:
-        compiler = LMCompiler(
+        compiler = LHCompiler(
             verbose=args.verbose,
             debug=args.debug,
             grammar_path=args.grammar
@@ -142,6 +103,7 @@ def main():
         if result.success:
             if not args.verbose:
                 print(f"✓ 编译成功: {result.output_file}")
+                
             return 0
         else:
             print(f"✗ 编译失败")
@@ -180,3 +142,4 @@ def main():
 
 if __name__ == '__main__':
     sys.exit(main())
+    

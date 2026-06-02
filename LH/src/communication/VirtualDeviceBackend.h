@@ -33,21 +33,28 @@ public:
 
     bool readPoints(const QStringList& pointIds,
                     QHash<QString, QVariant>& values,
-                    QString* errorMessage) override;
+                    QString* errorMessage,
+                    QHash<QString, CommError>* pointErrors = nullptr) override;
 
     bool writePoints(const QHash<QString, QVariant>& writes,
-                     QString* errorMessage) override;
+                     QString* errorMessage,
+                     QHash<QString, CommError>* pointErrors = nullptr) override;
 
     bool downloadArtifact(const QString& artifactPath,
                           const QVariantMap& options,
-                          QString* errorMessage) override;
+                          QString* errorMessage,
+                          CommError* operationError = nullptr) override;
 
-    QVariantMap queryStatus() const override;
+    BackendStatusSnapshot statusSnapshot() const override;
 
     // ── 故障注入（测试用）────────────────────────────────
 
     void setFaultInjection(bool readFail, bool writeFail, bool downloadFail);
     void setSimulatedLatencyMs(int ms);
+    void setDownloadFaultInjection(int attempts,
+                                   CommErrorCode code = CommErrorCode::InternalError,
+                                   const QString& message = QString());
+    void clearDownloadFaultInjection();
 
 private:
     bool checkOnline(QString* errorMessage) const;
@@ -71,6 +78,10 @@ private:
     bool m_faultWrite = false;
     bool m_faultDownload = false;
     int m_simulatedLatencyMs = 0;
+    bool m_lastOperationPartialSuccess = false;
+    int m_downloadFailureAttemptsRemaining = 0;
+    CommErrorCode m_downloadFailureCode = CommErrorCode::InternalError;
+    QString m_downloadFailureMessage;
 };
 
 #endif // VIRTUALDEVICEBACKEND_H

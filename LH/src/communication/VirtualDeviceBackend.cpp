@@ -3,12 +3,15 @@
 #include "VirtualDeviceBackend.h"
 #include "Common.h"
 
+#include <QDateTime>
+#include <QThread>
+
+#include <optional>
+
 VirtualDeviceBackend::VirtualDeviceBackend(QObject* parent)
     : IDeviceBackend(parent)
 {
 }
-
-// ── 点定义管理 ───────────────────────────────────────────
 
 void VirtualDeviceBackend::loadPointDefinitions(const QList<RuntimePointDefinition>& defs)
 {
@@ -38,8 +41,6 @@ void VirtualDeviceBackend::clearPoints()
     m_values.clear();
 }
 
-// ── 连接生命周期 ─────────────────────────────────────────
-
 bool VirtualDeviceBackend::connectBackend()
 {
     {
@@ -47,7 +48,10 @@ bool VirtualDeviceBackend::connectBackend()
         if (m_online)
             return true;
         m_online = true;
+        m_lastOperationPartialSuccess = false;
+        m_lastDownloadError.clear();
     }
+    clearError();
     emit connectionStateChanged(true);
     LOG_INFO("[VirtualDeviceBackend] connected");
     return true;
@@ -60,6 +64,8 @@ void VirtualDeviceBackend::disconnectBackend()
         if (!m_online)
             return;
         m_online = false;
+        m_downloading = false;
+        m_downloadPercent = 0;
     }
     emit connectionStateChanged(false);
     LOG_INFO("[VirtualDeviceBackend] disconnected");
@@ -71,115 +77,336 @@ bool VirtualDeviceBackend::isOnline() const
     return m_online;
 }
 
-// ── 点位读写 ─────────────────────────────────────────────
-
 bool VirtualDeviceBackend::readPoints(const QStringList& pointIds,
                                       QHash<QString, QVariant>& values,
-                                      QString* errorMessage)
+                                      QString* errorMessage,
+                                      QHash<QString, CommError>* pointErrors)
 {
-    if (!checkOnline(errorMessage))
-        return false;
-    if (!checkReadFault(errorMessage))
-        return false;
+    values.clear();
+    if (pointErrors) {
+        pointErrors->clear();
+    }
 
-    QMutexLocker lock(&m_mutex);
-    for (const auto& id : pointIds) {
-        auto it = m_values.constFind(id);
-        if (it != m_values.constEnd()) {
-            values.insert(id, it.value());
-        } else {
-            if (errorMessage)
-                *errorMessage = QStringLiteral("Point not found: %1").arg(id);
-            return false;
+    QString localError;
+    if (!checkOnline(&localError)) {
+        if (errorMessage)
+            *errorMessage = localError;
+        {
+            QMutexLocker lock(&m_mutex);
+            m_lastOperationPartialSuccess = false;
+        }
+        reportError(CommErrorCode::ConnectionLost, localError);
+        return false;
+    }
+    if (!checkReadFault(&localError)) {
+        if (errorMessage)
+            *errorMessage = localError;
+        {
+            QMutexLocker lock(&m_mutex);
+            m_lastOperationPartialSuccess = false;
+        }
+        reportError(CommErrorCode::InternalError, localError);
+        return false;
+    }
+
+    if (m_simulatedLatencyMs > 0) {
+        QThread::msleep(static_cast<unsigned long>(m_simulatedLatencyMs));
+    }
+
+    QHash<QString, CommError> localPointErrors;
+    CommError firstError;
+    bool hasError = false;
+
+    {
+        QMutexLocker lock(&m_mutex);
+        for (const auto& id : pointIds) {
+            auto it = m_values.constFind(id);
+            if (it != m_values.constEnd()) {
+                values.insert(id, it.value());
+                continue;
+            }
+
+            CommError pointError(CommProtocolType::Custom,
+                                 CommErrorCode::InvalidAddress,
+                                 QStringLiteral("Point not found: %1").arg(id));
+            localPointErrors.insert(id, pointError);
+            if (!hasError) {
+                firstError = pointError;
+                hasError = true;
+            }
         }
     }
+
+    if (pointErrors) {
+        *pointErrors = localPointErrors;
+    }
+
+    if (hasError) {
+        {
+            QMutexLocker lock(&m_mutex);
+            m_lastOperationPartialSuccess = true;
+        }
+        if (errorMessage)
+            *errorMessage = firstError.message;
+        reportError(firstError.code, firstError.message, QStringLiteral("partial success"));
+        return false;
+    }
+
+    {
+        QMutexLocker lock(&m_mutex);
+        m_lastOperationPartialSuccess = false;
+    }
+    clearError();
     return true;
 }
 
 bool VirtualDeviceBackend::writePoints(const QHash<QString, QVariant>& writes,
-                                       QString* errorMessage)
+                                       QString* errorMessage,
+                                       QHash<QString, CommError>* pointErrors)
 {
-    if (!checkOnline(errorMessage))
-        return false;
-    if (!checkWriteFault(errorMessage))
-        return false;
+    if (pointErrors) {
+        pointErrors->clear();
+    }
 
+    QString localError;
+    if (!checkOnline(&localError)) {
+        if (errorMessage)
+            *errorMessage = localError;
+        {
+            QMutexLocker lock(&m_mutex);
+            m_lastOperationPartialSuccess = false;
+        }
+        reportError(CommErrorCode::ConnectionLost, localError);
+        return false;
+    }
+    if (!checkWriteFault(&localError)) {
+        if (errorMessage)
+            *errorMessage = localError;
+        {
+            QMutexLocker lock(&m_mutex);
+            m_lastOperationPartialSuccess = false;
+        }
+        reportError(CommErrorCode::InternalError, localError);
+        return false;
+    }
+
+    if (m_simulatedLatencyMs > 0) {
+        QThread::msleep(static_cast<unsigned long>(m_simulatedLatencyMs));
+    }
+
+    QHash<QString, CommError> localPointErrors;
     QHash<QString, QVariant> changed;
+    CommError firstError;
+    bool hasError = false;
+
     {
         QMutexLocker lock(&m_mutex);
         for (auto it = writes.constBegin(); it != writes.constEnd(); ++it) {
             auto defIt = m_definitions.constFind(it.key());
             if (defIt == m_definitions.constEnd()) {
-                if (errorMessage)
-                    *errorMessage = QStringLiteral("Point not found: %1").arg(it.key());
-                return false;
+                CommError pointError(CommProtocolType::Custom,
+                                     CommErrorCode::InvalidAddress,
+                                     QStringLiteral("Point not found: %1").arg(it.key()));
+                localPointErrors.insert(it.key(), pointError);
+                if (!hasError) {
+                    firstError = pointError;
+                    hasError = true;
+                }
+                continue;
             }
             if (defIt->access == RuntimePointAccess::ReadOnly) {
-                if (errorMessage)
-                    *errorMessage = QStringLiteral("Point is read-only: %1").arg(it.key());
-                return false;
+                CommError pointError(CommProtocolType::Custom,
+                                     CommErrorCode::PermissionDenied,
+                                     QStringLiteral("Point is read-only: %1").arg(it.key()));
+                localPointErrors.insert(it.key(), pointError);
+                if (!hasError) {
+                    firstError = pointError;
+                    hasError = true;
+                }
+                continue;
             }
             m_values.insert(it.key(), it.value());
             changed.insert(it.key(), it.value());
         }
     }
 
-    if (!changed.isEmpty())
+    if (pointErrors) {
+        *pointErrors = localPointErrors;
+    }
+
+    if (!changed.isEmpty()) {
         emit pointsChanged(changed);
+    }
+
+    if (hasError) {
+        {
+            QMutexLocker lock(&m_mutex);
+            m_lastOperationPartialSuccess = true;
+        }
+        if (errorMessage)
+            *errorMessage = firstError.message;
+        reportError(firstError.code, firstError.message, QStringLiteral("partial success"));
+        return false;
+    }
+
+    {
+        QMutexLocker lock(&m_mutex);
+        m_lastOperationPartialSuccess = false;
+    }
+    clearError();
     return true;
 }
 
-// ── 下载 ─────────────────────────────────────────────────
-
 bool VirtualDeviceBackend::downloadArtifact(const QString& artifactPath,
                                             const QVariantMap& options,
-                                            QString* errorMessage)
+                                            QString* errorMessage,
+                                            CommError* operationError)
 {
-    Q_UNUSED(options)
+    QString localError;
+    auto setFailure = [&](CommErrorCode code, const QString& message) {
+        localError = message;
+        if (errorMessage)
+            *errorMessage = localError;
+        if (operationError)
+            *operationError = CommError(CommProtocolType::Custom, code, localError);
+        {
+            QMutexLocker lock(&m_mutex);
+            m_downloading = false;
+            m_downloadPercent = 0;
+            m_lastOperationPartialSuccess = false;
+            m_lastDownloadError = localError;
+        }
+        reportError(code, localError);
+        return false;
+    };
 
-    if (!checkOnline(errorMessage))
-        return false;
-    if (!checkDownloadFault(errorMessage))
-        return false;
+    auto consumeInjectedDownloadFailure = [&]() -> std::optional<CommErrorCode> {
+        QMutexLocker lock(&m_mutex);
+        if (m_downloadFailureAttemptsRemaining <= 0) {
+            return std::nullopt;
+        }
+
+        --m_downloadFailureAttemptsRemaining;
+        return m_downloadFailureCode;
+    };
+
+    auto failureCodeFromOptions = [&]() -> std::optional<CommErrorCode> {
+        const QVariant codeValue = options.value(QStringLiteral("simulateDownloadErrorCode"));
+        bool ok = false;
+        const int rawCode = codeValue.toInt(&ok);
+        if (ok) {
+            return static_cast<CommErrorCode>(rawCode);
+        }
+
+        const QString mode = options.value(QStringLiteral("simulateDownloadFailure")).toString().trimmed().toLower();
+        if (mode == QStringLiteral("transport")) {
+            return CommErrorCode::ConnectionLost;
+        }
+        if (mode == QStringLiteral("rejected")) {
+            return CommErrorCode::PermissionDenied;
+        }
+        if (mode == QStringLiteral("verify")) {
+            return CommErrorCode::InvalidResponse;
+        }
+        if (mode == QStringLiteral("protocol")) {
+            return CommErrorCode::ProtocolError;
+        }
+        return std::nullopt;
+    };
+
+    if (const auto injectedCode = consumeInjectedDownloadFailure()) {
+        const QString message = m_downloadFailureMessage.isEmpty()
+                ? QStringLiteral("Injected download fault")
+                : m_downloadFailureMessage;
+        return setFailure(*injectedCode, message);
+    }
+
+    if (const auto simulatedCode = failureCodeFromOptions()) {
+        const QString simulatedMessage = options.value(QStringLiteral("simulateDownloadMessage")).toString();
+        const QString message = simulatedMessage.isEmpty()
+                ? QStringLiteral("Injected download fault")
+                : simulatedMessage;
+        return setFailure(*simulatedCode, message);
+    }
+
+    if (artifactPath.trimmed().isEmpty()) {
+        localError = QStringLiteral("Artifact path is empty");
+        return setFailure(CommErrorCode::InvalidParameter, localError);
+    }
+
+    if (!checkOnline(&localError)) {
+        return setFailure(CommErrorCode::ConnectionLost, localError);
+    }
+    if (!checkDownloadFault(&localError)) {
+        return setFailure(CommErrorCode::InternalError, localError);
+    }
+
+    if (m_simulatedLatencyMs > 0) {
+        QThread::msleep(static_cast<unsigned long>(m_simulatedLatencyMs));
+    }
 
     {
         QMutexLocker lock(&m_mutex);
         m_downloading = true;
         m_downloadPercent = 0;
         m_lastDownloadError.clear();
+        m_lastOperationPartialSuccess = false;
     }
 
-    // 虚拟下载：直接标记完成
     {
         QMutexLocker lock(&m_mutex);
         m_downloading = false;
         m_downloadPercent = 100;
+        m_lastDownloadError.clear();
+    }
+
+    clearError();
+    if (operationError) {
+        *operationError = CommError();
     }
 
     LOG_INFO(QStringLiteral("[VirtualDeviceBackend] download simulated: %1").arg(artifactPath));
     return true;
 }
 
-// ── 状态查询 ─────────────────────────────────────────────
-
-QVariantMap VirtualDeviceBackend::queryStatus() const
+BackendStatusSnapshot VirtualDeviceBackend::statusSnapshot() const
 {
     QMutexLocker lock(&m_mutex);
-    QVariantMap status;
-    status[QStringLiteral("online")] = m_online;
-    status[QStringLiteral("backend")] = QStringLiteral("virtual");
-    status[QStringLiteral("pointCount")] = m_definitions.size();
-    status[QStringLiteral("downloading")] = m_downloading;
-    status[QStringLiteral("downloadPercent")] = m_downloadPercent;
-    if (!m_lastDownloadError.isEmpty())
-        status[QStringLiteral("lastDownloadError")] = m_lastDownloadError;
-    status[QStringLiteral("faultRead")] = m_faultRead;
-    status[QStringLiteral("faultWrite")] = m_faultWrite;
-    status[QStringLiteral("faultDownload")] = m_faultDownload;
-    return status;
-}
+    const CommError err = lastError();
 
-// ── 故障注入 ─────────────────────────────────────────────
+    BackendStatusSnapshot snapshot;
+    snapshot.online = m_online;
+    snapshot.backendType = QStringLiteral("virtual");
+    snapshot.downloading = m_downloading;
+    snapshot.downloadPercent = m_downloadPercent;
+    snapshot.lastErrorCode = err.code;
+    snapshot.lastErrorMessage = err.message;
+    snapshot.lastErrorDetails = err.details;
+    snapshot.partialSuccess = m_lastOperationPartialSuccess;
+    snapshot.timestamp = QDateTime::currentDateTimeUtc();
+
+    snapshot.extras[QStringLiteral("online")] = snapshot.online;
+    snapshot.extras[QStringLiteral("backend")] = snapshot.backendType;
+    snapshot.extras[QStringLiteral("pointCount")] = m_definitions.size();
+    snapshot.extras[QStringLiteral("downloading")] = snapshot.downloading;
+    snapshot.extras[QStringLiteral("downloadPercent")] = snapshot.downloadPercent;
+    snapshot.extras[QStringLiteral("lastErrorCode")] = static_cast<int>(snapshot.lastErrorCode);
+    snapshot.extras[QStringLiteral("lastErrorMessage")] = snapshot.lastErrorMessage;
+    snapshot.extras[QStringLiteral("lastErrorDetails")] = snapshot.lastErrorDetails;
+    snapshot.extras[QStringLiteral("partialSuccess")] = snapshot.partialSuccess;
+    snapshot.extras[QStringLiteral("timestamp")] = snapshot.timestamp;
+    if (!m_lastDownloadError.isEmpty())
+        snapshot.extras[QStringLiteral("lastDownloadError")] = m_lastDownloadError;
+    snapshot.extras[QStringLiteral("faultRead")] = m_faultRead;
+    snapshot.extras[QStringLiteral("faultWrite")] = m_faultWrite;
+    snapshot.extras[QStringLiteral("faultDownload")] = m_faultDownload;
+    snapshot.extras[QStringLiteral("simulatedLatencyMs")] = m_simulatedLatencyMs;
+    snapshot.extras[QStringLiteral("downloadFaultInjectionRemaining")] = m_downloadFailureAttemptsRemaining;
+    snapshot.extras[QStringLiteral("downloadFaultInjectionCode")] = static_cast<int>(m_downloadFailureCode);
+    if (!m_downloadFailureMessage.isEmpty())
+        snapshot.extras[QStringLiteral("downloadFaultInjectionMessage")] = m_downloadFailureMessage;
+    return snapshot;
+}
 
 void VirtualDeviceBackend::setFaultInjection(bool readFail, bool writeFail, bool downloadFail)
 {
@@ -195,7 +422,23 @@ void VirtualDeviceBackend::setSimulatedLatencyMs(int ms)
     m_simulatedLatencyMs = ms;
 }
 
-// ── 内部辅助 ─────────────────────────────────────────────
+void VirtualDeviceBackend::setDownloadFaultInjection(int attempts,
+                                                     CommErrorCode code,
+                                                     const QString& message)
+{
+    QMutexLocker lock(&m_mutex);
+    m_downloadFailureAttemptsRemaining = qMax(0, attempts);
+    m_downloadFailureCode = code;
+    m_downloadFailureMessage = message;
+}
+
+void VirtualDeviceBackend::clearDownloadFaultInjection()
+{
+    QMutexLocker lock(&m_mutex);
+    m_downloadFailureAttemptsRemaining = 0;
+    m_downloadFailureCode = CommErrorCode::InternalError;
+    m_downloadFailureMessage.clear();
+}
 
 bool VirtualDeviceBackend::checkOnline(QString* errorMessage) const
 {

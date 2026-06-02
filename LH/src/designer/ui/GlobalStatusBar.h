@@ -19,6 +19,7 @@ public:
     void setLatencyMs(int latencyMs);
     void setAlarmCount(int count);
     void setBuildState(const QString& stateText);
+    void setOpcState(bool running, const QString& errorMessage = QString());
 
 private:
     QLabel* createStatusItem(const QString& text);
@@ -33,6 +34,7 @@ private:
     QLabel* m_latencyLabel = nullptr;
     QLabel* m_alarmLabel = nullptr;
     QLabel* m_buildLabel = nullptr;
+    QLabel* m_opcLabel = nullptr;
 };
 
 #endif // GLOBAL_STATUS_BAR_H

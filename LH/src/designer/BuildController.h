@@ -130,7 +130,7 @@ private:
     /// 生成时间戳日志消息
     QString timestampedMessage(const QString& msg) const;
 
-    /// 当前项目主脚本路径（优先配置主入口，回退旧约定 main.lm/main.dsl）
+    /// 当前项目主脚本路径（仅支持 .lh）
     QString currentDslScriptPath(const ProjectRuntimeConfig& config) const;
 
     /// 获取编译输出目录

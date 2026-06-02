@@ -3,7 +3,8 @@
 #include "ParameterController.h"
 #include "../communication/IDeviceBackend.h"
 
-#include <QThread>
+#include <QEventLoop>
+#include <QTimer>
 #include <QtGlobal>
 
 namespace {
@@ -46,6 +47,9 @@ void ParameterController::loadDefinitions(const QList<ParameterDefinition>& defi
             info.appliedValue = it->appliedValue;
             info.readbackValue = it->readbackValue;
             info.lastError = it->lastError;
+            info.lastWriteTime = it->lastWriteTime;
+            info.lastReadbackTime = it->lastReadbackTime;
+            info.readbackAttempts = it->readbackAttempts;
         }
 
         newStates.insert(def.name, info);
@@ -75,6 +79,21 @@ bool ParameterController::editParameter(const QString& name, const QString& valu
     emit stateChanged(name, oldState, ParameterState::Modified);
     emit statesChanged();
     return true;
+}
+
+bool ParameterController::editParameterByPointId(const QString& pointId, const QString& value)
+{
+    if (pointId.trimmed().isEmpty()) {
+        return false;
+    }
+
+    for (auto it = m_states.begin(); it != m_states.end(); ++it) {
+        if (it->pointId == pointId) {
+            return editParameter(it->name, value);
+        }
+    }
+
+    return false;
 }
 
 bool ParameterController::applyModifiedParameters(IDeviceBackend* backend)
@@ -123,6 +142,9 @@ bool ParameterController::applyModifiedParameters(IDeviceBackend* backend)
             info.state = ParameterState::PendingReadback;
             info.appliedValue = info.editedValue;
             info.lastError.clear();
+            info.lastWriteTime = QDateTime::currentDateTimeUtc();
+            info.lastReadbackTime = QDateTime();
+            info.readbackAttempts = 0;
             emit stateChanged(name, oldState, ParameterState::PendingReadback);
         }
         emit statesChanged();
@@ -152,25 +174,43 @@ bool ParameterController::applyModifiedParametersWithReadback(IDeviceBackend* ba
         return false;
     }
 
-    const QStringList pointIds = pendingReadbackPointIds();
-    if (pointIds.isEmpty()) {
-        return true;
-    }
-
     const int retryCount = qMax(1, maxReadbackRetries);
     QString readbackError;
     QHash<QString, QVariant> readbackValues;
 
     for (int attempt = 0; attempt < retryCount; ++attempt) {
+        const QStringList pointIds = pendingReadbackPointIds();
+        if (pointIds.isEmpty()) {
+            return true;
+        }
+
+        for (auto it = m_states.begin(); it != m_states.end(); ++it) {
+            if (it->state == ParameterState::PendingReadback && !it->pointId.isEmpty()) {
+                ++it->readbackAttempts;
+            }
+        }
+
         readbackValues.clear();
         readbackError.clear();
-        if (backend->readPoints(pointIds, readbackValues, &readbackError)) {
+        const bool readOk = backend->readPoints(pointIds, readbackValues, &readbackError);
+        if (!readbackValues.isEmpty()) {
             onReadbackValues(readbackValues);
+            if (pendingReadbackPointIds().isEmpty()) {
+                return true;
+            }
+        }
+
+        if (readOk && pendingReadbackPointIds().isEmpty()) {
             return true;
         }
 
         if (attempt + 1 < retryCount && readbackRetryIntervalMs > 0) {
-            QThread::msleep(static_cast<unsigned long>(readbackRetryIntervalMs));
+            QEventLoop loop;
+            QTimer timer;
+            timer.setSingleShot(true);
+            QObject::connect(&timer, &QTimer::timeout, &loop, &QEventLoop::quit);
+            timer.start(readbackRetryIntervalMs);
+            loop.exec();
         }
     }
 
@@ -184,8 +224,54 @@ bool ParameterController::applyModifiedParametersWithReadback(IDeviceBackend* ba
     return false;
 }
 
+bool ParameterController::applyModifiedParametersWithReadbackAsync(IDeviceBackend* backend,
+                                                                   int maxReadbackRetries,
+                                                                   int readbackRetryIntervalMs,
+                                                                   QString* errorMessage)
+{
+    if (!backend) {
+        if (errorMessage) {
+            *errorMessage = QStringLiteral("参数下发失败：后端为空");
+        }
+        return false;
+    }
+
+    if (m_pendingReadbackActive) {
+        if (errorMessage) {
+            *errorMessage = QStringLiteral("参数回读正在进行中");
+        }
+        return false;
+    }
+
+    if (!applyModifiedParameters(backend)) {
+        if (errorMessage) {
+            *errorMessage = QStringLiteral("参数下发失败");
+        }
+        return false;
+    }
+
+    if (pendingReadbackPointIds().isEmpty()) {
+        emit readbackFinished(true, QString());
+        return true;
+    }
+
+    m_pendingReadbackBackend = backend;
+    m_pendingReadbackMaxRetries = qMax(1, maxReadbackRetries);
+    m_pendingReadbackRetryIntervalMs = qMax(0, readbackRetryIntervalMs);
+    m_pendingReadbackAttempt = 0;
+    m_pendingReadbackMessage.clear();
+    m_pendingReadbackActive = true;
+
+    QTimer::singleShot(0, this, [this]() {
+        pollReadbackAttempt();
+    });
+    return true;
+}
+
 void ParameterController::onReadbackValues(const QHash<QString, QVariant>& readbackValues)
 {
+    const QDateTime now = QDateTime::currentDateTimeUtc();
+
     for (auto it = m_states.begin(); it != m_states.end(); ++it) {
         if (it->state != ParameterState::PendingReadback)
             continue;
@@ -198,6 +284,7 @@ void ParameterController::onReadbackValues(const QHash<QString, QVariant>& readb
 
         const ParameterState oldState = it->state;
         it->readbackValue = rvIt->toString();
+        it->lastReadbackTime = now;
         it->state = valuesMatch(it->appliedValue, it->readbackValue)
                 ? ParameterState::Confirmed
                 : ParameterState::Mismatch;
@@ -210,6 +297,16 @@ void ParameterController::onReadbackValues(const QHash<QString, QVariant>& readb
 ParameterStateInfo ParameterController::parameterState(const QString& name) const
 {
     return m_states.value(name);
+}
+
+ParameterStateInfo ParameterController::parameterStateByPointId(const QString& pointId) const
+{
+    for (auto it = m_states.constBegin(); it != m_states.constEnd(); ++it) {
+        if (it->pointId == pointId) {
+            return it.value();
+        }
+    }
+    return ParameterStateInfo();
 }
 
 QList<ParameterStateInfo> ParameterController::parameterStates() const
@@ -249,10 +346,95 @@ QStringList ParameterController::pendingReadbackPointIds() const
 
 void ParameterController::setPendingReadbackError(const QString& errorMessage)
 {
+    QStringList timedOutNames;
     for (auto it = m_states.begin(); it != m_states.end(); ++it) {
         if (it->state == ParameterState::PendingReadback) {
             it->lastError = errorMessage;
+            it->state = ParameterState::Timeout;
+            timedOutNames.append(it.key());
         }
     }
+    for (const auto& name : timedOutNames) {
+        emit stateChanged(name, ParameterState::PendingReadback, ParameterState::Timeout);
+    }
     emit statesChanged();
+}
+
+void ParameterController::pollReadbackAttempt()
+{
+    if (!m_pendingReadbackActive) {
+        return;
+    }
+
+    if (!m_pendingReadbackBackend) {
+        finishReadback(false, QStringLiteral("参数回读失败：后端不可用"));
+        return;
+    }
+
+    const QStringList pointIds = pendingReadbackPointIds();
+    if (pointIds.isEmpty()) {
+        finishReadback(true, QString());
+        return;
+    }
+
+    ++m_pendingReadbackAttempt;
+    for (auto it = m_states.begin(); it != m_states.end(); ++it) {
+        if (it->state == ParameterState::PendingReadback && !it->pointId.isEmpty()) {
+            ++it->readbackAttempts;
+        }
+    }
+
+    QHash<QString, QVariant> readbackValues;
+    QString readbackError;
+    m_pendingReadbackBackend->readPoints(pointIds, readbackValues, &readbackError);
+
+    if (!readbackValues.isEmpty()) {
+        onReadbackValues(readbackValues);
+    }
+
+    const QStringList mismatchNames = parameterNamesByState(ParameterState::Mismatch);
+    if (!mismatchNames.isEmpty()) {
+        finishReadback(false, QStringLiteral("参数回读不匹配：%1")
+                                   .arg(mismatchNames.join(QStringLiteral(", "))));
+        return;
+    }
+
+    if (pendingReadbackPointIds().isEmpty()) {
+        finishReadback(true, QString());
+        return;
+    }
+
+    if (m_pendingReadbackAttempt >= m_pendingReadbackMaxRetries) {
+        const QString finalMessage = readbackError.isEmpty()
+                ? QStringLiteral("参数回读超时")
+                : QStringLiteral("参数回读失败：%1").arg(readbackError);
+        finishReadback(false, finalMessage);
+        return;
+    }
+
+    QTimer::singleShot(m_pendingReadbackRetryIntervalMs, this, [this]() {
+        pollReadbackAttempt();
+    });
+}
+
+void ParameterController::finishReadback(bool success, const QString& message)
+{
+    m_pendingReadbackActive = false;
+    m_pendingReadbackBackend = nullptr;
+    m_pendingReadbackMaxRetries = 0;
+    m_pendingReadbackRetryIntervalMs = 0;
+    m_pendingReadbackAttempt = 0;
+    m_pendingReadbackMessage = message;
+
+    if (!success) {
+        if (message.isEmpty()) {
+            setPendingReadbackError(QStringLiteral("参数回读失败"));
+        } else {
+            setPendingReadbackError(message);
+        }
+    } else {
+        emit statesChanged();
+    }
+
+    emit readbackFinished(success, message);
 }

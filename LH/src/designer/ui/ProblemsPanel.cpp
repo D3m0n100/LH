@@ -1,4 +1,4 @@
-﻿#include "ProblemsPanel.h"
+#include "ProblemsPanel.h"
 
 #include <QDateTime>
 #include <QHeaderView>

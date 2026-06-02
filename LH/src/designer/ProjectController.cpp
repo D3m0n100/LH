@@ -23,7 +23,7 @@
 #include <QRegularExpression>
 #include <algorithm>
 
-// ================= 鏋勯€?/ 鏋愭瀯 =================
+// ================= 构造 / 析构 =================
 
 ProjectController::ProjectController(QObject* parent)
     : QObject(parent)
@@ -67,7 +67,7 @@ void ProjectController::setModified(bool modified)
     }
 }
 
-// ================= 鏈€杩戦」鐩垪琛?=================
+// ================= 最近项目列表 =================
 
 void ProjectController::loadRecentProjects()
 {
@@ -127,17 +127,35 @@ void ProjectController::createNewProject()
     m_runtimeConfig.applyEmptyTemplates();
     m_runtimeConfig.lastModified = QDateTime::currentDateTime();
 
-    const QString scriptPath = fullPath + "/main.dsl";
+    const QString scriptPath = fullPath + "/main.lh";
     QFile scriptFile(scriptPath);
     if (scriptFile.open(QIODevice::WriteOnly | QIODevice::Text)) {
         QTextStream stream(&scriptFile);
         TextEncoding::setUtf8(stream);
-        stream << QString::fromUtf8(u8"// ") << projectName << QString::fromUtf8(u8" - DSL脚本\n");
+        stream << QString::fromUtf8(u8"// ") << projectName << QString::fromUtf8(u8" - LH脚本\n");
         stream << QString::fromUtf8(u8"// 创建时间: ")
                << QDateTime::currentDateTime().toString(Qt::ISODate)
                << QString::fromUtf8(u8"\n");
         stream << "\n";
-        stream << QString::fromUtf8(u8"// 在此编写 DSL 组态代码，或从左侧函数列表拖拽组件\n");
+        stream << QString::fromUtf8(u8"// 示例：从左侧函数列表拖拽功能块，或按以下 LH 结构编写\n");
+        stream << QString::fromUtf8(u8"PROGRAM Main\n");
+        stream << QString::fromUtf8(u8"VAR\n");
+        stream << QString::fromUtf8(u8"    system_1 : System;\n");
+        stream << QString::fromUtf8(u8"    drv_ai_1 : DrvAI;\n");
+        stream << QString::fromUtf8(u8"    add_1 : Add;\n");
+        stream << QString::fromUtf8(u8"END_VAR\n\n");
+        stream << QString::fromUtf8(u8"system_1(\n");
+        stream << QString::fromUtf8(u8"    Author := 1,\n");
+        stream << QString::fromUtf8(u8"    Config := 100,\n");
+        stream << QString::fromUtf8(u8"    Date := 2601\n");
+        stream << QString::fromUtf8(u8");\n\n");
+        stream << QString::fromUtf8(u8"drv_ai_1(\n");
+        stream << QString::fromUtf8(u8"    NumChannels := 1,\n");
+        stream << QString::fromUtf8(u8"    InputNum := 0,\n");
+        stream << QString::fromUtf8(u8"    DivisionNum := 4096\n");
+        stream << QString::fromUtf8(u8");\n\n");
+        stream << QString::fromUtf8(u8"add_1();\n\n");
+        stream << QString::fromUtf8(u8"END_PROGRAM\n");
         scriptFile.close();
     }
 
@@ -186,14 +204,14 @@ bool ProjectController::openProjectFromPath(const QString& projectPath)
         return false;
     }
     
-    // 鍔犺浇椤圭洰閰嶇疆
+    // 加载项目配置
     if (!loadProjectConfig(projectPath)) {
         return false;
     }
     
     m_currentProject = projectPath;
     
-    // 鍔犺浇 DSL 鑴氭湰
+    // 加载 DSL 脚本
     syncScriptConfigFields();
     if (!m_runtimeConfig.mainScriptPath.isEmpty()) {
         m_currentScriptFile = m_runtimeConfig.mainScriptPath;
@@ -226,9 +244,9 @@ bool ProjectController::saveProject()
     syncDslMappingsFromEditor();
     syncDslMappingsToEditor();
     
-    // 淇濆瓨 DSL 鑴氭湰锛堥渶瑕佷粠缂栬緫鍣ㄨ幏鍙栧唴瀹癸紝閫氳繃淇″彿锛?    // 杩欓儴鍒嗙敱 MainWindow 澶勭悊锛屽洜涓洪渶瑕佽闂紪杈戝櫒
+    // 保存 DSL 脚本需要从编辑器获取内容，这部分由 MainWindow 处理。
     
-    // 淇濆瓨椤圭洰閰嶇疆
+    // 保存项目配置
     if (!saveProjectConfig(m_currentProject)) {
         return false;
     }
@@ -281,8 +299,7 @@ void ProjectController::openRecentProject(const QString& path)
     openProjectFromPath(path);
 }
 
-// ================= 閰嶇疆璇诲啓 =================
-
+// ================= 配置读写 =================
 bool ProjectController::loadProjectConfig(const QString& projectDir)
 {
     QString configPath = projectDir + "/project_config.json";
@@ -347,17 +364,32 @@ bool ProjectController::saveProjectConfig(const QString& projectDir)
 
 void ProjectController::syncScriptConfigFields()
 {
+    auto isLhScript = [](const QString& path) {
+        return QFileInfo(path).suffix().compare(QStringLiteral("lh"), Qt::CaseInsensitive) == 0;
+    };
+
     if (!m_currentScriptFile.isEmpty()) {
         m_runtimeConfig.mainScriptPath = m_currentScriptFile;
     }
 
-    if (m_runtimeConfig.mainScriptPath.isEmpty()) {
-        m_runtimeConfig.mainScriptPath = m_runtimeConfig.dslScriptPath;
+    if (!m_runtimeConfig.mainScriptPath.isEmpty() && !isLhScript(m_runtimeConfig.mainScriptPath)) {
+        m_runtimeConfig.mainScriptPath.clear();
     }
 
-    if (m_runtimeConfig.scriptFiles.isEmpty() && !m_runtimeConfig.mainScriptPath.isEmpty()) {
-        m_runtimeConfig.scriptFiles.append(m_runtimeConfig.mainScriptPath);
+    if (m_runtimeConfig.mainScriptPath.isEmpty() && !m_currentProject.isEmpty()) {
+        const QString mainLh = QDir(m_currentProject).absoluteFilePath(QStringLiteral("main.lh"));
+        if (QFileInfo::exists(mainLh)) {
+            m_runtimeConfig.mainScriptPath = mainLh;
+        }
     }
+
+    QStringList lhScripts;
+    for (const QString& script : m_runtimeConfig.scriptFiles) {
+        if (isLhScript(script)) {
+            lhScripts.append(script);
+        }
+    }
+    m_runtimeConfig.scriptFiles = lhScripts;
 
     if (!m_runtimeConfig.mainScriptPath.isEmpty()) {
         m_runtimeConfig.scriptFiles.removeAll(m_runtimeConfig.mainScriptPath);
@@ -367,7 +399,7 @@ void ProjectController::syncScriptConfigFields()
     m_runtimeConfig.dslScriptPath = m_runtimeConfig.mainScriptPath;
 }
 
-// ================= DSL 鏄犲皠鍚屾 =================
+// ================= DSL 映射同步 =================
 
 void ProjectController::syncDslMappingsFromEditor()
 {
@@ -395,7 +427,7 @@ void ProjectController::syncDslMappingsFromEditor()
         if (it == m_runtimeConfig.dslMappings.end()) {
             m_runtimeConfig.dslMappings.append(createMappingFromInsertRecord(record));
         } else {
-            // 鏇存柊宸叉湁鏄犲皠瀛楁锛堥槻姝俊鎭繃鏈燂級
+            // 更新已有映射字段，防止信息过期
             if (!rid.isEmpty()) {
                 it->id = rid;
             }
@@ -452,7 +484,7 @@ void ProjectController::syncDslMappingsToEditor()
         }
         mappingIds.insert(mapping.id);
 
-        // 鑻ヨ剼鏈腑瀛樺湪 marker锛屽垯浠?marker 琛屽彿涓哄噯鏍℃ lineNumber锛堜唬鐮侀€氬父鍦?marker 涓嬩竴琛岋級
+        // 若脚本中存在 marker，则以 marker 行号为准校正 lineNumber，代码通常在下一行。
         if (markerMap.contains(mapping.id)) {
             const int markerLine = markerMap.value(mapping.id);
             mapping.lineNumber = markerLine + 1;
@@ -471,7 +503,7 @@ void ProjectController::syncDslMappingsToEditor()
         }
         const QString line = lines.at(codeLine - 1);
 
-        // 杞婚噺瑙ｆ瀽锛歺xx = analog_input( ... )
+    // 轻量解析：xxx = analog_input(...)
         static const QRegularExpression re(R"(^\s*([A-Za-z_]\w*)\s*=\s*([A-Za-z_]\w*)\s*\()");
         QRegularExpressionMatch m = re.match(line);
         if (m.hasMatch()) {
@@ -514,13 +546,13 @@ DslMappingEntry ProjectController::createMappingFromInsertRecord(const DslInsert
     entry.generatedCode = record.generatedCode;
     entry.createTime = record.insertTime;
     
-    // 浠?snippet 鑾峰彇棰濆淇℃伅
+    // 从 snippet 获取额外信息
     if (m_dslEditor) {
         FunctionSnippet snippet = m_dslEditor->snippetById(record.snippetId);
         entry.unit = snippet.unit;
         entry.periodMs = snippet.defaultPeriodMs;
         
-        // 鏍规嵁缁勪欢绫诲瀷鎺ㄦ柇閫氶亾鍚嶅拰淇″彿璺緞
+        // 根据组件类型推断通道名和信号路径
         if (!snippet.name.isEmpty()) {
             entry.channelName = QString("%1_%2").arg(snippet.name).arg(record.lineNumber);
             entry.signalPath = QString("%1.%2").arg(snippet.category).arg(snippet.name);
@@ -530,8 +562,7 @@ DslMappingEntry ProjectController::createMappingFromInsertRecord(const DslInsert
     return entry;
 }
 
-// ================= 缁勬€佸悎娉曟€ф牎楠?=================
-
+// ================= 组态合法性校验 =================
 bool ProjectController::validateConfiguration(QStringList& errors)
 {
     errors.clear();
@@ -811,14 +842,12 @@ bool ProjectController::checkHardwareResourceLimits(const ProjectRuntimeConfig& 
     return valid;
 }
 
-// ================= 杈呭姪鏂规硶 =================
-
+// ================= 辅助方法 =================
 QString ProjectController::timestampedMessage(const QString& msg) const
 {
     return QString("[%1] %2")
         .arg(QDateTime::currentDateTime().toString("HH:mm:ss"))
         .arg(msg);
 }
-
 
 
