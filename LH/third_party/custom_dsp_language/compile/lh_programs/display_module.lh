@@ -1,0 +1,461 @@
+PROGRAM DisplayModule
+(*
+  ================================================================
+  显示与交互模块（已修复）
+  ================================================================
+  
+  功能：键盘扫描、文本显示、进度条、串口显示、循环显示
+  
+  使用功能块：
+    - KeyScan: 键盘扫描
+    - M600TextDisp: M600文本显示
+    - M600ProgressBar: M600进度条
+    - SCIDispInit: 串口显示初始化
+    - EXCACycDisp: 循环显示
+  
+  修复内容：
+    - 移除错误的 if_condition() 调用
+    - 使用标准 IF 语法
+    - 完善显示逻辑
+  
+  ================================================================
+*)
+
+VAR
+    (* 系统基础 *)
+    system : System;
+    
+    (* ============================================
+       键盘扫描
+       ============================================ *)
+    keyScan : KeyScan;
+    
+    (* ============================================
+       M600显示屏
+       ============================================ *)
+    textDisplay : M600TextDisp;
+    progressBar : M600ProgressBar;
+    
+    (* ============================================
+       串口显示初始化
+       ============================================ *)
+    sciDispInit : SCIDispInit;
+    
+    (* ============================================
+       循环显示
+       ============================================ *)
+    cycDisplay : EXCACycDisp;
+    
+    (* ============================================
+       键盘状态
+       ============================================ *)
+    keyPressed : BOOL;
+    keyCode : INT;
+    keyValue : INT;
+    lastKeyCode : INT;
+    
+    (* 按键定义 *)
+    key_UP : BOOL;
+    key_DOWN : BOOL;
+    key_LEFT : BOOL;
+    key_RIGHT : BOOL;
+    key_ENTER : BOOL;
+    key_ESC : BOOL;
+    key_F1 : BOOL;
+    key_F2 : BOOL;
+    
+    (* ============================================
+       显示内容
+       ============================================ *)
+    displayLine1 : INT;
+    displayLine2 : INT;
+    displayLine3 : INT;
+    displayLine4 : INT;
+    
+    (* ============================================
+       进度条
+       ============================================ *)
+    progressValue : INT;
+    progressMax : INT;
+    progressPercent : INT;
+    progressRunning : BOOL;
+    
+    (* ============================================
+       串口配置
+       ============================================ *)
+    sciPort : INT;
+    sciBaudRate : INT;
+    sciInitOK : BOOL;
+    
+    (* ============================================
+       循环显示
+       ============================================ *)
+    displayIndex : INT;
+    displayCount : INT;
+    cyclePeriod : INT;
+    cycleEnabled : BOOL;
+    
+    (* ============================================
+       显示数据
+       ============================================ *)
+    tempDisplay : REAL;
+    pressDisplay : REAL;
+    flowDisplay : REAL;
+    levelDisplay : REAL;
+    
+    (* ============================================
+       系统状态显示
+       ============================================ *)
+    statusText : INT;
+    alarmText : INT;
+    alarmActive : BOOL;
+    alarmBlink : BOOL;
+    blinkCounter : INT;
+END_VAR
+
+(* ================================================================
+   系统初始化
+   ================================================================ *)
+system(Author := 1, Config := 100, Date := 2601);
+
+(* ============================================
+   初始化变量
+   ============================================ *)
+keyPressed := FALSE;
+keyCode := 0;
+keyValue := 0;
+lastKeyCode := 0;
+
+key_UP := FALSE;
+key_DOWN := FALSE;
+key_LEFT := FALSE;
+key_RIGHT := FALSE;
+key_ENTER := FALSE;
+key_ESC := FALSE;
+key_F1 := FALSE;
+key_F2 := FALSE;
+
+progressValue := 0;
+progressMax := 100;
+progressPercent := 0;
+progressRunning := FALSE;
+
+displayIndex := 0;
+displayCount := 4;
+cyclePeriod := 2000;
+cycleEnabled := TRUE;
+
+tempDisplay := 0.0;
+pressDisplay := 0.0;
+flowDisplay := 0.0;
+levelDisplay := 0.0;
+
+statusText := 0;
+alarmText := 0;
+alarmActive := FALSE;
+alarmBlink := FALSE;
+blinkCounter := 0;
+
+sciInitOK := FALSE;
+
+(* ================================================================
+   键盘扫描
+   ================================================================ *)
+(*
+   支持8x8矩阵键盘或独立按键
+   扫描模式：
+     Mode 0 = 单次扫描
+     Mode 1 = 连续扫描
+   防抖时间：50ms
+*)
+keyScan(
+    ScanMode := 1,
+    DebounceTime := 50,
+    RepeatDelay := 500,
+    RepeatRate := 100
+);
+
+(* 按键处理逻辑 *)
+IF keyCode <> lastKeyCode THEN
+    (* 检测到新按键 *)
+    keyPressed := TRUE;
+    lastKeyCode := keyCode;
+    
+    (* 解析按键码 *)
+    CASE keyCode OF
+        1:
+            key_UP := TRUE;
+        2:
+            key_DOWN := TRUE;
+        3:
+            key_LEFT := TRUE;
+        4:
+            key_RIGHT := TRUE;
+        5:
+            key_ENTER := TRUE;
+        6:
+            key_ESC := TRUE;
+        7:
+            key_F1 := TRUE;
+        8:
+            key_F2 := TRUE;
+    END_CASE;
+    
+ELSE
+    (* 无新按键 *)
+    keyPressed := FALSE;
+    key_UP := FALSE;
+    key_DOWN := FALSE;
+    key_LEFT := FALSE;
+    key_RIGHT := FALSE;
+    key_ENTER := FALSE;
+    key_ESC := FALSE;
+    key_F1 := FALSE;
+    key_F2 := FALSE;
+END_IF;
+
+(* ================================================================
+   M600文本显示
+   ================================================================ *)
+(*
+   M600液晶显示屏
+   规格：4行 x 20字符
+   支持文本库和自定义文本
+*)
+
+(* 显示第1行：系统标题 *)
+displayLine1 := 1001;
+textDisplay(
+    Line := 0,
+    Column := 0,
+    TextID := 1001,
+    ClearLine := 0
+);
+
+(* 显示第2行：温度数据 *)
+displayLine2 := 1002;
+tempDisplay := 25.5;
+textDisplay(
+    Line := 1,
+    Column := 0,
+    TextID := 1002,
+    ClearLine := 0
+);
+
+(* 显示第3行：压力数据 *)
+displayLine3 := 1003;
+pressDisplay := 5.2;
+textDisplay(
+    Line := 2,
+    Column := 0,
+    TextID := 1003,
+    ClearLine := 0
+);
+
+(* 显示第4行：状态信息 *)
+displayLine4 := 1004;
+statusText := 2000;
+textDisplay(
+    Line := 3,
+    Column := 0,
+    TextID := 1004,
+    ClearLine := 0
+);
+
+(* ================================================================
+   M600进度条显示
+   ================================================================ *)
+(*
+   用于显示任务进度或系统初始化进度
+*)
+
+progressMax := 100;
+
+(* 根据进度更新进度条 *)
+IF progressRunning THEN
+    (* 模拟进度递增 *)
+    IF progressValue < progressMax THEN
+        progressValue := progressValue + 1;
+        progressPercent := (progressValue * 100) / progressMax;
+    ELSE
+        progressRunning := FALSE;
+        progressValue := progressMax;
+        progressPercent := 100;
+    END_IF;
+END_IF;
+
+(* 显示进度条 *)
+progressBar(
+    Line := 1,
+    StartColumn := 0,
+    Length := 20,
+    Current := progressValue,
+    Maximum := progressMax,
+    Style := 1
+);
+
+(* ================================================================
+   串口显示初始化
+   ================================================================ *)
+(*
+   配置SCI串口用于显示通信
+   支持与PC或其他显示设备通信
+*)
+sciPort := 0;
+sciBaudRate := 115200;
+
+IF NOT sciInitOK THEN
+    sciDispInit(
+        Port := 0,
+        BaudRate := 115200,
+        DataBits := 8,
+        StopBits := 1,
+        Parity := 0
+    );
+    sciInitOK := TRUE;
+END_IF;
+
+(* ================================================================
+   循环显示
+   ================================================================ *)
+(*
+   自动轮流显示多个参数
+   每个参数显示2秒
+*)
+
+(* 初始化显示参数 *)
+tempDisplay := 25.5;
+pressDisplay := 5.2;
+flowDisplay := 50.0;
+levelDisplay := 2.5;
+
+(* 循环显示控制 *)
+IF cycleEnabled THEN
+    cycDisplay(
+        ParamCount := 4,
+        DisplayIndex := displayIndex,
+        CyclePeriod := 2000,
+        Enable := 1
+    );
+    
+    (* 根据索引显示不同参数 *)
+    CASE displayIndex OF
+        0:
+            (* 显示温度 *)
+            textDisplay(Line := 1, Column := 0, TextID := 2001, ClearLine := 1);
+        1:
+            (* 显示压力 *)
+            textDisplay(Line := 1, Column := 0, TextID := 2002, ClearLine := 1);
+        2:
+            (* 显示流量 *)
+            textDisplay(Line := 1, Column := 0, TextID := 2003, ClearLine := 1);
+        3:
+            (* 显示液位 *)
+            textDisplay(Line := 1, Column := 0, TextID := 2004, ClearLine := 1);
+    END_CASE;
+    
+    (* 索引循环递增 *)
+    (* 实际应该由cycDisplay功能块自动更新 *)
+    
+END_IF;
+
+(* ================================================================
+   报警信息显示
+   ================================================================ *)
+
+alarmText := 3000;
+
+(* 检查是否有报警 *)
+IF tempDisplay > 80.0 OR pressDisplay > 10.0 THEN
+    alarmActive := TRUE;
+ELSE
+    alarmActive := FALSE;
+END_IF;
+
+(* 报警时闪烁显示 *)
+IF alarmActive THEN
+    blinkCounter := blinkCounter + 1;
+    
+    (* 每10个周期切换一次显示状态 *)
+    IF blinkCounter >= 10 THEN
+        alarmBlink := NOT alarmBlink;
+        blinkCounter := 0;
+    END_IF;
+    
+    (* 根据闪烁状态显示或隐藏报警信息 *)
+    IF alarmBlink THEN
+        textDisplay(
+            Line := 3,
+            Column := 0,
+            TextID := 3000,
+            ClearLine := 0
+        );
+    ELSE
+        textDisplay(
+            Line := 3,
+            Column := 0,
+            TextID := 0,
+            ClearLine := 1
+        );
+    END_IF;
+ELSE
+    blinkCounter := 0;
+    alarmBlink := FALSE;
+END_IF;
+
+(* ================================================================
+   按键响应
+   ================================================================ *)
+
+(* UP键：增加数值或向上滚动 *)
+IF key_UP THEN
+    IF progressValue < progressMax THEN
+        progressValue := progressValue + 10;
+    END_IF;
+END_IF;
+
+(* DOWN键：减少数值或向下滚动 *)
+IF key_DOWN THEN
+    IF progressValue > 0 THEN
+        progressValue := progressValue - 10;
+    END_IF;
+END_IF;
+
+(* LEFT键：切换到上一页 *)
+IF key_LEFT THEN
+    IF displayIndex > 0 THEN
+        displayIndex := displayIndex - 1;
+    END_IF;
+END_IF;
+
+(* RIGHT键：切换到下一页 *)
+IF key_RIGHT THEN
+    IF displayIndex < (displayCount - 1) THEN
+        displayIndex := displayIndex + 1;
+    END_IF;
+END_IF;
+
+(* ENTER键：确认选择 *)
+IF key_ENTER THEN
+    progressRunning := TRUE;
+    progressValue := 0;
+END_IF;
+
+(* ESC键：取消或返回 *)
+IF key_ESC THEN
+    progressRunning := FALSE;
+    alarmActive := FALSE;
+END_IF;
+
+(* F1键：功能键1 - 切换循环显示 *)
+IF key_F1 THEN
+    cycleEnabled := NOT cycleEnabled;
+END_IF;
+
+(* F2键：功能键2 - 重置进度 *)
+IF key_F2 THEN
+    progressValue := 0;
+    progressPercent := 0;
+END_IF;
+
+END_PROGRAM

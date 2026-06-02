@@ -1,0 +1,26 @@
+PROGRAM servo_pid
+VAR
+    system      : System;
+    setpoint    : REAL := 0.0;
+    feedback    : REAL := 0.0;
+    output      : REAL := 0.0;
+    ai_channel  : DrvAI;
+    pid1        : PID;
+    ao_channel  : DrvAO;
+END_VAR
+
+system(Author := 1, Config := 100, Date := 2601,
+       Version := 1, CycleTime := 1000);
+
+setpoint := 5.0;
+
+ai_channel(NumChannels := 1, InputNum := 0, DivisionNum := 4096);
+
+pid1(Setpoint := setpoint, Feedback := feedback,
+     Kp := 1.5, Ki := 0.1, Kd := 0.05,
+     OutMax := 10.0, OutMin := -10.0,
+     SampleTime := 100, Enable := TRUE, Reset := FALSE);
+
+ao_channel(channel := 0, value := output);
+
+END_PROGRAM

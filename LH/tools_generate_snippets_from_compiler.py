@@ -8,7 +8,7 @@ COMPILER_SRC = ROOT / 'third_party' / 'custom_dsp_language' / 'compile' / 'src'
 if str(COMPILER_SRC) not in sys.path:
     sys.path.insert(0, str(COMPILER_SRC))
 
-from lm_compiler.function_blocks.definitions import get_all_definitions
+from lh_compiler.function_blocks.definitions import get_all_definitions
 
 
 def camel_to_snake(name: str) -> str:
@@ -26,6 +26,20 @@ def format_value(value):
     if isinstance(value, str):
         return json.dumps(value, ensure_ascii=False)
     return str(value)
+
+
+def build_parameter_metadata(parameters):
+    return [
+        {
+            'name': param.name,
+            'dataType': param.data_type,
+            'direction': param.direction,
+            'offset': param.offset,
+            'defaultValue': param.default_value,
+            'description': param.description,
+        }
+        for param in parameters
+    ]
 
 
 def build_snippets():
@@ -54,6 +68,7 @@ def build_snippets():
                 'typeId': block.type_id,
                 'memorySize': block.memory_size,
                 'parameterCount': len(block.parameters),
+                'parameters': build_parameter_metadata(block.parameters),
                 'compilerName': block.name,
             },
         })

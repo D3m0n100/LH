@@ -1,0 +1,7 @@
+PROGRAM test_wrong_param
+VAR
+    di : DrvDI;
+    val : BOOL := FALSE;
+END_VAR
+    di(wrong_param := 0, value := val);
+END_PROGRAM

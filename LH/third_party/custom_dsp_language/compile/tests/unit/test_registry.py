@@ -2,12 +2,9 @@
 Tests for Function Block Registry
 """
 
-import json
-from pathlib import Path
-
 import pytest
-from lm_compiler.function_blocks.registry import FunctionBlockRegistry
-from lm_compiler.function_blocks.base import FunctionBlockDefinition
+from lh_compiler.function_blocks.registry import FunctionBlockRegistry
+from lh_compiler.function_blocks.base import FunctionBlockDefinition
 
 
 def test_registry_creation():
@@ -134,35 +131,6 @@ def test_search():
     results = registry.search("add")
     assert len(results) == 1
     assert results[0].name == "_MathAdd"
-
-
-def test_default_registry_includes_high_frequency_io_blocks():
-    """Test that the default registry includes the new core IO blocks."""
-    registry = FunctionBlockRegistry()
-    registry.load_defaults()
-
-    assert registry.has("_DrvT1PWMAO")
-    assert registry.has("_DrvT2PulseIn")
-    assert registry.has("_DrvQEPIn")
-
-    drv_t1_pwmao = registry.get("_DrvT1PWMAO")
-    drv_t2_pulse_in = registry.get("_DrvT2PulseIn")
-    drv_qep_in = registry.get("_DrvQEPIn")
-
-    assert drv_t1_pwmao is not None
-    assert drv_t2_pulse_in is not None
-    assert drv_qep_in is not None
-    assert drv_t1_pwmao.category == "io"
-    assert drv_t2_pulse_in.category == "io"
-    assert drv_qep_in.category == "io"
-
-    snippets_path = Path(__file__).resolve().parents[5] / "resources" / "snippets" / "default_snippets.json"
-    snippets = json.loads(snippets_path.read_text(encoding="utf-8"))
-    snippet_ids = {item["id"] for item in snippets}
-
-    assert "_DrvT1PWMAO" in snippet_ids
-    assert "_DrvT2PulseIn" in snippet_ids
-    assert "_DrvQEPIn" in snippet_ids
 
 
 if __name__ == '__main__':

@@ -1,11 +1,11 @@
-# Getting Started with LM Compiler
+# Getting Started with LH Compiler
 
 ## Quick Installation
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/yourusername/lm-compiler.git
-cd lm-compiler
+git clone https://github.com/yourusername/lh-compiler.git
+cd lh-compiler
 
 # 2. Run setup script
 chmod +x scripts/setup.sh
@@ -17,7 +17,7 @@ lmc --version
 
 ## Your First Program
 
-Create a file `hello.lm`:
+Create a file `hello.lh`:
 
 ```pascal
 PROGRAM Main
@@ -38,7 +38,7 @@ END_PROGRAM
 Compile it:
 
 ```bash
-lmc compile hello.lm -o hello.code
+lmc compile hello.lh -o hello.code
 ```
 
 ## Exploring Function Blocks
@@ -65,13 +65,13 @@ lmc describe _System
 
 ## Project Structure
 
-When you create a new LM project, organize it like this:
+When you create a new LH project, organize it like this:
 
 ```
 my_project/
 ├── src/
-│   ├── main.lm          # Main program
-│   ├── config.lm        # Configuration
+│   ├── main.lh          # Main program
+│   ├── config.lh        # Configuration
 │   └── modules/         # Reusable modules
 ├── build/               # Compiled output
 └── tests/               # Test programs
@@ -88,10 +88,10 @@ my_project/
 
 ```bash
 # Compile a program
-lmc compile program.lm -o output.code
+lmc compile program.lh -o output.code
 
 # Check syntax without compiling
-lmc check program.lm
+lmc check program.lh
 
 # Interactive mode
 lmc repl
@@ -131,7 +131,7 @@ pip install -r requirements.txt
 Make sure the metadata files are present:
 
 ```bash
-ls src/lm_compiler/function_blocks/metadata/
+ls src/lh_compiler/function_blocks/metadata/
 ```
 
 You should see `system.json` and other metadata files.
@@ -139,5 +139,5 @@ You should see `system.json` and other metadata files.
 ## Getting Help
 
 - **Documentation**: Check the `docs/` directory
-- **Issues**: https://github.com/yourusername/lm-compiler/issues
+- **Issues**: https://github.com/yourusername/lh-compiler/issues
 - **Examples**: See `examples/` directory

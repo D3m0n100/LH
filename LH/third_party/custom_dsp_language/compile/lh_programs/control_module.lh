@@ -1,0 +1,336 @@
+PROGRAM ControlModule
+(*
+  ================================================================
+  控制逻辑模块（已修改：功能块名去下划线）
+  ================================================================
+  
+  修改内容：
+    - 所有功能块类型名去掉前导下划线
+      System → System, Timer → Timer, Counter → Counter, 等
+    - 变量名不变（变量名本来就没有下划线前缀问题）
+  
+  ================================================================
+*)
+
+VAR
+    (* 系统基础 *)
+    system : System;
+    
+    (* 定时功能块 *)
+    timer_main : Timer;
+    timer_delay : Timer;
+    timer_pulse : Timer;
+    
+    (* 计数器 *)
+    counter_cycle : Counter;
+    counter_event : Counter;
+    
+    (* 数学运算 *)
+    add_block : Add;
+    sub_block : Sub;
+    mul_block : Mul;
+    div_block : Div;
+    
+    (* 比较运算 *)
+    compare_gt : GT;
+    compare_lt : LT;
+    compare_eq : EQ;
+    
+    (* 逻辑运算 *)
+    and_gate : And;
+    or_gate : Or;
+    not_gate : Not;
+    
+    (* 控制变量 - 以下变量名无需修改 *)
+    condition1 : BOOL;
+    condition2 : BOOL;
+    condition3 : BOOL;
+    condition4 : BOOL;
+    
+    selector : INT;
+    selectedValue : INT;
+    
+    loopCounter : INT;
+    loopStart : INT;
+    loopEnd : INT;
+    loopStep : INT;
+    
+    timerPreset : INT;
+    timerElapsed : INT;
+    timerDone : BOOL;
+    timerEnabled : BOOL;
+    
+    counterValue : INT;
+    counterPreset : INT;
+    counterDone : BOOL;
+    
+    operand1 : REAL;
+    operand2 : REAL;
+    mathResult : REAL;
+    
+    isGreater : BOOL;
+    isLess : BOOL;
+    isEqual : BOOL;
+    
+    logicResult : BOOL;
+    
+    intValue : INT;
+    realValue : REAL;
+    boolValue : BOOL;
+END_VAR
+
+(* 系统初始化 *)
+system(Author := 1, Config := 100, Date := 2601);
+
+(* 初始化控制变量 *)
+condition1 := FALSE;
+condition2 := FALSE;
+condition3 := FALSE;
+condition4 := FALSE;
+
+selector := 0;
+selectedValue := 0;
+
+loopCounter := 0;
+loopStart := 0;
+loopEnd := 100;
+loopStep := 1;
+
+timerPreset := 1000;
+timerElapsed := 0;
+timerDone := FALSE;
+timerEnabled := FALSE;
+
+counterValue := 0;
+counterPreset := 100;
+counterDone := FALSE;
+
+operand1 := 0.0;
+operand2 := 0.0;
+mathResult := 0.0;
+
+isGreater := FALSE;
+isLess := FALSE;
+isEqual := FALSE;
+
+logicResult := FALSE;
+
+intValue := 0;
+realValue := 0.0;
+boolValue := FALSE;
+
+(* 条件判断示例 *)
+condition1 := TRUE;
+
+IF condition1 THEN
+    selectedValue := 100;
+ELSE
+    selectedValue := 0;
+END_IF;
+
+condition1 := TRUE;
+condition2 := FALSE;
+
+IF condition1 AND condition2 THEN
+    selectedValue := 150;
+ELSIF condition1 AND NOT condition2 THEN
+    selectedValue := 100;
+ELSIF NOT condition1 AND condition2 THEN
+    selectedValue := 50;
+ELSE
+    selectedValue := 0;
+END_IF;
+
+condition3 := TRUE;
+
+IF condition1 AND condition2 AND condition3 THEN
+    selectedValue := 300;
+END_IF;
+
+IF condition1 OR condition2 THEN
+    IF condition3 THEN
+        selectedValue := 200;
+    ELSE
+        selectedValue := 100;
+    END_IF;
+END_IF;
+
+(* CASE语句 *)
+selector := 2;
+
+CASE selector OF
+    0:
+        selectedValue := 0;
+    1:
+        selectedValue := 100;
+    2:
+        selectedValue := 200;
+    3:
+        selectedValue := 300;
+ELSE
+    selectedValue := -1;
+END_CASE;
+
+selector := 1;
+
+CASE selector OF
+    0:
+        timerPreset := 5000;
+        counterPreset := 10;
+    1:
+        timerPreset := 1000;
+        counterPreset := 100;
+    2:
+        timerPreset := 500;
+        counterPreset := 200;
+    3:
+        timerPreset := 2000;
+        counterPreset := 50;
+END_CASE;
+
+(* FOR循环 *)
+FOR loopCounter := loopStart TO loopEnd BY loopStep DO
+    IF loopCounter > 50 THEN
+        EXIT;
+    END_IF;
+END_FOR;
+
+(* WHILE循环 *)
+loopCounter := 0;
+condition1 := TRUE;
+
+WHILE condition1 AND (loopCounter < 100) DO
+    loopCounter := loopCounter + 1;
+    IF loopCounter >= 50 THEN
+        condition1 := FALSE;
+    END_IF;
+END_WHILE;
+
+(* 定时器 *)
+timerEnabled := TRUE;
+timer_main(Trigger := timerEnabled, TimeUnit := 1000);
+timerDone := FALSE;
+
+timer_delay(Trigger := TRUE, TimeUnit := 500);
+timer_pulse(Trigger := condition1, TimeUnit := 200);
+
+IF timerDone THEN
+    condition2 := NOT condition2;
+    timerEnabled := FALSE;
+END_IF;
+
+(* 计数器 *)
+counter_cycle(Preset := 100, Count := TRUE, Reset := FALSE);
+counterValue := 0;
+counterDone := FALSE;
+
+IF condition1 THEN
+    counter_event(Preset := 50, Count := TRUE, Reset := FALSE);
+END_IF;
+
+IF counterDone THEN
+    counterValue := 0;
+    counter_cycle(Preset := 100, Count := FALSE, Reset := TRUE);
+END_IF;
+
+(* 数学运算 *)
+operand1 := 10.5;
+operand2 := 5.3;
+add_block(Input1 := operand1, Input2 := operand2);
+mathResult := 15.8;
+
+sub_block(Input1 := operand1, Input2 := operand2);
+mathResult := 5.2;
+
+mul_block(Input1 := operand1, Input2 := operand2);
+mathResult := 55.65;
+
+IF operand2 <> 0.0 THEN
+    div_block(Input1 := operand1, Input2 := operand2);
+    mathResult := 1.98;
+ELSE
+    mathResult := 0.0;
+END_IF;
+
+(* 比较运算 *)
+operand1 := 50.0;
+operand2 := 30.0;
+
+compare_gt(Input1 := operand1, Input2 := operand2);
+isGreater := TRUE;
+
+compare_lt(Input1 := operand1, Input2 := operand2);
+isLess := FALSE;
+
+compare_eq(Input1 := operand1, Input2 := operand2);
+isEqual := FALSE;
+
+IF isGreater THEN
+    selectedValue := 1;
+ELSIF isLess THEN
+    selectedValue := -1;
+ELSIF isEqual THEN
+    selectedValue := 0;
+END_IF;
+
+(* 逻辑运算 *)
+condition1 := TRUE;
+condition2 := FALSE;
+
+and_gate(Input1 := condition1, Input2 := condition2);
+logicResult := FALSE;
+
+or_gate(Input1 := condition1, Input2 := condition2);
+logicResult := TRUE;
+
+not_gate(Input := condition1);
+logicResult := FALSE;
+
+IF (condition1 AND condition2) OR (NOT condition3) THEN
+    selectedValue := 500;
+END_IF;
+
+(* 数据类型转换 *)
+intValue := 100;
+realValue := INT_TO_REAL(intValue);
+
+realValue := 25.8;
+intValue := REAL_TO_INT(realValue);
+
+boolValue := TRUE;
+IF boolValue THEN
+    intValue := 1;
+ELSE
+    intValue := 0;
+END_IF;
+
+intValue := 5;
+boolValue := (intValue <> 0);
+
+(* 综合控制逻辑 *)
+operand1 := 50.0;
+operand2 := 60.0;
+
+IF operand1 < operand2 THEN
+    condition1 := TRUE;
+ELSIF operand1 > (operand2 + 5.0) THEN
+    condition1 := FALSE;
+END_IF;
+
+IF operand1 > 100.0 THEN
+    condition2 := TRUE;
+    condition1 := FALSE;
+ELSE
+    condition2 := FALSE;
+END_IF;
+
+CASE selector OF
+    0:
+        condition3 := FALSE;
+    1:
+        condition3 := TRUE;
+    2:
+        condition3 := condition2;
+END_CASE;
+
+END_PROGRAM

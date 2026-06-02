@@ -1,0 +1,56 @@
+PROGRAM SystemInit
+(*
+  系统初始化模块
+  功能：系统配置、任务管理、参数引擎初始化
+  使用功能块：System, Task, ParamtEngBuild
+*)
+
+VAR
+    (* 系统核心 *)
+    system : System;
+    
+    (* 任务管理 *)
+    mainTask : Task;
+    ioTask : Task;
+    commTask : Task;
+    
+    (* 参数引擎 *)
+    paramEngine : ParamtEngBuild;
+    
+    (* 系统状态变量 *)
+    systemReady : BOOL;
+    initComplete : BOOL;
+END_VAR
+
+(* ============================================
+   系统初始化
+   System 是每个程序必须的第一个功能块
+   ============================================ *)
+system(Author := 1, Config := 100, Date := 2601);
+
+(* ============================================
+   任务管理器初始化
+   Task 用于多任务调度
+   ============================================ *)
+(* 主控制任务 - 10ms周期 *)
+mainTask(Priority := 1, Period := 10);
+
+(* I/O扫描任务 - 5ms周期 *)
+ioTask(Priority := 2, Period := 5);
+
+(* 通信任务 - 100ms周期 *)
+commTask(Priority := 3, Period := 100);
+
+(* ============================================
+   参数引擎
+   ParamtEngBuild 用于工程参数管理
+   ============================================ *)
+paramEngine(ParamCount := 50);
+
+(* ============================================
+   初始化完成标志
+   ============================================ *)
+systemReady := TRUE;
+initComplete := TRUE;
+
+END_PROGRAM

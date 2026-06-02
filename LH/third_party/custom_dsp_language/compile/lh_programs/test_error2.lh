@@ -1,0 +1,6 @@
+PROGRAM test_unknown_fb
+VAR
+    val : REAL := 0.0;
+END_VAR
+    FakeBlock(channel := 0, value := val);
+END_PROGRAM

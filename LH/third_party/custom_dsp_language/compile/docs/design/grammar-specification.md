@@ -1,4 +1,4 @@
-# LM Language Grammar Specification
+# LH Language Grammar Specification
 
 ## 📋 Document Information
 
@@ -14,7 +14,7 @@
 1. **Easy to Read**: Clear, modern syntax
 2. **Industrial Standard**: Based on CODESYS/IEC 61131-3
 3. **Type Safe**: Strong typing with validation
-4. **Compatible**: Compiles to original LM bytecode
+4. **Compatible**: Compiles to original LH bytecode
 
 ---
 
@@ -22,7 +22,7 @@
 
 ### Program Structure
 
-Every LM program follows this structure:
+Every LH program follows this structure:
 
 ```
 PROGRAM <name>
@@ -362,7 +362,7 @@ literal = integer-literal
 
 **Comparison:**
 
-| Feature | Original LM | CODESYS Style |
+| Feature | Original LH | CODESYS Style |
 |---------|-------------|---------------|
 | Variables | No declaration | `VAR ... END_VAR` |
 | Function calls | `_Func[Name] params;` | `name(param := value);` |
@@ -468,13 +468,13 @@ END_PROGRAM
 
 ### ANTLR Grammar File
 
-The complete implementation is in `grammar/LM.g4`
+The complete implementation is in `grammar/LH.g4`
 
 ### Related Documents
 
 - IEC 61131-3 Standard
 - CODESYS Programming Manual
-- LM Function Block Reference
+- LH Function Block Reference
 
 ---
 

@@ -288,7 +288,7 @@ def main():
     print("=" * 60)
     
     # 创建输出目录
-    output_dir = Path("src/lm_compiler/function_blocks/definitions")
+    output_dir = Path("src/lh_compiler/function_blocks/definitions")
     output_dir.mkdir(parents=True, exist_ok=True)
     
     print(f"\n输出目录: {output_dir}\n")

@@ -1,10 +1,10 @@
 #!/bin/bash
-# Quick setup script for LM Compiler development
+# Quick setup script for LH Compiler development
 
 set -e
 
 echo "========================================="
-echo "LM Compiler - Quick Setup"
+echo "LH Compiler - Quick Setup"
 echo "========================================="
 echo ""
 
@@ -32,7 +32,7 @@ pip install -r requirements.txt
 echo "✓ Dependencies installed"
 
 # Install package in development mode
-echo "Installing lm-compiler in development mode..."
+echo "Installing lh-compiler in development mode..."
 pip install -e .
 echo "✓ Package installed"
 

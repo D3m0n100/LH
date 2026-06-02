@@ -1,4 +1,4 @@
-# LM 编译器使用指南
+# LH 编译器使用指南
 
 ## 快速开始
 
@@ -6,51 +6,51 @@
 
 ```bash
 # 方法1: 使用命令行工具（推荐）
-python lmc.py program.lm
+python lmc.py program.lh
 
 # 方法2: 直接使用 compiler.py
-python -m lm_compiler.compiler program.lm
+python -m lh_compiler.compiler program.lh
 
 # 方法3: Python 代码中使用
-from lm_compiler import LMCompiler
-compiler = LMCompiler()
-result = compiler.compile_file("program.lm", "output.code")
+from lh_compiler import LHCompiler
+compiler = LHCompiler()
+result = compiler.compile_file("program.lh", "output.code")
 ```
 
 ### 2. 指定输出文件
 
 ```bash
-python lmc.py program.lm -o myoutput.code
+python lmc.py program.lh -o myoutput.code
 ```
 
 ### 3. 批量编译
 
 ```bash
-# 编译 test_programs 目录下所有 .lm 文件到 compiled_output 目录
-python lmc.py test_programs/*.lm -o compiled_output/
+# 编译 test_programs 目录下所有 .lh 文件到 compiled_output 目录
+python lmc.py test_programs/*.lh -o compiled_output/
 ```
 
 ### 4. 详细模式和调试
 
 ```bash
 # 显示详细编译过程
-python lmc.py program.lm -v
+python lmc.py program.lh -v
 
 # 显示调试信息（AST树、指令列表）
-python lmc.py program.lm -d
+python lmc.py program.lh -d
 
 # 组合使用
-python lmc.py program.lm -vd
+python lmc.py program.lh -vd
 ```
 
 ## 完整编译流程
 
 ```
-源代码 (.lm)
+源代码 (.lh)
     ↓
-[词法分析] LMLexer
+[词法分析] LHLexer
     ↓
-[语法分析] LMParser
+[语法分析] LHParser
     ↓
 [AST构建] ASTBuilder
     ↓
@@ -120,7 +120,7 @@ END_PROGRAM
 ### 端到端测试
 
 ```bash
-cd E:\lm-compiler
+cd E:\lh-compiler
 python test_e2e_compile.py
 ```
 
@@ -141,8 +141,8 @@ python test_codegen.py
 ## 文件位置说明
 
 ```
-E:\lm-compiler\                     项目根目录
-├── src\lm_compiler\                源代码包
+E:\lh-compiler\                     项目根目录
+├── src\lh_compiler\                源代码包
 │   ├── __init__.py
 │   ├── compiler.py                 ← 主编译器（新增）
 │   ├── frontend\                   前端（词法/语法/AST）
@@ -161,17 +161,17 @@ E:\lm-compiler\                     项目根目录
 │           ├── __init__.py
 │           └── _system.py
 ├── grammar\                        ANTLR 生成的解析器
-│   ├── LM.g4
-│   ├── LMLexer.py
-│   ├── LMParser.py
-│   └── LMVisitor.py
+│   ├── LH.g4
+│   ├── LHLexer.py
+│   ├── LHParser.py
+│   └── LHVisitor.py
 ├── lmc.py                          ← 命令行工具（新增）
 ├── test_e2e_compile.py             ← 端到端测试（新增）
 ├── test_codegen.py                 代码生成测试
 ├── test_parser.py                  解析器测试
 ├── test_programs\                  ← 测试源文件（自动生成）
-│   ├── test1_simple.lm
-│   ├── test2_vars.lm
+│   ├── test1_simple.lh
+│   ├── test2_vars.lh
 │   └── ...
 └── compiled_output\                ← 编译输出（自动生成）
     ├── test1_simple.code
@@ -182,13 +182,13 @@ E:\lm-compiler\                     项目根目录
 ## 在 Python 代码中使用
 
 ```python
-from lm_compiler import LMCompiler
+from lh_compiler import LHCompiler
 
 # 创建编译器
-compiler = LMCompiler(verbose=True, debug=False)
+compiler = LHCompiler(verbose=True, debug=False)
 
 # 编译文件
-result = compiler.compile_file("program.lm", "output.code")
+result = compiler.compile_file("program.lh", "output.code")
 
 # 检查结果
 if result.success:
@@ -201,7 +201,7 @@ else:
 
 # 查看生成的 AST
 if result.ast:
-    from lm_compiler.frontend.ast_nodes import ASTPrinter
+    from lh_compiler.frontend.ast_nodes import ASTPrinter
     printer = ASTPrinter()
     printer.visit(result.ast)
 
@@ -231,7 +231,7 @@ result = compiler.compile_string(source_code, "test.code")
 **A**: 确保 `grammar` 目录存在且包含 ANTLR 生成的文件。运行:
 ```bash
 cd grammar
-antlr4 -Dlanguage=Python3 LM.g4 -visitor
+antlr4 -Dlanguage=Python3 LH.g4 -visitor
 ```
 
 ### Q: 提示 "未安装 antlr4-python3-runtime"
@@ -250,13 +250,13 @@ pip install antlr4-python3-runtime
 ### Q: 如何查看编译过程的详细信息？
 **A**: 使用 `-v` 参数:
 ```bash
-python lmc.py program.lm -v
+python lmc.py program.lh -v
 ```
 
 ### Q: 如何查看生成的 AST 树？
 **A**: 使用 `-d` 参数:
 ```bash
-python lmc.py program.lm -d
+python lmc.py program.lh -d
 ```
 
 ## 下一步计划
@@ -292,4 +292,4 @@ result := 10 + 20;  // 编译时计算为 30
 - `_RealConstBuild` (type_id=41030, 16单元)
 - `_BoolConstBuild` (type_id=41031, 8单元)
 
-添加新功能块: 在 `src/lm_compiler/function_blocks/definitions/` 下创建新的定义文件。
+添加新功能块: 在 `src/lh_compiler/function_blocks/definitions/` 下创建新的定义文件。

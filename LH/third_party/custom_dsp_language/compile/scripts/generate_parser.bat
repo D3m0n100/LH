@@ -4,7 +4,7 @@ REM ANTLR Parser Generation Script for Windows
 REM ============================================================================
 
 echo =========================================
-echo LM Compiler - Parser Generation (Windows)
+echo LH Compiler - Parser Generation (Windows)
 echo =========================================
 echo.
 
@@ -37,28 +37,28 @@ if %errorlevel% equ 0 (
 )
 
 echo.
-echo Generating parser from LM.g4...
+echo Generating parser from LH.g4...
 echo.
 
 REM 进入 grammar 目录
 cd /d "%~dp0..\grammar"
 
 REM 检查语法文件
-if not exist "LM.g4" (
-    echo [ERROR] Grammar file not found: LM.g4
+if not exist "LH.g4" (
+    echo [ERROR] Grammar file not found: LH.g4
     pause
     exit /b 1
 )
 
 REM 生成解析器
-java -jar "%ANTLR_JAR%" -Dlanguage=Python3 -visitor -no-listener LM.g4
+java -jar "%ANTLR_JAR%" -Dlanguage=Python3 -visitor -no-listener LH.g4
 
 if %errorlevel% equ 0 (
     echo.
     echo [OK] Parser generated successfully!
     echo.
     echo Generated files:
-    dir /b LM*.py 2>nul
+    dir /b LH*.py 2>nul
     dir /b *.tokens 2>nul
     echo.
 ) else (
@@ -82,6 +82,6 @@ echo.
 echo Next steps:
 echo   1. Test the parser:
 echo      cd grammar
-echo      python -c "from LMParser import LMParser; print('OK')"
+echo      python -c "from LHParser import LHParser; print('OK')"
 echo.
 pause

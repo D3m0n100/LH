@@ -1,0 +1,452 @@
+────────────────────────────────────────────────────────────────────
+  文件: comm_module.code   [✓ 通过]
+  大小: 776 字节
+
+  模块头:    type_id=40961(0x0A001), base_addr=0
+  FB实例数:  39
+  唯一类型:  6 种
+  地址范围:  0x0000 ~ 0x02ED  (≈781 字节)
+  域分布:    数据处理:4  算术运算:26  逻辑控制:9
+  [警告] 地址乱序：第21个地址 38 < 前一个 525
+  [警告] 地址乱序：第27个地址 70 < 前一个 605
+  [警告] 地址乱序：第32个地址 118 < 前一个 669
+  [警告] 地址乱序：第37个地址 182 < 前一个 733
+
+  功能块实例列表:
+    [002] boolConst          type=41031  addr=0x0115 = 0
+    [003] boolConst          type=41031  addr=0x011D = 0
+    [004] boolConst          type=41031  addr=0x0125 = 0
+    [005] boolConst          type=41031  addr=0x012D = 0
+    [006] boolConst          type=41031  addr=0x0135 = 0
+    [007] boolConst          type=41031  addr=0x013D = 0
+    [008] boolConst          type=41031  addr=0x0145 = 0
+    [009] boolConst          type=41031  addr=0x014D = 0
+    [010] boolConst          type=41031  addr=0x0155 = 0
+    [011] intConst           type=41029  addr=0x015D = 0
+    [012] intConst           type=41029  addr=0x016D = 0
+    [013] intConst           type=41029  addr=0x017D = 0
+    [014] intConst           type=41029  addr=0x018D = 0
+    [015] intConst           type=41029  addr=0x019D = 0
+    [016] intConst           type=41029  addr=0x01AD = 0
+    [017] intConst           type=41029  addr=0x01BD = 0
+    [018] intConst           type=41029  addr=0x01CD = 0
+    [019] intConst           type=41029  addr=0x01DD = 500
+    [020] intConst           type=41029  addr=0x01ED = 10
+    [021] intConst           type=41029  addr=0x01FD = 0
+    [022] intConst           type=41029  addr=0x020D = 2047
+    [023] intBuilder         type=42200  addr=0x0026
+    [024] intConst           type=41029  addr=0x021D = 192
+    [025] intConst           type=41029  addr=0x022D = 168
+    [026] intConst           type=41029  addr=0x023D = 1
+    [027] intConst           type=41029  addr=0x024D = 100
+    [028] intConst           type=41029  addr=0x025D = 8080
+    [029] intDirect          type=42201  addr=0x0046
+    [030] intConst           type=41029  addr=0x026D = 61444
+    [031] intConst           type=41029  addr=0x027D = 6
+    [032] intConst           type=41029  addr=0x028D = 10
+    [033] intConst           type=41029  addr=0x029D = 255
+    [034] floatBuilder       type=42202  addr=0x0076
+    [035] intConst           type=41029  addr=0x02AD = 100
+    [036] intConst           type=41029  addr=0x02BD = 200
+    [037] intConst           type=41029  addr=0x02CD = 300
+    [038] intConst           type=41029  addr=0x02DD = 400
+    [039] intCompare         type=42204  addr=0x00B6
+    [040] intConst           type=41029  addr=0x02ED = 1
+
+────────────────────────────────────────────────────────────────────
+  文件: control_module.code   [✓ 通过]
+  大小: 1522 字节
+
+  模块头:    type_id=40961(0x0A001), base_addr=0
+  FB实例数:  75
+  唯一类型:  12 种
+  地址范围:  0x0000 ~ 0x0458  (≈1128 字节)
+  域分布:    定时计数:1  比较运算:6  算术运算:36  逻辑控制:32
+  浮点初值:  floatConst=10.500  floatConst=5.300  floatConst=15.800  floatConst=5.200  floatConst=55.650  floatConst=50.000  floatConst=30.000  floatConst=25.800  floatConst=50.000  floatConst=60.000
+  [警告] 地址乱序：第38个地址 38 < 前一个 824
+  [警告] 地址乱序：第40个地址 62 < 前一个 832
+  [警告] 地址乱序：第47个地址 158 < 前一个 880
+  [警告] 地址乱序：第49个地址 174 < 前一个 896
+  [警告] 地址乱序：第51个地址 190 < 前一个 912
+  [警告] 地址乱序：第55个地址 222 < 前一个 960
+  [警告] 地址乱序：第57个地址 238 < 前一个 976
+  [警告] 地址乱序：第59个地址 254 < 前一个 984
+  [警告] 地址乱序：第63个地址 270 < 前一个 1008
+  [警告] 地址乱序：第65个地址 286 < 前一个 1016
+  [警告] 地址乱序：第67个地址 302 < 前一个 1024
+
+  功能块实例列表:
+    [002] boolConst          type=41031  addr=0x0170 = 0
+    [003] boolConst          type=41031  addr=0x0178 = 0
+    [004] boolConst          type=41031  addr=0x0180 = 0
+    [005] boolConst          type=41031  addr=0x0188 = 0
+    [006] intConst           type=41029  addr=0x0190 = 0
+    [007] intConst           type=41029  addr=0x01A0 = 0
+    [008] intConst           type=41029  addr=0x01B0 = 0
+    [009] intConst           type=41029  addr=0x01C0 = 0
+    [010] intConst           type=41029  addr=0x01D0 = 100
+    [011] intConst           type=41029  addr=0x01E0 = 1
+    [012] intConst           type=41029  addr=0x01F0 = 1000
+    [013] intConst           type=41029  addr=0x0200 = 0
+    [014] boolConst          type=41031  addr=0x0210 = 0
+    [015] boolConst          type=41031  addr=0x0218 = 0
+    [016] intConst           type=41029  addr=0x0220 = 0
+    [017] intConst           type=41029  addr=0x0230 = 100
+    [018] boolConst          type=41031  addr=0x0240 = 0
+    [019] floatConst         type=41030  addr=0x0248 = 0
+    [020] floatConst         type=41030  addr=0x0258 = 0
+    [021] floatConst         type=41030  addr=0x0268 = 0
+    [022] boolConst          type=41031  addr=0x0278 = 0
+    [023] boolConst          type=41031  addr=0x0280 = 0
+    [024] boolConst          type=41031  addr=0x0288 = 0
+    [025] boolConst          type=41031  addr=0x0290 = 0
+    [026] intConst           type=41029  addr=0x0298 = 0
+    [027] floatConst         type=41030  addr=0x02A8 = 0
+    [028] boolConst          type=41031  addr=0x02B8 = 0
+    [029] boolConst          type=41031  addr=0x02C0 = 1
+    [030] boolConst          type=41031  addr=0x02C8 = 1
+    [031] boolConst          type=41031  addr=0x02D0 = 0
+    [032] boolConst          type=41031  addr=0x02D8 = 1
+    [033] intConst           type=41029  addr=0x02E0 = 2
+    [034] intConst           type=41029  addr=0x02F0 = -1
+    [035] intConst           type=41029  addr=0x0300 = 1
+    [036] intConst           type=41029  addr=0x0310 = 0
+    [037] boolConst          type=41031  addr=0x0320 = 1
+    [038] intConst           type=41029  addr=0x0328 = 1
+    [039] boolConst          type=41031  addr=0x0338 = 1
+    [040] ifCondition        type=41600  addr=0x0026
+    [041] boolConst          type=41031  addr=0x0340 = 0
+    [042] ifCondition        type=41600  addr=0x003E
+    [043] ifCondition        type=41600  addr=0x0056
+    [044] timer100ms         type=41700  addr=0x006E
+    [045] intConst           type=41029  addr=0x0348 = 0
+    [046] boolConst          type=41031  addr=0x0358 = 0
+    [047] floatConst         type=41030  addr=0x0360 = 10.5000(f)
+    [048] floatConst         type=41030  addr=0x0370 = 5.3000(f)
+    [049] _GT                type=41300  addr=0x009E
+    [050] floatConst         type=41030  addr=0x0380 = 15.8000(f)
+    [051] _LT                type=41301  addr=0x00AE
+    [052] floatConst         type=41030  addr=0x0390 = 5.2000(f)
+    [053] _EQ                type=41302  addr=0x00BE
+    [054] floatConst         type=41030  addr=0x03A0 = 55.6500(f)
+    [055] floatConst         type=41030  addr=0x03B0 = 50.0000(f)
+    [056] floatConst         type=41030  addr=0x03C0 = 30.0000(f)
+    [057] _GT                type=41300  addr=0x00DE
+    [058] boolConst          type=41031  addr=0x03D0 = 1
+    [059] _LT                type=41301  addr=0x00EE
+    [060] boolConst          type=41031  addr=0x03D8 = 0
+    [061] _NE                type=41304  addr=0x00FE
+    [062] boolConst          type=41031  addr=0x03E0 = 0
+    [063] boolConst          type=41031  addr=0x03E8 = 1
+    [064] boolConst          type=41031  addr=0x03F0 = 0
+    [065] intAdd             type=41400  addr=0x010E
+    [066] boolConst          type=41031  addr=0x03F8 = 0
+    [067] intSub             type=41401  addr=0x011E
+    [068] boolConst          type=41031  addr=0x0400 = 1
+    [069] intMul             type=41402  addr=0x012E
+    [070] boolConst          type=41031  addr=0x0408 = 0
+    [071] intConst           type=41029  addr=0x0410 = 100
+    [072] floatConst         type=41030  addr=0x0420 = 25.8000(f)
+    [073] boolConst          type=41031  addr=0x0430 = 1
+    [074] intConst           type=41029  addr=0x0438 = 5
+    [075] floatConst         type=41030  addr=0x0448 = 50.0000(f)
+    [076] floatConst         type=41030  addr=0x0458 = 60.0000(f)
+
+────────────────────────────────────────────────────────────────────
+  文件: data_process.code   [✓ 通过]
+  大小: 879 字节
+
+  模块头:    type_id=40961(0x0A001), base_addr=0
+  FB实例数:  43
+  唯一类型:  27 种
+  地址范围:  0x0000 ~ 0x0360  (≈880 字节)
+  域分布:    定时计数:1  数据处理:23  算术运算:17  逻辑控制:2
+  浮点初值:  floatConst=25.500  floatConst=30.000  floatConst=25.000  floatConst=100.000  floatConst=50.000  floatConst=25.000  floatConst=100.000  floatConst=25.000  floatConst=100.000  floatConst=100.000
+  [警告] 地址乱序：第2个地址 54 < 前一个 608
+  [警告] 地址乱序：第5个地址 86 < 前一个 624
+  [警告] 地址乱序：第7个地址 102 < 前一个 640
+  [警告] 地址乱序：第10个地址 134 < 前一个 656
+  [警告] 地址乱序：第13个地址 166 < 前一个 664
+  [警告] 地址乱序：第15个地址 182 < 前一个 680
+  [警告] 地址乱序：第17个地址 198 < 前一个 696
+  [警告] 地址乱序：第19个地址 214 < 前一个 712
+  [警告] 地址乱序：第21个地址 230 < 前一个 728
+  [警告] 地址乱序：第23个地址 246 < 前一个 744
+  [警告] 地址乱序：第25个地址 270 < 前一个 760
+  [警告] 地址乱序：第30个地址 382 < 前一个 776
+  [警告] 地址乱序：第32个地址 430 < 前一个 792
+  [警告] 地址乱序：第34个地址 454 < 前一个 808
+  [警告] 地址乱序：第36个地址 486 < 前一个 824
+
+  功能块实例列表:
+    [002] intBuilder         type=42200  addr=0x0026
+    [003] intConst           type=41029  addr=0x0260 = 100
+    [004] intConst           type=41029  addr=0x0036
+    [005] intDirect          type=42201  addr=0x0046
+    [006] intConst           type=41029  addr=0x0270 = 200
+    [007] floatBuilder       type=42202  addr=0x0056
+    [008] floatConst         type=41030  addr=0x0280 = 25.5000(f)
+    [009] floatConst25_5     type=42203  addr=0x0066
+    [010] intCompare         type=42204  addr=0x0076
+    [011] boolConst          type=41031  addr=0x0290 = 1
+    [012] floatCompare       type=42205  addr=0x0086
+    [013] intMaxSel          type=42206  addr=0x0096
+    [014] intConst           type=41029  addr=0x0298 = 200
+    [015] intMinSel          type=42207  addr=0x00A6
+    [016] intConst           type=41029  addr=0x02A8 = 100
+    [017] floatMaxSel        type=42208  addr=0x00B6
+    [018] floatConst         type=41030  addr=0x02B8 = 30.0000(f)
+    [019] floatMinSel        type=42209  addr=0x00C6
+    [020] floatConst         type=41030  addr=0x02C8 = 25.0000(f)
+    [021] intLimiter         type=42210  addr=0x00D6
+    [022] intConst           type=41029  addr=0x02D8 = 1000
+    [023] floatLimiter       type=42211  addr=0x00E6
+    [024] floatConst         type=41030  addr=0x02E8 = 100.0000(f)
+    [025] floatVariLim       type=42212  addr=0x00F6
+    [026] floatConst         type=41030  addr=0x02F8 = 50.0000(f)
+    [027] intBuffer          type=42213  addr=0x010E
+    [028] floatBuffer        type=42214  addr=0x012E
+    [029] intLogicBuf        type=42215  addr=0x014E
+    [030] intModOper         type=42216  addr=0x016E
+    [031] intConst           type=41029  addr=0x0308 = 2
+    [032] counter            type=41900  addr=0x017E
+    [033] floatConst         type=41030  addr=0x0318 = 25.0000(f)
+    [034] roughFilter        type=42217  addr=0x01AE
+    [035] floatConst         type=41030  addr=0x0328 = 100.0000(f)
+    [036] dataRedundancy     type=42218  addr=0x01C6
+    [037] floatConst         type=41030  addr=0x0338 = 25.0000(f)
+    [038] dealInUnify        type=42219  addr=0x01E6
+    [039] dealOutUnify       type=42220  addr=0x01FE
+    [040] dealToData         type=42221  addr=0x0216
+    [041] dealToSwit         type=42222  addr=0x0226
+    [042] boolConst          type=41031  addr=0x0348 = 1
+    [043] floatConst         type=41030  addr=0x0350 = 100.0000(f)
+    [044] floatConst         type=41030  addr=0x0360 = 100.0000(f)
+
+────────────────────────────────────────────────────────────────────
+  文件: exca_module.code   [✓ 通过]
+  大小: 766 字节
+
+  模块头:    type_id=40961(0x0A001), base_addr=0
+  FB实例数:  38
+  唯一类型:  3 种
+  地址范围:  0x0000 ~ 0x028D  (≈685 字节)
+  域分布:    PID控制:1  算术运算:29  逻辑控制:8
+  [警告] 地址乱序：第31个地址 46 < 前一个 565
+
+  功能块实例列表:
+    [002] boolConst          type=41031  addr=0x008D = 0
+    [003] boolConst          type=41031  addr=0x0095 = 0
+    [004] boolConst          type=41031  addr=0x009D = 1
+    [005] boolConst          type=41031  addr=0x00A5 = 0
+    [006] intConst           type=41029  addr=0x00AD = 0
+    [007] intConst           type=41029  addr=0x00BD = 100
+    [008] boolConst          type=41031  addr=0x00CD = 0
+    [009] boolConst          type=41031  addr=0x00D5 = 0
+    [010] boolConst          type=41031  addr=0x00DD = 0
+    [011] intConst           type=41029  addr=0x00E5 = 1800
+    [012] intConst           type=41029  addr=0x00F5 = 280
+    [013] intConst           type=41029  addr=0x0105 = 65
+    [014] intConst           type=41029  addr=0x0115 = 75
+    [015] intConst           type=41029  addr=0x0125 = 24
+    [016] intConst           type=41029  addr=0x0135 = 100
+    [017] intConst           type=41029  addr=0x0145 = 95
+    [018] intConst           type=41029  addr=0x0155 = 98
+    [019] intConst           type=41029  addr=0x0165 = 100
+    [020] intConst           type=41029  addr=0x0175 = 0
+    [021] intConst           type=41029  addr=0x0185 = 0
+    [022] intConst           type=41029  addr=0x0195 = 0
+    [023] intConst           type=41029  addr=0x01A5 = 0
+    [024] intConst           type=41029  addr=0x01B5 = 100
+    [025] intConst           type=41029  addr=0x01C5 = 0
+    [026] intConst           type=41029  addr=0x01D5 = 100
+    [027] intConst           type=41029  addr=0x01E5 = 1
+    [028] intConst           type=41029  addr=0x01F5 = 100
+    [029] intConst           type=41029  addr=0x0205 = 1250
+    [030] intConst           type=41029  addr=0x0215 = 250
+    [031] intConst           type=41029  addr=0x0225 = 1000
+    [032] intConst           type=41029  addr=0x0235 = 0
+    [033] pidInit            type=42100  addr=0x002E
+    [034] intConst           type=41029  addr=0x0245 = 100
+    [035] boolConst          type=41031  addr=0x0255 = 0
+    [036] intConst           type=41029  addr=0x025D = 0
+    [037] intConst           type=41029  addr=0x026D = 0
+    [038] intConst           type=41029  addr=0x027D = 0
+    [039] intConst           type=41029  addr=0x028D = 0
+
+────────────────────────────────────────────────────────────────────
+  文件: io_module.code   [✓ 通过]
+  大小: 710 字节
+
+  模块头:    type_id=40961(0x0A001), base_addr=0
+  FB实例数:  36
+  唯一类型:  8 种
+  地址范围:  0x0000 ~ 0x0210  (≈536 字节)
+  域分布:    I/O驱动:6  算术运算:14  逻辑控制:16
+  浮点初值:  floatConst=25.000  floatConst=50.000  floatConst=2.500
+  [警告] 地址乱序：第2个地址 38 < 前一个 192
+  [警告] 地址乱序：第7个地址 70 < 前一个 248
+  [警告] 地址乱序：第13个地址 86 < 前一个 296
+  [警告] 地址乱序：第18个地址 104 < 前一个 336
+  [警告] 地址乱序：第20个地址 128 < 前一个 344
+  [警告] 地址乱序：第31个地址 86 < 前一个 472
+
+  功能块实例列表:
+    [002] boolConst          type=41031  addr=0x00B8 = 0
+    [003] boolConst          type=41031  addr=0x00C0 = 0
+    [004] adcRead            type=41200  addr=0x0026
+    [005] floatConst         type=41030  addr=0x00C8 = 0
+    [006] floatConst         type=41030  addr=0x00D8 = 0
+    [007] floatConst         type=41030  addr=0x00E8 = 0
+    [008] floatConst         type=41030  addr=0x00F8 = 0
+    [009] dacWrite           type=41202  addr=0x0046
+    [010] boolConst          type=41031  addr=0x0108 = 0
+    [011] boolConst          type=41031  addr=0x0110 = 0
+    [012] boolConst          type=41031  addr=0x0118 = 0
+    [013] boolConst          type=41031  addr=0x0120 = 0
+    [014] intConst           type=41029  addr=0x0128 = 0
+    [015] digitalIn          type=41203  addr=0x0056
+    [016] boolConst          type=41031  addr=0x0138 = 0
+    [017] boolConst          type=41031  addr=0x0140 = 0
+    [018] boolConst          type=41031  addr=0x0148 = 0
+    [019] boolConst          type=41031  addr=0x0150 = 0
+    [020] pwmOutput          type=41207  addr=0x0068
+    [021] floatConst         type=41030  addr=0x0158 = 0
+    [022] digitalOut         type=41208  addr=0x0080
+    [023] intConst           type=41029  addr=0x0168 = 0
+    [024] floatConst         type=41030  addr=0x0178 = 0
+    [025] floatConst         type=41030  addr=0x0188 = 25.0000(f)
+    [026] floatConst         type=41030  addr=0x0198 = 50.0000(f)
+    [027] floatConst         type=41030  addr=0x01A8 = 2.5000(f)
+    [028] boolConst          type=41031  addr=0x01B8 = 0
+    [029] boolConst          type=41031  addr=0x01C0 = 0
+    [030] boolConst          type=41031  addr=0x01C8 = 0
+    [031] boolConst          type=41031  addr=0x01D0 = 0
+    [032] intConst           type=41029  addr=0x01D8 = 0
+    [033] digitalIn          type=41203  addr=0x0056
+    [034] floatConst         type=41030  addr=0x01E8 = 0
+    [035] intConst           type=41029  addr=0x01F8 = 0
+    [036] boolConst          type=41031  addr=0x0208 = 1
+    [037] boolConst          type=41031  addr=0x0210 = 0
+
+────────────────────────────────────────────────────────────────────
+  文件: main.code   [✓ 通过]
+  大小: 756 字节
+
+  模块头:    type_id=40961(0x0A001), base_addr=0
+  FB实例数:  38
+  唯一类型:  3 种
+  地址范围:  0x0000 ~ 0x024F  (≈623 字节)
+  域分布:    算术运算:22  逻辑控制:16
+  浮点初值:  floatConst=50.000  floatConst=100.000
+
+  功能块实例列表:
+    [002] boolConst          type=41031  addr=0x007F = 0
+    [003] boolConst          type=41031  addr=0x0087 = 0
+    [004] boolConst          type=41031  addr=0x008F = 0
+    [005] intConst           type=41029  addr=0x0097 = 0
+    [006] intConst           type=41029  addr=0x00A7 = 0
+    [007] floatConst         type=41030  addr=0x00B7 = 0
+    [008] floatConst         type=41030  addr=0x00C7 = 0
+    [009] floatConst         type=41030  addr=0x00D7 = 0
+    [010] floatConst         type=41030  addr=0x00E7 = 0
+    [011] boolConst          type=41031  addr=0x00F7 = 0
+    [012] boolConst          type=41031  addr=0x00FF = 0
+    [013] boolConst          type=41031  addr=0x0107 = 0
+    [014] boolConst          type=41031  addr=0x010F = 0
+    [015] boolConst          type=41031  addr=0x0117 = 0
+    [016] boolConst          type=41031  addr=0x011F = 0
+    [017] intConst           type=41029  addr=0x0127 = 1
+    [018] floatConst         type=41030  addr=0x0137 = 50.0000(f)
+    [019] floatConst         type=41030  addr=0x0147 = 0
+    [020] floatConst         type=41030  addr=0x0157 = 0
+    [021] floatConst         type=41030  addr=0x0167 = 100.0000(f)
+    [022] floatConst         type=41030  addr=0x0177 = 0
+    [023] floatConst         type=41030  addr=0x0187 = 0
+    [024] boolConst          type=41031  addr=0x0197 = 0
+    [025] intConst           type=41029  addr=0x019F = 0
+    [026] intConst           type=41029  addr=0x01AF = 0
+    [027] intConst           type=41029  addr=0x01BF = 0
+    [028] boolConst          type=41031  addr=0x01CF = 1
+    [029] boolConst          type=41031  addr=0x01D7 = 0
+    [030] boolConst          type=41031  addr=0x01DF = 0
+    [031] boolConst          type=41031  addr=0x01E7 = 0
+    [032] intConst           type=41029  addr=0x01EF = 0
+    [033] boolConst          type=41031  addr=0x01FF = 1
+    [034] intConst           type=41029  addr=0x0207 = 0
+    [035] intConst           type=41029  addr=0x0217 = 0
+    [036] intConst           type=41029  addr=0x0227 = 10
+    [037] boolConst          type=41031  addr=0x0237 = 1
+    [038] intConst           type=41029  addr=0x023F = 0
+    [039] intConst           type=41029  addr=0x024F = 1
+
+────────────────────────────────────────────────────────────────────
+  文件: safety_module.code   [✓ 通过]
+  大小: 362 字节
+
+  模块头:    type_id=40961(0x0A001), base_addr=0
+  FB实例数:  17
+  唯一类型:  5 种
+  地址范围:  0x0000 ~ 0x011E  (≈294 字节)
+  域分布:    PID控制:2  算术运算:6  逻辑控制:9
+  浮点初值:  floatConst=25.000  floatConst=5.000  floatConst=50.000
+  [警告] 地址乱序：第9个地址 42 < 前一个 222
+  [警告] 地址乱序：第12个地址 76 < 前一个 246
+
+  功能块实例列表:
+    [002] floatConst         type=41030  addr=0x007E = 25.0000(f)
+    [003] boolConst          type=41031  addr=0x008E = 0
+    [004] boolConst          type=41031  addr=0x0096 = 0
+    [005] floatConst         type=41030  addr=0x009E = 5.0000(f)
+    [006] boolConst          type=41031  addr=0x00AE = 0
+    [007] floatConst         type=41030  addr=0x00B6 = 50.0000(f)
+    [008] boolConst          type=41031  addr=0x00C6 = 0
+    [009] intConst           type=41029  addr=0x00CE = 1234
+    [010] intConst           type=41029  addr=0x00DE = 0
+    [011] pidOutput          type=42102  addr=0x002A
+    [012] boolConst          type=41031  addr=0x00EE = 0
+    [013] boolConst          type=41031  addr=0x00F6 = 1
+    [014] pidController      type=42101  addr=0x004C
+    [015] boolConst          type=41031  addr=0x00FE = 1
+    [016] intConst           type=41029  addr=0x0106 = 0
+    [017] boolConst          type=41031  addr=0x0116 = 1
+    [018] boolConst          type=41031  addr=0x011E = 1
+
+────────────────────────────────────────────────────────────────────
+  文件: system_init.code   [✓ 通过]
+  大小: 99 字节
+
+  模块头:    type_id=40961(0x0A001), base_addr=0
+  FB实例数:  5
+  唯一类型:  2 种
+  地址范围:  0x0000 ~ 0x0062  (≈106 字节)
+  域分布:    系统管理:3  逻辑控制:2
+
+  功能块实例列表:
+    [002] systemInit         type=41000  addr=0x0026
+    [003] systemInit         type=41000  addr=0x0036
+    [004] systemInit         type=41000  addr=0x0046
+    [005] boolConst          type=41031  addr=0x005A = 1
+    [006] boolConst          type=41031  addr=0x0062 = 1
+
+====================================================================
+  LH .code 文件批量验证汇总报告
+====================================================================
+  文件总数:     8
+  验证通过:     8 / 8
+
+  FB实例总计:   291
+  涉及类型总计: 45 种
+  估算总内存:   5033 字节
+
+  文件名                         FB数    类型数    内存/B     状态
+  ───────────────────────────────────────────────────────
+  comm_module.code             39      6     781     通过
+  control_module.code          75     12    1128     通过
+  data_process.code            43     27     880     通过
+  exca_module.code             38      3     685     通过
+  io_module.code               36      8     536     通过
+  main.code                    38      3     623     通过
+  safety_module.code           17      5     294     通过
+  system_init.code              5      2     106     通过
+====================================================================

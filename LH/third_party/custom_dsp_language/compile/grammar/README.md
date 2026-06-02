@@ -1,13 +1,13 @@
-# LM Grammar - ANTLR4 Implementation
+# LH Grammar - ANTLR4 Implementation
 
 ## 📋 Overview
 
-This directory contains the ANTLR4 grammar definition for the LM language (CODESYS-style).
+This directory contains the ANTLR4 grammar definition for the LH language (CODESYS-style).
 
 ## 📁 Files
 
-- **LM.g4** - Main ANTLR grammar file
-- **test_programs.lm** - Test programs for grammar validation
+- **LH.g4** - Main ANTLR grammar file
+- **test_programs.lh** - Test programs for grammar validation
 - **README.md** - This file
 
 ## 🚀 Quick Start
@@ -50,18 +50,18 @@ export CLASSPATH=".:/usr/local/lib/antlr-4.13.1-complete.jar:$CLASSPATH"
 
 # Generate Python3 parser
 cd grammar
-antlr4 -Dlanguage=Python3 -visitor -no-listener LM.g4
+antlr4 -Dlanguage=Python3 -visitor -no-listener LH.g4
 
 # Or using Java directly:
-java -jar /path/to/antlr-4.13.1-complete.jar -Dlanguage=Python3 -visitor -no-listener LM.g4
+java -jar /path/to/antlr-4.13.1-complete.jar -Dlanguage=Python3 -visitor -no-listener LH.g4
 ```
 
 **Generated Files:**
-- `LMLexer.py` - Lexical analyzer
-- `LMParser.py` - Syntax parser
-- `LMVisitor.py` - Visitor pattern interface
-- `LM.tokens` - Token definitions
-- `LMLexer.tokens` - Lexer tokens
+- `LHLexer.py` - Lexical analyzer
+- `LHParser.py` - Syntax parser
+- `LHVisitor.py` - Visitor pattern interface
+- `LH.tokens` - Token definitions
+- `LHLexer.tokens` - Lexer tokens
 
 ### Test the Grammar
 
@@ -75,7 +75,7 @@ alias grun='java org.antlr.v4.gui.TestRig'
 
 # Test with GUI
 cd grammar
-grun LM program -gui test_programs.lm
+grun LH program -gui test_programs.lh
 ```
 
 This will show a visual parse tree!
@@ -84,8 +84,8 @@ This will show a visual parse tree!
 
 ```bash
 # Test parsing
-grun LM program -tree test_programs.lm
-grun LM program -tokens test_programs.lm
+grun LH program -tree test_programs.lh
+grun LH program -tokens test_programs.lh
 ```
 
 ### Integration with Python
@@ -94,15 +94,15 @@ After generation, the parser can be used in Python:
 
 ```python
 from antlr4 import *
-from grammar.LMLexer import LMLexer
-from grammar.LMParser import LMParser
+from grammar.LHLexer import LHLexer
+from grammar.LHParser import LHParser
 
 # Parse a program
 def parse_lm_program(code):
     input_stream = InputStream(code)
-    lexer = LMLexer(input_stream)
+    lexer = LHLexer(input_stream)
     token_stream = CommonTokenStream(lexer)
-    parser = LMParser(token_stream)
+    parser = LHParser(token_stream)
     
     tree = parser.program()
     return tree
@@ -147,7 +147,7 @@ print(tree.toStringTree(recog=parser))
 
 ## 🧪 Test Programs
 
-The `test_programs.lm` file contains various test cases:
+The `test_programs.lh` file contains various test cases:
 
 1. **MinimalTest** - Simplest valid program
 2. **VariableTest** - Multiple variable declarations
@@ -165,10 +165,10 @@ The `test_programs.lm` file contains various test cases:
 **Issue 1: "antlr4: command not found"**
 ```bash
 # Solution: Add ANTLR to PATH or use full path
-java -jar /path/to/antlr-4.13.1-complete.jar -Dlanguage=Python3 LM.g4
+java -jar /path/to/antlr-4.13.1-complete.jar -Dlanguage=Python3 LH.g4
 ```
 
-**Issue 2: "No such file or directory: LM.g4"**
+**Issue 2: "No such file or directory: LH.g4"**
 ```bash
 # Solution: Make sure you're in the grammar directory
 cd grammar
@@ -177,14 +177,14 @@ cd grammar
 **Issue 3: Parse errors**
 ```bash
 # Use -diagnostics flag for detailed error info
-grun LM program -diagnostics test_programs.lm
+grun LH program -diagnostics test_programs.lh
 ```
 
 ### Verbose Mode
 
 ```bash
 # Generate with verbose output
-antlr4 -Dlanguage=Python3 -visitor -no-listener -Xlog LM.g4
+antlr4 -Dlanguage=Python3 -visitor -no-listener -Xlog LH.g4
 ```
 
 ## 📚 Resources
@@ -195,7 +195,7 @@ antlr4 -Dlanguage=Python3 -visitor -no-listener -Xlog LM.g4
 
 ## 🔄 Development Workflow
 
-1. **Edit grammar** - Modify `LM.g4`
+1. **Edit grammar** - Modify `LH.g4`
 2. **Regenerate parser** - Run `antlr4 ...`
 3. **Test** - Use `grun` or Python tests
 4. **Iterate** - Repeat until satisfied
@@ -208,11 +208,11 @@ Create an alias for quick testing:
 
 ```bash
 # Add to ~/.bashrc or ~/.zshrc
-alias lmtest='antlr4 -Dlanguage=Python3 LM.g4 && grun LM program -gui'
+alias lmtest='antlr4 -Dlanguage=Python3 LH.g4 && grun LH program -gui'
 
 # Usage:
 cd grammar
-lmtest test_programs.lm
+lmtest test_programs.lh
 ```
 
 ### Syntax Highlighting
@@ -227,7 +227,7 @@ For VS Code, install:
 npm install -g antlr4-railroad-diagrams
 
 # Generate diagrams
-antlr4-railroad-diagrams LM.g4
+antlr4-railroad-diagrams LH.g4
 ```
 
 ## 📊 Grammar Statistics
@@ -242,12 +242,12 @@ antlr4-railroad-diagrams LM.g4
 
 After successful grammar generation:
 
-1. ✅ Integrate parser into `src/lm_compiler/frontend/parser.py`
+1. ✅ Integrate parser into `src/lh_compiler/frontend/parser.py`
 2. ✅ Build AST from parse tree
 3. ✅ Implement semantic analysis
 4. ✅ Connect to code generator
 
 ---
 
-**Ready to parse LM programs!** 🚀
+**Ready to parse LH programs!** 🚀
 

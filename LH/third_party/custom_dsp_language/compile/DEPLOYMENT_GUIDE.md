@@ -4,22 +4,22 @@
 
 ### 1. compiler.py - 主编译器
 **下载的文件**: `compiler.py`  
-**放置位置**: `E:\lm-compiler\src\lm_compiler\compiler.py`  
+**放置位置**: `E:\lh-compiler\src\lh_compiler\compiler.py`  
 **功能**: 整合词法分析、语法分析、AST构建、代码生成的完整编译流程
 
 ### 2. test_e2e_compile.py - 端到端测试
 **下载的文件**: `test_e2e_compile.py`  
-**放置位置**: `E:\lm-compiler\test_e2e_compile.py` (项目根目录)  
+**放置位置**: `E:\lh-compiler\test_e2e_compile.py` (项目根目录)  
 **功能**: 测试完整编译流程，自动创建测试程序并编译
 
 ### 3. lmc.py - 命令行工具
 **下载的文件**: `lmc.py`  
-**放置位置**: `E:\lm-compiler\lmc.py` (项目根目录)  
+**放置位置**: `E:\lh-compiler\lmc.py` (项目根目录)  
 **功能**: 方便的命令行编译工具，支持单文件和批量编译
 
 ### 4. COMPILER_GUIDE.md - 使用指南
 **下载的文件**: `COMPILER_GUIDE.md`  
-**放置位置**: `E:\lm-compiler\COMPILER_GUIDE.md` (项目根目录)  
+**放置位置**: `E:\lh-compiler\COMPILER_GUIDE.md` (项目根目录)  
 **功能**: 详细的使用文档和示例
 
 ## 快速开始
@@ -33,7 +33,7 @@
 打开虚拟环境，然后运行:
 
 ```bash
-cd E:\lm-compiler
+cd E:\lh-compiler
 python test_e2e_compile.py
 ```
 
@@ -45,7 +45,7 @@ python test_e2e_compile.py
 
 ### 步骤3: 使用命令行工具编译你自己的程序
 
-创建一个 `.lm` 文件，例如 `my_program.lm`:
+创建一个 `.lh` 文件，例如 `my_program.lh`:
 
 ```pascal
 PROGRAM MyFirst
@@ -63,7 +63,7 @@ END_PROGRAM
 然后编译:
 
 ```bash
-python lmc.py my_program.lm
+python lmc.py my_program.lh
 ```
 
 会生成 `my_program.code` 文件。
@@ -71,8 +71,8 @@ python lmc.py my_program.lm
 ## 完整的项目结构（更新后）
 
 ```
-E:\lm-compiler\
-├── src\lm_compiler\
+E:\lh-compiler\
+├── src\lh_compiler\
 │   ├── __init__.py
 │   ├── compiler.py                 ← 新增：主编译器
 │   ├── frontend\
@@ -91,10 +91,10 @@ E:\lm-compiler\
 │           ├── __init__.py
 │           └── _system.py
 ├── grammar\
-│   ├── LM.g4
-│   ├── LMLexer.py
-│   ├── LMParser.py
-│   └── LMVisitor.py
+│   ├── LH.g4
+│   ├── LHLexer.py
+│   ├── LHParser.py
+│   └── LHVisitor.py
 ├── lmc.py                          ← 新增：命令行工具
 ├── test_e2e_compile.py             ← 新增：端到端测试
 ├── test_codegen.py
@@ -107,13 +107,13 @@ E:\lm-compiler\
 ### 示例1: 编译单个文件（详细模式）
 
 ```bash
-python lmc.py my_program.lm -v
+python lmc.py my_program.lh -v
 ```
 
 输出:
 ```
 ======================================================================
-编译: my_program.lm -> my_program.code
+编译: my_program.lh -> my_program.code
 ======================================================================
 
 步骤 1/5: 读取源文件...
@@ -131,13 +131,13 @@ python lmc.py my_program.lm -v
 ### 示例2: 批量编译
 
 ```bash
-python lmc.py test_programs/*.lm -o compiled_output/
+python lmc.py test_programs/*.lh -o compiled_output/
 ```
 
 ### 示例3: 调试模式（查看AST和指令）
 
 ```bash
-python lmc.py my_program.lm -d
+python lmc.py my_program.lh -d
 ```
 
 会显示:
@@ -164,13 +164,13 @@ Program: MyFirst
 ## 在 Python 代码中使用
 
 ```python
-from lm_compiler import LMCompiler
+from lh_compiler import LHCompiler
 
 # 创建编译器
-compiler = LMCompiler(verbose=True)
+compiler = LHCompiler(verbose=True)
 
 # 编译文件
-result = compiler.compile_file("my_program.lm")
+result = compiler.compile_file("my_program.lh")
 
 # 检查结果
 if result.success:
@@ -230,14 +230,14 @@ pip install antlr4-python3-runtime
 ### 问题3: 提示找不到 grammar 目录
 **解决**: 使用 `-g` 参数指定 grammar 目录
 ```bash
-python lmc.py program.lm -g E:\lm-compiler\grammar
+python lmc.py program.lh -g E:\lh-compiler\grammar
 ```
 
 ## 下一步
 
 现在你已经有了完整的编译器，可以:
 
-1. **编译你的程序**: 创建 .lm 文件并编译
+1. **编译你的程序**: 创建 .lh 文件并编译
 2. **扩展功能块**: 在 `function_blocks/definitions/` 添加新的功能块定义
 3. **添加语言特性**: 扩展语法以支持更多 CODESYS 特性
 4. **优化代码生成**: 改进生成的字节码质量

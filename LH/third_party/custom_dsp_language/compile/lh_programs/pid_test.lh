@@ -1,0 +1,26 @@
+PROGRAM pid_test
+VAR
+    system      : System;
+    setpoint    : REAL := 0.0;
+    feedback    : REAL := 0.0;
+    output      : REAL := 0.0;
+    ai_sensor   : DrvAI;
+    pid_ctrl    : PID;
+    ao_drive    : DrvAO;
+END_VAR
+
+system(Author := 1, Config := 100, Date := 2601,
+       Version := 1, CycleTime := 1);
+
+setpoint := 50.0;
+
+ai_sensor(NumChannels := 1, InputNum := 0, DivisionNum := 4096);
+
+pid_ctrl(Setpoint := setpoint, Feedback := feedback,
+         Kp := 2.5, Ki := 0.8, Kd := 0.1,
+         OutMax := 100.0, OutMin := 0.0,
+         SampleTime := 1, Enable := TRUE, Reset := FALSE);
+
+ao_drive(channel := 0, value := output);
+
+END_PROGRAM

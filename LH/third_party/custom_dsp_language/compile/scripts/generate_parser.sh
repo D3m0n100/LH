@@ -8,7 +8,7 @@
 set -e  # Exit on error
 
 echo "========================================="
-echo "LM Compiler - Parser Generation"
+echo "LH Compiler - Parser Generation"
 echo "========================================="
 echo ""
 
@@ -83,21 +83,21 @@ fi
 cd "$GRAMMAR_DIR"
 
 # Check if grammar file exists
-if [ ! -f "LM.g4" ]; then
-    echo -e "${RED}✗ Grammar file not found: LM.g4${NC}"
+if [ ! -f "LH.g4" ]; then
+    echo -e "${RED}✗ Grammar file not found: LH.g4${NC}"
     exit 1
 fi
 
-echo "Generating parser from LM.g4..."
+echo "Generating parser from LH.g4..."
 echo ""
 
 # Generate parser
 if [ "$USE_COMMAND" = true ]; then
     # Use antlr4 command
-    antlr4 -Dlanguage=Python3 -visitor -no-listener LM.g4
+    antlr4 -Dlanguage=Python3 -visitor -no-listener LH.g4
 else
     # Use JAR file
-    java -jar "$ANTLR_JAR" -Dlanguage=Python3 -visitor -no-listener LM.g4
+    java -jar "$ANTLR_JAR" -Dlanguage=Python3 -visitor -no-listener LH.g4
 fi
 
 # Check if generation was successful
@@ -106,7 +106,7 @@ if [ $? -eq 0 ]; then
     echo -e "${GREEN}✓ Parser generated successfully!${NC}"
     echo ""
     echo "Generated files:"
-    ls -lh LM*.py LM*.tokens 2>/dev/null | awk '{print "  " $9 " (" $5 ")"}'
+    ls -lh LH*.py LH*.tokens 2>/dev/null | awk '{print "  " $9 " (" $5 ")"}'
     echo ""
 else
     echo -e "${RED}✗ Parser generation failed!${NC}"
@@ -126,8 +126,8 @@ python3 -c "
 import sys
 sys.path.insert(0, 'grammar')
 try:
-    from LMLexer import LMLexer
-    from LMParser import LMParser
+    from LHLexer import LHLexer
+    from LHParser import LHParser
     print('${GREEN}✓ Parser imports successfully!${NC}')
 except ImportError as e:
     print('${RED}✗ Import failed: ' + str(e) + '${NC}')
@@ -143,13 +143,13 @@ if [ $? -eq 0 ]; then
     echo "Next steps:"
     echo "  1. Test the parser:"
     echo "     cd grammar"
-    echo "     python3 -c 'from LMParser import LMParser; print(\"OK\")'"
+    echo "     python3 -c 'from LHParser import LHParser; print(\"OK\")'"
     echo ""
     echo "  2. View parse tree (if Java GUI available):"
-    echo "     grun LM program -gui test_programs.lm"
+    echo "     grun LH program -gui test_programs.lh"
     echo ""
     echo "  3. Integrate into compiler:"
-    echo "     Edit src/lm_compiler/frontend/parser.py"
+    echo "     Edit src/lh_compiler/frontend/parser.py"
     echo ""
 else
     echo -e "${RED}✗ Import test failed${NC}"
