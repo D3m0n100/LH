@@ -63,6 +63,75 @@ private slots:
         QCOMPARE(table.definition("p1")->name, QStringLiteral("New"));
     }
 
+    void reRegisterRebuildsIndexesAndResetsValue()
+    {
+        RuntimePointTable table;
+        auto original = makePoint("p1", "Old", RuntimePointKind::Variable);
+        original.defaultValue = 1.0;
+        table.registerPoint(original);
+        QVERIFY(table.updateValue("p1", 42.0, RuntimePointQuality::Good, QStringLiteral("test")));
+
+        auto replacement = makePoint("p1", "New", RuntimePointKind::Parameter);
+        replacement.defaultValue = 7.5;
+        table.registerPoint(replacement);
+
+        QVERIFY(!table.definitionByName("Old").has_value());
+        QVERIFY(!table.idsByKind(RuntimePointKind::Variable).contains(QStringLiteral("p1")));
+        QVERIFY(table.idsByKind(RuntimePointKind::Parameter).contains(QStringLiteral("p1")));
+        const auto snapshot = table.snapshot("p1");
+        QVERIFY(snapshot.has_value());
+        QCOMPARE(snapshot->current.value.toDouble(), 7.5);
+        QCOMPARE(snapshot->current.quality, RuntimePointQuality::Unknown);
+        QCOMPARE(snapshot->current.origin, QStringLiteral("init"));
+        QCOMPARE(snapshot->current.sequence, quint64(0));
+        QVERIFY(!snapshot->current.timestamp.isValid());
+    }
+
+    void reRegisterDoesNotRemoveSameNameMappingForAnotherId()
+    {
+        RuntimePointTable table;
+        table.registerPoint(makePoint("p1", "Shared"));
+        table.registerPoint(makePoint("p2", "Shared"));
+
+        table.registerPoint(makePoint("p1", "Renamed"));
+
+        const auto shared = table.definitionByName("Shared");
+        QVERIFY(shared.has_value());
+        QCOMPARE(shared->id, QStringLiteral("p2"));
+        const auto renamed = table.definitionByName("Renamed");
+        QVERIFY(renamed.has_value());
+        QCOMPARE(renamed->id, QStringLiteral("p1"));
+    }
+
+    void reRegisterRestoresNameMappingForRemainingDefinition()
+    {
+        RuntimePointTable table;
+        table.registerPoint(makePoint("p1", "Shared"));
+        table.registerPoint(makePoint("p2", "Shared"));
+
+        table.registerPoint(makePoint("p2", "Renamed"));
+
+        const auto shared = table.definitionByName("Shared");
+        QVERIFY(shared.has_value());
+        QCOMPARE(shared->id, QStringLiteral("p1"));
+        const auto renamed = table.definitionByName("Renamed");
+        QVERIFY(renamed.has_value());
+        QCOMPARE(renamed->id, QStringLiteral("p2"));
+    }
+
+    void reRegisterKeepsNameMappingOwnedByAnotherId()
+    {
+        RuntimePointTable table;
+        table.registerPoint(makePoint("p1", "Shared"));
+        table.registerPoint(makePoint("p2", "Shared"));
+
+        table.registerPoint(makePoint("p1", "Shared"));
+
+        const auto shared = table.definitionByName("Shared");
+        QVERIFY(shared.has_value());
+        QCOMPARE(shared->id, QStringLiteral("p2"));
+    }
+
     void loadDefinitionsBulk()
     {
         RuntimePointTable table;
@@ -72,6 +141,47 @@ private slots:
 
         QCOMPARE(table.count(), 3);
         QCOMPARE(table.allIds().size(), 3);
+    }
+
+    void loadDefinitionsRemainsIncremental()
+    {
+        RuntimePointTable table;
+        table.registerPoint(makePoint("existing", "Existing"));
+        table.loadDefinitions({makePoint("loaded", "Loaded")});
+
+        QCOMPARE(table.count(), 2);
+        QVERIFY(table.contains("existing"));
+        QVERIFY(table.contains("loaded"));
+    }
+
+    void loadFromProjectConfigReplacesPreviousPointSet()
+    {
+        RuntimePointTable table;
+        ProjectRuntimeConfig first;
+        VariableDefinition oldVariable;
+        oldVariable.id = QStringLiteral("old-variable");
+        oldVariable.name = QStringLiteral("Old");
+        oldVariable.dataType = QStringLiteral("REAL");
+        oldVariable.defaultValue = QStringLiteral("1.0");
+        first.variables.append(oldVariable);
+        table.loadFromProjectConfig(first);
+        QVERIFY(table.contains(oldVariable.id));
+        QVERIFY(table.updateValue(oldVariable.id, 12.0));
+
+        ProjectRuntimeConfig second;
+        VariableDefinition newVariable;
+        newVariable.id = QStringLiteral("new-variable");
+        newVariable.name = QStringLiteral("New");
+        newVariable.dataType = QStringLiteral("REAL");
+        newVariable.defaultValue = QStringLiteral("2.0");
+        second.variables.append(newVariable);
+        table.loadFromProjectConfig(second);
+
+        QCOMPARE(table.count(), 1);
+        QVERIFY(!table.contains(oldVariable.id));
+        QVERIFY(!table.snapshot(oldVariable.id).has_value());
+        QVERIFY(table.contains(newVariable.id));
+        QCOMPARE(table.snapshot(newVariable.id)->current.quality, RuntimePointQuality::Unknown);
     }
 
     // ── 按 name 查询 ────────────────────────────────────
@@ -240,6 +350,78 @@ private slots:
         QCOMPARE(varSnaps.size(), 2);
     }
 
+    void converterProducesStableAddressingSchema()
+    {
+        VariableDefinition var;
+        var.id = "v1";
+        var.name = "Speed";
+        var.dataType = "REAL";
+        var.scope = "global";
+        var.binding = "motor.speed";
+
+        const auto varPt = RuntimePointConverter::fromVariable(var);
+        QVERIFY(varPt.addressing.contains("schemaVersion"));
+        QCOMPARE(varPt.addressing.value("role").toString(), QStringLiteral("variable"));
+        QCOMPARE(varPt.addressing.value("channel").toString(), QStringLiteral("motor.speed"));
+        QCOMPARE(varPt.addressing.value("address").toLongLong(), qint64(-1));
+
+        ParameterDefinition param;
+        param.id = "p1";
+        param.name = "Gain";
+        param.dataType = "REAL";
+        param.defaultValue = "1.0";
+        param.onlineEditable = true;
+
+        const auto paramPt = RuntimePointConverter::fromParameter(param);
+        QCOMPARE(paramPt.addressing.value("role").toString(), QStringLiteral("parameter"));
+        QCOMPARE(paramPt.addressing.value("mode").toString(), QStringLiteral("editable"));
+        QCOMPARE(paramPt.addressing.value("area").toString(), QStringLiteral("parameters"));
+        QVERIFY(paramPt.addressing.value("schemaVersion").toString().startsWith(QStringLiteral("lh.runtimePointAddressing")));
+
+        HardwareResourceBinding res;
+        res.id = "r1";
+        res.resourceType = "serial";
+        res.resourceName = "COM1";
+        res.channel = "comm.serial";
+        res.owner = "runtime";
+        res.exclusive = true;
+
+        const auto resPt = RuntimePointConverter::fromResource(res);
+        QCOMPARE(resPt.addressing.value("role").toString(), QStringLiteral("resource"));
+        QCOMPARE(resPt.addressing.value("area").toString(), QStringLiteral("serial"));
+        QCOMPARE(resPt.addressing.value("channel").toString(), QStringLiteral("comm.serial"));
+        QCOMPARE(resPt.addressing.value("resourceType").toString(), QStringLiteral("serial"));
+
+        MonitorProviderRuntimeConfig prov;
+        prov.id = "m1";
+        prov.channelName = "pressure";
+        prov.unit = "bar";
+        prov.periodMs = 25;
+        prov.priority = 10;
+
+        const auto provPt = RuntimePointConverter::fromProvider(prov);
+        QCOMPARE(provPt.addressing.value("role").toString(), QStringLiteral("provider"));
+        QCOMPARE(provPt.addressing.value("mode").toString(), QStringLiteral("poll"));
+        QCOMPARE(provPt.addressing.value("pollGroup").toString(), QStringLiteral("default"));
+        QCOMPARE(provPt.addressing.value("periodMs").toInt(), 25);
+
+        DslMappingEntry mapping;
+        mapping.id = "d1";
+        mapping.snippetId = "analog_input";
+        mapping.snippetName = "PressureInput";
+        mapping.channelName = "pressure.input";
+        mapping.signalPath = "pressure.input";
+        mapping.unit = "bar";
+        mapping.periodMs = 20;
+        mapping.lineNumber = 12;
+
+        const auto mapPt = RuntimePointConverter::fromDslMapping(mapping);
+        QCOMPARE(mapPt.addressing.value("role").toString(), QStringLiteral("dsl_mapping"));
+        QCOMPARE(mapPt.addressing.value("mode").toString(), QStringLiteral("mapping"));
+        QCOMPARE(mapPt.addressing.value("channel").toString(), QStringLiteral("pressure.input"));
+        QCOMPARE(mapPt.addressing.value("lineNumber").toInt(), 12);
+    }
+
     // ── 清空 ────────────────────────────────────────────
 
     void clearRemovesAll()
@@ -251,6 +433,9 @@ private slots:
 
         QCOMPARE(table.count(), 0);
         QVERIFY(!table.contains("p1"));
+        QVERIFY(!table.definitionByName("A").has_value());
+        QVERIFY(table.idsByKind(RuntimePointKind::Variable).isEmpty());
+        QVERIFY(!table.snapshot("p1").has_value());
     }
 
     // ── 边界 ────────────────────────────────────────────

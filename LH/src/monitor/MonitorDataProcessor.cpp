@@ -11,6 +11,8 @@
 #include <algorithm>
 #include <numeric>
 #include <cmath>
+#include <limits>
+#include <vector>
 
 MonitorDataProcessor::MonitorDataProcessor(QObject* parent)
     : QObject(parent)
@@ -34,85 +36,84 @@ MonitorDataProcessor::~MonitorDataProcessor() = default;
 // 配置接口
 // ============================================================================
 
+DataProcessorConfig MonitorDataProcessor::config() const
+{
+    return snapshotConfig();
+}
+
 void MonitorDataProcessor::setConfig(const DataProcessorConfig& config)
 {
-    QWriteLocker locker(&m_bufferLock);
-    
-    bool capacityChanged = (m_config.ringBufferCapacity != config.ringBufferCapacity);
-    m_config = config;
-    if (m_config.maxDeltaBufferSize < m_config.ringBufferCapacity) {
-        m_config.maxDeltaBufferSize = m_config.ringBufferCapacity;
-    }
-    
-    // 如果容量改变，更新所有缓冲区
-    if (capacityChanged) {
-        for (auto& [key, buffer] : m_channelBuffers) {
-            buffer->ringBuffer.setCapacity(config.ringBufferCapacity);
-        }
-    }
-    
-    emit configChanged();
+    updateConfig([config](DataProcessorConfig& current) {
+        current = config;
+    });
 }
 
 void MonitorDataProcessor::setTimeWindow(qint64 windowMs)
 {
-    if (m_config.timeWindowMs != windowMs) {
-        m_config.timeWindowMs = windowMs;
-        emit configChanged();
-    }
+    updateConfig([windowMs](DataProcessorConfig& config) {
+        config.timeWindowMs = windowMs;
+    });
+}
+
+qint64 MonitorDataProcessor::timeWindow() const
+{
+    return snapshotConfig().timeWindowMs;
 }
 
 void MonitorDataProcessor::setMaxDisplaySamples(int maxSamples)
 {
-    if (m_config.maxDisplaySamples != maxSamples) {
-        m_config.maxDisplaySamples = maxSamples;
-        emit configChanged();
-    }
+    updateConfig([maxSamples](DataProcessorConfig& config) {
+        config.maxDisplaySamples = maxSamples;
+    });
+}
+
+int MonitorDataProcessor::maxDisplaySamples() const
+{
+    return snapshotConfig().maxDisplaySamples;
 }
 
 void MonitorDataProcessor::setRingBufferCapacity(int capacity)
 {
-    if (m_config.ringBufferCapacity != capacity) {
-        QWriteLocker locker(&m_bufferLock);
-        m_config.ringBufferCapacity = capacity;
-        if (m_config.maxDeltaBufferSize < capacity) {
-            m_config.maxDeltaBufferSize = capacity;
-        }
-        
-        for (auto& [key, buffer] : m_channelBuffers) {
-            buffer->ringBuffer.setCapacity(capacity);
-        }
-        
-        emit configChanged();
-    }
+    updateConfig([capacity](DataProcessorConfig& config) {
+        config.ringBufferCapacity = capacity;
+    });
+}
+
+int MonitorDataProcessor::ringBufferCapacity() const
+{
+    return snapshotConfig().ringBufferCapacity;
 }
 
 void MonitorDataProcessor::setClampRange(std::optional<double> minVal, 
                                           std::optional<double> maxVal)
 {
-    m_config.minClamp = minVal;
-    m_config.maxClamp = maxVal;
-    emit configChanged();
+    updateConfig([minVal, maxVal](DataProcessorConfig& config) {
+        config.minClamp = minVal;
+        config.maxClamp = maxVal;
+    });
 }
 
 void MonitorDataProcessor::setSmoothing(bool enabled, int windowSize)
 {
-    m_config.enableSmoothing = enabled;
-    m_config.smoothingWindow = windowSize;
-    emit configChanged();
+    updateConfig([enabled, windowSize](DataProcessorConfig& config) {
+        config.enableSmoothing = enabled;
+        config.smoothingWindow = windowSize;
+    });
 }
 
 void MonitorDataProcessor::setDownsampling(bool enabled, int factor)
 {
-    m_config.enableDownsampling = enabled;
-    m_config.downsampleFactor = factor;
-    emit configChanged();
+    updateConfig([enabled, factor](DataProcessorConfig& config) {
+        config.enableDownsampling = enabled;
+        config.downsampleFactor = factor;
+    });
 }
 
 void MonitorDataProcessor::setIncrementalMode(bool enabled)
 {
-    m_config.enableIncrementalMode = enabled;
-    emit configChanged();
+    updateConfig([enabled](DataProcessorConfig& config) {
+        config.enableIncrementalMode = enabled;
+    });
 }
 
 // ============================================================================
@@ -122,8 +123,31 @@ void MonitorDataProcessor::setIncrementalMode(bool enabled)
 void MonitorDataProcessor::appendSample(const QString& channelId, 
                                          const Monitor::Sample& sample)
 {
-    QPointF point = sample.toPoint();
-    appendPoint(channelId, point);
+    QWriteLocker locker(&m_bufferLock);
+    ChannelBuffer& buffer = getOrCreateBuffer(channelId);
+    buffer.unit = sample.unit;
+    buffer.quality = sample.quality;
+    buffer.valueValid = sample.valueValid;
+    buffer.lastTimestampMs = sample.timestampMs();
+    int deltaCount = 0;
+    if (sample.valueValid) {
+        const QPointF point = sample.toPoint();
+        buffer.ringBuffer.push_back(point);
+        buffer.lastValue = point.y();
+        if (m_config.enableIncrementalMode) {
+            buffer.deltaBuffer.deltaPoints.append(point);
+            buffer.deltaBuffer.totalAppended++;
+            if (buffer.deltaBuffer.deltaPoints.size() > m_config.maxDeltaBufferSize) {
+                buffer.deltaBuffer.deltaPoints.remove(0, buffer.deltaBuffer.deltaPoints.size() - m_config.maxDeltaBufferSize);
+            }
+            deltaCount = buffer.deltaBuffer.size();
+        }
+        m_totalAppendCount++;
+    }
+    const bool emitDelta = deltaCount >= m_config.batchProcessThreshold;
+    locker.unlock();
+    emit channelQualityUpdated(channelId, sample.quality, sample.valueValid);
+    if (emitDelta) emit deltaDataReady(channelId, deltaCount);
 }
 
 void MonitorDataProcessor::appendSamples(const QString& channelId, 
@@ -136,10 +160,35 @@ void MonitorDataProcessor::appendSamples(const QString& channelId,
     QVector<QPointF> points;
     points.reserve(samples.size());
     for (const auto& sample : samples) {
-        points.append(sample.toPoint());
+        if (sample.valueValid) {
+            points.append(sample.toPoint());
+        }
     }
-    
-    appendPoints(channelId, points);
+
+    const Monitor::Sample& lastSample = samples.last();
+    QWriteLocker locker(&m_bufferLock);
+    ChannelBuffer& buffer = getOrCreateBuffer(channelId);
+    buffer.unit = lastSample.unit;
+    buffer.quality = lastSample.quality;
+    buffer.valueValid = lastSample.valueValid;
+    buffer.lastTimestampMs = lastSample.timestampMs();
+    if (!points.isEmpty()) {
+        for (const QPointF& point : points) buffer.ringBuffer.push_back(point);
+        const QPointF& lastPoint = points.last();
+        buffer.lastValue = lastPoint.y();
+        if (m_config.enableIncrementalMode) {
+            buffer.deltaBuffer.deltaPoints.append(points);
+            buffer.deltaBuffer.totalAppended += points.size();
+            if (buffer.deltaBuffer.deltaPoints.size() > m_config.maxDeltaBufferSize) {
+                buffer.deltaBuffer.deltaPoints.remove(0, buffer.deltaBuffer.deltaPoints.size() - m_config.maxDeltaBufferSize);
+            }
+        }
+        m_totalAppendCount += points.size();
+    }
+    const int deltaCount = points.size();
+    locker.unlock();
+    emit channelQualityUpdated(channelId, lastSample.quality, lastSample.valueValid);
+    if (deltaCount > 0) emit deltaDataReady(channelId, deltaCount);
 }
 
 void MonitorDataProcessor::appendPoint(const QString& channelId, const QPointF& point)
@@ -152,6 +201,8 @@ void MonitorDataProcessor::appendPoint(const QString& channelId, const QPointF& 
     buffer.ringBuffer.push_back(point);
     buffer.lastValue = point.y();
     buffer.lastTimestampMs = static_cast<qint64>(point.x());
+    buffer.quality = RuntimePointQuality::Good;
+    buffer.valueValid = true;
     
     // 追加到增量缓冲区
     if (m_config.enableIncrementalMode) {
@@ -169,8 +220,9 @@ void MonitorDataProcessor::appendPoint(const QString& channelId, const QPointF& 
     
     // 检查是否需要发送信号（批量阈值）
     if (buffer.deltaBuffer.size() >= m_config.batchProcessThreshold) {
+        const int deltaCount = buffer.deltaBuffer.size();
         locker.unlock();
-        emit deltaDataReady(channelId, buffer.deltaBuffer.size());
+        emit deltaDataReady(channelId, deltaCount);
     }
 }
 
@@ -194,6 +246,8 @@ void MonitorDataProcessor::appendPoints(const QString& channelId,
     const QPointF& lastPoint = points.last();
     buffer.lastValue = lastPoint.y();
     buffer.lastTimestampMs = static_cast<qint64>(lastPoint.x());
+    buffer.quality = RuntimePointQuality::Good;
+    buffer.valueValid = true;
     
     // 追加到增量缓冲区
     if (m_config.enableIncrementalMode) {
@@ -296,11 +350,17 @@ ProcessedChannelData MonitorDataProcessor::processChannel(
     
     result.channelName = channel->name();
     result.lastUpdateTime = QDateTime::currentDateTime();
+    quint64 configGeneration = 0;
+    const DataProcessorConfig processingConfig = snapshotConfig(&configGeneration);
     
     // 获取最新样本信息
     auto currentSample = channel->latestSample();
     if (!currentSample.channelName.isEmpty()) {
-        result.currentValue = currentSample.value;
+        result.quality = currentSample.quality;
+        result.valueValid = currentSample.valueValid;
+        if (currentSample.valueValid) {
+            result.currentValue = currentSample.value;
+        }
         result.unit = currentSample.unit;
     }
     
@@ -309,10 +369,10 @@ ProcessedChannelData MonitorDataProcessor::processChannel(
     result.rawSampleCount = allPoints.size();
     
     // 应用时间窗口
-    result.seriesPoints = applyTimeWindow(allPoints);
+    result.seriesPoints = applyTimeWindow(allPoints, processingConfig);
     
     // 应用处理管道
-    result.seriesPoints = applyProcessingPipeline(result.seriesPoints);
+    result.seriesPoints = applyProcessingPipeline(result.seriesPoints, processingConfig);
     
     result.processedCount = result.seriesPoints.size();
     
@@ -323,8 +383,11 @@ ProcessedChannelData MonitorDataProcessor::processChannel(
     
     // 缓存结果
     {
-        QMutexLocker locker(&m_cacheMutex);
-        m_cachedData[result.channelName] = result;
+        QReadLocker configLocker(&m_bufferLock);
+        if (m_configGeneration == configGeneration) {
+            QMutexLocker cacheLocker(&m_cacheMutex);
+            m_cachedData[result.channelName] = result;
+        }
     }
     
     return result;
@@ -338,20 +401,29 @@ ProcessedChannelData MonitorDataProcessor::processSamples(
     result.channelName = channelName;
     result.lastUpdateTime = QDateTime::currentDateTime();
     result.rawSampleCount = samples.size();
+    const DataProcessorConfig processingConfig = snapshotConfig();
     
     if (!samples.isEmpty()) {
-        result.currentValue = samples.last().value;
-        result.unit = samples.last().unit;
+        const Monitor::Sample& lastSample = samples.last();
+        result.quality = lastSample.quality;
+        result.valueValid = lastSample.valueValid;
+        result.unit = lastSample.unit;
+        for (auto it = samples.crbegin(); it != samples.crend(); ++it) {
+            if (it->valueValid) {
+                result.currentValue = it->value;
+                break;
+            }
+        }
     }
     
     // 转换为点序列
     result.seriesPoints = samplesToPoints(samples);
     
     // 应用时间窗口
-    result.seriesPoints = applyTimeWindow(result.seriesPoints);
+    result.seriesPoints = applyTimeWindow(result.seriesPoints, processingConfig);
     
     // 应用处理管道
-    result.seriesPoints = applyProcessingPipeline(result.seriesPoints);
+    result.seriesPoints = applyProcessingPipeline(result.seriesPoints, processingConfig);
     
     result.processedCount = result.seriesPoints.size();
     
@@ -401,8 +473,9 @@ QVector<QPointF> MonitorDataProcessor::getRecentPoints(const QString& channelId,
 
 QVector<QPointF> MonitorDataProcessor::getPointsInTimeWindow(const QString& channelId) const
 {
+    const DataProcessorConfig processingConfig = snapshotConfig();
     QVector<QPointF> allPoints = getChannelData(channelId);
-    return applyTimeWindow(allPoints);
+    return applyTimeWindow(allPoints, processingConfig);
 }
 
 // ============================================================================
@@ -505,7 +578,9 @@ QVector<QPointF> MonitorDataProcessor::samplesToPoints(const QList<Monitor::Samp
     QVector<QPointF> points;
     points.reserve(samples.size());
     for (const auto& sample : samples) {
-        points.append(sample.toPoint());
+        if (sample.valueValid) {
+            points.append(sample.toPoint());
+        }
     }
     return points;
 }
@@ -557,6 +632,122 @@ std::optional<double> MonitorDataProcessor::calculateAvg(const QVector<QPointF>&
 // 私有方法
 // ============================================================================
 
+DataProcessorConfig MonitorDataProcessor::normalizeConfig(DataProcessorConfig config)
+{
+    if (config.timeWindowMs < 0) {
+        config.timeWindowMs = 0;
+    }
+    if (config.maxDisplaySamples < 0) {
+        config.maxDisplaySamples = 0;
+    }
+    config.ringBufferCapacity = std::max(1, config.ringBufferCapacity);
+    config.smoothingWindow = std::max(1, config.smoothingWindow);
+    config.downsampleFactor = std::max(1, config.downsampleFactor);
+    config.batchProcessThreshold = std::max(1, config.batchProcessThreshold);
+    config.adaptiveDownsampleThreshold =
+        std::max(2, config.adaptiveDownsampleThreshold);
+    config.maxDeltaBufferSize = std::max(1, config.maxDeltaBufferSize);
+    config.maxDeltaBufferSize =
+        std::max(config.maxDeltaBufferSize, config.ringBufferCapacity);
+
+    if (config.minClamp.has_value() && !std::isfinite(config.minClamp.value())) {
+        config.minClamp.reset();
+    }
+    if (config.maxClamp.has_value() && !std::isfinite(config.maxClamp.value())) {
+        config.maxClamp.reset();
+    }
+    if (config.minClamp.has_value() && config.maxClamp.has_value()
+        && config.minClamp.value() > config.maxClamp.value()) {
+        std::swap(config.minClamp, config.maxClamp);
+    }
+
+    return config;
+}
+
+bool MonitorDataProcessor::configsEqual(const DataProcessorConfig& lhs,
+                                        const DataProcessorConfig& rhs)
+{
+    return lhs.maxDisplaySamples == rhs.maxDisplaySamples
+        && lhs.timeWindowMs == rhs.timeWindowMs
+        && lhs.ringBufferCapacity == rhs.ringBufferCapacity
+        && lhs.enableSmoothing == rhs.enableSmoothing
+        && lhs.smoothingWindow == rhs.smoothingWindow
+        && lhs.enableDownsampling == rhs.enableDownsampling
+        && lhs.downsampleFactor == rhs.downsampleFactor
+        && lhs.minClamp == rhs.minClamp
+        && lhs.maxClamp == rhs.maxClamp
+        && lhs.enableIncrementalMode == rhs.enableIncrementalMode
+        && lhs.batchProcessThreshold == rhs.batchProcessThreshold
+        && lhs.maxDeltaBufferSize == rhs.maxDeltaBufferSize
+        && lhs.enableAdaptiveDownsample == rhs.enableAdaptiveDownsample
+        && lhs.adaptiveDownsampleThreshold == rhs.adaptiveDownsampleThreshold;
+}
+
+void MonitorDataProcessor::updateConfig(
+    const std::function<void(DataProcessorConfig&)>& updater)
+{
+    bool changed = false;
+    {
+        QWriteLocker bufferLocker(&m_bufferLock);
+        DataProcessorConfig candidate = m_config;
+        updater(candidate);
+        candidate = normalizeConfig(candidate);
+
+        if (configsEqual(m_config, candidate)) {
+            return;
+        }
+
+        if (m_config.ringBufferCapacity != candidate.ringBufferCapacity) {
+            std::vector<std::pair<ChannelBuffer*, Monitor::RingBuffer<QPointF>>>
+                resizedBuffers;
+            resizedBuffers.reserve(m_channelBuffers.size());
+            for (auto& entry : m_channelBuffers) {
+                auto& buffer = entry.second;
+                const auto retained = buffer->ringBuffer.last(
+                    static_cast<size_t>(candidate.ringBufferCapacity));
+                Monitor::RingBuffer<QPointF> resized(
+                    static_cast<size_t>(candidate.ringBufferCapacity));
+                resized.append(retained);
+                resizedBuffers.emplace_back(buffer.get(), std::move(resized));
+            }
+            for (auto& resized : resizedBuffers) {
+                resized.first->ringBuffer = std::move(resized.second);
+            }
+        }
+
+        for (auto& entry : m_channelBuffers) {
+            auto& buffer = entry.second;
+            if (!candidate.enableIncrementalMode) {
+                buffer->deltaBuffer.clear();
+            } else if (buffer->deltaBuffer.size() > candidate.maxDeltaBufferSize) {
+                buffer->deltaBuffer.deltaPoints.remove(
+                    0, buffer->deltaBuffer.size() - candidate.maxDeltaBufferSize);
+            }
+        }
+
+        m_config = candidate;
+        ++m_configGeneration;
+
+        // 保持 buffer -> cache 的单向锁顺序，防止旧配置处理结果重新写入。
+        QMutexLocker cacheLocker(&m_cacheMutex);
+        m_cachedData.clear();
+        changed = true;
+    }
+
+    if (changed) {
+        emit configChanged();
+    }
+}
+
+DataProcessorConfig MonitorDataProcessor::snapshotConfig(quint64* generation) const
+{
+    QReadLocker locker(&m_bufferLock);
+    if (generation) {
+        *generation = m_configGeneration;
+    }
+    return m_config;
+}
+
 MonitorDataProcessor::ChannelBuffer& 
 MonitorDataProcessor::getOrCreateBuffer(const QString& channelId)
 {
@@ -572,48 +763,51 @@ MonitorDataProcessor::getOrCreateBuffer(const QString& channelId)
 }
 
 QVector<QPointF> MonitorDataProcessor::applyProcessingPipeline(
-    const QVector<QPointF>& points) const
+    const QVector<QPointF>& points,
+    const DataProcessorConfig& config) const
 {
     QVector<QPointF> result = points;
     
     // 1. 限幅
-    if (m_config.minClamp.has_value() || m_config.maxClamp.has_value()) {
-        result = applyClamp(result);
+    if (config.minClamp.has_value() || config.maxClamp.has_value()) {
+        result = applyClamp(result, config);
     }
     
     // 2. 平滑
-    if (m_config.enableSmoothing && m_config.smoothingWindow > 1) {
-        result = applySmoothing(result);
+    if (config.enableSmoothing && config.smoothingWindow > 1) {
+        result = applySmoothing(result, config);
     }
     
     // 3. 降采样
-    if (m_config.enableDownsampling && m_config.downsampleFactor > 1) {
-        result = applyDownsampling(result);
+    if (config.enableDownsampling && config.downsampleFactor > 1) {
+        result = applyDownsampling(result, config);
     }
     
     // 4. 自适应降采样（高负载时）
-    if (m_config.enableAdaptiveDownsample) {
-        result = applyAdaptiveDownsample(result);
+    if (config.enableAdaptiveDownsample) {
+        result = applyAdaptiveDownsample(result, config);
     }
     
     // 5. 限制点数
-    result = limitPointCount(result);
+    result = limitPointCount(result, config);
     
     return result;
 }
 
-QVector<QPointF> MonitorDataProcessor::applyClamp(const QVector<QPointF>& points) const
+QVector<QPointF> MonitorDataProcessor::applyClamp(
+    const QVector<QPointF>& points,
+    const DataProcessorConfig& config) const
 {
     QVector<QPointF> result;
     result.reserve(points.size());
     
     for (const auto& pt : points) {
         double y = pt.y();
-        if (m_config.minClamp.has_value()) {
-            y = std::max(y, m_config.minClamp.value());
+        if (config.minClamp.has_value()) {
+            y = std::max(y, config.minClamp.value());
         }
-        if (m_config.maxClamp.has_value()) {
-            y = std::min(y, m_config.maxClamp.value());
+        if (config.maxClamp.has_value()) {
+            y = std::min(y, config.maxClamp.value());
         }
         result.append(QPointF(pt.x(), y));
     }
@@ -621,16 +815,18 @@ QVector<QPointF> MonitorDataProcessor::applyClamp(const QVector<QPointF>& points
     return result;
 }
 
-QVector<QPointF> MonitorDataProcessor::applySmoothing(const QVector<QPointF>& points) const
+QVector<QPointF> MonitorDataProcessor::applySmoothing(
+    const QVector<QPointF>& points,
+    const DataProcessorConfig& config) const
 {
-    if (points.size() < m_config.smoothingWindow) {
+    if (points.size() < config.smoothingWindow) {
         return points;
     }
     
     QVector<QPointF> result;
     result.reserve(points.size());
     
-    int halfWindow = m_config.smoothingWindow / 2;
+    int halfWindow = config.smoothingWindow / 2;
     
     for (int i = 0; i < points.size(); ++i) {
         double sum = 0.0;
@@ -649,16 +845,18 @@ QVector<QPointF> MonitorDataProcessor::applySmoothing(const QVector<QPointF>& po
     return result;
 }
 
-QVector<QPointF> MonitorDataProcessor::applyDownsampling(const QVector<QPointF>& points) const
+QVector<QPointF> MonitorDataProcessor::applyDownsampling(
+    const QVector<QPointF>& points,
+    const DataProcessorConfig& config) const
 {
-    if (points.size() <= m_config.downsampleFactor) {
+    if (points.size() <= config.downsampleFactor) {
         return points;
     }
     
     QVector<QPointF> result;
-    result.reserve(points.size() / m_config.downsampleFactor + 1);
+    result.reserve(points.size() / config.downsampleFactor + 1);
     
-    for (int i = 0; i < points.size(); i += m_config.downsampleFactor) {
+    for (int i = 0; i < points.size(); i += config.downsampleFactor) {
         result.append(points[i]);
     }
     
@@ -670,24 +868,26 @@ QVector<QPointF> MonitorDataProcessor::applyDownsampling(const QVector<QPointF>&
     return result;
 }
 
-QVector<QPointF> MonitorDataProcessor::limitPointCount(const QVector<QPointF>& points) const
+QVector<QPointF> MonitorDataProcessor::limitPointCount(
+    const QVector<QPointF>& points,
+    const DataProcessorConfig& config) const
 {
-    if (points.size() <= m_config.maxDisplaySamples || m_config.maxDisplaySamples <= 0) {
+    if (points.size() <= config.maxDisplaySamples || config.maxDisplaySamples <= 0) {
         return points;
     }
 
     // maxDisplaySamples == 1 时直接返回最后一个点
-    if (m_config.maxDisplaySamples == 1) {
+    if (config.maxDisplaySamples == 1) {
         return {points.last()};
     }
 
     // 等间距采样
     QVector<QPointF> result;
-    result.reserve(m_config.maxDisplaySamples);
+    result.reserve(config.maxDisplaySamples);
 
-    double step = static_cast<double>(points.size() - 1) / (m_config.maxDisplaySamples - 1);
+    double step = static_cast<double>(points.size() - 1) / (config.maxDisplaySamples - 1);
     
-    for (int i = 0; i < m_config.maxDisplaySamples - 1; ++i) {
+    for (int i = 0; i < config.maxDisplaySamples - 1; ++i) {
         int idx = static_cast<int>(i * step);
         result.append(points[idx]);
     }
@@ -698,13 +898,15 @@ QVector<QPointF> MonitorDataProcessor::limitPointCount(const QVector<QPointF>& p
     return result;
 }
 
-QVector<QPointF> MonitorDataProcessor::applyTimeWindow(const QVector<QPointF>& points) const
+QVector<QPointF> MonitorDataProcessor::applyTimeWindow(
+    const QVector<QPointF>& points,
+    const DataProcessorConfig& config) const
 {
-    if (points.isEmpty() || m_config.timeWindowMs <= 0) {
+    if (points.isEmpty() || config.timeWindowMs <= 0) {
         return points;
     }
     
-    qint64 cutoffTime = QDateTime::currentMSecsSinceEpoch() - m_config.timeWindowMs;
+    qint64 cutoffTime = QDateTime::currentMSecsSinceEpoch() - config.timeWindowMs;
     
     // 找到第一个在时间窗口内的点
     int startIdx = -1;
@@ -726,14 +928,15 @@ QVector<QPointF> MonitorDataProcessor::applyTimeWindow(const QVector<QPointF>& p
 }
 
 QVector<QPointF> MonitorDataProcessor::applyAdaptiveDownsample(
-    const QVector<QPointF>& points) const
+    const QVector<QPointF>& points,
+    const DataProcessorConfig& config) const
 {
-    if (points.size() <= m_config.adaptiveDownsampleThreshold) {
+    if (points.size() <= config.adaptiveDownsampleThreshold) {
         return points;
     }
     
     // 计算需要的降采样因子
-    int targetCount = m_config.adaptiveDownsampleThreshold / 2;
+    int targetCount = config.adaptiveDownsampleThreshold / 2;
     int factor = (points.size() + targetCount - 1) / targetCount;
     
     if (factor <= 1) {

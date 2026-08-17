@@ -17,9 +17,34 @@
 #include <QVector>
 #include <QPointF>
 #include <QElapsedTimer>
+#include <QSignalSpy>
+#include <QThread>
+#include <algorithm>
+#include <atomic>
 #include <cmath>
+#include <functional>
+#include <limits>
+#include <utility>
 
 #include "MonitorDataProcessor.h"
+#include "MonitorChannel.h"
+
+class FunctionThread final : public QThread
+{
+public:
+    explicit FunctionThread(std::function<void()> function)
+        : m_function(std::move(function))
+    {}
+
+protected:
+    void run() override
+    {
+        m_function();
+    }
+
+private:
+    std::function<void()> m_function;
+};
 
 class MonitorDataProcessorTest : public QObject
 {
@@ -237,6 +262,7 @@ private slots:
     void testConfigSetters()
     {
         MonitorDataProcessor processor;
+        QSignalSpy configSpy(&processor, &MonitorDataProcessor::configChanged);
 
         // 获取默认配置
         DataProcessorConfig cfg = processor.config();
@@ -254,6 +280,33 @@ private slots:
         // 修改 ringBufferCapacity
         processor.setRingBufferCapacity(1000);
         QCOMPARE(processor.ringBufferCapacity(), 1000);
+
+        processor.setClampRange(-10.0, 10.0);
+        processor.setSmoothing(true, 5);
+        processor.setDownsampling(true, 4);
+        processor.setIncrementalMode(false);
+
+        cfg = processor.config();
+        QVERIFY(cfg.minClamp.has_value());
+        QVERIFY(cfg.maxClamp.has_value());
+        QCOMPARE(cfg.minClamp.value(), -10.0);
+        QCOMPARE(cfg.maxClamp.value(), 10.0);
+        QVERIFY(cfg.enableSmoothing);
+        QCOMPARE(cfg.smoothingWindow, 5);
+        QVERIFY(cfg.enableDownsampling);
+        QCOMPARE(cfg.downsampleFactor, 4);
+        QVERIFY(!cfg.enableIncrementalMode);
+        QCOMPARE(configSpy.count(), 7);
+
+        // 相同的有效配置不应重复通知。
+        processor.setTimeWindow(10000);
+        processor.setMaxDisplaySamples(50);
+        processor.setRingBufferCapacity(1000);
+        processor.setClampRange(-10.0, 10.0);
+        processor.setSmoothing(true, 5);
+        processor.setDownsampling(true, 4);
+        processor.setIncrementalMode(false);
+        QCOMPARE(configSpy.count(), 7);
         
         qInfo() << "配置接口测试通过";
     }
@@ -270,8 +323,16 @@ private slots:
         newConfig.maxDisplaySamples = 500;
         newConfig.ringBufferCapacity = 10000;
         newConfig.enableIncrementalMode = true;
-        newConfig.enableSmoothing = false;
-        newConfig.enableDownsampling = false;
+        newConfig.enableSmoothing = true;
+        newConfig.smoothingWindow = 7;
+        newConfig.enableDownsampling = true;
+        newConfig.downsampleFactor = 3;
+        newConfig.batchProcessThreshold = 25;
+        newConfig.maxDeltaBufferSize = 12000;
+        newConfig.enableAdaptiveDownsample = false;
+        newConfig.adaptiveDownsampleThreshold = 4000;
+        newConfig.minClamp = -20.0;
+        newConfig.maxClamp = 20.0;
 
         processor.setConfig(newConfig);
 
@@ -279,8 +340,142 @@ private slots:
         QCOMPARE(readBack.timeWindowMs, newConfig.timeWindowMs);
         QCOMPARE(readBack.maxDisplaySamples, newConfig.maxDisplaySamples);
         QCOMPARE(readBack.ringBufferCapacity, newConfig.ringBufferCapacity);
+        QCOMPARE(readBack.smoothingWindow, newConfig.smoothingWindow);
+        QCOMPARE(readBack.downsampleFactor, newConfig.downsampleFactor);
+        QCOMPARE(readBack.batchProcessThreshold, newConfig.batchProcessThreshold);
+        QCOMPARE(readBack.maxDeltaBufferSize, newConfig.maxDeltaBufferSize);
+        QCOMPARE(readBack.adaptiveDownsampleThreshold,
+                 newConfig.adaptiveDownsampleThreshold);
+        QCOMPARE(readBack.minClamp.value(), newConfig.minClamp.value());
+        QCOMPARE(readBack.maxClamp.value(), newConfig.maxClamp.value());
         
         qInfo() << "完整配置测试通过";
+    }
+
+    void testConfigurationBoundaryNormalization()
+    {
+        MonitorDataProcessor processor;
+        QSignalSpy configSpy(&processor, &MonitorDataProcessor::configChanged);
+
+        DataProcessorConfig invalid = processor.config();
+        invalid.timeWindowMs = -100;
+        invalid.maxDisplaySamples = -20;
+        invalid.ringBufferCapacity = -5;
+        invalid.smoothingWindow = 0;
+        invalid.downsampleFactor = -2;
+        invalid.batchProcessThreshold = 0;
+        invalid.maxDeltaBufferSize = -10;
+        invalid.adaptiveDownsampleThreshold = 1;
+        processor.setConfig(invalid);
+
+        DataProcessorConfig normalized = processor.config();
+        QCOMPARE(normalized.timeWindowMs, 0ll);
+        QCOMPARE(normalized.maxDisplaySamples, 0);
+        QCOMPARE(normalized.ringBufferCapacity, 1);
+        QCOMPARE(normalized.smoothingWindow, 1);
+        QCOMPARE(normalized.downsampleFactor, 1);
+        QCOMPARE(normalized.batchProcessThreshold, 1);
+        QCOMPARE(normalized.maxDeltaBufferSize, 1);
+        QCOMPARE(normalized.adaptiveDownsampleThreshold, 2);
+        QCOMPARE(configSpy.count(), 1);
+
+        const QVector<QPointF> capacityPoints = {QPointF(0, 0), QPointF(1, 1)};
+        processor.appendPoints(QStringLiteral("normalized_capacity"), capacityPoints);
+        QCOMPARE(processor.getChannelData(QStringLiteral("normalized_capacity")),
+                 QVector<QPointF>({capacityPoints.last()}));
+
+        // setter 与 setConfig 使用相同规范化，等价输入不重复发信号。
+        processor.setTimeWindow(-1);
+        processor.setMaxDisplaySamples(-1);
+        processor.setRingBufferCapacity(0);
+        processor.setSmoothing(true, -1);
+        processor.setDownsampling(true, 0);
+        QCOMPARE(configSpy.count(), 3);
+        normalized = processor.config();
+        QCOMPARE(normalized.timeWindowMs, 0ll);
+        QCOMPARE(normalized.maxDisplaySamples, 0);
+        QCOMPARE(normalized.ringBufferCapacity, 1);
+        QCOMPARE(normalized.smoothingWindow, 1);
+        QCOMPARE(normalized.downsampleFactor, 1);
+
+        normalized.enableAdaptiveDownsample = false;
+        processor.setConfig(normalized);
+
+        QList<Monitor::Sample> samples;
+        for (int i = 0; i < 4; ++i) {
+            Monitor::Sample sample;
+            sample.channelName = QStringLiteral("unlimited");
+            sample.value = i;
+            sample.timestamp = QDateTime::fromMSecsSinceEpoch(i);
+            samples.append(sample);
+        }
+        const ProcessedChannelData unlimited = processor.processSamples(
+            QStringLiteral("unlimited"), samples);
+        QCOMPARE(unlimited.seriesPoints.size(), samples.size());
+
+        DataProcessorConfig coupledCapacity = processor.config();
+        coupledCapacity.ringBufferCapacity = 4;
+        coupledCapacity.maxDeltaBufferSize = 2;
+        processor.setConfig(coupledCapacity);
+        coupledCapacity = processor.config();
+        QCOMPARE(coupledCapacity.ringBufferCapacity, 4);
+        QCOMPARE(coupledCapacity.maxDeltaBufferSize, 4);
+
+        DataProcessorConfig large = processor.config();
+        large.timeWindowMs = std::numeric_limits<qint64>::max();
+        large.maxDisplaySamples = std::numeric_limits<int>::max();
+        large.smoothingWindow = std::numeric_limits<int>::max();
+        large.downsampleFactor = std::numeric_limits<int>::max();
+        large.batchProcessThreshold = std::numeric_limits<int>::max();
+        large.maxDeltaBufferSize = std::numeric_limits<int>::max();
+        large.adaptiveDownsampleThreshold = std::numeric_limits<int>::max();
+        processor.setConfig(large);
+        normalized = processor.config();
+        QCOMPARE(normalized.timeWindowMs, large.timeWindowMs);
+        QCOMPARE(normalized.maxDisplaySamples, large.maxDisplaySamples);
+        QCOMPARE(normalized.smoothingWindow, large.smoothingWindow);
+        QCOMPARE(normalized.downsampleFactor, large.downsampleFactor);
+        QCOMPARE(normalized.batchProcessThreshold, large.batchProcessThreshold);
+        QCOMPARE(normalized.maxDeltaBufferSize, large.maxDeltaBufferSize);
+        QCOMPARE(normalized.adaptiveDownsampleThreshold,
+                 large.adaptiveDownsampleThreshold);
+    }
+
+    void testClampNormalization()
+    {
+        MonitorDataProcessor processor;
+        DataProcessorConfig config = processor.config();
+        config.minClamp = std::numeric_limits<double>::quiet_NaN();
+        config.maxClamp = std::numeric_limits<double>::infinity();
+        processor.setConfig(config);
+
+        config = processor.config();
+        QVERIFY(!config.minClamp.has_value());
+        QVERIFY(!config.maxClamp.has_value());
+
+        processor.setClampRange(10.0, -10.0);
+        config = processor.config();
+        QCOMPARE(config.minClamp.value(), -10.0);
+        QCOMPARE(config.maxClamp.value(), 10.0);
+
+        QList<Monitor::Sample> samples;
+        for (double value : {-20.0, 0.0, 20.0}) {
+            Monitor::Sample sample;
+            sample.channelName = QStringLiteral("clamp");
+            sample.value = value;
+            sample.timestamp = QDateTime::currentDateTimeUtc();
+            samples.append(sample);
+        }
+        const ProcessedChannelData processed = processor.processSamples(
+            QStringLiteral("clamp"), samples);
+        QCOMPARE(processed.seriesPoints.size(), 3);
+        QCOMPARE(processed.seriesPoints.first().y(), -10.0);
+        QCOMPARE(processed.seriesPoints.last().y(), 10.0);
+
+        processor.setClampRange(-std::numeric_limits<double>::infinity(), 5.0);
+        config = processor.config();
+        QVERIFY(!config.minClamp.has_value());
+        QCOMPARE(config.maxClamp.value(), 5.0);
     }
 
     // =========================================================================
@@ -400,6 +595,71 @@ private slots:
         }
     }
 
+    void testCapacityChangesPreserveNewestRawPoints()
+    {
+        MonitorDataProcessor processor;
+        const QString channelId = QStringLiteral("capacity_migration");
+        const QString otherChannelId = QStringLiteral("capacity_migration_other");
+        const QVector<QPointF> initial = {
+            QPointF(0, 0), QPointF(1, 1), QPointF(2, 2)
+        };
+        const QVector<QPointF> otherInitial = {QPointF(10, 10), QPointF(11, 11)};
+
+        processor.setRingBufferCapacity(3);
+        processor.appendPoints(channelId, initial);
+        processor.appendPoints(otherChannelId, otherInitial);
+        processor.setRingBufferCapacity(5);
+        QCOMPARE(processor.getChannelData(channelId), initial);
+        QCOMPARE(processor.getChannelData(otherChannelId), otherInitial);
+
+        const QVector<QPointF> appended = {QPointF(3, 3), QPointF(4, 4)};
+        const QVector<QPointF> otherAppended = {
+            QPointF(12, 12), QPointF(13, 13), QPointF(14, 14)
+        };
+        processor.appendPoints(channelId, appended);
+        processor.appendPoints(otherChannelId, otherAppended);
+        const QVector<QPointF> beforeShrink = processor.getChannelData(channelId);
+        const QVector<QPointF> otherBeforeShrink =
+            processor.getChannelData(otherChannelId);
+        QCOMPARE(beforeShrink.size(), 5);
+        QCOMPARE(otherBeforeShrink.size(), 5);
+
+        processor.setRingBufferCapacity(2);
+        const QVector<QPointF> afterShrink = processor.getChannelData(channelId);
+        const QVector<QPointF> otherAfterShrink =
+            processor.getChannelData(otherChannelId);
+        QCOMPARE(afterShrink, beforeShrink.mid(3));
+        QCOMPARE(otherAfterShrink, otherBeforeShrink.mid(3));
+        QCOMPARE(afterShrink.first(), QPointF(3, 3));
+        QCOMPARE(afterShrink.last(), QPointF(4, 4));
+        QCOMPARE(otherAfterShrink.first(), QPointF(13, 13));
+        QCOMPARE(otherAfterShrink.last(), QPointF(14, 14));
+    }
+
+    void testDeltaShrinkKeepsNewestPoints()
+    {
+        MonitorDataProcessor processor;
+        const QString channelId = QStringLiteral("delta_shrink");
+        DataProcessorConfig config = processor.config();
+        config.ringBufferCapacity = 2;
+        config.maxDeltaBufferSize = 6;
+        processor.setConfig(config);
+
+        const QVector<QPointF> points = {
+            QPointF(0, 0), QPointF(1, 1), QPointF(2, 2),
+            QPointF(3, 3), QPointF(4, 4), QPointF(5, 5)
+        };
+        processor.appendPoints(channelId, points);
+        QCOMPARE(processor.pendingDeltaCount(channelId), 6);
+
+        config = processor.config();
+        config.maxDeltaBufferSize = 3;
+        processor.setConfig(config);
+
+        QCOMPARE(processor.pendingDeltaCount(channelId), 3);
+        QCOMPARE(processor.drainDelta(channelId), points.mid(3));
+    }
+
     // =========================================================================
     // 测试 5：边界情况
     // =========================================================================
@@ -514,25 +774,33 @@ private slots:
         MonitorDataProcessor processor;
         const QString channelId = "incremental_mode_test";
 
-        // 启用增量模式
-        processor.setIncrementalMode(true);
-        
+        DataProcessorConfig config = processor.config();
+        config.ringBufferCapacity = 6;
+        config.maxDeltaBufferSize = 6;
+        config.enableIncrementalMode = true;
+        processor.setConfig(config);
+
         QVector<QPointF> points1 = { QPointF(0, 10), QPointF(1, 20) };
         processor.appendPoints(channelId, points1);
-        
-        QVector<QPointF> delta1 = processor.drainDelta(channelId);
-        QCOMPARE(delta1.size(), points1.size());
+        QCOMPARE(processor.pendingDeltaCount(channelId), points1.size());
 
-        // 禁用增量模式后的行为取决于具体实现
-        // 这里只验证接口可用且不崩溃
+        // 关闭时立即清理旧 delta，关闭期间的数据不进入 delta。
         processor.setIncrementalMode(false);
-        
-        QVector<QPointF> points2 = { QPointF(2, 30) };
-        processor.appendPoints(channelId, points2);
-        
-        // 获取数据应该仍然工作
-        QVector<QPointF> channelData = processor.getChannelData(channelId);
-        QVERIFY(channelData.size() > 0);
+        QCOMPARE(processor.pendingDeltaCount(channelId), 0);
+        const QVector<QPointF> whileDisabled = {QPointF(2, 30)};
+        processor.appendPoints(channelId, whileDisabled);
+        QCOMPARE(processor.pendingDeltaCount(channelId), 0);
+
+        // 重开后只包含新追加的增量。
+        processor.setIncrementalMode(true);
+        const QVector<QPointF> afterReopen = {QPointF(3, 40), QPointF(4, 50)};
+        processor.appendPoints(channelId, afterReopen);
+        QCOMPARE(processor.drainDelta(channelId), afterReopen);
+
+        const QVector<QPointF> channelData = processor.getChannelData(channelId);
+        QCOMPARE(channelData,
+                 QVector<QPointF>({points1[0], points1[1], whileDisabled[0],
+                                   afterReopen[0], afterReopen[1]}));
         
         qInfo() << "增量模式开关测试通过";
     }
@@ -574,6 +842,220 @@ private slots:
         
         qInfo() << "快速追加测试通过，获取" << allDelta.size() 
                 << "/" << expectedTotal << "个数据点";
+    }
+
+    void testConfigurationChangeInvalidatesCacheButKeepsRawData()
+    {
+        MonitorDataProcessor processor;
+        Monitor::ChannelConfig channelConfig;
+        channelConfig.name = QStringLiteral("cache_channel");
+        channelConfig.unit = QStringLiteral("V");
+        auto channel = std::make_shared<Monitor::MonitorChannel>(channelConfig);
+
+        Monitor::Sample sample;
+        sample.channelName = channelConfig.name;
+        sample.value = 12.0;
+        sample.unit = channelConfig.unit;
+        sample.timestamp = QDateTime::currentDateTimeUtc();
+        channel->appendSample(sample);
+        processor.appendSample(channelConfig.name, sample);
+
+        const QVector<QPointF> rawBefore = processor.getChannelData(channelConfig.name);
+        QVERIFY(!rawBefore.isEmpty());
+        processor.processChannel(channel);
+        QVERIFY(processor.hasCachedData(channelConfig.name));
+
+        processor.setSmoothing(true, 3);
+        QVERIFY(!processor.hasCachedData(channelConfig.name));
+        QCOMPARE(processor.getChannelData(channelConfig.name), rawBefore);
+    }
+
+    void testConfigChangedDirectReadbackAndReentrantSetter()
+    {
+        MonitorDataProcessor processor;
+        QSignalSpy configSpy(&processor, &MonitorDataProcessor::configChanged);
+        bool readBackSucceeded = false;
+        bool nestedSetterTriggered = false;
+
+        connect(&processor, &MonitorDataProcessor::configChanged,
+                &processor, [&]() {
+                    const DataProcessorConfig current = processor.config();
+                    readBackSucceeded = current.ringBufferCapacity >= 1;
+                    if (!nestedSetterTriggered) {
+                        nestedSetterTriggered = true;
+                        processor.setMaxDisplaySamples(17);
+                    }
+                }, Qt::DirectConnection);
+
+        processor.setTimeWindow(1234);
+        QVERIFY(readBackSucceeded);
+        QVERIFY(nestedSetterTriggered);
+        QCOMPARE(processor.timeWindow(), 1234ll);
+        QCOMPARE(processor.maxDisplaySamples(), 17);
+        QCOMPARE(configSpy.count(), 2);
+    }
+
+    void testConcurrentConfigReadWriteAndAppendCompletes()
+    {
+        auto* processor = new MonitorDataProcessor;
+        const QString channelId = QStringLiteral("concurrent_config");
+        auto* validSnapshots = new std::atomic_bool{true};
+
+        auto* writer = new FunctionThread([processor]() {
+            for (int i = 0; i < 200; ++i) {
+                DataProcessorConfig config = processor->config();
+                config.ringBufferCapacity = (i % 2 == 0) ? 8 : 16;
+                config.maxDeltaBufferSize = config.ringBufferCapacity + 4;
+                config.timeWindowMs = (i % 3 == 0) ? 0 : 5000;
+                config.maxDisplaySamples = (i % 4 == 0) ? 0 : 64;
+                config.smoothingWindow = i % 5 + 1;
+                config.downsampleFactor = i % 4 + 1;
+                config.batchProcessThreshold = i % 7 + 1;
+                config.adaptiveDownsampleThreshold = i % 11 + 2;
+                processor->setConfig(config);
+            }
+
+            DataProcessorConfig finalConfig = processor->config();
+            finalConfig.ringBufferCapacity = 16;
+            finalConfig.maxDeltaBufferSize = 20;
+            processor->setConfig(finalConfig);
+        });
+
+        auto* reader = new FunctionThread([processor, validSnapshots]() {
+            for (int i = 0; i < 1000; ++i) {
+                const DataProcessorConfig config = processor->config();
+                if (config.ringBufferCapacity < 1
+                    || config.maxDeltaBufferSize < config.ringBufferCapacity
+                    || config.smoothingWindow < 1
+                    || config.downsampleFactor < 1
+                    || config.batchProcessThreshold < 1
+                    || config.adaptiveDownsampleThreshold < 2) {
+                    validSnapshots->store(false, std::memory_order_relaxed);
+                }
+            }
+        });
+
+        auto* appender = new FunctionThread([processor, channelId]() {
+            for (int i = 0; i < 1000; ++i) {
+                processor->appendPoint(channelId, QPointF(i, i));
+            }
+        });
+
+        writer->start();
+        reader->start();
+        appender->start();
+
+        QElapsedTimer timeout;
+        timeout.start();
+        auto waitWithinDeadline = [&timeout](QThread* thread) {
+            const qint64 remaining = std::max<qint64>(0, 5000 - timeout.elapsed());
+            return thread->wait(static_cast<unsigned long>(remaining));
+        };
+        const bool completed = waitWithinDeadline(writer)
+            && waitWithinDeadline(reader)
+            && waitWithinDeadline(appender);
+
+        if (!completed) {
+            for (QThread* thread : {writer, reader, appender}) {
+                if (thread->isRunning()) {
+                    thread->terminate();
+                }
+            }
+            for (QThread* thread : {writer, reader, appender}) {
+                thread->wait(1000);
+                if (!thread->isRunning()) {
+                    delete thread;
+                }
+            }
+            QFAIL("并发配置读写与数据追加未在 5 秒内完成");
+        }
+
+        delete writer;
+        delete reader;
+        delete appender;
+
+        const bool snapshotsValid = validSnapshots->load(std::memory_order_relaxed);
+        const DataProcessorConfig finalConfig = processor->config();
+        const QVector<QPointF> data = processor->getChannelData(channelId);
+
+        delete validSnapshots;
+        delete processor;
+
+        QVERIFY(snapshotsValid);
+        QCOMPARE(finalConfig.ringBufferCapacity, 16);
+        QVERIFY(finalConfig.maxDeltaBufferSize >= finalConfig.ringBufferCapacity);
+        QVERIFY(!data.isEmpty());
+        QVERIFY(data.size() <= finalConfig.ringBufferCapacity);
+        for (int i = 1; i < data.size(); ++i) {
+            QVERIFY(data[i - 1].x() < data[i].x());
+        }
+    }
+
+    void testInvalidSamplesKeepQualityWithoutNumericPoint()
+    {
+        MonitorDataProcessor processor;
+        const QString channelId = QStringLiteral("invalid_read");
+
+        Monitor::Sample validSample;
+        validSample.channelName = channelId;
+        validSample.value = 12.5;
+        validSample.timestamp = QDateTime::currentDateTimeUtc();
+        validSample.quality = RuntimePointQuality::Good;
+        validSample.valueValid = true;
+
+        Monitor::Sample invalidSample = validSample;
+        invalidSample.timestamp = validSample.timestamp.addMSecs(100);
+        invalidSample.quality = RuntimePointQuality::Bad;
+        invalidSample.valueValid = false;
+
+        processor.appendSamples(channelId, {validSample, invalidSample});
+
+        const QVector<QPointF> storedPoints = processor.getChannelData(channelId);
+        QCOMPARE(storedPoints.size(), 1);
+        QCOMPARE(storedPoints.first().y(), validSample.value);
+
+        const ProcessedChannelData processed = processor.processSamples(
+            channelId, {validSample, invalidSample});
+        QCOMPARE(processed.seriesPoints.size(), 1);
+        QCOMPARE(processed.currentValue, validSample.value);
+        QCOMPARE(processed.quality, RuntimePointQuality::Bad);
+        QVERIFY(!processed.valueValid);
+    }
+
+    void testQualityCommittedBeforeDeltaSignal()
+    {
+        MonitorDataProcessor processor;
+        DataProcessorConfig config = processor.config();
+        config.batchProcessThreshold = 1;
+        processor.setConfig(config);
+        QStringList events;
+        bool qualityStateVisible = false;
+        bool deltaStateVisible = false;
+        connect(&processor, &MonitorDataProcessor::channelQualityUpdated,
+                &processor, [&processor, &events, &qualityStateVisible](
+                    const QString& channelId, RuntimePointQuality, bool) {
+                    qualityStateVisible = processor.pendingDeltaCount(channelId) == 1;
+                    events.append(QStringLiteral("quality"));
+                }, Qt::DirectConnection);
+        connect(&processor, &MonitorDataProcessor::deltaDataReady,
+                &processor, [&processor, &events, &deltaStateVisible](
+                    const QString& channelId, int) {
+                    deltaStateVisible = processor.pendingDeltaCount(channelId) == 1
+                        && processor.config().batchProcessThreshold == 1;
+                    events.append(QStringLiteral("delta"));
+                }, Qt::DirectConnection);
+
+        Monitor::Sample sample;
+        sample.channelName = QStringLiteral("ordered");
+        sample.value = 3.0;
+        sample.timestamp = QDateTime::currentDateTimeUtc();
+        sample.quality = RuntimePointQuality::Uncertain;
+        sample.valueValid = true;
+        processor.appendSample(sample.channelName, sample);
+
+        QCOMPARE(events, QStringList({QStringLiteral("quality"), QStringLiteral("delta")}));
+        QVERIFY(qualityStateVisible);
+        QVERIFY(deltaStateVisible);
     }
 };
 

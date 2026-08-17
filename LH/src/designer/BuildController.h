@@ -139,6 +139,17 @@ private:
     /// 通用编译入口（三个编译类型的公共逻辑）
     void compileCommon(BuildType type, const QString& projectPath, const ProjectRuntimeConfig& config);
 
+    /// 生成参数/通信类 LH 产物（不调用 Python DSL 编译器）
+    void compileGeneratedArtifacts(BuildType type,
+                                   const QString& projectPath,
+                                   const ProjectRuntimeConfig& config);
+    CompileResult generateParameterArtifacts(const QString& projectPath,
+                                             const ProjectRuntimeConfig& config,
+                                             const QString& outputDir) const;
+    CompileResult generateCommunicationArtifacts(const QString& projectPath,
+                                                 const ProjectRuntimeConfig& config,
+                                                 const QString& outputDir) const;
+
 private:
     // ===== 编译接口 =====
     DSLCompilerInterface* m_dslCompiler = nullptr;

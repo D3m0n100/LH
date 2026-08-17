@@ -92,6 +92,7 @@ struct Task {
     int warningThresholdMs = 0;         ///< 超时告警阈值（0=使用默认值）
     int maxConsecutiveErrors = 10;      ///< 最大连续错误次数（达到后禁用）
     bool enabled = true;                ///< 是否启用
+    quint64 generation = 0;             ///< 内部任务代次，防止旧执行结果写入替换任务
     
     Task() = default;
 };
@@ -293,10 +294,10 @@ private:
     
     /**
      * @brief 执行单个任务
-     * @param task 任务指针
-     * @param currentTime 当前时间
+     * @param taskName 任务名称
+     * @param expectedGeneration 到期快照中的任务代次
      */
-    void executeTask(const QString& taskName, qint64 currentTime);
+    void executeTask(const QString& taskName, quint64 expectedGeneration);
     
     /**
      * @brief 计算任务的告警阈值
@@ -316,6 +317,7 @@ private:
     bool m_running = false;                     ///< 调度器是否正在运行
     bool m_shutdown = false;                    ///< 调度器是否已关闭
     int m_tickIntervalMs = DEFAULT_TICK_INTERVAL_MS; ///< tick 间隔
+    quint64 m_nextTaskGeneration = 0;    ///< 任务代次分配器
 
     QHash<QString, TaskStats> m_taskStats;      ///< 任务统计信息
 };

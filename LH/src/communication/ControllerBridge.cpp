@@ -8,6 +8,7 @@
 #include <QElapsedTimer>
 #include <QThread>
 #include <QVariantList>
+#include <QtMath>
 
 namespace {
 
@@ -85,19 +86,36 @@ bool ControllerBridge::parseExpected(const QVariant& v, int count, QVector<quint
         return false;
     }
 
-    if (v.canConvert<qulonglong>()) {
-        out = QVector<quint16>(count, static_cast<quint16>(v.toULongLong()));
+    auto parseWord = [](const QVariant& value, quint16* word) {
+        if (value.type() == QVariant::Bool) return false;
+        bool ok = false;
+        const double number = value.toDouble(&ok);
+        if (!ok || !qIsFinite(number) || qFloor(number) != number || number < 0 || number > 65535) return false;
+        *word = static_cast<quint16>(number);
+        return true;
+    };
+    if (v.type() != QVariant::List && v.type() != QVariant::StringList) {
+        quint16 word = 0;
+        if (!parseWord(v, &word)) return false;
+        out = QVector<quint16>(count, word);
         return true;
     }
 
-    if (v.type() == QVariant::List) {
-        const QVariantList list = v.toList();
-        if (list.size() < count) {
+    if (v.type() == QVariant::List || v.type() == QVariant::StringList) {
+        QVariantList list;
+        if (v.type() == QVariant::List) {
+            list = v.toList();
+        } else {
+            for (const QString& value : v.toStringList()) list.append(value);
+        }
+        if (list.size() != count) {
             return false;
         }
         out.reserve(count);
         for (int i = 0; i < count; ++i) {
-            out.push_back(static_cast<quint16>(list[i].toUInt()));
+            quint16 word = 0;
+            if (!parseWord(list[i], &word)) return false;
+            out.push_back(word);
         }
         return true;
     }
@@ -272,6 +290,9 @@ int ControllerBridge::resolveSlaveId(Layer layer, const QVariantMap& params) con
     if (layer == Layer::Controller) {
         return ctrl.value("slaveId", 1).toInt();
     }
+    if (addressingMode() == AddressingMode::ControllerOnlyWithTargetSelectReg) {
+        return ctrl.value("slaveId", 1).toInt();
+    }
     return tgt.value("deviceId", 1).toInt();
 }
 
@@ -335,19 +356,47 @@ bool ControllerBridge::stepEnterOrFinalize(const QVariantMap& params)
         StationAddressGuard guard(m_modbus, slaveId);
 
         if (op.compare("writecoils", Qt::CaseInsensitive) == 0) {
-            const QVariantList vs = params.value("values").toList();
+            const QVariant values = params.value("values");
+            QVariantList vs = values.toList();
+            if (values.type() == QVariant::StringList) {
+                vs.clear();
+                for (const QString& value : values.toStringList()) {
+                    vs.append(value);
+                }
+            } else if (vs.isEmpty() && values.isValid() && !values.isNull()) {
+                vs.append(values);
+            }
             QVector<bool> coils;
             coils.reserve(vs.size());
             for (const auto& v : vs) {
                 coils.push_back(v.toInt() != 0);
             }
+            if (addr < 0 || addr > 65535 || addr + coils.size() > 65536) {
+                m_modbus->reportCommError(CommErrorCode::InvalidConfig,
+                                          "Write coils address range invalid");
+                return false;
+            }
             ok = m_modbus->writeMultipleCoils(addr, coils);
         } else {
-            const QVariantList vs = params.value("values").toList();
+            const QVariant values = params.value("values");
+            QVariantList vs = values.toList();
+            if (values.type() == QVariant::StringList) {
+                vs.clear();
+                for (const QString& value : values.toStringList()) {
+                    vs.append(value);
+                }
+            } else if (vs.isEmpty() && values.isValid() && !values.isNull()) {
+                vs.append(values);
+            }
             QVector<quint16> regs;
             regs.reserve(vs.size());
             for (const auto& v : vs) {
                 regs.push_back(static_cast<quint16>(v.toUInt()));
+            }
+            if (addr < 0 || addr > 65535 || addr + regs.size() > 65536) {
+                m_modbus->reportCommError(CommErrorCode::InvalidConfig,
+                                          "Write registers address range invalid");
+                return false;
             }
             ok = m_modbus->writeMultipleRegisters(addr, regs);
             if (!ok && slaveId == 0 && !needResp) {
@@ -370,6 +419,11 @@ bool ControllerBridge::stepPoll(const QVariantMap& params)
     const int count = params.value("count", 1).toInt();
     const int timeoutMs = params.value("timeoutMs", 2000).toInt();
     const int pollMs = params.value("pollIntervalMs", 100).toInt();
+
+    if (addr < 0 || addr > 65535 || count <= 0 || count > 125 || addr + count > 65536) {
+        m_modbus->reportCommError(CommErrorCode::InvalidConfig, "Poll address range invalid");
+        return false;
+    }
 
     QVector<quint16> expected;
     if (!parseExpected(params.value("expected"), count, expected)) {
@@ -441,10 +495,18 @@ bool ControllerBridge::stepSendChunk(const QVariantMap& params, const QByteArray
     const int packetOffsetAddr = params.value("packetOffsetAddress", -1).toInt();
     const int packetIndexBase = params.value("packetIndexBase", 0).toInt();
 
-    if (dataAddr <= 0 || chunkWords <= 0) {
+    if (dataAddr < 0 || chunkWords <= 0 || chunkWords > 125) {
         m_modbus->reportCommError(CommErrorCode::InvalidConfig,
                                   "SendChunk config invalid: dataAddress/chunkWords",
                                   QString("dataAddress=%1 chunkWords=%2").arg(dataAddr).arg(chunkWords));
+        return false;
+    }
+    if (dataAddr > 65535 || dataAddr + chunkWords > 65536
+            || packetIndexBase < 0 || packetIndexBase > 65535
+            || packetIndexAddr > 65535 || packetLenAddr > 65535
+            || packetCrcAddr > 65535 || packetOffsetAddr > 65535) {
+        m_modbus->reportCommError(CommErrorCode::InvalidConfig,
+                                  "SendChunk 16 位字段或数据地址范围超出限制");
         return false;
     }
 
@@ -473,29 +535,34 @@ bool ControllerBridge::stepSendChunk(const QVariantMap& params, const QByteArray
         const QByteArray chunk = payload.mid(off, len);
         const QVector<quint16> words = le ? bytesToWordsLE(chunk) : bytesToWordsBE(chunk);
         const quint16 chunkCrc = calcCrc16Modbus(chunk);
+        if (packetIndexBase + i > 65535 || off > 65535 || len > 65535) {
+            m_modbus->reportCommError(CommErrorCode::InvalidConfig,
+                                      "SendChunk 包序号、偏移或长度超出 16 位范围");
+            return false;
+        }
 
-        if (packetIndexAddr > 0) {
+        if (packetIndexAddr >= 0) {
             const bool ok = m_modbus->writeMultipleRegisters(packetIndexAddr, { static_cast<quint16>(packetIndexBase + i) });
             if (!ok) {
                 m_modbus->reportCommError(CommErrorCode::SendFailed, "Write packetIndex failed");
                 return false;
             }
         }
-        if (packetLenAddr > 0) {
+        if (packetLenAddr >= 0) {
             const bool ok = m_modbus->writeMultipleRegisters(packetLenAddr, { static_cast<quint16>(len) });
             if (!ok) {
                 m_modbus->reportCommError(CommErrorCode::SendFailed, "Write packetLength failed");
                 return false;
             }
         }
-        if (packetCrcAddr > 0) {
+        if (packetCrcAddr >= 0) {
             const bool ok = m_modbus->writeMultipleRegisters(packetCrcAddr, { chunkCrc });
             if (!ok) {
                 m_modbus->reportCommError(CommErrorCode::SendFailed, "Write packetCrc failed");
                 return false;
             }
         }
-        if (packetOffsetAddr > 0) {
+        if (packetOffsetAddr >= 0) {
             const bool ok = m_modbus->writeMultipleRegisters(packetOffsetAddr, { static_cast<quint16>(off) });
             if (!ok) {
                 m_modbus->reportCommError(CommErrorCode::SendFailed, "Write packetOffset failed");
@@ -533,6 +600,11 @@ bool ControllerBridge::stepQueryResult(const QVariantMap& params)
     const int addr = params.value("address").toInt();
     const int count = params.value("count", 1).toInt();
 
+    if (addr < 0 || addr > 65535 || count <= 0 || count > 125 || addr + count > 65536) {
+        m_modbus->reportCommError(CommErrorCode::InvalidConfig, "QueryResult address range invalid");
+        return false;
+    }
+
     if (layer == Layer::Target) {
         const int targetId = m_cfg.value("target").toMap().value("deviceId", slaveId).toInt();
         if (!selectTargetIfNeeded(targetId)) {
@@ -557,7 +629,12 @@ bool ControllerBridge::stepQueryResult(const QVariantMap& params)
     emit logLine(QString("[QRY] values=%1").arg(parts.join(",")));
 
     QVector<quint16> expected;
-    if (parseExpected(params.value("expected"), count, expected)) {
+    if (params.contains("expected") && !parseExpected(params.value("expected"), count, expected)) {
+        m_modbus->reportCommError(CommErrorCode::InvalidConfig,
+                                  "QueryResult expected 长度或值无效");
+        return false;
+    }
+    if (!expected.isEmpty()) {
         if (got.size() < count) {
             m_modbus->reportCommError(CommErrorCode::InvalidResponse,
                                       "QueryResult size mismatch",
@@ -583,6 +660,19 @@ bool ControllerBridge::download(const DownloadProfile& profile, const QByteArray
         return false;
     }
 
+    QStringList validationErrors;
+    if (!profile.validate(&validationErrors)) {
+        m_modbus->reportCommError(CommErrorCode::InvalidConfig,
+                                  "Download profile invalid",
+                                  validationErrors.join(QStringLiteral("; ")));
+        return false;
+    }
+    if (payload.isEmpty()) {
+        m_modbus->reportCommError(CommErrorCode::InvalidConfig,
+                                  "下载产物为空，拒绝执行");
+        return false;
+    }
+
     m_abortRequested = false;
 
     if (!handshake()) {
@@ -602,7 +692,7 @@ bool ControllerBridge::download(const DownloadProfile& profile, const QByteArray
         }
 
         const auto& step = profile.steps[i];
-        const QVariantMap params = step.params;
+        const QVariantMap params = profile.resolvedParams(step);
         bool ok = false;
         switch (step.type) {
         case DownloadProfile::StepType::Enter:

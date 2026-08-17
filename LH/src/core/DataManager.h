@@ -29,6 +29,7 @@
 #include <QDateTime>
 #include <functional>
 #include "Common.h"
+#include "common/RuntimePointTypes.h"
 
 // ============================================================================
 // 前向声明和类型定义
@@ -62,8 +63,78 @@ struct RuntimeRecord {
     QDateTime timestamp;
     QString variableName;
     double value = 0.0;
+    bool valueValid = true;
+    RuntimePointQuality quality = RuntimePointQuality::Unknown;
     QString unit;
+    QString origin;
+    QString errorCode;
+    QString errorText;
 };
+
+/**
+ * @brief 运行时历史查询的 keyset 游标
+ *
+ * 游标由 (timestamp,id) 组成。id 用于区分同一毫秒内的多条记录，
+ * 因而分页不会因为时间戳相同而重复或漏行。
+ */
+struct RuntimeHistoryCursor
+{
+    QDateTime timestamp;
+    qint64 id = 0;
+
+    bool isValid() const { return timestamp.isValid() && id > 0; }
+    void clear() { timestamp = QDateTime(); id = 0; }
+};
+
+enum class RuntimeHistoryPageStatus
+{
+    Success,
+    NotInitialized,
+    SqlError
+};
+
+/**
+ * @brief 一页历史记录及其状态
+ *
+ * Success 且 records 为空表示成功空页/已到末页；不能用空列表代替
+ * NotInitialized 或 SqlError，否则导出会把数据库故障误判为没有数据。
+ */
+struct RuntimeHistoryPage
+{
+    RuntimeHistoryPageStatus status = RuntimeHistoryPageStatus::NotInitialized;
+    QList<RuntimeRecord> records;
+    RuntimeHistoryCursor nextCursor;
+    bool hasMore = false;
+    QString errorCode;
+    QString errorText;
+
+    bool succeeded() const { return status == RuntimeHistoryPageStatus::Success; }
+    bool isEnd() const { return succeeded() && !hasMore; }
+};
+
+/**
+ * @brief 历史结果集的轻量计数结果
+ *
+ * 只执行 COUNT 查询，不物化历史记录，用于流式导出预先写入兼容的
+ * 元数据计数。
+ */
+struct RuntimeHistoryCount
+{
+    RuntimeHistoryPageStatus status = RuntimeHistoryPageStatus::NotInitialized;
+    qint64 count = 0;
+    QString errorCode;
+    QString errorText;
+
+    bool succeeded() const { return status == RuntimeHistoryPageStatus::Success; }
+};
+
+// 便于调用方使用简短、兼容的类型名。
+using HistoryCursor = RuntimeHistoryCursor;
+using HistoryPageStatus = RuntimeHistoryPageStatus;
+using HistoryPage = RuntimeHistoryPage;
+using HistoryPageResult = RuntimeHistoryPage;
+using HistoryQueryResult = RuntimeHistoryPage;
+using HistoryCount = RuntimeHistoryCount;
 
 /**
  * @brief 数据统计信息
@@ -99,7 +170,7 @@ class DataManager : public QObject
     
 public:
     /// 当前 Schema 版本
-    static constexpr int CURRENT_SCHEMA_VERSION = 2;
+    static constexpr int CURRENT_SCHEMA_VERSION = 4;
     
     // =========================================================================
     // 生命周期管理
@@ -150,7 +221,7 @@ public:
     
     /**
      * @brief 批量记录运行时数据
-     * @param records 记录列表，每条包含 varName, value, unit
+     * @param records 记录列表，每条包含 varName、value、unit，可包含 quality、valueValid、timestamp、origin、errorCode、errorText
      * @return 操作结果
      */
     QueryResult logRuntimeDataBatch(const QList<QVariantMap>& records);
@@ -191,6 +262,40 @@ public:
     QList<RuntimeRecord> queryHistory(const QString& varName,
                                        const QDateTime& start,
                                        const QDateTime& end);
+
+    /**
+     * @brief 按 (timestamp,id) 升序进行 keyset 分页查询
+     * @param pageSize 每页最多返回的记录数；SQL 不会请求超过此数量
+     * @param cursor 上一页返回的游标；无效游标表示从起点开始
+     * @return 明确区分成功空页/末页、未初始化和 SQL 错误的结果
+     */
+    RuntimeHistoryPage queryHistoryPage(const QString& varName,
+                                         const QDateTime& start,
+                                         const QDateTime& end,
+                                         int pageSize,
+                                         const RuntimeHistoryCursor& cursor = {});
+
+    /**
+     * @brief 查询最近 maxCount 条记录的升序分页视图
+     *
+     * 该接口用于时间窗为空时的兼容回退路径。maxCount 限定整个结果集，
+     * pageSize 限定单次请求返回的行数；end 有效时限定记录时间上界。
+     */
+    RuntimeHistoryPage queryLatestHistoryPage(const QString& varName,
+                                               int maxCount,
+                                               int pageSize,
+                                               const RuntimeHistoryCursor& cursor = {},
+                                               const QDateTime& end = QDateTime());
+
+    /// 轻量统计时间窗内记录数，不构造历史列表。
+    RuntimeHistoryCount countHistory(const QString& varName,
+                                      const QDateTime& start,
+                                      const QDateTime& end);
+
+    /// 轻量统计最近 maxCount 记录数，不构造历史列表；end 有效时限定时间上界。
+    RuntimeHistoryCount countLatestHistory(const QString& varName,
+                                            int maxCount,
+                                            const QDateTime& end = QDateTime());
     
     /**
      * @brief 获取最近 N 条记录
@@ -310,6 +415,12 @@ private:
     
     /// 升级到版本 2
     bool upgradeToVersion2();
+
+    /// 升级到版本 3
+    bool upgradeToVersion3();
+
+    /// 升级到版本 4：添加稳定的来源和错误上下文字段
+    bool upgradeToVersion4();
     
     /// 记录 SQL 错误详情
     void logSqlError(const QSqlQuery& query, const QString& description);

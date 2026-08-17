@@ -2,6 +2,7 @@
 #define RUNTIME_POINT_TYPES_H
 
 #include <QString>
+#include <QStringList>
 #include <QDateTime>
 #include <QVariantMap>
 #include <QList>
@@ -9,11 +10,10 @@
 #include <QtGlobal>
 #include <QJsonObject>
 
-#include "../communication/CommTypes.h"
 
 /**
  * @brief RuntimePointKind
- * 运行点类型分类
+ * 运行点类型分类。
  */
 enum class RuntimePointKind {
     Variable,   ///< DSL 变量
@@ -25,7 +25,7 @@ enum class RuntimePointKind {
 
 /**
  * @brief RuntimePointAccess
- * 运行点读写权限
+ * 运行点读写权限。
  */
 enum class RuntimePointAccess {
     ReadOnly,
@@ -60,10 +60,10 @@ inline RuntimePointAccess runtimePointAccessFromString(const QString& accessText
 
 /**
  * @brief RuntimePointQuality
- * 运行点数据质量标识
+ * 运行点数据质量标识。
  */
 enum class RuntimePointQuality {
-    Unknown,    ///< 初始/未知
+    Unknown,    ///< 初始或未知
     Good,       ///< 正常
     Simulated,  ///< 仿真值
     Stale,      ///< 过期
@@ -122,19 +122,19 @@ struct OpcTagDefinition
 
 /**
  * @brief RuntimePointDefinition
- * 运行点定义，描述一个可被监控/参数/下载/通信共用的点位元数据
+ * 运行点定义，描述可被监控、参数、下载和通信共用的点位元数据。
  */
 struct RuntimePointDefinition
 {
-    QString id;                  ///< 唯一标识（UUID 或业务 key）
+    QString id;                  ///< 唯一标识，UUID 或业务 key
     QString name;                ///< 显示名称
     RuntimePointKind kind = RuntimePointKind::Variable; ///< 点类型
-    QString dataType;            ///< 数据类型（REAL, INT, BOOL 等）
+    QString dataType;            ///< 数据类型，如 REAL、INT、BOOL
     QString unit;                ///< 物理单位
     RuntimePointAccess access = RuntimePointAccess::ReadWrite;
-    QString sourceModule;        ///< 来源模块标识（如 "dsl", "monitor", "hardware"）
-    QString bindingPath;         ///< 绑定路径（信号路径、通道名等）
-    QVariantMap addressing;      ///< 寄存器/地址信息
+    QString sourceModule;        ///< 来源模块标识，如 dsl、monitor、hardware
+    QString bindingPath;         ///< 绑定路径，如信号路径、通道名等
+    QVariantMap addressing;      ///< 寄存器或地址信息
     QVariant defaultValue;       ///< 默认值
     QVariantMap metadata;        ///< 扩展元数据
     QString opcTagName;
@@ -149,11 +149,11 @@ struct RuntimePointDefinition
 
 /**
  * @brief RuntimePointAddressing
- * 统一的运行点地址/映射描述，作为 runtime_points.json 中 addressing 字段的稳定 schema。
+ * 统一的运行点地址和映射描述，作为 runtime_points.json 中 addressing 字段的稳定 schema。
  *
  * 说明：
- * - 对于尚未绑定真实控制器地址的点，address 允许为 -1
- * - 旧代码仍然可按 QVariantMap 读取，但输出字段应保持一致
+ * - 对于尚未绑定真实控制器地址的点，address 允许为 -1。
+ * - 旧代码仍可按 QVariantMap 读取，但输出字段应保持一致。
  */
 struct RuntimePointAddressing
 {
@@ -238,7 +238,7 @@ inline RuntimePointAddressing makeAddressing(const QString& role,
 
 /**
  * @brief RuntimePointValue
- * 运行点当前值，携带质量戳和时间戳
+ * 运行点当前值，携带质量戳和时间戳。
  */
 struct RuntimePointValue
 {
@@ -252,7 +252,7 @@ struct RuntimePointValue
 
 /**
  * @brief RuntimePointSnapshot
- * 运行点快照 = 定义 + 当前值
+ * 运行点快照 = 定义 + 当前值。
  */
 struct RuntimePointSnapshot
 {
@@ -265,6 +265,39 @@ struct RuntimePointSnapshot
 #include "ConfigTypes.h"
 
 namespace RuntimePointConverter {
+
+inline void applyOpcMetadata(RuntimePointDefinition& pt)
+{
+    QVariantMap addressing = pt.addressing;
+    const QStringList passthroughKeys {
+        QStringLiteral("opcItemId"),
+        QStringLiteral("opcChannel"),
+        QStringLiteral("opcDevice"),
+        QStringLiteral("registerType"),
+        QStringLiteral("regAddress"),
+        QStringLiteral("register"),
+        QStringLiteral("pointAddress"),
+        QStringLiteral("offset"),
+        QStringLiteral("bitIndex"),
+        QStringLiteral("length"),
+        QStringLiteral("slaveId")
+    };
+
+    for (const QString& key : passthroughKeys) {
+        if (pt.metadata.contains(key) && !addressing.contains(key)) {
+            addressing.insert(key, pt.metadata.value(key));
+        }
+    }
+    pt.addressing = addressing;
+
+    QVariantMap opcMetadata = pt.opcMetadata;
+    for (auto it = pt.metadata.constBegin(); it != pt.metadata.constEnd(); ++it) {
+        if (!opcMetadata.contains(it.key())) {
+            opcMetadata.insert(it.key(), it.value());
+        }
+    }
+    pt.opcMetadata = opcMetadata;
+}
 
 /**
  * @brief VariableDefinition -> RuntimePointDefinition
@@ -302,6 +335,7 @@ inline RuntimePointDefinition fromVariable(const VariableDefinition& v)
     pt.opcIoGroup = v.scope;
     pt.opcTagAccess = runtimePointAccessToString(pt.access);
     pt.opcMetadata = v.metadata;
+    applyOpcMetadata(pt);
     return pt;
 }
 
@@ -348,6 +382,7 @@ inline RuntimePointDefinition fromParameter(const ParameterDefinition& p)
     pt.opcIoGroup = QStringLiteral("parameters");
     pt.opcTagAccess = runtimePointAccessToString(pt.access);
     pt.opcMetadata = pt.metadata;
+    applyOpcMetadata(pt);
     return pt;
 }
 
@@ -385,6 +420,7 @@ inline RuntimePointDefinition fromResource(const HardwareResourceBinding& r)
     pt.opcIoGroup = r.resourceType;
     pt.opcTagAccess = runtimePointAccessToString(pt.access);
     pt.opcMetadata = r.metadata;
+    applyOpcMetadata(pt);
     return pt;
 }
 
@@ -424,6 +460,7 @@ inline RuntimePointDefinition fromProvider(const MonitorProviderRuntimeConfig& p
     pt.opcIoGroup = QStringLiteral("status");
     pt.opcTagAccess = runtimePointAccessToString(pt.access);
     pt.opcMetadata = prov.metadata;
+    applyOpcMetadata(pt);
     return pt;
 }
 
@@ -466,11 +503,12 @@ inline RuntimePointDefinition fromDslMapping(const DslMappingEntry& m)
     pt.opcIoGroup = QStringLiteral("dsl");
     pt.opcTagAccess = runtimePointAccessToString(pt.access);
     pt.opcMetadata = m.metadata;
+    applyOpcMetadata(pt);
     return pt;
 }
 
 /**
- * @brief ProjectRuntimeConfig -> QList<RuntimePointDefinition>
+// ========== 从 ProjectRuntimeConfig 各字段转换为 RuntimePointDefinition ==========
  *
  * 将项目配置中的 variables / parameters / resources / providers / dslMappings
  * 全部转换为统一点定义列表。原有字段保持不变。
@@ -545,35 +583,15 @@ inline QString runtimePointQualityToString(RuntimePointQuality quality)
     }
 }
 
-inline RuntimePointQuality runtimePointQualityFromBackendError(const CommError& error,
-                                                               bool backendOnline)
+inline RuntimePointQuality runtimePointQualityFromString(const QString& qualityText)
 {
-    if (!error.isError()) {
-        return backendOnline ? RuntimePointQuality::Good : RuntimePointQuality::Offline;
-    }
-
-    switch (error.code) {
-    case CommErrorCode::ConnectionTimeout:
-    case CommErrorCode::ReceiveTimeout:
-        return backendOnline ? RuntimePointQuality::Stale : RuntimePointQuality::Offline;
-    case CommErrorCode::ConnectionLost:
-    case CommErrorCode::ConnectionFailed:
-    case CommErrorCode::DeviceNotFound:
-    case CommErrorCode::DeviceBusy:
-        return RuntimePointQuality::Offline;
-    case CommErrorCode::PermissionDenied:
-    case CommErrorCode::InvalidAddress:
-    case CommErrorCode::InvalidParameter:
-    case CommErrorCode::UnsupportedProtocol:
-    case CommErrorCode::ProtocolError:
-    case CommErrorCode::InvalidResponse:
-    case CommErrorCode::AddressMismatch:
-    case CommErrorCode::ResourceError:
-    case CommErrorCode::InternalError:
-        return RuntimePointQuality::Bad;
-    default:
-        return backendOnline ? RuntimePointQuality::Bad : RuntimePointQuality::Offline;
-    }
+    const QString normalized = qualityText.trimmed().toLower();
+    if (normalized == QStringLiteral("good")) return RuntimePointQuality::Good;
+    if (normalized == QStringLiteral("simulated")) return RuntimePointQuality::Simulated;
+    if (normalized == QStringLiteral("stale")) return RuntimePointQuality::Stale;
+    if (normalized == QStringLiteral("bad")) return RuntimePointQuality::Bad;
+    if (normalized == QStringLiteral("offline")) return RuntimePointQuality::Offline;
+    return RuntimePointQuality::Unknown;
 }
 
 #endif // RUNTIME_POINT_TYPES_H

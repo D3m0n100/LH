@@ -14,9 +14,17 @@ set(COMM_SOURCES
     DownloadManager.cpp
     EthernetInterface.cpp
     ControllerBridge.cpp
+    ControllerDeviceBackend.cpp
+    ControllerDeviceBackendDebug.cpp
+    ControllerDeviceBackendDiagnostics.cpp
+    ControllerDeviceBackendDownload.cpp
+    ControllerDeviceBackendPoints.cpp
+    ControllerDebugClient.cpp
+    ControllerDebugProtocol.cpp
     DownloadProfile.cpp
     VirtualDeviceBackend.cpp
     ClassicOpcServer.cpp
+    MatrikonOpcServer.cpp
     OpcServerFactory.cpp
 )
 
@@ -33,13 +41,18 @@ set(COMM_HEADERS
     EthernetInterface.h
     Communication.h
     ControllerBridge.h
+    ControllerDeviceBackend.h
+    ControllerDebugClient.h
+    ControllerDebugProtocol.h
     DownloadProfile.h
     IDownloadTransport.h
     IDeviceBackend.h
     VirtualDeviceBackend.h
     IOpcServer.h
     ClassicOpcServer.h
+    MatrikonOpcServer.h
     OpcServerFactory.h
+    RuntimePointQualityMapper.h
 )
 
 add_library(ServoValveComm STATIC
@@ -50,6 +63,7 @@ add_library(ServoValveComm STATIC
 target_include_directories(ServoValveComm
     PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}
+        ${LX_PUBLIC_INCLUDE_DIRS}
 )
 
 target_link_libraries(ServoValveComm
@@ -59,6 +73,10 @@ target_link_libraries(ServoValveComm
         Qt${QT_VERSION_MAJOR}::SerialPort
         Qt${QT_VERSION_MAJOR}::SerialBus
 )
+
+if(WIN32)
+    target_link_libraries(ServoValveComm PUBLIC ole32 oleaut32)
+endif()
 
 target_compile_features(ServoValveComm PUBLIC cxx_std_17)
 
@@ -87,6 +105,7 @@ if(BUILD_SHARED_LIBS)
     target_include_directories(ServoValveCommShared
         PUBLIC
             ${CMAKE_CURRENT_SOURCE_DIR}
+            ${LX_PUBLIC_INCLUDE_DIRS}
     )
 
     target_link_libraries(ServoValveCommShared
@@ -96,6 +115,10 @@ if(BUILD_SHARED_LIBS)
             Qt${QT_VERSION_MAJOR}::SerialPort
             Qt${QT_VERSION_MAJOR}::SerialBus
     )
+
+    if(WIN32)
+        target_link_libraries(ServoValveCommShared PUBLIC ole32 oleaut32)
+    endif()
 
     set_target_properties(ServoValveCommShared PROPERTIES
         AUTOMOC ON

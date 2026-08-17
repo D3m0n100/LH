@@ -77,7 +77,88 @@ const char* const CREATE_DATA_SUMMARY_V2 = R"(
     )
 )";
 
+/// 版本 3 新增：采样质量和值有效性
+const char* const ADD_RUNTIME_QUALITY_V3 =
+    "ALTER TABLE runtime_data ADD COLUMN quality TEXT NOT NULL DEFAULT 'Unknown'";
+const char* const ADD_RUNTIME_VALUE_VALID_V3 =
+    "ALTER TABLE runtime_data ADD COLUMN value_valid INTEGER NOT NULL DEFAULT 1";
+
+/// 版本 4 新增：稳定的来源和错误上下文
+const char* const ADD_RUNTIME_ORIGIN_V4 =
+    "ALTER TABLE runtime_data ADD COLUMN origin TEXT NOT NULL DEFAULT ''";
+const char* const ADD_RUNTIME_ERROR_CODE_V4 =
+    "ALTER TABLE runtime_data ADD COLUMN error_code TEXT NOT NULL DEFAULT ''";
+const char* const ADD_RUNTIME_ERROR_TEXT_V4 =
+    "ALTER TABLE runtime_data ADD COLUMN error_text TEXT NOT NULL DEFAULT ''";
+
 } // namespace SchemaDefinitions
+
+namespace {
+
+QVariantMap nestedRuntimeMetadata(const QVariantMap& record)
+{
+    return record.value(QStringLiteral("metadata")).toMap();
+}
+
+QString runtimeOriginFromRecord(const QVariantMap& record)
+{
+    const QVariantMap metadata = nestedRuntimeMetadata(record);
+    QString origin = record.value(QStringLiteral("origin")).toString();
+    if (origin.isEmpty()) {
+        origin = metadata.value(QStringLiteral("origin")).toString();
+    }
+    if (origin.isEmpty()) {
+        origin = record.value(QStringLiteral("source")).toString();
+    }
+    if (origin.isEmpty()) {
+        origin = metadata.value(QStringLiteral("source")).toString();
+    }
+    return origin;
+}
+
+QString runtimeErrorCodeFromRecord(const QVariantMap& record)
+{
+    const QVariantMap metadata = nestedRuntimeMetadata(record);
+    QString errorCode = metadata.value(QStringLiteral("errorCodeName")).toString();
+    if (errorCode.isEmpty()) {
+        errorCode = record.value(QStringLiteral("errorCodeName")).toString();
+    }
+    if (errorCode.isEmpty()) {
+        errorCode = metadata.value(QStringLiteral("errorCode")).toString();
+    }
+    if (errorCode.isEmpty()) {
+        errorCode = record.value(QStringLiteral("errorCode")).toString();
+    }
+    return errorCode;
+}
+
+QString runtimeErrorTextFromRecord(const QVariantMap& record)
+{
+    const QVariantMap metadata = nestedRuntimeMetadata(record);
+    QString errorText = record.value(QStringLiteral("errorText")).toString();
+    if (errorText.isEmpty()) {
+        errorText = record.value(QStringLiteral("error")).toString();
+    }
+    if (errorText.isEmpty()) {
+        errorText = metadata.value(QStringLiteral("error")).toString();
+    }
+
+    QString errorDetails = record.value(QStringLiteral("errorDetails")).toString();
+    if (errorDetails.isEmpty()) {
+        errorDetails = metadata.value(QStringLiteral("errorDetails")).toString();
+    }
+    if (!errorDetails.isEmpty()) {
+        if (errorText.isEmpty()) {
+            errorText = errorDetails;
+        } else {
+            errorText += QStringLiteral(" (details: ") + errorDetails
+                       + QLatin1Char(')');
+        }
+    }
+    return errorText;
+}
+
+} // namespace
 
 // ============================================================================
 // 构造 / 析构
@@ -291,6 +372,12 @@ bool DataManager::migrateSchema(int fromVersion, int toVersion)
             case 2:
                 success = upgradeToVersion2();
                 break;
+            case 3:
+                success = upgradeToVersion3();
+                break;
+            case 4:
+                success = upgradeToVersion4();
+                break;
             default:
                 LOG_ERROR(QString("未知的迁移版本: %1").arg(ver));
                 success = false;
@@ -360,6 +447,32 @@ bool DataManager::upgradeToVersion2()
                "创建复合索引");
     
     return true;
+}
+
+bool DataManager::upgradeToVersion3()
+{
+    auto result = executeSql(SchemaDefinitions::ADD_RUNTIME_QUALITY_V3,
+                             "为 runtime_data 添加质量字段");
+    if (!result) return false;
+
+    result = executeSql(SchemaDefinitions::ADD_RUNTIME_VALUE_VALID_V3,
+                        "为 runtime_data 添加值有效性字段");
+    return result.success;
+}
+
+bool DataManager::upgradeToVersion4()
+{
+    auto result = executeSql(SchemaDefinitions::ADD_RUNTIME_ORIGIN_V4,
+                             "为 runtime_data 添加来源字段");
+    if (!result) return false;
+
+    result = executeSql(SchemaDefinitions::ADD_RUNTIME_ERROR_CODE_V4,
+                        "为 runtime_data 添加错误码字段");
+    if (!result) return false;
+
+    result = executeSql(SchemaDefinitions::ADD_RUNTIME_ERROR_TEXT_V4,
+                        "为 runtime_data 添加错误文本字段");
+    return result.success;
 }
 
 // ============================================================================
@@ -446,13 +559,18 @@ QueryResult DataManager::logRuntimeData(const QString& varName, double value, co
 
         QSqlQuery query(m_db);
         query.prepare(R"(
-            INSERT INTO runtime_data (timestamp, variable_name, value, unit)
-            VALUES (COALESCE(:timestamp, CURRENT_TIMESTAMP), :name, :value, :unit)
+            INSERT INTO runtime_data (
+                timestamp, variable_name, value, unit, quality, value_valid,
+                origin, error_code, error_text)
+            VALUES (
+                COALESCE(:timestamp, CURRENT_TIMESTAMP), :name, :value, :unit,
+                :quality, 1, '', '', '')
         )");
         query.bindValue(":timestamp", QDateTime::currentDateTimeUtc());
         query.bindValue(":name", varName);
         query.bindValue(":value", value);
         query.bindValue(":unit", unit);
+        query.bindValue(":quality", runtimePointQualityToString(RuntimePointQuality::Good));
 
         result = executeQuery(query, "记录运行数据");
 
@@ -498,17 +616,27 @@ QueryResult DataManager::logRuntimeDataBatch(const QList<QVariantMap>& records)
     
     QSqlQuery query(m_db);
     query.prepare(R"(
-        INSERT INTO runtime_data (timestamp, variable_name, value, unit)
-        VALUES (COALESCE(:timestamp, CURRENT_TIMESTAMP), :name, :value, :unit)
+        INSERT INTO runtime_data (
+            timestamp, variable_name, value, unit, quality, value_valid,
+            origin, error_code, error_text)
+        VALUES (
+            COALESCE(:timestamp, CURRENT_TIMESTAMP), :name, :value, :unit,
+            :quality, :valueValid, :origin, :errorCode, :errorText)
     )");
     
-    int successCount = 0;
     QMap<QString, double> updatedValues;
+    QueryResult result;
     
     for (const QVariantMap& record : records) {
         QString varName = record.value("varName").toString();
         double value = record.value("value").toDouble();
         QString unit = record.value("unit").toString();
+        const bool valueValid = record.value("valueValid", true).toBool();
+        const RuntimePointQuality quality = runtimePointQualityFromString(
+            record.value("quality", QStringLiteral("Good")).toString());
+        const QString origin = runtimeOriginFromRecord(record);
+        const QString errorCode = runtimeErrorCodeFromRecord(record);
+        const QString errorText = runtimeErrorTextFromRecord(record);
 
         // 可选：允许外部提供真实采样时间（用于历史查询/回放）
         // 如果未提供，则由 SQL 中的 CURRENT_TIMESTAMP 自动填充
@@ -520,23 +648,32 @@ QueryResult DataManager::logRuntimeDataBatch(const QList<QVariantMap>& records)
 
         query.bindValue(":timestamp", ts.isValid() ? QVariant(ts) : QVariant());
         query.bindValue(":name", varName);
-        query.bindValue(":value", value);
+        query.bindValue(":value", valueValid ? QVariant(value) : QVariant());
         query.bindValue(":unit", unit);
+        query.bindValue(":quality", runtimePointQualityToString(quality));
+        query.bindValue(":valueValid", valueValid ? 1 : 0);
+        query.bindValue(":origin", origin);
+        query.bindValue(":errorCode", errorCode);
+        query.bindValue(":errorText", errorText);
         
         if (query.exec()) {
-            ++successCount;
-            updatedValues[varName] = value;
+            if (valueValid) {
+                updatedValues[varName] = value;
+            }
         } else {
             logSqlError(query, QString("批量记录运行数据[%1]").arg(varName));
+            result.errorCode = query.lastError().nativeErrorCode();
+            result.errorText = query.lastError().text();
+            m_db.rollback();
+            return result;
         }
     }
     
-    QueryResult result;
     QMap<QString, double> emitValues; // 在锁外 emit 的数据
 
     if (m_db.commit()) {
         result.success = true;
-        result.affectedRows = successCount;
+        result.affectedRows = records.size();
 
         // 更新缓存
         {
@@ -547,8 +684,7 @@ QueryResult DataManager::logRuntimeDataBatch(const QList<QVariantMap>& records)
         }
 
         emitValues = std::move(updatedValues);
-        LOG_DEBUG(QString("批量记录运行数据: %1/%2 条成功")
-                  .arg(successCount).arg(records.size()));
+        LOG_DEBUG(QString("批量记录运行数据: %1 条成功").arg(records.size()));
     } else {
         m_db.rollback();
         result.errorText = "提交事务失败: " + m_db.lastError().text();
@@ -603,18 +739,22 @@ QList<RuntimeRecord> DataManager::queryHistory(const QString& varName,
     }
     
     QMutexLocker dbLocker(&m_dbMutex);
+
+    const QDateTime startUtc = start.isValid() ? start.toUTC() : start;
+    const QDateTime endUtc = end.isValid() ? end.toUTC() : end;
     
     QSqlQuery query(m_db);
     query.prepare(R"(
-        SELECT id, timestamp, variable_name, value, unit
+        SELECT id, timestamp, variable_name, value, unit, value_valid, quality,
+               origin, error_code, error_text
         FROM runtime_data
         WHERE variable_name = :name
           AND timestamp BETWEEN :start AND :end
-        ORDER BY timestamp ASC
+        ORDER BY timestamp ASC, id ASC
     )");
     query.bindValue(":name", varName);
-    query.bindValue(":start", start);
-    query.bindValue(":end", end);
+    query.bindValue(":start", startUtc);
+    query.bindValue(":end", endUtc);
     
     if (query.exec()) {
         while (query.next()) {
@@ -622,8 +762,15 @@ QList<RuntimeRecord> DataManager::queryHistory(const QString& varName,
             record.id = query.value(0).toLongLong();
             record.timestamp = query.value(1).toDateTime();
             record.variableName = query.value(2).toString();
-            record.value = query.value(3).toDouble();
+            record.valueValid = query.value(5).toBool() && !query.value(3).isNull();
+            if (record.valueValid) {
+                record.value = query.value(3).toDouble();
+            }
             record.unit = query.value(4).toString();
+            record.quality = runtimePointQualityFromString(query.value(6).toString());
+            record.origin = query.value(7).toString();
+            record.errorCode = query.value(8).toString();
+            record.errorText = query.value(9).toString();
             results.append(record);
         }
     } else {
@@ -631,6 +778,337 @@ QList<RuntimeRecord> DataManager::queryHistory(const QString& varName,
     }
     
     return results;
+}
+
+RuntimeHistoryPage DataManager::queryHistoryPage(const QString& varName,
+                                                  const QDateTime& start,
+                                                  const QDateTime& end,
+                                                  int pageSize,
+                                                  const RuntimeHistoryCursor& cursor)
+{
+    RuntimeHistoryPage page;
+
+    if (!m_initialized) {
+        LOG_WARN("DataManager 未初始化，无法分页查询历史数据");
+        page.status = RuntimeHistoryPageStatus::NotInitialized;
+        page.errorText = "DataManager 未初始化";
+        return page;
+    }
+
+    if (pageSize <= 0) {
+        page.status = RuntimeHistoryPageStatus::SqlError;
+        page.errorCode = "InvalidPageSize";
+        page.errorText = "分页大小必须大于 0";
+        return page;
+    }
+
+    const QDateTime startUtc = start.toUTC();
+    const QDateTime endUtc = end.toUTC();
+    QMutexLocker dbLocker(&m_dbMutex);
+
+    QSqlQuery query(m_db);
+    query.prepare(R"(
+        SELECT id, timestamp, variable_name, value, unit, value_valid, quality,
+               origin, error_code, error_text
+        FROM runtime_data
+        WHERE variable_name = :name
+          AND timestamp >= :start
+          AND timestamp <= :end
+          AND (:hasCursor = 0
+               OR timestamp > :cursorTimestamp
+               OR (timestamp = :cursorTimestamp AND id > :cursorId))
+        ORDER BY timestamp ASC, id ASC
+        LIMIT :limit
+    )");
+    query.bindValue(":name", varName);
+    query.bindValue(":start", startUtc);
+    query.bindValue(":end", endUtc);
+    query.bindValue(":hasCursor", cursor.isValid() ? 1 : 0);
+    query.bindValue(":cursorTimestamp", cursor.timestamp.toUTC());
+    query.bindValue(":cursorId", cursor.id);
+    query.bindValue(":limit", pageSize);
+
+    if (!query.exec()) {
+        page.status = RuntimeHistoryPageStatus::SqlError;
+        page.errorCode = query.lastError().nativeErrorCode();
+        page.errorText = query.lastError().text();
+        logSqlError(query, "分页查询历史数据");
+        return page;
+    }
+
+    while (query.next()) {
+        RuntimeRecord record;
+        record.id = query.value(0).toLongLong();
+        record.timestamp = query.value(1).toDateTime();
+        record.variableName = query.value(2).toString();
+        record.valueValid = query.value(5).toBool() && !query.value(3).isNull();
+        if (record.valueValid) {
+            record.value = query.value(3).toDouble();
+        }
+        record.unit = query.value(4).toString();
+        record.quality = runtimePointQualityFromString(query.value(6).toString());
+        record.origin = query.value(7).toString();
+        record.errorCode = query.value(8).toString();
+        record.errorText = query.value(9).toString();
+        page.records.append(record);
+    }
+
+    page.status = RuntimeHistoryPageStatus::Success;
+    if (!page.records.isEmpty()) {
+        page.nextCursor.timestamp = page.records.constLast().timestamp.toUTC();
+        page.nextCursor.id = page.records.constLast().id;
+    } else {
+        page.nextCursor = cursor;
+    }
+
+    // 不使用 LIMIT pageSize + 1，保证每次数据请求都不超过调用方指定的页大小。
+    // 仅在整页时做一次 EXISTS 检查来判断是否还有下一页。
+    if (page.records.size() == pageSize) {
+        QSqlQuery moreQuery(m_db);
+        moreQuery.prepare(R"(
+            SELECT 1
+            FROM runtime_data
+            WHERE variable_name = :name
+              AND timestamp >= :start
+              AND timestamp <= :end
+              AND (:hasCursor = 0
+                   OR timestamp > :cursorTimestamp
+                   OR (timestamp = :cursorTimestamp AND id > :cursorId))
+            LIMIT 1
+        )");
+        moreQuery.bindValue(":name", varName);
+        moreQuery.bindValue(":start", startUtc);
+        moreQuery.bindValue(":end", endUtc);
+        moreQuery.bindValue(":hasCursor", page.nextCursor.isValid() ? 1 : 0);
+        moreQuery.bindValue(":cursorTimestamp", page.nextCursor.timestamp);
+        moreQuery.bindValue(":cursorId", page.nextCursor.id);
+        if (!moreQuery.exec()) {
+            page.status = RuntimeHistoryPageStatus::SqlError;
+            page.errorCode = moreQuery.lastError().nativeErrorCode();
+            page.errorText = moreQuery.lastError().text();
+            logSqlError(moreQuery, "判断历史分页末页");
+            page.records.clear();
+            page.hasMore = false;
+            return page;
+        }
+        page.hasMore = moreQuery.next();
+    }
+
+    return page;
+}
+
+RuntimeHistoryPage DataManager::queryLatestHistoryPage(const QString& varName,
+                                                        int maxCount,
+                                                        int pageSize,
+                                                        const RuntimeHistoryCursor& cursor,
+                                                        const QDateTime& end)
+{
+    RuntimeHistoryPage page;
+
+    if (!m_initialized) {
+        LOG_WARN("DataManager 未初始化，无法分页查询最近历史数据");
+        page.status = RuntimeHistoryPageStatus::NotInitialized;
+        page.errorText = "DataManager 未初始化";
+        return page;
+    }
+
+    if (maxCount <= 0 || pageSize <= 0) {
+        page.status = RuntimeHistoryPageStatus::SqlError;
+        page.errorCode = "InvalidPageSize";
+        page.errorText = "最近记录数和分页大小必须大于 0";
+        return page;
+    }
+
+    QMutexLocker dbLocker(&m_dbMutex);
+
+    const bool hasEnd = end.isValid();
+    const QDateTime endUtc = hasEnd ? end.toUTC() : end;
+
+    // 子查询只选最近 maxCount 个 id；外层按升序分页，避免把回退数据一次
+    // 读入内存，同时保持与普通历史分页完全相同的游标语义。
+    const QString latestIds = R"(
+        SELECT id
+        FROM runtime_data
+        WHERE variable_name = :latestName
+          AND (:hasEnd = 0 OR timestamp <= :end)
+        ORDER BY timestamp DESC, id DESC
+        LIMIT :maxCount
+    )";
+    QSqlQuery query(m_db);
+    query.prepare(QStringLiteral(
+        "SELECT id, timestamp, variable_name, value, unit, value_valid, quality, "
+        "origin, error_code, error_text "
+        "FROM runtime_data WHERE id IN (") + latestIds + QStringLiteral(
+        ") AND (:hasEnd = 0 OR timestamp <= :end) "
+        "AND (:hasCursor = 0 "
+        "OR timestamp > :cursorTimestamp "
+        "OR (timestamp = :cursorTimestamp AND id > :cursorId)) "
+        "ORDER BY timestamp ASC, id ASC LIMIT :limit"));
+    query.bindValue(":latestName", varName);
+    query.bindValue(":hasEnd", hasEnd ? 1 : 0);
+    query.bindValue(":end", endUtc);
+    query.bindValue(":maxCount", maxCount);
+    query.bindValue(":hasCursor", cursor.isValid() ? 1 : 0);
+    query.bindValue(":cursorTimestamp", cursor.timestamp.toUTC());
+    query.bindValue(":cursorId", cursor.id);
+    query.bindValue(":limit", pageSize);
+
+    if (!query.exec()) {
+        page.status = RuntimeHistoryPageStatus::SqlError;
+        page.errorCode = query.lastError().nativeErrorCode();
+        page.errorText = query.lastError().text();
+        logSqlError(query, "分页查询最近历史数据");
+        return page;
+    }
+
+    while (query.next()) {
+        RuntimeRecord record;
+        record.id = query.value(0).toLongLong();
+        record.timestamp = query.value(1).toDateTime();
+        record.variableName = query.value(2).toString();
+        record.valueValid = query.value(5).toBool() && !query.value(3).isNull();
+        if (record.valueValid) {
+            record.value = query.value(3).toDouble();
+        }
+        record.unit = query.value(4).toString();
+        record.quality = runtimePointQualityFromString(query.value(6).toString());
+        record.origin = query.value(7).toString();
+        record.errorCode = query.value(8).toString();
+        record.errorText = query.value(9).toString();
+        page.records.append(record);
+    }
+
+    page.status = RuntimeHistoryPageStatus::Success;
+    if (!page.records.isEmpty()) {
+        page.nextCursor.timestamp = page.records.constLast().timestamp.toUTC();
+        page.nextCursor.id = page.records.constLast().id;
+    } else {
+        page.nextCursor = cursor;
+    }
+
+    if (page.records.size() == pageSize) {
+        QSqlQuery moreQuery(m_db);
+        moreQuery.prepare(QStringLiteral(
+            "SELECT 1 FROM runtime_data WHERE id IN (") + latestIds + QStringLiteral(
+            ") AND (:hasEnd = 0 OR timestamp <= :end) "
+            "AND (:hasCursor = 0 "
+            "OR timestamp > :cursorTimestamp "
+            "OR (timestamp = :cursorTimestamp AND id > :cursorId)) LIMIT 1"));
+        moreQuery.bindValue(":latestName", varName);
+        moreQuery.bindValue(":hasEnd", hasEnd ? 1 : 0);
+        moreQuery.bindValue(":end", endUtc);
+        moreQuery.bindValue(":maxCount", maxCount);
+        moreQuery.bindValue(":hasCursor", page.nextCursor.isValid() ? 1 : 0);
+        moreQuery.bindValue(":cursorTimestamp", page.nextCursor.timestamp);
+        moreQuery.bindValue(":cursorId", page.nextCursor.id);
+        if (!moreQuery.exec()) {
+            page.status = RuntimeHistoryPageStatus::SqlError;
+            page.errorCode = moreQuery.lastError().nativeErrorCode();
+            page.errorText = moreQuery.lastError().text();
+            logSqlError(moreQuery, "判断最近历史分页末页");
+            page.records.clear();
+            page.hasMore = false;
+            return page;
+        }
+        page.hasMore = moreQuery.next();
+    }
+
+    return page;
+}
+
+RuntimeHistoryCount DataManager::countHistory(const QString& varName,
+                                               const QDateTime& start,
+                                               const QDateTime& end)
+{
+    RuntimeHistoryCount result;
+
+    if (!m_initialized) {
+        LOG_WARN("DataManager 未初始化，无法统计历史数据");
+        result.status = RuntimeHistoryPageStatus::NotInitialized;
+        result.errorText = "DataManager 未初始化";
+        return result;
+    }
+
+    const QDateTime startUtc = start.isValid() ? start.toUTC() : start;
+    const QDateTime endUtc = end.isValid() ? end.toUTC() : end;
+    QMutexLocker dbLocker(&m_dbMutex);
+
+    QSqlQuery query(m_db);
+    query.prepare(R"(
+        SELECT COUNT(*)
+        FROM runtime_data
+        WHERE variable_name = :name
+          AND timestamp >= :start
+          AND timestamp <= :end
+    )");
+    query.bindValue(":name", varName);
+    query.bindValue(":start", startUtc);
+    query.bindValue(":end", endUtc);
+
+    if (!query.exec() || !query.next()) {
+        result.status = RuntimeHistoryPageStatus::SqlError;
+        result.errorCode = query.lastError().nativeErrorCode();
+        result.errorText = query.lastError().text();
+        logSqlError(query, "统计历史数据");
+        return result;
+    }
+
+    result.status = RuntimeHistoryPageStatus::Success;
+    result.count = query.value(0).toLongLong();
+    return result;
+}
+
+RuntimeHistoryCount DataManager::countLatestHistory(const QString& varName,
+                                                     int maxCount,
+                                                     const QDateTime& end)
+{
+    RuntimeHistoryCount result;
+
+    if (!m_initialized) {
+        LOG_WARN("DataManager 未初始化，无法统计最近历史数据");
+        result.status = RuntimeHistoryPageStatus::NotInitialized;
+        result.errorText = "DataManager 未初始化";
+        return result;
+    }
+
+    if (maxCount <= 0) {
+        result.status = RuntimeHistoryPageStatus::SqlError;
+        result.errorCode = "InvalidMaxCount";
+        result.errorText = "最近记录数必须大于 0";
+        return result;
+    }
+
+    QMutexLocker dbLocker(&m_dbMutex);
+    const bool hasEnd = end.isValid();
+    const QDateTime endUtc = hasEnd ? end.toUTC() : end;
+    QSqlQuery query(m_db);
+    query.prepare(R"(
+        SELECT COUNT(*)
+        FROM (
+            SELECT id
+            FROM runtime_data
+            WHERE variable_name = :name
+              AND (:hasEnd = 0 OR timestamp <= :end)
+            ORDER BY timestamp DESC, id DESC
+            LIMIT :limit
+        )
+    )");
+    query.bindValue(":name", varName);
+    query.bindValue(":hasEnd", hasEnd ? 1 : 0);
+    query.bindValue(":end", endUtc);
+    query.bindValue(":limit", maxCount);
+
+    if (!query.exec() || !query.next()) {
+        result.status = RuntimeHistoryPageStatus::SqlError;
+        result.errorCode = query.lastError().nativeErrorCode();
+        result.errorText = query.lastError().text();
+        logSqlError(query, "统计最近历史数据");
+        return result;
+    }
+
+    result.status = RuntimeHistoryPageStatus::Success;
+    result.count = query.value(0).toLongLong();
+    return result;
 }
 
 QList<RuntimeRecord> DataManager::getLatestRecords(const QString& varName, int count)
@@ -646,10 +1124,11 @@ QList<RuntimeRecord> DataManager::getLatestRecords(const QString& varName, int c
     
     QSqlQuery query(m_db);
     query.prepare(R"(
-        SELECT id, timestamp, variable_name, value, unit
+        SELECT id, timestamp, variable_name, value, unit, value_valid, quality,
+               origin, error_code, error_text
         FROM runtime_data
         WHERE variable_name = :name
-        ORDER BY timestamp DESC
+        ORDER BY timestamp DESC, id DESC
         LIMIT :count
     )");
     query.bindValue(":name", varName);
@@ -661,8 +1140,15 @@ QList<RuntimeRecord> DataManager::getLatestRecords(const QString& varName, int c
             record.id = query.value(0).toLongLong();
             record.timestamp = query.value(1).toDateTime();
             record.variableName = query.value(2).toString();
-            record.value = query.value(3).toDouble();
+            record.valueValid = query.value(5).toBool() && !query.value(3).isNull();
+            if (record.valueValid) {
+                record.value = query.value(3).toDouble();
+            }
             record.unit = query.value(4).toString();
+            record.quality = runtimePointQualityFromString(query.value(6).toString());
+            record.origin = query.value(7).toString();
+            record.errorCode = query.value(8).toString();
+            record.errorText = query.value(9).toString();
             results.append(record);
         }
     } else {
@@ -685,11 +1171,12 @@ QList<RuntimeRecord> DataManager::getRecordsSince(const QString& varName, const 
     
     QSqlQuery query(m_db);
     query.prepare(R"(
-        SELECT id, timestamp, variable_name, value, unit
+        SELECT id, timestamp, variable_name, value, unit, value_valid, quality,
+               origin, error_code, error_text
         FROM runtime_data
         WHERE variable_name = :name
           AND timestamp > :since
-        ORDER BY timestamp ASC
+        ORDER BY timestamp ASC, id ASC
     )");
     query.bindValue(":name", varName);
     query.bindValue(":since", since);
@@ -700,8 +1187,15 @@ QList<RuntimeRecord> DataManager::getRecordsSince(const QString& varName, const 
             record.id = query.value(0).toLongLong();
             record.timestamp = query.value(1).toDateTime();
             record.variableName = query.value(2).toString();
-            record.value = query.value(3).toDouble();
+            record.valueValid = query.value(5).toBool() && !query.value(3).isNull();
+            if (record.valueValid) {
+                record.value = query.value(3).toDouble();
+            }
             record.unit = query.value(4).toString();
+            record.quality = runtimePointQualityFromString(query.value(6).toString());
+            record.origin = query.value(7).toString();
+            record.errorCode = query.value(8).toString();
+            record.errorText = query.value(9).toString();
             results.append(record);
         }
     } else {
@@ -730,6 +1224,8 @@ DataStatistics DataManager::getStatistics(const QString& varName,
         FROM runtime_data
         WHERE variable_name = :name
           AND timestamp BETWEEN :start AND :end
+          AND value_valid = 1
+          AND value IS NOT NULL
     )");
     query.bindValue(":name", varName);
     query.bindValue(":start", start);

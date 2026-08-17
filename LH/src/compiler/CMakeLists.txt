@@ -2,6 +2,10 @@
 
 add_library(compiler_module STATIC
     DSLCompilerInterface.cpp
+    DSLCompilerInput.cpp
+    DSLCompilerArtifacts.cpp
+    DSLCompilerComponents.cpp
+    DSLCompilerAsync.cpp
 )
 
 target_link_libraries(compiler_module
@@ -10,4 +14,5 @@ target_link_libraries(compiler_module
 
 target_include_directories(compiler_module PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}
+    ${LX_PUBLIC_INCLUDE_DIRS}
 )

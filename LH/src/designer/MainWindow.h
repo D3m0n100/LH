@@ -58,6 +58,7 @@ class QTextEdit;
 class QLabel;
 class QProgressBar;
 class QCloseEvent;
+class QEvent;
 class QAction;
 class QDockWidget;
 class QToolBar;
@@ -122,6 +123,7 @@ public:
 
 protected:
     void closeEvent(QCloseEvent* event) override;
+    bool eventFilter(QObject* watched, QEvent* event) override;
 
 private slots:
     // ===== 工程相关（转发给 ProjectController）=====
@@ -165,6 +167,11 @@ private slots:
     // ===== 运行控制 =====
     void onRunProject();
     void onStopProject();
+    void onPauseController();
+    void onResumeController();
+    void onStepController();
+    void onRunControllerToCursor();
+    void onTestControllerConnection();
 
     // ===== 监控相关 =====
     void onOpenMonitor();
@@ -276,6 +283,9 @@ private:
     bool loadTextFileToEditor(const QString& filePath);
     void openAuxiliaryTextFileInMdi(const QString& filePath);
     bool isSupportedTextFile(const QString& filePath) const;
+    bool saveAuxiliarySubWindow(QMdiSubWindow* sub);
+    bool saveAuxiliaryFiles(bool all);
+    bool confirmAuxiliaryChanges();
 
     // ===== Demo Mode（演示数据模式） =====
     void startDemoModeIfNeeded(const QString& reason);
@@ -357,6 +367,11 @@ private:
     QAction*      m_actCompileAndRunProject;
     QAction*      m_actRunProject;
     QAction*      m_actStopProject;
+    QAction*      m_actPauseController = nullptr;
+    QAction*      m_actResumeController = nullptr;
+    QAction*      m_actStepController = nullptr;
+    QAction*      m_actRunToCursor = nullptr;
+    QAction*      m_actTestControllerConnection = nullptr;
     QAction*      m_actOpenMonitor;
 
     QAction*      m_actOpenDownload;
@@ -392,6 +407,7 @@ private:
     bool m_opcRunning = false;
     QString m_lastOpcError;
     QVariantMap m_lastOpcStatusExtras;
+    QVariantMap m_lastDownloadDiagnostic;
 };
 
 #endif // MAINWINDOW_H

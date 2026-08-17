@@ -161,6 +161,51 @@ private slots:
         QVERIFY(errorMsg.contains("read-only"));
     }
 
+    void partialReadReturnsPointErrors()
+    {
+        VirtualDeviceBackend backend;
+        backend.loadPointDefinitions({makePoint("p1", "A"), makePoint("p2", "B")});
+        backend.connectBackend();
+
+        QStringList ids = {"p1", "missing"};
+        QHash<QString, QVariant> values;
+        QHash<QString, CommError> pointErrors;
+        QString errorMsg;
+        QVERIFY(!backend.readPoints(ids, values, &errorMsg, &pointErrors));
+        QCOMPARE(values.size(), 1);
+        QVERIFY(values.contains("p1"));
+        QCOMPARE(pointErrors.size(), 1);
+        QCOMPARE(pointErrors.value("missing").code, CommErrorCode::InvalidAddress);
+        QVERIFY(!errorMsg.isEmpty());
+        QCOMPARE(backend.lastError().code, CommErrorCode::InvalidAddress);
+    }
+
+    void partialWriteAppliesWritablePoints()
+    {
+        VirtualDeviceBackend backend;
+        backend.loadPointDefinitions({
+            makePoint("p1", "A"),
+            makePoint("p2", "B", RuntimePointAccess::ReadOnly)
+        });
+        backend.connectBackend();
+
+        QHash<QString, QVariant> writes;
+        writes["p1"] = 42.0;
+        writes["p2"] = 84.0;
+        QHash<QString, CommError> pointErrors;
+        QString errorMsg;
+        QVERIFY(!backend.writePoints(writes, &errorMsg, &pointErrors));
+        QCOMPARE(pointErrors.size(), 1);
+        QCOMPARE(pointErrors.value("p2").code, CommErrorCode::PermissionDenied);
+        QCOMPARE(backend.lastError().code, CommErrorCode::PermissionDenied);
+
+        QStringList ids = {"p1", "p2"};
+        QHash<QString, QVariant> values;
+        QVERIFY(backend.readPoints(ids, values, nullptr));
+        QCOMPARE(values.value("p1").toDouble(), 42.0);
+        QCOMPARE(values.value("p2").toDouble(), 0.0);
+    }
+
     // ── offline 拒绝操作 ────────────────────────────────
 
     void readWhileOfflineFails()
@@ -246,30 +291,70 @@ private slots:
         QVERIFY(backend.downloadArtifact("test.code", {}, nullptr));
     }
 
-    // ── 状态查询 ────────────────────────────────────────
-
-    void queryStatusContainsBackend()
-    {
-        VirtualDeviceBackend backend;
-        auto status = backend.queryStatus();
-        QCOMPARE(status["backend"].toString(), QStringLiteral("virtual"));
-        QCOMPARE(status["online"].toBool(), false);
-    }
-
-    void queryStatusReflectsOnline()
+    void downloadFaultInjectionCanBeConsumedOnce()
     {
         VirtualDeviceBackend backend;
         backend.connectBackend();
-        auto status = backend.queryStatus();
-        QCOMPARE(status["online"].toBool(), true);
+        backend.setDownloadFaultInjection(1, CommErrorCode::ConnectionLost, QStringLiteral("one-shot"));
+
+        QString errorMsg;
+        CommError operationError;
+        QVERIFY(!backend.downloadArtifact(QStringLiteral("test.code"), {}, &errorMsg, &operationError));
+        QCOMPARE(operationError.code, CommErrorCode::ConnectionLost);
+        QVERIFY(errorMsg.contains(QStringLiteral("one-shot")));
+
+        errorMsg.clear();
+        operationError = CommError();
+        QVERIFY(backend.downloadArtifact(QStringLiteral("test.code"), {}, &errorMsg, &operationError));
+        QCOMPARE(operationError.code, CommErrorCode::NoError);
+
+        const auto snapshot = backend.statusSnapshot();
+        QCOMPARE(snapshot.extras.value(QStringLiteral("downloadFaultInjectionRemaining")).toInt(), 0);
     }
 
-    void queryStatusReflectsPointCount()
+    // ── 状态查询 ────────────────────────────────────────
+
+    void statusSnapshotContainsBackend()
+    {
+        VirtualDeviceBackend backend;
+        const auto snapshot = backend.statusSnapshot();
+        QCOMPARE(snapshot.backendType, QStringLiteral("virtual"));
+        QCOMPARE(snapshot.online, false);
+    }
+
+    void statusSnapshotReflectsOnline()
+    {
+        VirtualDeviceBackend backend;
+        backend.connectBackend();
+        const auto snapshot = backend.statusSnapshot();
+        QCOMPARE(snapshot.online, true);
+    }
+
+    void statusSnapshotReflectsPointCount()
     {
         VirtualDeviceBackend backend;
         backend.loadPointDefinitions({makePoint("p1", "A"), makePoint("p2", "B")});
-        auto status = backend.queryStatus();
-        QCOMPARE(status["pointCount"].toInt(), 2);
+        const auto snapshot = backend.statusSnapshot();
+        QCOMPARE(snapshot.extras.value("pointCount").toInt(), 2);
+    }
+
+    void statusSnapshotExposesLastErrorFields()
+    {
+        VirtualDeviceBackend backend;
+        backend.connectBackend();
+        backend.setFaultInjection(true, false, false);
+
+        QStringList ids = {"p1"};
+        QHash<QString, QVariant> values;
+        QString errorMsg;
+        QVERIFY(!backend.readPoints(ids, values, &errorMsg));
+
+        const auto snapshot = backend.statusSnapshot();
+        QCOMPARE(snapshot.lastErrorCode, CommErrorCode::InternalError);
+        QVERIFY(!snapshot.lastErrorMessage.isEmpty());
+        QVERIFY(snapshot.timestamp.isValid());
+        QCOMPARE(snapshot.partialSuccess, false);
+        QCOMPARE(snapshot.extras.value("lastErrorCode").toInt(), static_cast<int>(CommErrorCode::InternalError));
     }
 };
 

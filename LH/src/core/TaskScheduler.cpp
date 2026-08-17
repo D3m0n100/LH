@@ -46,6 +46,10 @@ void TaskScheduler::registerTask(const QString& name,
 
     QMutexLocker locker(&m_taskMutex);
 
+    const qint64 registrationTime = (m_running && m_globalTimer.isValid())
+            ? m_globalTimer.elapsed()
+            : 0;
+
     auto it = std::find_if(m_tasks.begin(), m_tasks.end(),
                            [&name](const TaskPtr& t) { return t->name == name; });
     if (it != m_tasks.end()) {
@@ -60,9 +64,10 @@ void TaskScheduler::registerTask(const QString& name,
     task->executor = std::move(executor);
     task->scheduleMode = mode;
     task->state = TaskState::Ready;
-    task->lastExecutionTime = 0;
+    task->lastExecutionTime = (mode == ScheduleMode::FixedDelay) ? registrationTime : 0;
     task->nextScheduledTime = 0;
     task->enabled = true;
+    task->generation = ++m_nextTaskGeneration;
 
     m_tasks.push_back(std::move(task));
     m_taskStats[name] = TaskStats();
@@ -314,7 +319,11 @@ void TaskScheduler::onTick()
     }
 
     const qint64 currentTime = m_globalTimer.elapsed();
-    QStringList dueTaskNames;
+    struct DueTask {
+        QString name;
+        quint64 generation = 0;
+    };
+    std::vector<DueTask> dueTasks;
 
     {
         QMutexLocker locker(&m_taskMutex);
@@ -335,30 +344,38 @@ void TaskScheduler::onTick()
             }
 
             if (shouldExecute) {
-                dueTaskNames.append(task->name);
+                dueTasks.push_back({task->name, task->generation});
             }
         }
     }
 
-    for (const QString& taskName : dueTaskNames) {
-        executeTask(taskName, currentTime);
+    for (const DueTask& dueTask : dueTasks) {
+        if (!m_running) {
+            break;
+        }
+        executeTask(dueTask.name, dueTask.generation);
     }
 }
 
-void TaskScheduler::executeTask(const QString& taskName, qint64 currentTime)
+void TaskScheduler::executeTask(const QString& taskName, quint64 expectedGeneration)
 {
     std::function<void()> executor;
     ScheduleMode scheduleMode = ScheduleMode::FixedDelay;
     int periodMs = 0;
     int warningThreshold = 0;
     int maxConsecutiveErrors = 0;
+    quint64 generation = 0;
 
     {
         QMutexLocker locker(&m_taskMutex);
 
+        if (!m_running) {
+            return;
+        }
+
         auto it = std::find_if(m_tasks.begin(), m_tasks.end(),
                                [&taskName](const TaskPtr& t) { return t->name == taskName; });
-        if (it == m_tasks.end()) {
+        if (it == m_tasks.end() || (*it)->generation != expectedGeneration) {
             return;
         }
 
@@ -373,6 +390,7 @@ void TaskScheduler::executeTask(const QString& taskName, qint64 currentTime)
         periodMs = task->periodMs;
         warningThreshold = getWarningThreshold(task);
         maxConsecutiveErrors = task->maxConsecutiveErrors;
+        generation = task->generation;
     }
 
     QElapsedTimer execTimer;
@@ -393,6 +411,7 @@ void TaskScheduler::executeTask(const QString& taskName, qint64 currentTime)
     }
 
     const qint64 costMs = execTimer.elapsed();
+    const qint64 completionTime = m_globalTimer.elapsed();
     bool taskDisabledByErrors = false;
     int consecutiveErrors = 0;
 
@@ -401,31 +420,32 @@ void TaskScheduler::executeTask(const QString& taskName, qint64 currentTime)
 
         auto it = std::find_if(m_tasks.begin(), m_tasks.end(),
                                [&taskName](const TaskPtr& t) { return t->name == taskName; });
-        if (it == m_tasks.end()) {
+        if (it == m_tasks.end() || (*it)->generation != generation) {
             return;
         }
 
         Task* task = it->get();
-        task->lastExecutionTime = currentTime + costMs;
+        task->lastExecutionTime = completionTime;
 
         if (scheduleMode == ScheduleMode::FixedRate) {
             task->nextScheduledTime += periodMs;
-            if (task->nextScheduledTime < currentTime) {
+            if (task->nextScheduledTime <= completionTime) {
                 LOG_WARN(QString("任务[%1] 执行落后，重新同步调度时间。").arg(taskName));
-                task->nextScheduledTime = currentTime + periodMs;
+                task->nextScheduledTime = completionTime + periodMs;
             }
         }
 
         updateTaskStats(taskName, costMs, success, errorMsg);
 
         if (success) {
-            task->state = TaskState::Ready;
+            task->state = task->enabled ? TaskState::Ready : TaskState::Disabled;
         } else {
-            task->state = TaskState::Error;
+            task->state = task->enabled ? TaskState::Error : TaskState::Disabled;
 
             TaskStats& stats = m_taskStats[taskName];
             consecutiveErrors = static_cast<int>(stats.consecutiveErrors);
-            if (stats.consecutiveErrors >= static_cast<quint64>(maxConsecutiveErrors)) {
+            if (task->enabled
+                    && stats.consecutiveErrors >= static_cast<quint64>(maxConsecutiveErrors)) {
                 task->enabled = false;
                 task->state = TaskState::Disabled;
                 taskDisabledByErrors = true;

@@ -22,6 +22,7 @@
 
 QT_BEGIN_NAMESPACE
 class QWidget;
+class QSaveFile;
 QT_END_NAMESPACE
 
 namespace Monitor {
@@ -148,6 +149,40 @@ struct ExportDataPackage
         metadata = ExportMetadata();
     }
 };
+
+/**
+ * @brief 分页导出的无数据库游标
+ *
+ * 导出助手不依赖 DataManager，调用方可以把任意分页后端（数据库、远程
+ * 服务或测试提供器）适配为同一接口。
+ */
+struct ExportCursor
+{
+    QDateTime timestamp;
+    qint64 id = 0;
+
+    bool isValid() const { return timestamp.isValid() && id > 0; }
+    void clear() { timestamp = QDateTime(); id = 0; }
+};
+
+/**
+ * @brief 一次分页提供结果
+ *
+ * success=false 表示提供器/后端失败；success=true 且 samples 为空、
+ * hasMore=false 表示成功空页或末页，不能把两者混淆。
+ */
+struct ExportPage
+{
+    bool success = true;
+    QList<Monitor::Sample> samples;
+    ExportCursor nextCursor;
+    bool hasMore = false;
+    QString errorMessage;
+};
+
+using ExportPageProvider = std::function<ExportPage(const QString& channelId,
+                                                     const ExportCursor& cursor,
+                                                     int pageSize)>;
 
 // ============================================================================
 // MonitorExportHelper 类
@@ -301,6 +336,42 @@ public:
                                           const QString& suggestedFileName = QString());
 
     // =========================================================================
+    // 分页/流式数据导出
+    // =========================================================================
+
+    /**
+     * @brief 从分页提供器直接流式导出多通道数据
+     *
+     * 每次回调最多请求 pageSize 条；CSV、TSV 和 JSON 均写入 QSaveFile，
+     * 只有所有页面成功且 commit 成功后才替换目标文件。
+     */
+    ExportResult exportPackagePaged(const QList<ExportChannelInfo>& channelInfos,
+                                     const ExportMetadata& metadata,
+                                     const ExportPageProvider& provider,
+                                     const QString& filePath,
+                                     int pageSize = 500);
+
+    /// exportPackagePaged 的语义别名，便于调用方按“流式”命名。
+    ExportResult exportPackageStream(const QList<ExportChannelInfo>& channelInfos,
+                                      const ExportMetadata& metadata,
+                                      const ExportPageProvider& provider,
+                                      const QString& filePath,
+                                      int pageSize = 500);
+
+    ExportResult exportDataAsCsvPaged(const QString& channelName,
+                                       const ExportPageProvider& provider,
+                                       const QString& filePath,
+                                       int pageSize = 500);
+    ExportResult exportDataAsJsonPaged(const QString& channelName,
+                                        const ExportPageProvider& provider,
+                                        const QString& filePath,
+                                        int pageSize = 500);
+    ExportResult exportDataAsTsvPaged(const QString& channelName,
+                                       const ExportPageProvider& provider,
+                                       const QString& filePath,
+                                       int pageSize = 500);
+
+    // =========================================================================
     // 工具方法
     // =========================================================================
     
@@ -329,6 +400,10 @@ signals:
     
     /// 导出错误
     void exportError(const QString& errorMessage);
+
+protected:
+    /// 提交原子文件；测试可在派生 helper 中局部注入提交失败。
+    virtual bool commitSaveFile(QSaveFile& file);
 
 private:
     // =========================================================================
@@ -385,6 +460,15 @@ private:
     
     /// 生成 TSV 元数据注释头
     QString generateTsvMetadataHeader(const ExportDataPackage& package) const;
+
+    /// 分页数据的实际流式实现（format 为 CSV/JSON/TSV）
+    ExportResult exportPagedPackageToFile(
+        const QList<ExportChannelInfo>& channelInfos,
+        const ExportMetadata& metadata,
+        const ExportPageProvider& provider,
+        const QString& filePath,
+        const QString& format,
+        int pageSize);
 
 private:
     ExportConfig m_config;

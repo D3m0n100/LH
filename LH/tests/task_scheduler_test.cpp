@@ -11,10 +11,15 @@
  */
 
 #include <QCoreApplication>
+#include <QEventLoop>
 #include <QTimer>
 #include <QElapsedTimer>
+#include <QVector>
 #include <QtGlobal>
 #include <atomic>
+#include <chrono>
+#include <stdexcept>
+#include <thread>
 #include "core/TaskScheduler.h"
 
 // 全局执行计数器
@@ -36,6 +41,21 @@ void printTestResult(const QString& testName, bool passed)
         qInfo() << "[PASS]" << testName;
     } else {
         qCritical() << "[FAIL]" << testName;
+    }
+}
+
+void waitForEvents(int durationMs)
+{
+    QEventLoop loop;
+    QTimer::singleShot(durationMs, &loop, &QEventLoop::quit);
+    loop.exec();
+}
+
+void unregisterAllTasks(TaskScheduler& scheduler)
+{
+    const QStringList names = scheduler.taskNames();
+    for (const QString& name : names) {
+        scheduler.unregisterTask(name);
     }
 }
 
@@ -151,7 +171,267 @@ int main(int argc, char* argv[])
                 printTestResult("Task count is 2", test11);
                 if (test11) testsPassed++; else testsFailed++;
 
-                // ===== Test 6: Shutdown =====
+                auto recordTest = [&](const QString& name, bool passed) {
+                    printTestResult(name, passed);
+                    if (passed) {
+                        testsPassed++;
+                    } else {
+                        testsFailed++;
+                    }
+                };
+
+                scheduler.stop();
+                unregisterAllTasks(scheduler);
+
+                // ===== Test 6: 同一 tick 的优先级和 FixedDelay 完成基线 =====
+                printTestHeader("Priority Queue Time and FixedDelay Completion");
+                QVector<QString> order;
+                QVector<qint64> lowStarts;
+                QElapsedTimer priorityTimer;
+                bool highFirstRun = true;
+                priorityTimer.start();
+                scheduler.registerTask("priorityHigh", 1, 30, [&]() {
+                    order.append(QStringLiteral("high"));
+                    if (highFirstRun) {
+                        highFirstRun = false;
+                        std::this_thread::sleep_for(std::chrono::milliseconds(60));
+                    }
+                });
+                scheduler.registerTask("priorityLow", 2, 30, [&]() {
+                    order.append(QStringLiteral("low"));
+                    lowStarts.append(priorityTimer.elapsed());
+                });
+                scheduler.start();
+                waitForEvents(260);
+                scheduler.stop();
+                const bool priorityOrder = order.size() >= 2
+                        && order.at(0) == QStringLiteral("high")
+                        && order.at(1) == QStringLiteral("low");
+                recordTest("Same-tick tasks preserve priority order", priorityOrder);
+                const bool queuedDelayIncluded = lowStarts.size() >= 2
+                        && lowStarts.at(1) - lowStarts.at(0) >= 20;
+                recordTest("FixedDelay includes queued execution time", queuedDelayIncluded);
+                unregisterAllTasks(scheduler);
+
+                // ===== Test 7: 单个慢 FixedDelay =====
+                printTestHeader("Slow FixedDelay Uses Completion Time");
+                QVector<qint64> slowStarts;
+                QElapsedTimer slowTimer;
+                slowTimer.start();
+                scheduler.registerTask("slowFixedDelay", 1, 30, [&]() {
+                    slowStarts.append(slowTimer.elapsed());
+                    std::this_thread::sleep_for(std::chrono::milliseconds(45));
+                });
+                scheduler.start();
+                waitForEvents(280);
+                scheduler.stop();
+                const bool slowDelay = slowStarts.size() >= 2
+                        && slowStarts.at(1) - slowStarts.at(0) >= 55;
+                recordTest("Slow FixedDelay waits period after completion", slowDelay);
+                unregisterAllTasks(scheduler);
+
+                // ===== Test 8: FixedRate 计划推进与完成时刻重同步 =====
+                printTestHeader("FixedRate Schedule Progression");
+                QVector<qint64> rateStarts;
+                QElapsedTimer rateTimer;
+                bool firstRateRun = true;
+                rateTimer.start();
+                scheduler.registerTask("fixedRate", 1, 25, [&]() {
+                    rateStarts.append(rateTimer.elapsed());
+                    if (firstRateRun) {
+                        firstRateRun = false;
+                        std::this_thread::sleep_for(std::chrono::milliseconds(70));
+                    }
+                }, ScheduleMode::FixedRate);
+                scheduler.start();
+                waitForEvents(260);
+                scheduler.stop();
+                const bool rateResynced = rateStarts.size() >= 2
+                        && rateStarts.at(1) - rateStarts.at(0) >= 65;
+                recordTest("FixedRate resynchronizes from real completion", rateResynced);
+                const bool rateContinuesByPlan = rateStarts.size() >= 3
+                        && rateStarts.at(2) - rateStarts.at(1) >= 15
+                        && rateStarts.at(2) - rateStarts.at(1) <= 60;
+                recordTest("FixedRate continues on scheduled periods", rateContinuesByPlan);
+                unregisterAllTasks(scheduler);
+
+                // ===== Test 9: 异常后的 FixedDelay 基线 =====
+                printTestHeader("Exception FixedDelay Completion Time");
+                QVector<qint64> exceptionStarts;
+                QElapsedTimer exceptionTimer;
+                bool throwOnce = true;
+                exceptionTimer.start();
+                scheduler.registerTask("exceptionFixedDelay", 1, 25, [&]() {
+                    exceptionStarts.append(exceptionTimer.elapsed());
+                    if (throwOnce) {
+                        throwOnce = false;
+                        std::this_thread::sleep_for(std::chrono::milliseconds(35));
+                        throw std::runtime_error("expected scheduler test error");
+                    }
+                });
+                scheduler.start();
+                waitForEvents(180);
+                scheduler.stop();
+                const bool exceptionDelay = exceptionStarts.size() >= 2
+                        && exceptionStarts.at(1) - exceptionStarts.at(0) >= 45;
+                recordTest("Exception FixedDelay waits from return time", exceptionDelay);
+                unregisterAllTasks(scheduler);
+
+                // ===== Test 10: stop/restart 基线 =====
+                printTestHeader("Stop and Restart Baseline");
+                int restartCount = 0;
+                scheduler.registerTask("restartBaseline", 1, 25, [&]() { ++restartCount; });
+                scheduler.start();
+                waitForEvents(80);
+                scheduler.stop();
+                const int countAtStop = restartCount;
+                waitForEvents(60);
+                const bool stoppedStable = restartCount == countAtStop;
+                recordTest("Stop prevents further execution", stoppedStable);
+                scheduler.start();
+                waitForEvents(80);
+                scheduler.stop();
+                recordTest("Restart resets and resumes execution", restartCount > countAtStop);
+                unregisterAllTasks(scheduler);
+
+                // ===== Test 11: 执行器重入时的任务身份保护 =====
+                printTestHeader("Task Generation Reentrancy Protection");
+                int unregisterRuns = 0;
+                scheduler.registerTask("unregisterSelf", 1, 10, [&]() {
+                    ++unregisterRuns;
+                    scheduler.unregisterTask("unregisterSelf");
+                });
+                scheduler.start();
+                waitForEvents(80);
+                scheduler.stop();
+                const TaskStats unregisterStats = scheduler.getTaskStats("unregisterSelf");
+                recordTest("Self-unregister does not recreate statistics",
+                           unregisterRuns == 1 && !scheduler.hasTask("unregisterSelf")
+                               && unregisterStats.execCount == 0);
+                unregisterAllTasks(scheduler);
+
+                int oldReplacementRuns = 0;
+                int newReplacementRuns = 0;
+                scheduler.registerTask("replaceSelf", 1, 10, [&]() {
+                    ++oldReplacementRuns;
+                    scheduler.registerTask("replaceSelf", 1, 10, [&]() {
+                        ++newReplacementRuns;
+                    });
+                });
+                scheduler.start();
+                waitForEvents(100);
+                scheduler.stop();
+                const TaskStats replacementStats = scheduler.getTaskStats("replaceSelf");
+                recordTest("Same-name replacement rejects old completion",
+                           oldReplacementRuns == 1 && newReplacementRuns > 0
+                               && replacementStats.execCount == static_cast<quint64>(newReplacementRuns));
+                unregisterAllTasks(scheduler);
+
+                int disabledRuns = 0;
+                scheduler.registerTask("disableDuringRun", 1, 10, [&]() {
+                    ++disabledRuns;
+                    scheduler.setTaskEnabled("disableDuringRun", false);
+                });
+                scheduler.start();
+                waitForEvents(80);
+                scheduler.stop();
+                recordTest("Disable during execution remains disabled", disabledRuns == 1
+                           && !scheduler.isTaskEnabled("disableDuringRun"));
+                unregisterAllTasks(scheduler);
+
+                // ===== Test 12: 运行中动态注册的 FixedDelay 基线 =====
+                printTestHeader("Dynamic FixedDelay Registration Baseline");
+                QVector<qint64> dynamicStarts;
+                QElapsedTimer dynamicTimer;
+                dynamicTimer.start();
+                qint64 registeredAt = -1;
+                scheduler.start();
+                waitForEvents(140);
+                registeredAt = dynamicTimer.elapsed();
+                scheduler.registerTask("dynamicFixedDelay", 1, 100, [&]() {
+                    dynamicStarts.append(dynamicTimer.elapsed());
+                });
+                waitForEvents(70);
+                const bool dynamicNotEarly = dynamicStarts.isEmpty();
+                waitForEvents(80);
+                scheduler.stop();
+                const bool dynamicWaitedFullPeriod = registeredAt >= 0
+                        && !dynamicStarts.isEmpty()
+                        && dynamicStarts.first() - registeredAt >= 75;
+                recordTest("Dynamic FixedDelay does not execute early", dynamicNotEarly);
+                recordTest("Dynamic FixedDelay waits from registration",
+                           dynamicWaitedFullPeriod);
+                unregisterAllTasks(scheduler);
+
+                // ===== Test 13: 到期快照的任务代次保护 =====
+                printTestHeader("Due Snapshot Generation Protection");
+                QVector<qint64> replacementStarts;
+                QElapsedTimer replacementTimer;
+                replacementTimer.start();
+                qint64 replacementAt = -1;
+                int oldDueRuns = 0;
+                bool replacedDueTask = false;
+                scheduler.registerTask("dueSnapshotA", 1, 40, [&]() {
+                    if (replacedDueTask) {
+                        return;
+                    }
+                    replacedDueTask = true;
+                    replacementAt = replacementTimer.elapsed();
+                    scheduler.registerTask("dueSnapshotB", 2, 150, [&]() {
+                        replacementStarts.append(replacementTimer.elapsed());
+                    });
+                });
+                scheduler.registerTask("dueSnapshotB", 2, 40, [&]() {
+                    ++oldDueRuns;
+                });
+                scheduler.start();
+                waitForEvents(280);
+                scheduler.stop();
+                const bool replacementWaited = replacementAt >= 0
+                        && !replacementStarts.isEmpty()
+                        && replacementStarts.first() - replacementAt >= 120;
+                recordTest("Replaced task waits after old due snapshot", replacementWaited);
+                recordTest("Old due task executor is skipped", oldDueRuns == 0);
+                const TaskStats replacementDueStats = scheduler.getTaskStats("dueSnapshotB");
+                recordTest("Replacement statistics match new executions",
+                           replacementDueStats.execCount
+                               == static_cast<quint64>(replacementStarts.size()));
+                unregisterAllTasks(scheduler);
+
+                QVector<qint64> rebuiltStarts;
+                QElapsedTimer rebuiltTimer;
+                rebuiltTimer.start();
+                qint64 rebuiltAt = -1;
+                int oldRebuiltRuns = 0;
+                bool rebuiltDueTask = false;
+                scheduler.registerTask("rebuildSnapshotA", 1, 40, [&]() {
+                    if (rebuiltDueTask) {
+                        return;
+                    }
+                    rebuiltDueTask = true;
+                    rebuiltAt = rebuiltTimer.elapsed();
+                    scheduler.unregisterTask("rebuildSnapshotB");
+                    scheduler.registerTask("rebuildSnapshotB", 2, 150, [&]() {
+                        rebuiltStarts.append(rebuiltTimer.elapsed());
+                    });
+                });
+                scheduler.registerTask("rebuildSnapshotB", 2, 40, [&]() {
+                    ++oldRebuiltRuns;
+                });
+                scheduler.start();
+                waitForEvents(280);
+                scheduler.stop();
+                const bool rebuildWaited = rebuiltAt >= 0
+                        && !rebuiltStarts.isEmpty()
+                        && rebuiltStarts.first() - rebuiltAt >= 120;
+                recordTest("Unregister/rebuild skips old due task", rebuildWaited);
+                recordTest("Unregistered task executor is not called", oldRebuiltRuns == 0);
+                const TaskStats rebuiltStats = scheduler.getTaskStats("rebuildSnapshotB");
+                recordTest("Rebuilt task statistics match new executions",
+                           rebuiltStats.execCount == static_cast<quint64>(rebuiltStarts.size()));
+                unregisterAllTasks(scheduler);
+
+                // ===== Test 14: Shutdown =====
                 printTestHeader("Shutdown");
                 
                 scheduler.shutdown();

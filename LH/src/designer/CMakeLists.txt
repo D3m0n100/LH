@@ -3,6 +3,9 @@
 
 add_library(designer_module STATIC
     MainWindow.cpp
+    MainWindowUi.cpp
+    MainWindowInspector.cpp
+    MainWindowExplorer.cpp
     DownloadDockWidget.cpp
     ProjectExplorerWidget.cpp
     ProgramBlocksWidget.cpp
@@ -26,6 +29,9 @@ add_library(designer_module STATIC
     ParameterTuningWindow.cpp
     ParameterController.cpp
     RuntimeSessionController.cpp
+    RuntimeSessionDownload.cpp
+    RuntimeSessionDebug.cpp
+    RuntimeSessionOpc.cpp
     ui/ProblemsPanel.cpp
 )
 
@@ -41,7 +47,6 @@ target_link_libraries(designer_module
 
 target_include_directories(designer_module PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}
-    ${CMAKE_SOURCE_DIR}/src
     ${CMAKE_SOURCE_DIR}/src/monitor
-    ${CMAKE_SOURCE_DIR}/include
+    ${LX_PUBLIC_INCLUDE_DIRS}
 )

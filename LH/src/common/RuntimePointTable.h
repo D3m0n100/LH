@@ -37,8 +37,44 @@ public:
     {
         QWriteLocker defLock(&m_defLock);
         QMutexLocker valLock(&m_valMutex);
+
+        const auto existing = m_defs.constFind(def.id);
+        bool keepExistingNameMapping = false;
+        if (existing != m_defs.constEnd()) {
+            const QString oldName = existing->name;
+            const auto oldNameIt = m_nameIndex.constFind(oldName);
+            const bool oldNameMappedToOtherId = oldNameIt != m_nameIndex.constEnd()
+                    && oldNameIt.value() != def.id;
+            keepExistingNameMapping = oldNameMappedToOtherId && oldName == def.name;
+            if (!oldNameMappedToOtherId) {
+                if (oldNameIt != m_nameIndex.constEnd() && oldNameIt.value() == def.id)
+                    m_nameIndex.remove(oldName);
+
+                QString fallbackId;
+                for (auto it = m_defs.constBegin(); it != m_defs.constEnd(); ++it) {
+                    if (it.key() == def.id || it.value().name != oldName)
+                        continue;
+                    if (fallbackId.isEmpty() || it.key() < fallbackId)
+                        fallbackId = it.key();
+                }
+                if (!fallbackId.isEmpty())
+                    m_nameIndex.insert(oldName, fallbackId);
+                else
+                    m_nameIndex.remove(oldName);
+            }
+
+            const int oldKind = static_cast<int>(existing->kind);
+            auto oldKindIt = m_kindIndex.find(oldKind);
+            if (oldKindIt != m_kindIndex.end()) {
+                oldKindIt->remove(def.id);
+                if (oldKindIt->isEmpty())
+                    m_kindIndex.erase(oldKindIt);
+            }
+        }
+
         m_defs.insert(def.id, def);
-        m_nameIndex.insert(def.name, def.id);
+        if (!keepExistingNameMapping)
+            m_nameIndex.insert(def.name, def.id);
         m_kindIndex[static_cast<int>(def.kind)].insert(def.id);
         m_values.insert(def.id, RuntimePointValue{def.id, def.defaultValue, RuntimePointQuality::Unknown, QDateTime(), QStringLiteral("init")});
     }
@@ -57,6 +93,7 @@ public:
      */
     void loadFromProjectConfig(const ProjectRuntimeConfig& cfg)
     {
+        clear();
         loadDefinitions(RuntimePointConverter::fromProjectConfig(cfg));
     }
 

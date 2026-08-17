@@ -34,6 +34,177 @@
  */
 namespace Communication {
 
+struct ResolvedCommConfig
+{
+    CommProtocolType type = CommProtocolType::Unknown;
+    QVariantMap parameters;
+
+    bool isValid() const { return type != CommProtocolType::Unknown; }
+};
+
+namespace Detail {
+
+inline QString normalizedToken(QString value)
+{
+    value = value.trimmed().toUpper();
+    value.remove(QLatin1Char('-'));
+    value.remove(QLatin1Char('_'));
+    value.remove(QLatin1Char(' '));
+    return value;
+}
+
+inline void mergeMissing(QVariantMap& target, const QVariantMap& source)
+{
+    for (auto it = source.constBegin(); it != source.constEnd(); ++it) {
+        if (!target.contains(it.key())) {
+            target.insert(it.key(), it.value());
+        }
+    }
+}
+
+} // namespace Detail
+
+/**
+ * @brief 将历史配置、强类型配置和扁平配置解析为统一的后端配置。
+ *
+ * 顶层明确协议优先于字段推断；嵌套 serial/modbus/ethernet 参数只补充缺失值。
+ */
+inline ResolvedCommConfig resolveConfig(const QVariantMap& config)
+{
+    ResolvedCommConfig resolved;
+    resolved.parameters = config;
+
+    const QVariantMap parameters = config.value(QStringLiteral("parameters")).toMap();
+    const QVariantMap commParameters = config.value(QStringLiteral("commParameters")).toMap();
+    const QVariantMap serial = config.value(QStringLiteral("serial")).toMap();
+    const QVariantMap modbus = config.value(QStringLiteral("modbus")).toMap();
+    const QVariantMap ethernet = config.value(QStringLiteral("ethernet")).toMap();
+    Detail::mergeMissing(resolved.parameters, parameters);
+    Detail::mergeMissing(resolved.parameters, commParameters);
+    Detail::mergeMissing(resolved.parameters, serial);
+    Detail::mergeMissing(resolved.parameters, modbus);
+    Detail::mergeMissing(resolved.parameters, ethernet);
+
+    if (!resolved.parameters.contains(QStringLiteral("port"))) {
+        const QString port = serial.value(
+                QStringLiteral("port"),
+                serial.value(QStringLiteral("portName"),
+                             resolved.parameters.value(QStringLiteral("portName")))).toString();
+        if (!port.isEmpty()) {
+            resolved.parameters.insert(QStringLiteral("port"), port);
+        }
+    }
+    if (!resolved.parameters.contains(QStringLiteral("responseTimeout"))) {
+        const QVariant timeout = modbus.value(QStringLiteral("responseTimeout"),
+                                              modbus.value(
+                                                      QStringLiteral("timeoutMs"),
+                                                      resolved.parameters.value(
+                                                              QStringLiteral("timeoutMs"))));
+        if (timeout.isValid()) {
+            resolved.parameters.insert(QStringLiteral("responseTimeout"), timeout);
+        }
+    }
+
+    const QString protocol = Detail::normalizedToken(
+            resolved.parameters.value(QStringLiteral("protocol")).toString());
+    QString mode = Detail::normalizedToken(
+            resolved.parameters.value(QStringLiteral("mode")).toString());
+
+    if (protocol == QStringLiteral("MODBUSRTU") || protocol == QStringLiteral("RTU")) {
+        resolved.type = CommProtocolType::ModbusRTU;
+        mode = QStringLiteral("RTU");
+    } else if (protocol == QStringLiteral("MODBUSTCP")) {
+        resolved.type = CommProtocolType::ModbusTCP;
+        mode = QStringLiteral("TCP");
+    } else if (protocol == QStringLiteral("MODBUS")) {
+        resolved.type = mode == QStringLiteral("TCP")
+                ? CommProtocolType::ModbusTCP
+                : CommProtocolType::ModbusRTU;
+        mode = resolved.type == CommProtocolType::ModbusTCP
+                ? QStringLiteral("TCP")
+                : QStringLiteral("RTU");
+    } else if (protocol == QStringLiteral("SERIAL")
+               || protocol == QStringLiteral("RS232")
+               || protocol == QStringLiteral("RS485")) {
+        if (mode == QStringLiteral("MODBUS") || mode == QStringLiteral("RTU")) {
+            resolved.type = CommProtocolType::ModbusRTU;
+            mode = QStringLiteral("RTU");
+        } else {
+            resolved.type = CommProtocolType::Serial;
+        }
+    } else if (protocol == QStringLiteral("ETHERNET")) {
+        resolved.type = mode == QStringLiteral("UDP")
+                ? CommProtocolType::EthernetUDP
+                : CommProtocolType::EthernetTCP;
+    } else if (protocol == QStringLiteral("TCP")) {
+        resolved.type = CommProtocolType::EthernetTCP;
+        mode = QStringLiteral("TCP");
+    } else if (protocol == QStringLiteral("UDP")) {
+        resolved.type = CommProtocolType::EthernetUDP;
+        mode = QStringLiteral("UDP");
+    } else if (protocol == QStringLiteral("CAN")) {
+        resolved.type = CommProtocolType::CAN;
+    } else if (protocol == QStringLiteral("CANOPEN")) {
+        resolved.type = CommProtocolType::CANOpen;
+    } else if (protocol == QStringLiteral("J1939")) {
+        resolved.type = CommProtocolType::J1939;
+    } else if (protocol == QStringLiteral("AUTO")) {
+        resolved.type = CommProtocolType::Serial;
+    } else if (protocol == QStringLiteral("RAW") || protocol == QStringLiteral("CUSTOM")) {
+        resolved.type = CommProtocolType::Serial;
+    }
+
+    if (resolved.type == CommProtocolType::Unknown && protocol.isEmpty()) {
+        const bool hasTcpHint = mode == QStringLiteral("TCP")
+                || resolved.parameters.contains(QStringLiteral("tcpPort"));
+        if (!modbus.isEmpty()
+                || mode == QStringLiteral("RTU")
+                || mode == QStringLiteral("MODBUS")
+                || resolved.parameters.contains(QStringLiteral("tcpPort"))) {
+            resolved.type = hasTcpHint
+                    ? CommProtocolType::ModbusTCP
+                    : CommProtocolType::ModbusRTU;
+            mode = resolved.type == CommProtocolType::ModbusTCP
+                    ? QStringLiteral("TCP")
+                    : QStringLiteral("RTU");
+        } else if (resolved.parameters.contains(QStringLiteral("interface"))) {
+            resolved.type = CommProtocolType::CAN;
+        } else if (resolved.parameters.contains(QStringLiteral("baudRate"))) {
+            resolved.type = CommProtocolType::Serial;
+        } else if (resolved.parameters.contains(QStringLiteral("host"))) {
+            resolved.type = mode == QStringLiteral("UDP")
+                    ? CommProtocolType::EthernetUDP
+                    : CommProtocolType::EthernetTCP;
+        }
+    }
+
+    switch (resolved.type) {
+    case CommProtocolType::ModbusRTU:
+        resolved.parameters.insert(QStringLiteral("protocol"), QStringLiteral("MODBUS"));
+        resolved.parameters.insert(QStringLiteral("mode"), QStringLiteral("RTU"));
+        break;
+    case CommProtocolType::ModbusTCP:
+        resolved.parameters.insert(QStringLiteral("protocol"), QStringLiteral("MODBUS"));
+        resolved.parameters.insert(QStringLiteral("mode"), QStringLiteral("TCP"));
+        break;
+    case CommProtocolType::Serial:
+        resolved.parameters.insert(QStringLiteral("protocol"), QStringLiteral("SERIAL"));
+        break;
+    case CommProtocolType::EthernetUDP:
+        resolved.parameters.insert(QStringLiteral("protocol"), QStringLiteral("UDP"));
+        resolved.parameters.insert(QStringLiteral("mode"), QStringLiteral("UDP"));
+        break;
+    case CommProtocolType::EthernetTCP:
+        resolved.parameters.insert(QStringLiteral("protocol"), QStringLiteral("TCP"));
+        resolved.parameters.insert(QStringLiteral("mode"), QStringLiteral("TCP"));
+        break;
+    default:
+        break;
+    }
+
+    return resolved;
+}
+
 /**
  * @brief 根据协议类型创建通信接口
  * @param type 协议类型
@@ -76,46 +247,17 @@ inline ICommInterface* createInterface(CommProtocolType type, QObject* parent = 
  */
 inline ICommInterface* createAndOpen(const QVariantMap& config, QObject* parent = nullptr)
 {
-    // 从配置中推断协议类型（尽量兼容旧配置写法）
-    const QString protocol = config.value("protocol", "").toString().toUpper();
-    const QString mode = config.value("mode", "").toString().toUpper();
-
-    CommProtocolType type = CommProtocolType::Unknown;
-
-    if (protocol == "SERIAL" || config.contains("baudRate")) {
-        // 只要含有串口字段，默认按串口类；若 mode 指示 RTU/MODBUS 则按 ModbusRTU
-        if (mode == "MODBUS" || mode == "RTU") {
-            type = CommProtocolType::ModbusRTU;
-        } else {
-            type = CommProtocolType::Serial;
-        }
-    } else if (protocol == "MODBUS") {
-        type = (mode == "TCP") ? CommProtocolType::ModbusTCP : CommProtocolType::ModbusRTU;
-    } else if (protocol == "CAN") {
-        type = CommProtocolType::CAN;
-    } else if (protocol == "CANOPEN") {
-        type = CommProtocolType::CANOpen;
-    } else if (protocol == "J1939") {
-        type = CommProtocolType::J1939;
-    } else if (protocol == "ETHERNET") {
-        type = (mode == "UDP") ? CommProtocolType::EthernetUDP : CommProtocolType::EthernetTCP;
-    } else if (config.contains("interface") && !config.contains("tcpPort")) {
-        // CAN 配置通常包含 interface=can0 等
-        type = CommProtocolType::CAN;
-    } else if (config.contains("host") || config.contains("tcpPort")) {
-        type = CommProtocolType::EthernetTCP;
-    }
-
-    if (type == CommProtocolType::Unknown) {
+    const ResolvedCommConfig resolved = resolveConfig(config);
+    if (!resolved.isValid()) {
         return nullptr;
     }
 
-    ICommInterface* interface = createInterface(type, parent);
+    ICommInterface* interface = createInterface(resolved.type, parent);
     if (!interface) {
         return nullptr;
     }
 
-    if (!interface->open(config)) {
+    if (!interface->open(resolved.parameters)) {
         delete interface;
         return nullptr;
     }
@@ -124,21 +266,22 @@ inline ICommInterface* createAndOpen(const QVariantMap& config, QObject* parent 
     // ControllerBridge 自动接入（仅对 Modbus 生效）
     // 目的：open() 后自动 handshake/probe，并通过 errorOccurred 明确区分三层问题
     // --------------------------------------------------------------------
-    if (type == CommProtocolType::ModbusRTU || type == CommProtocolType::ModbusTCP) {
+    if (resolved.type == CommProtocolType::ModbusRTU
+            || resolved.type == CommProtocolType::ModbusTCP) {
         auto* modbus = qobject_cast<ModbusInterface*>(interface);
         if (modbus) {
             QVariantMap bridgeCfg;
-            if (config.contains("bridge")) {
-                bridgeCfg = config.value("bridge").toMap();
+            if (resolved.parameters.contains("bridge")) {
+                bridgeCfg = resolved.parameters.value("bridge").toMap();
             } else {
                 // 兼容：允许把 handshake/targetProbe 直接放在顶层
-                if (config.contains("handshake")) bridgeCfg.insert("handshake", config.value("handshake").toMap());
-                if (config.contains("targetProbe")) bridgeCfg.insert("targetProbe", config.value("targetProbe").toMap());
-                if (config.contains("enableHandshake")) bridgeCfg.insert("enableHandshake", config.value("enableHandshake"));
-                if (config.contains("enableTargetProbe")) bridgeCfg.insert("enableTargetProbe", config.value("enableTargetProbe"));
+                if (resolved.parameters.contains("handshake")) bridgeCfg.insert("handshake", resolved.parameters.value("handshake").toMap());
+                if (resolved.parameters.contains("targetProbe")) bridgeCfg.insert("targetProbe", resolved.parameters.value("targetProbe").toMap());
+                if (resolved.parameters.contains("enableHandshake")) bridgeCfg.insert("enableHandshake", resolved.parameters.value("enableHandshake"));
+                if (resolved.parameters.contains("enableTargetProbe")) bridgeCfg.insert("enableTargetProbe", resolved.parameters.value("enableTargetProbe"));
             }
 
-            const bool enableBridge = config.value("enableBridge", !bridgeCfg.isEmpty()).toBool();
+            const bool enableBridge = resolved.parameters.value("enableBridge", !bridgeCfg.isEmpty()).toBool();
             if (enableBridge && !bridgeCfg.isEmpty()) {
                 auto* bridge = new ControllerBridge(modbus, interface); // parent=interface，生命周期跟随
                 bridge->setBridgeConfig(bridgeCfg);

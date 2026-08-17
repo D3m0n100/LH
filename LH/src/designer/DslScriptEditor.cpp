@@ -1013,6 +1013,14 @@ QString DslScriptEditor::scriptForSave() const
     return stripDslMappingMarkers(currentScript());
 }
 
+int DslScriptEditor::currentLineNumber() const
+{
+    if (!m_editor) {
+        return 1;
+    }
+    return m_editor->textCursor().blockNumber() + 1;
+}
+
 void DslScriptEditor::setScript(const QString& text)
 {
     if (m_editor) {
@@ -1082,7 +1090,7 @@ void DslScriptEditor::onFunctionItemActivated(QListWidgetItem* item)
     QTextCursor cursor = m_editor->textCursor();
     const int codeLine = cursor.blockNumber() + (cursor.atBlockStart() ? 1 : 2);
 
-    // 鎻掑叆 snippet 浠ｇ爜
+    // 插入 snippet 代码
     insertSnippet(snippetCode);
 
     // 记录插入：lineNumber 记录代码行而非 marker 行
@@ -1511,6 +1519,10 @@ void DslScriptEditor::updateCompletionPrefix(bool forceShow)
     if (prefix.isEmpty() && !forceShow) {
         completer->popup()->hide();
         return;
+    }
+
+    if (forceShow && prefix.length() < 2) {
+        prefix.clear();
     }
     
     completer->setCompletionPrefix(prefix);

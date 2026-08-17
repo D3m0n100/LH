@@ -8,6 +8,11 @@ out/
 bin/
 lib/
 LH/build_current_mingw/
+LH/build_codex_verify_mingw/
+
+# Local OCR and assistant-generated workspace data
+LH/.ocr/
+LH/.claude/settings.local.json
 
 # IDE and editor files
 .vscode/

@@ -319,5 +319,4 @@ void TaskSchedulerTest::testTimeoutWarning()
 }
 
 // 注册测试类
-// QTEST_MAIN(TaskSchedulerTest)
-// 如果要独立运行，取消上面的注释
+QTEST_MAIN(TaskSchedulerTest)

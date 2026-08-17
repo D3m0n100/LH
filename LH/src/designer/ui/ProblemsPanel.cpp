@@ -1,5 +1,7 @@
-#include "ProblemsPanel.h"
+﻿#include "ProblemsPanel.h"
 
+#include <QAbstractItemView>
+#include <QColor>
 #include <QDateTime>
 #include <QHeaderView>
 #include <QHBoxLayout>
@@ -57,17 +59,17 @@ QHeaderView::section {
 
     auto* tools = new QHBoxLayout;
     tools->setContentsMargins(0, 0, 0, 0);
-    auto* title = new QLabel("问题", this);
+    auto* title = new QLabel(QStringLiteral("问题"), this);
     title->setObjectName(QStringLiteral("ProblemsTitle"));
-    m_summaryLabel = new QLabel("诊断摘要：错误 0，警告 0，信息 0", this);
+    m_summaryLabel = new QLabel(QStringLiteral("诊断摘要：错误 0，警告 0，信息 0"), this);
     m_summaryLabel->setObjectName(QStringLiteral("ProblemsSummary"));
     m_summaryLabel->setStyleSheet("QLabel#ProblemsSummary { color: #57606a; }");
     m_clearButton = new QToolButton(this);
-    m_clearButton->setText("清空");
+    m_clearButton->setText(QStringLiteral("清空"));
     m_clearButton->setIcon(QIcon(":/icons/clear.svg"));
     m_clearButton->setIconSize(QSize(16, 16));
     m_clearButton->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
-    m_clearButton->setToolTip("清空所有问题");
+    m_clearButton->setToolTip(QStringLiteral("清空所有问题"));
     connect(m_clearButton, &QToolButton::clicked, this, &ProblemsPanel::clearProblems);
     tools->addWidget(title);
     tools->addSpacing(12);
@@ -78,7 +80,11 @@ QHeaderView::section {
 
     m_table = new QTableWidget(this);
     m_table->setColumnCount(4);
-    m_table->setHorizontalHeaderLabels(QStringList() << "时间" << "级别" << "来源" << "消息");
+    m_table->setHorizontalHeaderLabels(QStringList()
+                                       << QStringLiteral("时间")
+                                       << QStringLiteral("级别")
+                                       << QStringLiteral("来源")
+                                       << QStringLiteral("消息"));
     m_table->horizontalHeader()->setStretchLastSection(false);
     m_table->horizontalHeader()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
     m_table->horizontalHeader()->setSectionResizeMode(1, QHeaderView::ResizeToContents);
@@ -114,18 +120,18 @@ void ProblemsPanel::addProblem(const QString& severity, const QString& source, c
     auto* sourceItem = new QTableWidgetItem(source);
     auto* messageItem = new QTableWidgetItem(message);
 
-    if (severity.compare("错误", Qt::CaseInsensitive) == 0 ||
-        severity.compare("error", Qt::CaseInsensitive) == 0) {
-        severityItem->setText("错误");
+    if (severity.compare(QStringLiteral("错误"), Qt::CaseInsensitive) == 0
+            || severity.compare(QStringLiteral("error"), Qt::CaseInsensitive) == 0) {
+        severityItem->setText(QStringLiteral("错误"));
         severityItem->setForeground(QColor("#cf222e"));
         severityItem->setBackground(QColor("#ffebe9"));
-    } else if (severity.compare("警告", Qt::CaseInsensitive) == 0 ||
-               severity.compare("warning", Qt::CaseInsensitive) == 0) {
-        severityItem->setText("警告");
+    } else if (severity.compare(QStringLiteral("警告"), Qt::CaseInsensitive) == 0
+               || severity.compare(QStringLiteral("warning"), Qt::CaseInsensitive) == 0) {
+        severityItem->setText(QStringLiteral("警告"));
         severityItem->setForeground(QColor("#7d4e00"));
         severityItem->setBackground(QColor("#fff8c5"));
     } else {
-        severityItem->setText(severity.isEmpty() ? "信息" : severity);
+        severityItem->setText(severity.isEmpty() ? QStringLiteral("信息") : severity);
         severityItem->setForeground(QColor("#0969da"));
         severityItem->setBackground(QColor("#ddf4ff"));
     }
@@ -138,9 +144,9 @@ void ProblemsPanel::addProblem(const QString& severity, const QString& source, c
     m_table->setItem(row, 2, sourceItem);
     m_table->setItem(row, 3, messageItem);
 
-    if (severityItem->text() == "错误") {
+    if (severityItem->text() == QStringLiteral("错误")) {
         ++m_errorCount;
-    } else if (severityItem->text() == "警告") {
+    } else if (severityItem->text() == QStringLiteral("警告")) {
         ++m_warningCount;
     } else {
         ++m_infoCount;
@@ -182,10 +188,8 @@ void ProblemsPanel::updateSummaryLabels()
         return;
     }
 
-    m_summaryLabel->setText(
-        QString("诊断摘要：错误 %1，警告 %2，信息 %3")
-            .arg(m_errorCount)
-            .arg(m_warningCount)
-            .arg(m_infoCount));
+    m_summaryLabel->setText(QStringLiteral("诊断摘要：错误 %1，警告 %2，信息 %3")
+                            .arg(m_errorCount)
+                            .arg(m_warningCount)
+                            .arg(m_infoCount));
 }
-

@@ -13,6 +13,7 @@
 
 class IDeviceBackend;
 class IOpcServer;
+class ControllerDeviceBackend;
 class SampleDataProvider;
 class BuildController;
 class ProjectController;
@@ -65,8 +66,9 @@ public:
 
     RuntimeSessionState state() const { return m_state; }
     DownloadState downloadState() const { return m_downloadState; }
-    bool isRunning() const { return m_state == RuntimeSessionState::Running; }
-    bool isMonitoring() const { return m_monitoringActive; }
+    bool isRunning() const { return m_state == RuntimeSessionState::Running
+                                    || m_state == RuntimeSessionState::Monitoring; }
+    bool isMonitoring() const { return m_state == RuntimeSessionState::Monitoring; }
     bool isDemoMode() const { return m_demoModeActive; }
     bool hasPendingRunAfterCompile() const { return m_pendingRunAfterCompile; }
     QString artifactPath() const { return m_artifactPath; }
@@ -89,6 +91,12 @@ public:
     void stopMonitoring();
 
     bool requestDownload(const QString& artifactPath, const QVariantMap& options = {});
+    bool pauseController();
+    bool resumeController();
+    bool stepController();
+    bool runControllerToCursor(int lineNumber);
+    bool setControllerBreakpoints(int firstLine, int secondLine);
+    bool testControllerConnection();
 
 signals:
     void stateChanged(RuntimeSessionState oldState, RuntimeSessionState newState);
@@ -99,22 +107,34 @@ signals:
     void downloadStateChanged(DownloadState oldState, DownloadState newState);
     void downloadProgressChanged(int percent);
     void downloadFinished(bool success, const QString& message);
+    void downloadDiagnosticChanged(const QVariantMap& diagnostic);
     void opcRunningChanged(bool running);
     void opcErrorOccurred(const QString& message);
 
 private:
     void setState(RuntimeSessionState newState);
     void setDownloadState(DownloadState newState);
+    void handleBackendConnectionStateChanged(bool connected);
     DownloadState classifyDownloadFailure(const CommError* operationError,
                                           const QString& errorMessage) const;
+    void emitDownloadDiagnostic(const QString& severity,
+                                const QString& stage,
+                                const QString& message,
+                                const QVariantMap& details = QVariantMap());
+    bool runDownloadPrecheck(const QString& artifactPath,
+                             const QVariantMap& options,
+                             QString* errorMessage);
     bool shouldAutoDownload() const;
     void connectOpcServerSignals();
     void handleOpcWriteRequest(const QString& pointId, const QVariant& value);
     void syncOpcRuntimePoints();
     void startOpcServerIfEnabled();
     void stopOpcServer();
+    bool ensureControllerBackend();
+    ControllerDeviceBackend* controllerBackend() const;
 
     IDeviceBackend* m_backend = nullptr;
+    ControllerDeviceBackend* m_ownedControllerBackend = nullptr;
     IOpcServer* m_opcServer = nullptr;
     SampleDataProvider* m_sampleDataProvider = nullptr;
     ProjectController* m_projectController = nullptr;
@@ -124,9 +144,9 @@ private:
     RuntimeSessionState m_state = RuntimeSessionState::Idle;
     DownloadState m_downloadState = DownloadState::Idle;
     bool m_demoModeActive = false;
-    bool m_monitoringActive = false;
     bool m_pendingRunAfterCompile = false;
     bool m_skipNextBuildSave = false;
+    bool m_downloadCancelled = false;
     QString m_artifactPath;
 };
 

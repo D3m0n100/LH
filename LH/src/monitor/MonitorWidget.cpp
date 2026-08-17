@@ -34,6 +34,8 @@
 #include <QTextStream>
 #include <QDir>
 #include <QFileInfo>
+#include <QHash>
+#include <limits>
 
 MonitorWidget::MonitorWidget(QWidget* parent)
     : QWidget(parent)
@@ -91,6 +93,10 @@ MonitorWidget::MonitorWidget(QWidget* parent)
 MonitorWidget::~MonitorWidget()
 {
     stopMonitoring();
+    auto& manager = Monitor::MonitorManager::instance();
+    if (manager.dataProcessor() == m_dataProcessor) {
+        manager.setDataProcessor(nullptr);
+    }
 }
 
 void MonitorWidget::setSampleDataProvider(SampleDataProvider* provider)
@@ -590,52 +596,209 @@ void MonitorWidget::onExportData()
         fromDatabase = (clicked == dbBtn);
     }
 
-    ExportDataPackage package = buildExportDataPackage(channels, fromDatabase);
-    
+    auto& manager = Monitor::MonitorManager::instance();
+
+    if (fromDatabase) {
+        // 先排空日志队列，再固定整个导出的上界。之后的每一页都使用这
+        // 个 end，不会因为用户选择路径或写文件耗时而改变时间窗。
+        manager.flushDatabaseLogging();
+        const QDateTime fixedEnd = QDateTime::currentDateTimeUtc();
+        const qint64 windowMs = timeWindow();
+        const QDateTime fixedStart = fixedEnd.addMSecs(-windowMs);
+
+        QList<ExportChannelInfo> channelInfos;
+        channelInfos.reserve(channels.size());
+        QHash<QString, int> fallbackLimits;
+        for (const QString& channelId : channels) {
+            const Monitor::ChannelConfig config = manager.channelConfig(channelId);
+            ExportChannelInfo info;
+            info.channelId = channelId;
+            info.displayName = config.displayName.isEmpty() ? channelId : config.displayName;
+            info.unit = config.unit;
+            bool periodOk = false;
+            const int period = config.metadata.value("periodMs").toInt(&periodOk);
+            info.samplePeriodMs = periodOk && period > 0 ? period : 100;
+            channelInfos.append(info);
+
+            const int estimate = static_cast<int>(windowMs / qMax(1, info.samplePeriodMs));
+            fallbackLimits.insert(channelId, qMax(50, estimate));
+        }
+
+        ExportMetadata metadata;
+        metadata.exportTime = fixedEnd;
+        metadata.timeWindowMs = windowMs;
+        metadata.exportFormat = QStringLiteral("AUTO");
+        metadata.totalChannels = channelInfos.size();
+
+        const QString defaultFileName = m_exportHelper->generateMultiChannelFileName("csv");
+        const QString filePath = QFileDialog::getSaveFileName(
+            this,
+            tr("导出监控数据"),
+            QDir::homePath() + "/" + defaultFileName,
+            MonitorExportHelper::dataFormatFilter());
+        if (filePath.isEmpty()) {
+            qDebug() << "[MonitorWidget] 用户取消导出";
+            return;
+        }
+
+        struct DatabaseProviderState {
+            bool fallback = false;
+        };
+        QHash<QString, DatabaseProviderState> providerStates;
+
+        qint64 totalSamples = 0;
+        const qint64 maxMetadataCount = std::numeric_limits<int>::max();
+        for (int channelIndex = 0; channelIndex < channelInfos.size(); ++channelIndex) {
+            const QString& channelId = channels.at(channelIndex);
+            RuntimeHistoryCount count = manager.historyFromDatabaseCount(
+                channelId, fixedStart, fixedEnd);
+            if (!count.succeeded()) {
+                const QString error = count.errorText.isEmpty()
+                    ? tr("数据库历史计数失败: %1").arg(channelId)
+                    : count.errorText;
+                QMessageBox::critical(this, tr("导出失败"), error);
+                return;
+            }
+
+            DatabaseProviderState state;
+            qint64 selectedCount = count.count;
+            if (selectedCount == 0) {
+                state.fallback = true;
+                RuntimeHistoryCount latestCount = manager.historyFromDatabaseLatestCount(
+                    channelId, fallbackLimits.value(channelId), fixedEnd);
+                if (!latestCount.succeeded()) {
+                    const QString error = latestCount.errorText.isEmpty()
+                        ? tr("数据库最近历史计数失败: %1").arg(channelId)
+                        : latestCount.errorText;
+                    QMessageBox::critical(this, tr("导出失败"), error);
+                    return;
+                }
+                selectedCount = latestCount.count;
+            }
+
+            const qint64 boundedCount = qMin(selectedCount, maxMetadataCount);
+            channelInfos[channelIndex].sampleCount = static_cast<int>(boundedCount);
+            if (boundedCount > maxMetadataCount - totalSamples) {
+                totalSamples = maxMetadataCount;
+            } else {
+                totalSamples += boundedCount;
+            }
+            providerStates.insert(channelId, state);
+        }
+        metadata.totalSamples = static_cast<int>(totalSamples);
+
+        constexpr int pageSize = 500;
+
+        ExportPageProvider provider =
+            [&, fixedStart, fixedEnd](const QString& channelId,
+                                      const ExportCursor& cursor,
+                                      int requestedPageSize) -> ExportPage {
+                ExportPage output;
+                DatabaseProviderState& state = providerStates[channelId];
+
+                RuntimeHistoryCursor historyCursor;
+                historyCursor.timestamp = cursor.timestamp;
+                historyCursor.id = cursor.id;
+
+                const int effectivePageSize = qMax(1, qMin(pageSize, requestedPageSize));
+                Monitor::DatabaseHistoryPage page;
+                if (state.fallback) {
+                    page = manager.historyFromDatabaseLatestPage(
+                        channelId, fallbackLimits.value(channelId), effectivePageSize,
+                        historyCursor, fixedEnd);
+                } else {
+                    page = manager.historyFromDatabasePage(
+                        channelId, fixedStart, fixedEnd, effectivePageSize, historyCursor);
+
+                    // 保持旧行为：当前窗口没有数据时回退最近 max(50,estimate) 条。
+                    // 仅首个成功空页触发，后续页仍严格沿用 keyset 游标。
+                    if (page.succeeded() && page.samples.isEmpty()
+                            && !page.hasMore && !historyCursor.isValid()) {
+                        state.fallback = true;
+                        historyCursor.clear();
+                        page = manager.historyFromDatabaseLatestPage(
+                            channelId, fallbackLimits.value(channelId), effectivePageSize,
+                            historyCursor, fixedEnd);
+                    }
+                }
+
+                if (!page.succeeded()) {
+                    output.success = false;
+                    output.errorMessage = page.errorText.isEmpty()
+                        ? tr("数据库历史分页失败: %1").arg(channelId)
+                        : page.errorText;
+                    return output;
+                }
+
+                output.samples = page.samples;
+                output.hasMore = page.hasMore;
+                output.nextCursor.timestamp = page.nextCursor.timestamp;
+                output.nextCursor.id = page.nextCursor.id;
+                return output;
+            };
+
+        ExportResult result = m_exportHelper->exportPackagePaged(
+            channelInfos, metadata, provider, filePath, pageSize);
+        if (result.success) {
+            const QString message = tr("数据导出成功！\n\n"
+                                       "文件: %1\n"
+                                       "格式: %2\n"
+                                       "通道数: %3\n"
+                                       "样本数: %4\n"
+                                       "文件大小: %5 字节")
+                .arg(result.filePath)
+                .arg(result.exportFormat)
+                .arg(channelInfos.size())
+                .arg(result.exportedCount)
+                .arg(result.fileSizeBytes);
+            QMessageBox::information(this, tr("导出成功"), message);
+            qDebug() << "[MonitorWidget] 数据库流式导出成功:" << result.filePath;
+        } else {
+            QMessageBox::critical(this, tr("导出失败"),
+                                   tr("导出失败: %1").arg(result.errorMessage));
+            qWarning() << "[MonitorWidget] 数据库流式导出失败:" << result.errorMessage;
+        }
+        return;
+    }
+
+    // 内存来源保持原有完整数据包路径和公开导出 API 语义。
+    ExportDataPackage package = buildExportDataPackage(channels, false);
     if (!package.isValid()) {
         QMessageBox::warning(this, tr("导出失败"),
-                            tr("选中的通道没有可导出的数据"));
+                             tr("选中的通道没有可导出的数据"));
         qWarning() << "[MonitorWidget] 导出失败: 没有数据";
         return;
     }
-    
-    QString defaultFileName = m_exportHelper->generateMultiChannelFileName("csv");
-    QString filter = MonitorExportHelper::dataFormatFilter();
-    
-    QString filePath = QFileDialog::getSaveFileName(
+
+    const QString defaultFileName = m_exportHelper->generateMultiChannelFileName("csv");
+    const QString filePath = QFileDialog::getSaveFileName(
         this,
         tr("导出监控数据"),
         QDir::homePath() + "/" + defaultFileName,
-        filter
-    );
-    
+        MonitorExportHelper::dataFormatFilter());
     if (filePath.isEmpty()) {
         qDebug() << "[MonitorWidget] 用户取消导出";
         return;
     }
-    
-    // 4. 根据文件扩展名选择导出格式
+
     ExportResult result = m_exportHelper->exportPackageAuto(package, filePath);
-    
-    // 5. 显示导出结果
     if (result.success) {
-        QString message = tr("数据导出成功！\n\n"
-                            "文件: %1\n"
-                            "格式: %2\n"
-                            "通道数: %3\n"
-                            "样本数: %4\n"
-                            "文件大小: %5 字节")
+        const QString message = tr("数据导出成功！\n\n"
+                                   "文件: %1\n"
+                                   "格式: %2\n"
+                                   "通道数: %3\n"
+                                   "样本数: %4\n"
+                                   "文件大小: %5 字节")
             .arg(result.filePath)
             .arg(result.exportFormat)
             .arg(package.channelInfos.size())
             .arg(result.exportedCount)
             .arg(result.fileSizeBytes);
-        
         QMessageBox::information(this, tr("导出成功"), message);
         qDebug() << "[MonitorWidget] 导出成功:" << result.filePath;
     } else {
         QMessageBox::critical(this, tr("导出失败"),
-                             tr("导出失败: %1").arg(result.errorMessage));
+                              tr("导出失败: %1").arg(result.errorMessage));
         qWarning() << "[MonitorWidget] 导出失败:" << result.errorMessage;
     }
 }
@@ -716,22 +879,13 @@ ExportDataPackage MonitorWidget::buildExportDataPackage(const QStringList& chann
         info.samplePeriodMs = periodMs;
 
         // 获取通道历史数据
+        // 数据库来源由 onExportData() 的分页提供器直接写文件，避免在这里
+        // 构造完整历史列表。此兼容辅助函数只保留内存来源的旧路径。
+        Q_UNUSED(fromDatabase);
         QList<Monitor::Sample> samples;
         const qint64 winMs = timeWindow();
-        if (fromDatabase && manager.isDatabaseHistoryAvailable()) {
-            const QDateTime end = QDateTime::currentDateTimeUtc();
-            const QDateTime start = end.addMSecs(-winMs);
-            samples = manager.historyFromDatabase(channelId, start, end);
-
-            if (samples.isEmpty()) {
-                const int estimate = static_cast<int>(winMs / qMax(1, info.samplePeriodMs));
-                samples = manager.historyFromDatabase(channelId, qMax(50, estimate));
-            }
-        } else {
-            // 内存历史（当前会话）
-            const int estimate = static_cast<int>(winMs / 100); // 保持与原逻辑一致的估算
-            samples = manager.history(channelId, qMax(50, estimate));
-        }
+        const int estimate = static_cast<int>(winMs / 100); // 保持与原逻辑一致的估算
+        samples = manager.history(channelId, qMax(50, estimate));
 
         info.sampleCount = samples.size();
         package.channelInfos.append(info);

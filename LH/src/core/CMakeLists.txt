@@ -14,6 +14,7 @@ target_link_libraries(core_module
 
 target_include_directories(core_module PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}
+    ${LX_PUBLIC_INCLUDE_DIRS}
 )
 
 target_compile_features(core_module PUBLIC cxx_std_17)

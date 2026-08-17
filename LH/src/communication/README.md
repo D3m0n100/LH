@@ -36,7 +36,7 @@ QVariantMap modbusCfg{
     {"protocol", "MODBUS"},   // 或 "SERIAL" + mode=RTU
     {"mode", "RTU"},
     {"type", "Master"},
-    {"stationAddress", 1},
+    {"address", 1},
 
     // 串口参数（要求：115200/8N1）
     {"port", "COM7"},
@@ -141,14 +141,17 @@ ControllerBridge* bridge = Communication::getControllerBridge(iface);
 
 ---
 
-## 下载协议可插拔框架（预留）
+## 下载 Profile 契约
 
 ### 文件
 
-- `IDownloadTransport.h`：下载传输接口
-- `DownloadProfile.h/.cpp`：下载步骤配置（JSON）
+- `DownloadProfile.h/.cpp`：下载步骤解析、兼容字段归一化和结构校验
+- `ControllerBridge.h/.cpp`：下载面板使用的 Bridge 执行入口
+- `ControllerDeviceBackendDownload.cpp`：运行会话使用的控制器后端执行入口
 
-当前不实现具体厂家下载命令细节，仅提供配置驱动框架与入口（`ControllerBridge::download()`）。
+两个执行入口使用同一组规范字段。下载产物必须配置 Profile；缺少、不可读或结构无效时，下载会在写设备前失败。寄存器地址、命令值和结果状态仍须以实际硬件协议为准。
+
+运行会话的控制器后端目前只接受需要响应的 `writeRegs`，并仅支持设备站号直达；`writeCoils`、`needResponse=false` 或目标选择寄存器寻址会明确报配置错误，需改用 Bridge 下载入口。
 
 ### DownloadProfile JSON 示例
 
@@ -157,13 +160,16 @@ ControllerBridge* bridge = Communication::getControllerBridge(iface);
   "name": "example_download_v1",
   "slaveId": 1,
   "steps": [
-    { "type": "enter", "params": { "writeHolding": { "address": 2000, "values": [1] } } },
-    { "type": "sendChunk", "params": { "chunkHoldingAddress": 2100, "maxRegistersPerChunk": 60 } },
-    { "type": "finalize", "params": { "writeHolding": { "address": 2001, "values": [1] } } },
-    { "type": "queryResult", "params": { "resultRegister": { "address": 2300, "count": 2 } } }
+    { "type": "enter", "params": { "layer": "target", "address": 2000, "values": [1] } },
+    { "type": "poll", "params": { "layer": "target", "address": 2002, "count": 1, "expected": [1], "timeoutMs": 2000, "pollIntervalMs": 100 } },
+    { "type": "sendChunk", "params": { "layer": "target", "dataAddress": 2100, "chunkWords": 60, "byteOrder": "BigEndian", "needResponse": true } },
+    { "type": "finalize", "params": { "layer": "target", "address": 2001, "values": [1] } },
+    { "type": "queryResult", "params": { "layer": "target", "address": 2300, "count": 2, "expected": [0, 0] } }
   ]
 }
 ```
+
+规范字段为 `pollIntervalMs`、`dataAddress`、`chunkWords`、`byteOrder` 以及可选的 `packetIndexAddress`、`packetLengthAddress`、`packetCrcAddress`、`packetOffsetAddress`。旧字段 `intervalMs`、`maxRegisters`、`maxRegistersPerChunk`、`chunkHoldingAddress` 仅作为兼容别名保留。
 
 ---
 
@@ -185,48 +191,48 @@ ControllerBridge* bridge = Communication::getControllerBridge(iface);
 - 连续执行 Fun3/Fun15/Fun16：应稳定；超时会按 `retryCount` 重试，最终错误码清晰
 ---
 
-## Classic OPC / Modbus ��λ��ַ����˵��
+## Classic OPC / Modbus 点位地址兼容说明
 
-`ClassicOpcServer` �����ȶ�ȡ `RuntimePointDefinition.addressing`��������һ�鳣�������ֶΣ��������� LM ���ɵ���������ݡ�
+`ClassicOpcServer` 会优先读取 `RuntimePointDefinition.addressing`，并兼容一组常见别名字段，用于适配 LH 历史点表或导入数据。
 
-### ֧�ֵ��ֶ�
+### 支持的字段
 
-- ���� / �Ĵ�������
+- 区域 / 寄存器类型
   - `area`
   - `registerType`
   - `tagArea`
   - `memoryArea`
   - `region`
-- ��ַ
+- 地址
   - `address`
   - `regAddress`
   - `register`
   - `pointAddress`
   - `offset`
-- ��վ / վ��
+- 从站 / 站号
   - `unitId`
   - `slaveId`
   - `stationAddress`
   - `serverAddress`
-- λƫ��
+- 位偏移
   - `bitOffset`
   - `bit`
   - `bitIndex`
-- Ԫ�ظ���
+- 元素个数
   - `elementCount`
   - `count`
   - `length`
   - `quantity`
 
-### Ĭ�Ϲ���
+### 默认规则
 
-- `area` Ĭ�ϰ� `holding` ����
-- `address` ȱʧʱ������� `point.metadata.address`��`point.bindingPath` ���ƶ�
-- `readOnly` ����δ��ʽָ������ʱ��Ĭ�ϸ�ƫ�� `input`
-- `bitOffset` ����ӵ�������ַ�ϣ�����λƫ�Ƽ���
+- `area` 默认按 `holding` 处理
+- `address` 缺失时会继续从 `point.metadata.address`、`point.bindingPath` 中推断
+- `readOnly` 点在未显式指定区域时，默认更偏向 `input`
+- `bitOffset` 会叠加到基础地址上，用于位偏移兼容
 
-### Լ��
+### 约定
 
-- `coil/coils` ����Ȧ��д
-- `input/input-register/input-registers` ������Ĵ�����
-- �������Ĭ���߱��ּĴ�����д
+- `coil/coils` 走线圈读写
+- `input/input-register/input-registers` 走输入寄存器读
+- 其余情况默认走保持寄存器读写

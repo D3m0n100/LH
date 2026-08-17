@@ -4,6 +4,7 @@
 #include "MonitorChannel.h"
 #include "MonitorDataProcessor.h"
 #include "MonitorDataLogger.h"
+#include "communication/RuntimePointQualityMapper.h"
 #include "core/DataManager.h"
 
 // 运行时配置类型（避免在头文件中引入，减少依赖）
@@ -20,6 +21,7 @@
 #include <algorithm>
 #include <cmath>
 #include <random>
+#include <utility>
 
 namespace Monitor {
 
@@ -201,6 +203,19 @@ static RuntimePointQuality qualityFromBackendError(const CommError& error, bool 
     return runtimePointQualityFromBackendError(error, backendOnline);
 }
 
+static void attachRuntimeRecordMetadata(Sample& sample, const RuntimeRecord& record)
+{
+    if (!record.origin.isEmpty()) {
+        sample.metadata[QStringLiteral("origin")] = record.origin;
+    }
+    if (!record.errorCode.isEmpty()) {
+        sample.metadata[QStringLiteral("errorCode")] = record.errorCode;
+    }
+    if (!record.errorText.isEmpty()) {
+        sample.metadata[QStringLiteral("error")] = record.errorText;
+    }
+}
+
 static void attachBackendStatusMetadata(Sample& sample, const BackendStatusSnapshot& status)
 {
     sample.metadata[QStringLiteral("backendType")] = status.backendType;
@@ -233,6 +248,7 @@ MonitorManager::MonitorManager()
     , m_cleanupTimer(new QTimer(this))
     , m_dataRetentionDays(DEFAULT_DATA_RETENTION_DAYS)
 {
+    m_backendPollClock.start();
     setupCleanupTimer();
 
     connect(m_backendPollTimer, &QTimer::timeout,
@@ -243,17 +259,47 @@ MonitorManager::MonitorManager()
 
     if (QCoreApplication::instance()) {
         connect(QCoreApplication::instance(), &QCoreApplication::aboutToQuit,
-                this, [this]() { if (m_dataLogger) { m_dataLogger->shutdown(); } });
+                this, [this]() { shutdown(); });
     }
 }
 
 MonitorManager::~MonitorManager()
 {
-    flushDatabaseLogging();
+    shutdown();
+    m_dataLogger.reset();
+}
+
+void MonitorManager::shutdown()
+{
+    stopMonitoring();
+
+    if (m_backendPointsChangedConnection) {
+        disconnect(m_backendPointsChangedConnection);
+        m_backendPointsChangedConnection = {};
+    }
+    if (m_backendConnectionStateConnection) {
+        disconnect(m_backendConnectionStateConnection);
+        m_backendConnectionStateConnection = {};
+    }
+    if (m_backendDestroyedConnection) {
+        disconnect(m_backendDestroyedConnection);
+        m_backendDestroyedConnection = {};
+    }
+    if (m_dataProcessorDestroyedConnection) {
+        disconnect(m_dataProcessorDestroyedConnection);
+        m_dataProcessorDestroyedConnection = {};
+    }
+
+    m_backend = nullptr;
+    m_dataProcessor = nullptr;
+    m_backendPointIds.clear();
+    m_pointIdToChannel.clear();
+    m_backendPointPeriodsMs.clear();
+    m_backendPointNextDueMs.clear();
+
     if (m_dataLogger) {
         m_dataLogger->shutdown();
     }
-    stopMonitoring();
 }
 
 void MonitorManager::setupCleanupTimer()
@@ -269,7 +315,23 @@ void MonitorManager::setupCleanupTimer()
 
 void MonitorManager::setDataProcessor(MonitorDataProcessor* processor)
 {
-    m_dataProcessor.store(processor, std::memory_order_release);
+    if (m_dataProcessor.data() == processor) {
+        return;
+    }
+
+    if (m_dataProcessorDestroyedConnection) {
+        disconnect(m_dataProcessorDestroyedConnection);
+        m_dataProcessorDestroyedConnection = {};
+    }
+
+    m_dataProcessor = processor;
+    if (processor) {
+        m_dataProcessorDestroyedConnection = connect(
+            processor, &QObject::destroyed, this, [this]() {
+                m_dataProcessor = nullptr;
+                m_dataProcessorDestroyedConnection = {};
+            });
+    }
 
     // 确保处理器中的通道与当前注册通道同步
     if (processor) {
@@ -281,6 +343,11 @@ void MonitorManager::setDataProcessor(MonitorDataProcessor* processor)
 
     qDebug() << "[MonitorManager] 数据处理器已设置:"
              << (processor ? "启用增量分发" : "禁用增量分发");
+}
+
+MonitorDataProcessor* MonitorManager::dataProcessor() const
+{
+    return m_dataProcessor.data();
 }
 
 // ============================================================================
@@ -300,24 +367,59 @@ void MonitorManager::setDeviceBackend(IDeviceBackend* backend)
         disconnect(m_backendConnectionStateConnection);
         m_backendConnectionStateConnection = {};
     }
+    if (m_backendDestroyedConnection) {
+        disconnect(m_backendDestroyedConnection);
+        m_backendDestroyedConnection = {};
+    }
 
     m_backend = backend;
     m_backendPollTimer->stop();
     m_backendPointIds.clear();
     m_pointIdToChannel.clear();
+    m_backendPointPeriodsMs.clear();
+    m_backendPointNextDueMs.clear();
 
     if (backend) {
+        m_backendDestroyedConnection = connect(
+            backend, &QObject::destroyed, this, [this]() {
+                m_backend = nullptr;
+                m_backendPollTimer->stop();
+                m_backendPointIds.clear();
+                m_pointIdToChannel.clear();
+                m_backendPointPeriodsMs.clear();
+                m_backendPointNextDueMs.clear();
+                m_backendPointsChangedConnection = {};
+                m_backendConnectionStateConnection = {};
+                m_backendDestroyedConnection = {};
+            });
+
         // 连接 backend 的 pointsChanged 信号，实时更新通道
+        const QPointer<IDeviceBackend> sourceBackend = backend;
         m_backendPointsChangedConnection =
                 connect(backend, &IDeviceBackend::pointsChanged,
-                        this, [this](const QHash<QString, QVariant>& updates) {
+                        this, [this, sourceBackend](const QHash<QString, QVariant>& updates) {
+                            if (!m_isMonitoring.load(std::memory_order_acquire)
+                                    || !sourceBackend
+                                    || m_backend.data() != sourceBackend.data()) {
+                                return;
+                            }
                             for (auto it = updates.constBegin(); it != updates.constEnd(); ++it) {
                                 const QString channelName = m_pointIdToChannel.value(it.key());
                                 if (channelName.isEmpty())
                                     continue;
-                                recordSample(channelName, it.value().toDouble(), QString(),
-                                             {{"quality", runtimePointQualityToString(RuntimePointQuality::Good)},
-                                              {"source", "backend_push"}});
+                                bool valueOk = false;
+                                const double value = it.value().toDouble(&valueOk);
+                                Sample sample;
+                                sample.channelName = channelName;
+                                sample.value = value;
+                                sample.valueValid = valueOk;
+                                sample.quality = valueOk ? RuntimePointQuality::Good
+                                                         : RuntimePointQuality::Bad;
+                                sample.timestamp = QDateTime::currentDateTimeUtc();
+                                sample.metadata[QStringLiteral("quality")] = qualityToString(sample.quality);
+                                sample.metadata[QStringLiteral("valueValid")] = sample.valueValid;
+                                sample.metadata[QStringLiteral("source")] = QStringLiteral("backend_push");
+                                recordSample(sample);
                             }
                         });
 
@@ -350,9 +452,6 @@ bool MonitorManager::isDatabaseLoggingEnabled() const
 
 bool MonitorManager::isDatabaseHistoryAvailable() const
 {
-    if (!m_dataLogger || !m_dataLogger->isEnabled()) {
-        return false;
-    }
     return DataManager::instance().isInitialized();
 }
 
@@ -391,7 +490,7 @@ bool MonitorManager::registerChannel(const ChannelConfig& config)
 
     // 同步到数据处理器
     {
-        MonitorDataProcessor* proc = m_dataProcessor.load(std::memory_order_acquire);
+        QPointer<MonitorDataProcessor> proc = m_dataProcessor;
         if (proc) {
             proc->ensureChannel(config.name);
         }
@@ -417,7 +516,7 @@ bool MonitorManager::removeChannel(const QString& name)
     }
 
     {
-        MonitorDataProcessor* proc = m_dataProcessor.load(std::memory_order_acquire);
+        QPointer<MonitorDataProcessor> proc = m_dataProcessor;
         if (proc) {
             proc->clearChannelCache(name);
         }
@@ -497,7 +596,7 @@ void MonitorManager::recordSample(const Sample& sample)
         ch = m_channels.value(sample.channelName);
     }
 
-    if (ch) {
+    if (ch && sample.valueValid) {
         ch->appendSample(sample);
     }
 
@@ -509,8 +608,10 @@ void MonitorManager::recordSample(const Sample& sample)
     // 增量分发到数据处理器
     dispatchToProcessor(sample.channelName, sample);
 
-    emit sampleRecorded(sample.channelName, sample.value,
-                        sample.unit, sample.timestamp);
+    if (sample.valueValid) {
+        emit sampleRecorded(sample.channelName, sample.value,
+                            sample.unit, sample.timestamp);
+    }
 }
 
 void MonitorManager::recordSamples(const QString& channelName,
@@ -549,7 +650,9 @@ void MonitorManager::recordSamples(const QString& channelName,
 
     if (ch) {
         for (const Sample& sample : normalizedSamples) {
-            ch->appendSample(sample);
+            if (sample.valueValid) {
+                ch->appendSample(sample);
+            }
         }
     }
 
@@ -561,7 +664,11 @@ void MonitorManager::recordSamples(const QString& channelName,
     // 批量增量分发
     dispatchToProcessor(channelName, normalizedSamples);
 
-    emit samplesRecorded(channelName, normalizedSamples.size());
+    const int validCount = std::count_if(normalizedSamples.cbegin(), normalizedSamples.cend(),
+                                         [](const Sample& sample) { return sample.valueValid; });
+    if (validCount > 0) {
+        emit samplesRecorded(channelName, validCount);
+    }
 }
 
 QList<Sample> MonitorManager::history(const QString& channelName, int count) const
@@ -604,8 +711,13 @@ QList<Sample> MonitorManager::historyFromDatabase(const QString& channelName, in
         Sample s;
         s.channelName = channelName;
         s.value = r.value;
+        s.valueValid = r.valueValid;
+        s.quality = r.quality;
         s.unit = r.unit;
         s.timestamp = r.timestamp.isValid() ? r.timestamp : QDateTime();
+        s.metadata[QStringLiteral("quality")] = qualityToString(s.quality);
+        s.metadata[QStringLiteral("valueValid")] = s.valueValid;
+        attachRuntimeRecordMetadata(s, r);
         out.append(s);
     }
 
@@ -633,11 +745,112 @@ QList<Sample> MonitorManager::historyFromDatabase(const QString& channelName,
         Sample srec;
         srec.channelName = channelName;
         srec.value = r.value;
+        srec.valueValid = r.valueValid;
+        srec.quality = r.quality;
         srec.unit = r.unit;
         srec.timestamp = r.timestamp.isValid() ? r.timestamp : QDateTime();
+        srec.metadata[QStringLiteral("quality")] = qualityToString(srec.quality);
+        srec.metadata[QStringLiteral("valueValid")] = srec.valueValid;
+        attachRuntimeRecordMetadata(srec, r);
         out.append(srec);
     }
     return out;
+}
+
+DatabaseHistoryPage MonitorManager::historyFromDatabasePage(
+    const QString& channelName,
+    const QDateTime& start,
+    const QDateTime& end,
+    int pageSize,
+    const RuntimeHistoryCursor& cursor) const
+{
+    DatabaseHistoryPage result;
+    auto& dm = DataManager::instance();
+    const RuntimeHistoryPage page = dm.queryHistoryPage(
+        channelName,
+        start.isValid() ? start.toUTC() : QDateTime::fromMSecsSinceEpoch(0, Qt::UTC),
+        end.isValid() ? end.toUTC() : QDateTime::currentDateTimeUtc(),
+        pageSize,
+        cursor);
+
+    result.status = page.status;
+    result.nextCursor = page.nextCursor;
+    result.hasMore = page.hasMore;
+    result.errorCode = page.errorCode;
+    result.errorText = page.errorText;
+    result.samples.reserve(page.records.size());
+    for (const RuntimeRecord& record : page.records) {
+        Sample sample;
+        sample.channelName = channelName;
+        sample.value = record.value;
+        sample.valueValid = record.valueValid;
+        sample.quality = record.quality;
+        sample.unit = record.unit;
+        sample.timestamp = record.timestamp.isValid() ? record.timestamp : QDateTime();
+        sample.metadata[QStringLiteral("quality")] = qualityToString(sample.quality);
+        sample.metadata[QStringLiteral("valueValid")] = sample.valueValid;
+        sample.metadata[QStringLiteral("id")] = record.id;
+        attachRuntimeRecordMetadata(sample, record);
+        result.samples.append(sample);
+    }
+    return result;
+}
+
+DatabaseHistoryPage MonitorManager::historyFromDatabaseLatestPage(
+    const QString& channelName,
+    int maxCount,
+    int pageSize,
+    const RuntimeHistoryCursor& cursor,
+    const QDateTime& end) const
+{
+    DatabaseHistoryPage result;
+    auto& dm = DataManager::instance();
+    const RuntimeHistoryPage page = dm.queryLatestHistoryPage(
+        channelName, maxCount, pageSize, cursor,
+        end.isValid() ? end.toUTC() : QDateTime());
+
+    result.status = page.status;
+    result.nextCursor = page.nextCursor;
+    result.hasMore = page.hasMore;
+    result.errorCode = page.errorCode;
+    result.errorText = page.errorText;
+    result.samples.reserve(page.records.size());
+    for (const RuntimeRecord& record : page.records) {
+        Sample sample;
+        sample.channelName = channelName;
+        sample.value = record.value;
+        sample.valueValid = record.valueValid;
+        sample.quality = record.quality;
+        sample.unit = record.unit;
+        sample.timestamp = record.timestamp.isValid() ? record.timestamp : QDateTime();
+        sample.metadata[QStringLiteral("quality")] = qualityToString(sample.quality);
+        sample.metadata[QStringLiteral("valueValid")] = sample.valueValid;
+        sample.metadata[QStringLiteral("id")] = record.id;
+        attachRuntimeRecordMetadata(sample, record);
+        result.samples.append(sample);
+    }
+    return result;
+}
+
+RuntimeHistoryCount MonitorManager::historyFromDatabaseCount(
+    const QString& channelName,
+    const QDateTime& start,
+    const QDateTime& end) const
+{
+    auto& dm = DataManager::instance();
+    return dm.countHistory(
+        channelName,
+        start.isValid() ? start.toUTC() : QDateTime::fromMSecsSinceEpoch(0, Qt::UTC),
+        end.isValid() ? end.toUTC() : QDateTime::currentDateTimeUtc());
+}
+
+RuntimeHistoryCount MonitorManager::historyFromDatabaseLatestCount(
+    const QString& channelName,
+    int maxCount,
+    const QDateTime& end) const
+{
+    return DataManager::instance().countLatestHistory(
+        channelName, maxCount, end.isValid() ? end.toUTC() : QDateTime());
 }
 
 
@@ -743,6 +956,10 @@ void MonitorManager::startMonitoring()
         }
     }
 
+    for (const QString& pointId : std::as_const(m_backendPointIds)) {
+        m_backendPointNextDueMs.insert(pointId, 0);
+    }
+
     // 启动后端轮询定时器（如果已配置）
     if (m_backend && m_backendPollTimer->interval() > 0 && !m_backendPointIds.isEmpty()) {
         m_backendPollTimer->start();
@@ -755,10 +972,7 @@ void MonitorManager::startMonitoring()
 
 void MonitorManager::stopMonitoring()
 {
-    if (!m_isMonitoring) {
-        return;
-    }
-
+    const bool wasMonitoring = m_isMonitoring.load(std::memory_order_acquire);
     m_isMonitoring = false;
 
     {
@@ -769,13 +983,16 @@ void MonitorManager::stopMonitoring()
     }
 
     m_backendPollTimer->stop();
+    m_backendPointNextDueMs.clear();
 
     m_cleanupTimer->stop();
 
     // 停止时 flush 一次，避免丢数据
     flushDatabaseLogging();
 
-    qDebug() << "[MonitorManager] 监控已停止";
+    if (wasMonitoring) {
+        qDebug() << "[MonitorManager] 监控已停止";
+    }
 }
 
 // ============================================================================
@@ -798,7 +1015,7 @@ void MonitorManager::clearChannelData(const QString& channelName)
     }
 
     {
-        MonitorDataProcessor* proc = m_dataProcessor.load(std::memory_order_acquire);
+        QPointer<MonitorDataProcessor> proc = m_dataProcessor;
         if (proc) {
             proc->clearChannelCache(channelName);
         }
@@ -815,7 +1032,7 @@ void MonitorManager::clearAllData()
     }
 
     {
-        MonitorDataProcessor* proc = m_dataProcessor.load(std::memory_order_acquire);
+        QPointer<MonitorDataProcessor> proc = m_dataProcessor;
         if (proc) {
             proc->clearAllCache();
         }
@@ -827,6 +1044,10 @@ void MonitorManager::clearAllData()
 // ============================================================================
 void MonitorManager::onCleanupTimeout()
 {
+    if (!m_isMonitoring.load(std::memory_order_acquire)) {
+        return;
+    }
+
     QDateTime cutoff = QDateTime::currentDateTimeUtc().addDays(-m_dataRetentionDays);
 
     QReadLocker locker(&m_channelLock);
@@ -839,13 +1060,31 @@ void MonitorManager::onCleanupTimeout()
 
 void MonitorManager::onBackendPollTimeout()
 {
-    if (!m_backend || m_backendPointIds.isEmpty())
+    if (!m_isMonitoring.load(std::memory_order_acquire)
+            || !m_backend
+            || m_backendPointIds.isEmpty())
         return;
+
+    const qint64 nowMs = m_backendPollClock.isValid() ? m_backendPollClock.elapsed() : 0;
+    QStringList duePointIds;
+    duePointIds.reserve(m_backendPointIds.size());
+    for (const QString& pointId : std::as_const(m_backendPointIds)) {
+        const int periodMs = qMax(1, m_backendPointPeriodsMs.value(pointId,
+                                                                    m_backendPollTimer->interval()));
+        const qint64 nextDueMs = m_backendPointNextDueMs.value(pointId, 0);
+        if (nextDueMs <= nowMs) {
+            duePointIds.append(pointId);
+            m_backendPointNextDueMs.insert(pointId, nowMs + periodMs);
+        }
+    }
+    if (duePointIds.isEmpty()) {
+        return;
+    }
 
     QHash<QString, QVariant> values;
     QHash<QString, CommError> pointErrors;
     QString errorMsg;
-    const bool ok = m_backend->readPoints(m_backendPointIds, values, &errorMsg, &pointErrors);
+    const bool ok = m_backend->readPoints(duePointIds, values, &errorMsg, &pointErrors);
 
     const BackendStatusSnapshot status = m_backend->statusSnapshot();
     const bool backendOnline = status.online;
@@ -863,17 +1102,28 @@ void MonitorManager::onBackendPollTimeout()
 
     const QDateTime now = QDateTime::currentDateTimeUtc();
     QSet<QString> emittedPoints;
+    QSet<QString> duePointSet;
+    for (const QString& pointId : duePointIds) {
+        duePointSet.insert(pointId);
+    }
 
     for (auto it = values.constBegin(); it != values.constEnd(); ++it) {
+        if (!duePointSet.contains(it.key())) {
+            continue;
+        }
         const QString channelName = m_pointIdToChannel.value(it.key());
         if (channelName.isEmpty())
             continue;
 
         Sample sample;
         sample.channelName = channelName;
-        sample.value = it.value().toDouble();
+        bool valueOk = false;
+        sample.value = it.value().toDouble(&valueOk);
+        sample.valueValid = valueOk;
+        sample.quality = valueOk ? baseQuality : RuntimePointQuality::Bad;
         sample.timestamp = now;
-        sample.metadata[QStringLiteral("quality")] = qualityToString(baseQuality);
+        sample.metadata[QStringLiteral("quality")] = qualityToString(sample.quality);
+        sample.metadata[QStringLiteral("valueValid")] = sample.valueValid;
         sample.metadata[QStringLiteral("source")] = QStringLiteral("backend_poll");
         attachBackendStatusMetadata(sample, status);
 
@@ -881,7 +1131,7 @@ void MonitorManager::onBackendPollTimeout()
         emittedPoints.insert(it.key());
     }
 
-    for (const auto& pointId : m_backendPointIds) {
+    for (const auto& pointId : duePointIds) {
         if (emittedPoints.contains(pointId))
             continue;
 
@@ -892,15 +1142,18 @@ void MonitorManager::onBackendPollTimeout()
         const CommError pointError = pointErrors.value(pointId);
         const RuntimePointQuality quality = pointError.isError()
                                                 ? qualityFromBackendError(pointError, backendOnline)
-                                                : (ok ? baseQuality
-                                                      : (backendOnline ? RuntimePointQuality::Bad
-                                                                       : RuntimePointQuality::Offline));
+                                                : (!backendOnline
+                                                       ? RuntimePointQuality::Offline
+                                                       : (ok ? RuntimePointQuality::Stale
+                                                             : RuntimePointQuality::Bad));
 
         Sample sample;
         sample.channelName = channelName;
-        sample.value = 0.0;
+        sample.valueValid = false;
+        sample.quality = quality;
         sample.timestamp = now;
         sample.metadata[QStringLiteral("quality")] = qualityToString(quality);
+        sample.metadata[QStringLiteral("valueValid")] = false;
         sample.metadata[QStringLiteral("source")] = QStringLiteral("backend_poll");
         sample.metadata[QStringLiteral("errorCode")] = static_cast<int>(pointError.code);
         sample.metadata[QStringLiteral("errorCodeName")] = commErrorCodeToString(pointError.code);
@@ -912,8 +1165,18 @@ void MonitorManager::onBackendPollTimeout()
         recordSample(sample);
     }
 }
+
+IDeviceBackend* MonitorManager::deviceBackend() const
+{
+    return m_backend.data();
+}
+
 void MonitorManager::onProviderTimeout()
 {
+    if (!m_isMonitoring.load(std::memory_order_acquire)) {
+        return;
+    }
+
     QTimer* timer = qobject_cast<QTimer*>(sender());
     if (!timer) {
         return;
@@ -962,7 +1225,7 @@ void MonitorManager::connectChannelSignals(const std::shared_ptr<MonitorChannel>
 
 void MonitorManager::dispatchToProcessor(const QString& channelName, const Sample& sample)
 {
-    MonitorDataProcessor* proc = m_dataProcessor.load(std::memory_order_acquire);
+    QPointer<MonitorDataProcessor> proc = m_dataProcessor;
     if (!proc) {
         return;
     }
@@ -974,7 +1237,7 @@ void MonitorManager::dispatchToProcessor(const QString& channelName, const Sampl
 void MonitorManager::dispatchToProcessor(const QString& channelName,
                                          const QList<Sample>& samples)
 {
-    MonitorDataProcessor* proc = m_dataProcessor.load(std::memory_order_acquire);
+    QPointer<MonitorDataProcessor> proc = m_dataProcessor;
     if (!proc || samples.isEmpty()) {
         return;
     }
@@ -1175,6 +1438,8 @@ bool MonitorManager::applyConfiguration(const ProjectRuntimeConfig& config)
     // 清理旧的 backend 轮询映射
     m_backendPointIds.clear();
     m_pointIdToChannel.clear();
+    m_backendPointPeriodsMs.clear();
+    m_backendPointNextDueMs.clear();
 
     int minPeriodMs = 0;
 
@@ -1216,13 +1481,7 @@ bool MonitorManager::applyConfiguration(const ProjectRuntimeConfig& config)
             pc.metadata["lineNumber"] = m.lineNumber;
         }
 
-        if (m_backend) {
-            // backend 模式：收集 point ID 映射，不创建 sampler
-            m_backendPointIds.append(pc.id);
-            m_pointIdToChannel.insert(pc.id, pc.channelName);
-            if (minPeriodMs <= 0 || pc.periodMs < minPeriodMs)
-                minPeriodMs = pc.periodMs;
-        } else {
+        if (!m_backend) {
             QString snippetId = pc.metadata.value("snippetId").toString();
             pc.sampler = makeDemoSampler(pc.id, pc.channelName, pc.unit, snippetId, pc.metadata);
             pc.errorHandler = [pid = pc.id](const QString& err) {
@@ -1235,6 +1494,22 @@ bool MonitorManager::applyConfiguration(const ProjectRuntimeConfig& config)
                        << "->" << pc.channelName;
             success = false;
             continue;
+        }
+
+        if (m_backend) {
+            // backend 模式：收集去重后的 point ID，并保留最后一个有效 provider 的通道映射。
+            if (!m_backendPointPeriodsMs.contains(pc.id)) {
+                m_backendPointIds.append(pc.id);
+                m_backendPointPeriodsMs.insert(pc.id, qMax(1, pc.periodMs));
+                m_backendPointNextDueMs.insert(pc.id, 0);
+            } else {
+                // 同一点被多个 provider 使用时按最快需求轮询，但每次 readPoints 只传一次。
+                m_backendPointPeriodsMs[pc.id] = qMin(m_backendPointPeriodsMs.value(pc.id),
+                                                      qMax(1, pc.periodMs));
+            }
+            m_pointIdToChannel.insert(pc.id, pc.channelName);
+            if (minPeriodMs <= 0 || pc.periodMs < minPeriodMs)
+                minPeriodMs = pc.periodMs;
         }
     }
 

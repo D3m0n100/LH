@@ -30,7 +30,7 @@ from lh_compiler.frontend.ast_builder import ASTBuilder
 from lh_compiler.frontend.ast_nodes import Program
 from lh_compiler.function_blocks.registry import FunctionBlockRegistry
 from lh_compiler.backend.codegen import CodeGenerator
-from lh_compiler.backend.emitter import CodeEmitter
+from lh_compiler.backend.emitter import CodeEmitter, CompileSupportEmitter
 
 
 @dataclass
@@ -90,10 +90,11 @@ class LHCompiler:
         
         # 初始化代码输出器
         self.emitter = CodeEmitter(add_comments=False)
+        self.support_emitter = CompileSupportEmitter()
     
     def compile_file(self, source_path: str, output_path: str = None) -> CompileResult:
         """
-        编译LM源文件
+        编译 LH 源文件
         
         Args:
             source_path: 源文件路径 (.lh)
@@ -134,15 +135,16 @@ class LHCompiler:
             )
         
         # 编译
-        return self.compile_string(source_code, str(output_path))
+        return self.compile_string(source_code, str(output_path), str(source_path))
     
-    def compile_string(self, source_code: str, output_path: str = None) -> CompileResult:
+    def compile_string(self, source_code: str, output_path: str = None, source_path: str = "") -> CompileResult:
         """
         编译字符串形式的源代码
         
         Args:
             source_code: LH源代码
             output_path: 输出文件路径 (.code), 如果为None则不写入文件
+            source_path: 源文件路径，用于生成 LH 附属产物头部
             
         Returns:
             CompileResult: 编译结果
@@ -230,19 +232,39 @@ class LHCompiler:
                 errors=[f"代码生成失败: {e}"]
             )
         
-        # 步骤5: 只有无语义错误时才输出文件
+        # 步骤5: 只有无语义错误时才输出可下载代码和 LH 附属产物
         if output_path and len(errors) == 0:
             try:
                 output_path = Path(output_path)
                 output_path.parent.mkdir(parents=True, exist_ok=True)
 
                 self.emitter.emit(instructions, str(output_path))
+                self.support_emitter.emit(
+                    source_path=source_path,
+                    output_path=str(output_path),
+                    program=ast,
+                    instructions=instructions,
+                    code_generator=self.code_generator,
+                    errors=[]
+                )
 
                 if self.verbose:
                     print(f"\n✓ 编译成功: {output_path}")
                     print(f"  文件大小: {output_path.stat().st_size} 字节")
             except Exception as e:
                 errors.append(f"写入输出文件失败: {e}")
+        elif output_path and len(errors) > 0:
+            try:
+                self.support_emitter.emit(
+                    source_path=source_path,
+                    output_path=str(output_path),
+                    program=ast,
+                    instructions=instructions,
+                    code_generator=self.code_generator,
+                    errors=errors
+                )
+            except Exception:
+                pass
 
         # 返回结果
         return CompileResult(
@@ -289,9 +311,9 @@ def main():
     import argparse
     
     parser = argparse.ArgumentParser(
-        description='LH编译器 - 将.lm源文件编译为.code字节码'
+        description='LH编译器 - 将.lh源文件编译为.code字节码'
     )
-    parser.add_argument('input', help='输入的.lm源文件')
+    parser.add_argument('input', help='输入的.lh源文件')
     parser.add_argument('-o', '--output', help='输出的.code文件（默认：与源文件同名）')
     parser.add_argument('-v', '--verbose', action='store_true', help='显示详细信息')
     parser.add_argument('-d', '--debug', action='store_true', help='显示调试信息')

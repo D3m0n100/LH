@@ -91,6 +91,28 @@ private slots:
         QVERIFY(!ctrl.editParameter("no_such", "1.0"));
     }
 
+    void editByPointIdTransitionsToModified()
+    {
+        ParameterController ctrl;
+        ctrl.loadDefinitions({makeParam("Kp", true, "0", "param.kp")});
+
+        QVERIFY(ctrl.editParameterByPointId("param.kp", "2.0"));
+        QCOMPARE(ctrl.parameterState("Kp").state, ParameterState::Modified);
+        QCOMPARE(ctrl.parameterState("Kp").editedValue, QStringLiteral("2.0"));
+    }
+
+    void parameterStateByPointIdReturnsMatchedState()
+    {
+        ParameterController ctrl;
+        ctrl.loadDefinitions({makeParam("Kp", true, "0", "param.kp")});
+        ctrl.editParameter("Kp", "1.5");
+
+        const auto state = ctrl.parameterStateByPointId("param.kp");
+        QCOMPARE(state.name, QStringLiteral("Kp"));
+        QCOMPARE(state.pointId, QStringLiteral("param.kp"));
+        QCOMPARE(state.state, ParameterState::Modified);
+    }
+
     void editEmitsStateChanged()
     {
         ParameterController ctrl;
@@ -155,7 +177,37 @@ private slots:
         QString errorMessage;
         QVERIFY(ctrl.applyModifiedParametersWithReadback(&backend, 1, 0, &errorMessage));
         QVERIFY(errorMessage.isEmpty());
+        const auto state = ctrl.parameterState("Kp");
+        QCOMPARE(state.state, ParameterState::Confirmed);
+        QCOMPARE(state.readbackAttempts, 1);
+        QVERIFY(state.lastWriteTime.isValid());
+        QVERIFY(state.lastReadbackTime.isValid());
+    }
+
+    void applyWithReadbackAsyncConfirmsParameter()
+    {
+        ParameterController ctrl;
+        ctrl.loadDefinitions({makeParam("Kp", true, "0", "param.kp")});
+        ctrl.editParameter("Kp", "2.0");
+
+        VirtualDeviceBackend backend;
+        RuntimePointDefinition point;
+        point.id = "param.kp";
+        point.name = "Kp";
+        point.kind = RuntimePointKind::Parameter;
+        point.access = RuntimePointAccess::ReadWrite;
+        point.defaultValue = 0.0;
+        backend.loadPointDefinitions({point});
+        backend.connectBackend();
+
+        QSignalSpy finishedSpy(&ctrl, &ParameterController::readbackFinished);
+        QString errorMessage;
+        QVERIFY(ctrl.applyModifiedParametersWithReadbackAsync(&backend, 1, 0, &errorMessage));
+        QVERIFY(errorMessage.isEmpty());
+        QTRY_COMPARE(finishedSpy.count(), 1);
+        QCOMPARE(finishedSpy.first().at(0).toBool(), true);
         QCOMPARE(ctrl.parameterState("Kp").state, ParameterState::Confirmed);
+        QCOMPARE(ctrl.parameterState("Kp").readbackAttempts, 1);
     }
 
     void applyWithNoModifiedReturnsTrue()
@@ -219,7 +271,7 @@ private slots:
 
         QString errorMessage;
         QVERIFY(!ctrl.applyModifiedParametersWithReadback(&backend, 2, 0, &errorMessage));
-        QCOMPARE(ctrl.parameterState("Kp").state, ParameterState::PendingReadback);
+        QCOMPARE(ctrl.parameterState("Kp").state, ParameterState::Timeout);
         QVERIFY(!ctrl.parameterState("Kp").lastError.isEmpty());
         QVERIFY(!errorMessage.isEmpty());
     }

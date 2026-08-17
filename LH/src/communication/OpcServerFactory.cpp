@@ -2,19 +2,25 @@
 
 #include "IOpcServer.h"
 #include "ClassicOpcServer.h"
+#include "MatrikonOpcServer.h"
 
 IOpcServer* OpcServerFactory::createDefault(QObject* parent)
 {
-    auto* server = new ClassicOpcServer(parent);
-    server->setObjectName(QStringLiteral("OpcServerFactory::ClassicOpcServer"));
+    auto* server = new MatrikonOpcServer(parent);
+    server->setObjectName(QStringLiteral("OpcServerFactory::MatrikonOpcServer"));
     return server;
 }
 
 IOpcServer* OpcServerFactory::createForConfig(const OpcServerConfig& config, QObject* parent)
 {
-    Q_UNUSED(config);
+    if (config.metadata.value(QStringLiteral("backend")).toString().compare(QStringLiteral("classic-modbus"),
+                                                                            Qt::CaseInsensitive) == 0) {
+        auto* server = new ClassicOpcServer(parent);
+        server->setObjectName(QStringLiteral("OpcServerFactory::ClassicOpcServer"));
+        return server;
+    }
 
-    auto* server = new ClassicOpcServer(parent);
-    server->setObjectName(QStringLiteral("OpcServerFactory::ClassicOpcServer"));
+    auto* server = new MatrikonOpcServer(parent);
+    server->setObjectName(QStringLiteral("OpcServerFactory::MatrikonOpcServer"));
     return server;
 }

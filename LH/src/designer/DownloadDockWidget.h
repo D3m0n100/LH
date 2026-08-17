@@ -1,5 +1,5 @@
-// 文件：src/designer/DownloadDockWidget.h
-// 最小可用的下载 Dock：连接/探测/下载 + 进度 + 日志
+﻿// 文件：src/designer/DownloadDockWidget.h
+// 下载 Dock：连接/探测/下载 + 进度 + 日志
 
 #pragma once
 #include <QWidget>

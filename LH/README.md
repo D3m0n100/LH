@@ -72,12 +72,36 @@ ctest --output-on-failure
 
 DSL 编译器使用 Python 实现，请不要提交虚拟环境目录，依赖通过 `requirements.txt` 安装。
 
+Windows：
+
 ```bash
 cd third_party/custom_dsp_language/compile
 python -m venv venv
 venv\Scripts\activate
-pip install -r requirements.txt
+python -m pip install -r requirements.txt
 ```
+
+Linux/macOS 使用对应的本地虚拟环境激活方式：
+
+```bash
+cd third_party/custom_dsp_language/compile
+python3 -m venv venv
+. venv/bin/activate
+python -m pip install -r requirements.txt
+```
+
+安装包不会复制仓库中的 `venv`，也不会在 CMake 安装阶段联网安装 Python 或第三方包。安装后的程序会在可执行文件所在目录的上级查找
+`third_party/custom_dsp_language/compile`；运行 DSL 编译前，请在该目录准备 Python 3.8+ 的本地 `venv` 并按上面的方式安装
+`requirements.txt`。若找不到 Python 3、虚拟环境依赖或 `antlr4-python3-runtime`，编译会失败并在错误输出中说明缺失项，不会静默报告成功。
+
+### 安装与 Qt 运行库
+
+安装规则只包含 DSL 编译所需的 `lmc.py`、`requirements.txt`、ANTLR 生成 Python 文件，以及 `src/lh_compiler` 的前端、后端和功能块定义；
+不会安装虚拟环境、缓存、字节码、测试/示例/文档或编译输出目录。
+
+Windows 安装默认启用 Qt 部署：配置时会定位与当前 Qt 匹配的 `windeployqt`，安装时复制 Qt 运行库并检查 `platforms/qwindows.dll`
+和 `sqldrivers/qsqlite.dll`。工具缺失、执行失败或关键插件缺失都会使安装失败。特殊打包环境若由外部流程提供 Qt，可显式使用
+`-DLH_ENABLE_QT_DEPLOYMENT=OFF`，此时必须由该外部流程补齐 Qt 运行库和插件。非 Windows 平台不调用 `windeployqt`，请由操作系统包管理器或平台打包流程提供 Qt 动态库。
 
 ## 使用说明
 

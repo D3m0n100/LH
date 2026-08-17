@@ -39,6 +39,19 @@ struct CompileResult
 
 namespace CompileArtifactType {
     inline constexpr const char* Download        = "download";
+    inline constexpr const char* ParameterData   = "parameter_data";
+    inline constexpr const char* CommunicationXml = "communication_xml";
+    inline constexpr const char* CommunicationTags = "communication_tags";
+    inline constexpr const char* CommunicationAct = "communication_act";
+    inline constexpr const char* CommunicationTx = "communication_tx";
+    inline constexpr const char* CommunicationRx = "communication_rx";
+    inline constexpr const char* CommunicationRt = "communication_rt";
+    inline constexpr const char* CommunicationEngineering = "communication_engineering";
+    inline constexpr const char* CommunicationComm = "communication_comm";
+    inline constexpr const char* CommunicationDebug = "communication_debug";
+    inline constexpr const char* ParameterInitials = "parameter_initials";
+    inline constexpr const char* ParameterLayout = "parameter_layout";
+    inline constexpr const char* CompileReport   = "compile_report";
     inline constexpr const char* RuntimePoints   = "runtime_points";
     inline constexpr const char* RuntimeManifest = "runtime_manifest";
 }
@@ -122,6 +135,19 @@ private:
     QString prepareCompilerInput(const QString& sourceFile,
                                  const QString& outputDir,
                                  QString* errorMessage) const;
+    void resetFinishedProcess();
+    void ensureCompileTimeoutTimer();
+    void startAsyncCompilerProcess(const QString& logPrefix,
+                                   const QString& python,
+                                   const QStringList& args,
+                                   const QString& workDir,
+                                   const QString& sourceFile,
+                                   const QString& mainScriptFile,
+                                   const QStringList& scriptFiles,
+                                   const QString& outputDir,
+                                   const QString& projectName,
+                                   const QString& outputFile,
+                                   const QString& compilerInputFile);
     CompileResult buildCompileResult(const QString& sourceFile,
                                      const QString& outputDir,
                                      const QString& projectName,

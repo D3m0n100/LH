@@ -2,7 +2,7 @@
 // 监控采样落库日志器（最小闭环版本）
 // - 负责将 MonitorManager 采样数据缓冲并批量写入 DataManager
 // - 支持开关关闭落库（高频实时测试场景）
-// - 线程安全：外部可在任意线程 enqueue，内部在对象线程中 flush
+// - 线程安全：外部可在任意线程 enqueue；数据库写入在对象线程中 flush
 
 #ifndef MONITOR_DATA_LOGGER_H
 #define MONITOR_DATA_LOGGER_H
@@ -63,6 +63,9 @@ public:
      */
     void shutdown();
 
+signals:
+    void samplesDropped(int count);
+
 private slots:
     void onFlushTimer();
 
@@ -72,6 +75,7 @@ private:
 
     QVariantMap toRuntimeRecord(const Sample& sample) const;
     void flushInThread();
+    void restoreFailedBatch(QList<QVariantMap>& batch);
 
 private:
     mutable QMutex m_mutex;

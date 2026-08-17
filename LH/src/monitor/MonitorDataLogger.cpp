@@ -31,24 +31,14 @@ MonitorDataLogger::~MonitorDataLogger()
 
 void MonitorDataLogger::setEnabled(bool enabled)
 {
-    // 允许跨线程调用
-    if (QThread::currentThread() != thread()) {
-        QMetaObject::invokeMethod(this, [this, enabled]() {
-            setEnabled(enabled);
-        }, Qt::QueuedConnection);
-        return;
-    }
-
     {
         QMutexLocker locker(&m_mutex);
         m_enabled = enabled;
     }
 
-    // 关闭落库时仍可保留定时器，以便后续重新开启
-    // 但若希望更省资源，也可以在此 stop；此处保持简单。
-    if (!m_enabled) {
-        // 可选：关闭时也 flush 一次，避免丢数据
-        flushInThread();
+    // enabled 只控制新样本接收；已接受的样本必须在禁用前排空。
+    if (!enabled) {
+        flush();
     }
 }
 
@@ -71,9 +61,12 @@ void MonitorDataLogger::setFlushIntervalMs(int intervalMs)
         return;
     }
 
-    m_flushIntervalMs = intervalMs;
+    {
+        QMutexLocker locker(&m_mutex);
+        m_flushIntervalMs = intervalMs;
+    }
     if (m_flushTimer) {
-        m_flushTimer->setInterval(m_flushIntervalMs);
+        m_flushTimer->setInterval(intervalMs);
     }
 }
 
@@ -96,6 +89,7 @@ void MonitorDataLogger::setBatchSize(int batchSize)
         return;
     }
 
+    QMutexLocker locker(&m_mutex);
     m_batchSize = batchSize;
 }
 
@@ -107,32 +101,12 @@ int MonitorDataLogger::batchSize() const
 
 void MonitorDataLogger::enqueueSample(const Sample& sample)
 {
-    if (!m_enabled) {
-        return;
-    }
-
-    if (QThread::currentThread() != thread()) {
-        const Sample copy = sample;
-        QMetaObject::invokeMethod(this, [this, copy]() {
-            enqueueSampleInThread(copy);
-        }, Qt::QueuedConnection);
-        return;
-    }
-
     enqueueSampleInThread(sample);
 }
 
 void MonitorDataLogger::enqueueSamples(const QList<Sample>& samples)
 {
-    if (samples.isEmpty() || !m_enabled) {
-        return;
-    }
-
-    if (QThread::currentThread() != thread()) {
-        const QList<Sample> copy = samples;
-        QMetaObject::invokeMethod(this, [this, copy]() {
-            enqueueSamplesInThread(copy);
-        }, Qt::QueuedConnection);
+    if (samples.isEmpty()) {
         return;
     }
 
@@ -141,14 +115,10 @@ void MonitorDataLogger::enqueueSamples(const QList<Sample>& samples)
 
 void MonitorDataLogger::flush()
 {
-    if (!m_enabled) {
-        return;
-    }
-
     if (QThread::currentThread() != thread()) {
         QMetaObject::invokeMethod(this, [this]() {
             flushInThread();
-        }, Qt::QueuedConnection);
+        }, Qt::BlockingQueuedConnection);
         return;
     }
 
@@ -165,6 +135,11 @@ void MonitorDataLogger::shutdown()
         return;
     }
 
+    {
+        QMutexLocker locker(&m_mutex);
+        m_enabled = false;
+    }
+
     if (m_flushTimer) {
         m_flushTimer->stop();
     }
@@ -174,7 +149,7 @@ void MonitorDataLogger::shutdown()
 
 void MonitorDataLogger::onFlushTimer()
 {
-    if (!m_enabled) {
+    if (!isEnabled()) {
         return;
     }
     flushInThread();
@@ -182,61 +157,61 @@ void MonitorDataLogger::onFlushTimer()
 
 void MonitorDataLogger::enqueueSampleInThread(const Sample& sample)
 {
-    // logger 所在线程调用
+    int dropped = 0;
+    bool shouldFlush = false;
+    QMutexLocker locker(&m_mutex);
     if (!m_enabled) {
         return;
     }
-
-    QMutexLocker locker(&m_mutex);
 
     // 避免极端情况下缓冲无限增大
     if (m_buffer.size() >= DEFAULT_MAX_BUFFER_SIZE) {
         // 丢弃最旧的数据（保留最新）
-        const int dropCount = std::min(m_buffer.size(), DEFAULT_BATCH_SIZE);
+        const int dropCount = 1;
         for (int i = 0; i < dropCount; ++i) {
             m_buffer.removeFirst();
         }
-        qWarning() << "[MonitorDataLogger] buffer overflow, drop" << dropCount
-                   << "records, buffer=" << m_buffer.size();
+        dropped = dropCount;
     }
 
     m_buffer.push_back(toRuntimeRecord(sample));
 
-    if (m_buffer.size() >= m_batchSize) {
-        // 达到阈值立即 flush（仍在同线程）
-        locker.unlock();
-        flushInThread();
-    }
+    shouldFlush = m_buffer.size() >= m_batchSize;
+    locker.unlock();
+    if (dropped > 0) emit samplesDropped(dropped);
+    if (shouldFlush) flush();
 }
 
 void MonitorDataLogger::enqueueSamplesInThread(const QList<Sample>& samples)
 {
+    int dropped = 0;
+    bool shouldFlush = false;
+    int fromBuffer = 0;
+    QMutexLocker locker(&m_mutex);
     if (!m_enabled) {
         return;
     }
 
-    QMutexLocker locker(&m_mutex);
-
     // 预先裁剪，避免超限
-    if (m_buffer.size() + samples.size() > DEFAULT_MAX_BUFFER_SIZE) {
-        const int overflow = (m_buffer.size() + samples.size()) - DEFAULT_MAX_BUFFER_SIZE;
-        const int dropCount = std::max(overflow, DEFAULT_BATCH_SIZE);
-        const int realDrop = std::min(dropCount, m_buffer.size());
-        for (int i = 0; i < realDrop; ++i) {
+    const int overflow = qMax(0, m_buffer.size() + samples.size() - DEFAULT_MAX_BUFFER_SIZE);
+    if (overflow > 0) {
+        fromBuffer = qMin(overflow, m_buffer.size());
+        for (int i = 0; i < fromBuffer; ++i) {
             m_buffer.removeFirst();
         }
-        qWarning() << "[MonitorDataLogger] buffer overflow, drop" << realDrop
-                   << "records, buffer=" << m_buffer.size();
+        dropped = overflow;
     }
 
-    for (const auto& s : samples) {
+    const int skipIncoming = qMax(0, overflow - fromBuffer);
+    for (int i = skipIncoming; i < samples.size(); ++i) {
+        const auto& s = samples.at(i);
         m_buffer.push_back(toRuntimeRecord(s));
     }
 
-    if (m_buffer.size() >= m_batchSize) {
-        locker.unlock();
-        flushInThread();
-    }
+    shouldFlush = m_buffer.size() >= m_batchSize;
+    locker.unlock();
+    if (dropped > 0) emit samplesDropped(dropped);
+    if (shouldFlush) flush();
 }
 
 QVariantMap MonitorDataLogger::toRuntimeRecord(const Sample& sample) const
@@ -248,6 +223,27 @@ QVariantMap MonitorDataLogger::toRuntimeRecord(const Sample& sample) const
     record["varName"] = sample.channelName;
     record["value"] = sample.value;
     record["unit"] = sample.unit;
+    record["quality"] = runtimePointQualityToString(sample.quality);
+    record["valueValid"] = sample.valueValid;
+
+    // 仅保留稳定的 provenance/error 字段，避免把整张运行时 metadata
+    // JSON 带入数据库；DataManager 仍兼容 source/errorCode 等旧键。
+    const QVariantMap& metadata = sample.metadata;
+    QString origin = metadata.value(QStringLiteral("origin")).toString();
+    if (origin.isEmpty()) {
+        origin = metadata.value(QStringLiteral("source")).toString();
+    }
+    record["origin"] = origin;
+
+    QString errorCode = metadata.value(QStringLiteral("errorCodeName")).toString();
+    if (errorCode.isEmpty()) {
+        errorCode = metadata.value(QStringLiteral("errorCode")).toString();
+    }
+    record["errorCode"] = errorCode;
+    record["errorText"] = metadata.value(QStringLiteral("error")).toString();
+    if (metadata.contains(QStringLiteral("errorDetails"))) {
+        record["errorDetails"] = metadata.value(QStringLiteral("errorDetails"));
+    }
 
     // 为历史查询/回放保留真实采样时间
     // 统一使用 UTC，避免跨时区/夏令时问题
@@ -255,6 +251,23 @@ QVariantMap MonitorDataLogger::toRuntimeRecord(const Sample& sample) const
                                                       : QDateTime::currentDateTimeUtc();
 
     return record;
+}
+
+void MonitorDataLogger::restoreFailedBatch(QList<QVariantMap>& batch)
+{
+    int dropped = 0;
+    {
+        QMutexLocker locker(&m_mutex);
+        batch.append(m_buffer);
+        m_buffer.swap(batch);
+
+        dropped = qMax(0, m_buffer.size() - DEFAULT_MAX_BUFFER_SIZE);
+        for (int i = 0; i < dropped; ++i) {
+            m_buffer.removeFirst();
+        }
+        m_flushing = false;
+    }
+    if (dropped > 0) emit samplesDropped(dropped);
 }
 
 void MonitorDataLogger::flushInThread()
@@ -266,7 +279,7 @@ void MonitorDataLogger::flushInThread()
     QList<QVariantMap> batch;
     {
         QMutexLocker locker(&m_mutex);
-        if (!m_enabled || m_buffer.isEmpty()) {
+        if (m_buffer.isEmpty()) {
             return;
         }
         m_flushing = true;
@@ -277,9 +290,8 @@ void MonitorDataLogger::flushInThread()
     // DataManager 初始化通常在主线程，因此 logger 默认也在主线程。
     auto& dm = DataManager::instance();
     if (!dm.isInitialized()) {
-        qWarning() << "[MonitorDataLogger] DataManager not initialized, drop batch=" << batch.size();
-        QMutexLocker locker(&m_mutex);
-        m_flushing = false;
+        qWarning() << "[MonitorDataLogger] DataManager not initialized, retain batch=" << batch.size();
+        restoreFailedBatch(batch);
         return;
     }
 
@@ -287,6 +299,8 @@ void MonitorDataLogger::flushInThread()
     if (!r.success) {
         qWarning() << "[MonitorDataLogger] logRuntimeDataBatch failed:" << r.fullError()
                    << "batch=" << batch.size();
+        restoreFailedBatch(batch);
+        return;
     }
 
     QMutexLocker locker(&m_mutex);

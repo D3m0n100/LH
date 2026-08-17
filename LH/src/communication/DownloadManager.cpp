@@ -255,8 +255,13 @@ DownloadManager::DownloadManager(QObject* parent)
 
 DownloadManager::~DownloadManager()
 {
+    QPointer<QObject> activeWorker = m_activeWorker;
+    if (activeWorker) {
+        QMetaObject::invokeMethod(activeWorker.data(), "requestCancel", Qt::QueuedConnection);
+    }
     m_thread.quit();
     m_thread.wait();
+    m_activeWorker.clear();
 }
 
 void DownloadManager::setConfig(const QVariantMap& cfg)
@@ -283,7 +288,16 @@ void DownloadManager::startConnectProbe()
 
     connect(worker, &DownloadWorker::finished, &m_thread, &QThread::quit);
     connect(worker, &DownloadWorker::finished, worker, &QObject::deleteLater);
-    connect(worker, &DownloadWorker::finished, this, [this]() { m_activeWorker = nullptr; });
+    connect(&m_thread, &QThread::finished, worker, &QObject::deleteLater);
+    const QPointer<QObject> workerGuard(worker);
+    connect(worker, &DownloadWorker::finished, this, [this, workerGuard]() {
+        if (m_activeWorker.data() == workerGuard.data())
+            m_activeWorker.clear();
+    });
+    connect(&m_thread, &QThread::finished, this, [this, workerGuard]() {
+        if (m_activeWorker.data() == workerGuard.data())
+            m_activeWorker.clear();
+    });
 
     m_thread.start();
 }
@@ -310,17 +324,27 @@ void DownloadManager::startDownload(const QString& profileJsonPath, const QStrin
 
     connect(worker, &DownloadWorker::finished, &m_thread, &QThread::quit);
     connect(worker, &DownloadWorker::finished, worker, &QObject::deleteLater);
-    connect(worker, &DownloadWorker::finished, this, [this]() { m_activeWorker = nullptr; });
+    connect(&m_thread, &QThread::finished, worker, &QObject::deleteLater);
+    const QPointer<QObject> workerGuard(worker);
+    connect(worker, &DownloadWorker::finished, this, [this, workerGuard]() {
+        if (m_activeWorker.data() == workerGuard.data())
+            m_activeWorker.clear();
+    });
+    connect(&m_thread, &QThread::finished, this, [this, workerGuard]() {
+        if (m_activeWorker.data() == workerGuard.data())
+            m_activeWorker.clear();
+    });
 
     m_thread.start();
 }
 
 void DownloadManager::cancel()
 {
-    if (!m_activeWorker) {
+    const QPointer<QObject> activeWorker = m_activeWorker;
+    if (!activeWorker) {
         return;
     }
-    QMetaObject::invokeMethod(m_activeWorker, "requestCancel", Qt::QueuedConnection);
+    QMetaObject::invokeMethod(activeWorker.data(), "requestCancel", Qt::QueuedConnection);
 }
 
 #include "DownloadManager.moc"

@@ -16,6 +16,7 @@
 #include <optional>
 #include <memory>
 #include <atomic>
+#include <functional>
 #include <map>          // 添加：std::map 支持 unique_ptr
 
 #include "MonitorTypes.h"
@@ -58,6 +59,8 @@ struct ProcessedChannelData
     QString unit;
     QVector<QPointF> seriesPoints;      ///< 图表数据点 (timestamp_ms, value)
     double currentValue = 0.0;
+    RuntimePointQuality quality = RuntimePointQuality::Unknown;
+    bool valueValid = false;
     std::optional<double> minValue;
     std::optional<double> maxValue;
     std::optional<double> avgValue;
@@ -132,17 +135,17 @@ public:
     // 配置接口
     // =========================================================================
     
-    DataProcessorConfig config() const { return m_config; }
+    DataProcessorConfig config() const;
     void setConfig(const DataProcessorConfig& config);
     
     void setTimeWindow(qint64 windowMs);
-    qint64 timeWindow() const { return m_config.timeWindowMs; }
+    qint64 timeWindow() const;
     
     void setMaxDisplaySamples(int maxSamples);
-    int maxDisplaySamples() const { return m_config.maxDisplaySamples; }
+    int maxDisplaySamples() const;
     
     void setRingBufferCapacity(int capacity);
-    int ringBufferCapacity() const { return m_config.ringBufferCapacity; }
+    int ringBufferCapacity() const;
     
     void setClampRange(std::optional<double> minVal, std::optional<double> maxVal);
     void setSmoothing(bool enabled, int windowSize = 3);
@@ -278,6 +281,7 @@ signals:
     void configChanged();
     void channelDataUpdated(const QString& channelId);
     void deltaDataReady(const QString& channelId, int count);
+    void channelQualityUpdated(const QString& channelId, RuntimePointQuality quality, bool valueValid);
 
 private:
     /// 通道缓冲区数据
@@ -287,25 +291,43 @@ private:
         QString unit;
         double lastValue = 0.0;
         qint64 lastTimestampMs = 0;
+        RuntimePointQuality quality = RuntimePointQuality::Unknown;
+        bool valueValid = false;
         
         ChannelBuffer(int capacity = 5000) : ringBuffer(capacity) {}
     };
 
     /// 获取或创建通道缓冲区
     ChannelBuffer& getOrCreateBuffer(const QString& channelId);
+
+    /// 规范化并提交配置；所有外部信号均在锁外发送
+    static DataProcessorConfig normalizeConfig(DataProcessorConfig config);
+    static bool configsEqual(const DataProcessorConfig& lhs,
+                             const DataProcessorConfig& rhs);
+    void updateConfig(const std::function<void(DataProcessorConfig&)>& updater);
+    DataProcessorConfig snapshotConfig(quint64* generation = nullptr) const;
     
     /// 应用处理管道
-    QVector<QPointF> applyProcessingPipeline(const QVector<QPointF>& points) const;
-    QVector<QPointF> applyClamp(const QVector<QPointF>& points) const;
-    QVector<QPointF> applySmoothing(const QVector<QPointF>& points) const;
-    QVector<QPointF> applyDownsampling(const QVector<QPointF>& points) const;
-    QVector<QPointF> limitPointCount(const QVector<QPointF>& points) const;
+    QVector<QPointF> applyProcessingPipeline(
+        const QVector<QPointF>& points,
+        const DataProcessorConfig& config) const;
+    QVector<QPointF> applyClamp(const QVector<QPointF>& points,
+                                const DataProcessorConfig& config) const;
+    QVector<QPointF> applySmoothing(const QVector<QPointF>& points,
+                                    const DataProcessorConfig& config) const;
+    QVector<QPointF> applyDownsampling(const QVector<QPointF>& points,
+                                       const DataProcessorConfig& config) const;
+    QVector<QPointF> limitPointCount(const QVector<QPointF>& points,
+                                     const DataProcessorConfig& config) const;
     
     /// 时间窗口裁剪
-    QVector<QPointF> applyTimeWindow(const QVector<QPointF>& points) const;
+    QVector<QPointF> applyTimeWindow(const QVector<QPointF>& points,
+                                     const DataProcessorConfig& config) const;
     
     /// 自适应降采样
-    QVector<QPointF> applyAdaptiveDownsample(const QVector<QPointF>& points) const;
+    QVector<QPointF> applyAdaptiveDownsample(
+        const QVector<QPointF>& points,
+        const DataProcessorConfig& config) const;
 
 private:
     DataProcessorConfig m_config;
@@ -314,6 +336,7 @@ private:
     // 修复：使用 std::map 替代 QMap，因为 QMap 不支持 unique_ptr（需要可拷贝类型）
     mutable std::map<QString, std::unique_ptr<ChannelBuffer>> m_channelBuffers;
     mutable QReadWriteLock m_bufferLock;
+    quint64 m_configGeneration = 0;
     
     // 处理结果缓存
     mutable QMap<QString, ProcessedChannelData> m_cachedData;

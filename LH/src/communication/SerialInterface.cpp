@@ -9,6 +9,25 @@
 #include <QRegularExpression>
 #include "Common.h"
 
+namespace {
+
+bool appendBounded(QByteArray& buffer, const QByteArray& data, int maximumSize)
+{
+    if (data.size() >= maximumSize) {
+        buffer = data.right(maximumSize);
+        return true;
+    }
+
+    const int overflow = buffer.size() + data.size() - maximumSize;
+    if (overflow > 0) {
+        buffer.remove(0, overflow);
+    }
+    buffer.append(data);
+    return overflow > 0;
+}
+
+} // namespace
+
 SerialInterface::SerialInterface(QObject* parent)
     : ICommInterface(parent)
     , m_serialPort(new QSerialPort(this))
@@ -113,6 +132,7 @@ bool SerialInterface::open(const SerialConfig& config)
     {
         QMutexLocker locker(&m_bufferMutex);
         m_receiveBuffer.clear();
+        m_frameBuffer.clear();
     }
     
     emit connectionStateChanged(true);
@@ -127,15 +147,19 @@ void SerialInterface::close()
     m_baudRateDetectionTimer->stop();
     m_frameProcessingTimer->stop();
     
-    if (m_serialPort->isOpen()) {
+    const bool wasOpen = m_serialPort->isOpen();
+    if (wasOpen) {
         m_serialPort->close();
-        
-        {
-            QMutexLocker locker(&m_bufferMutex);
-            m_receiveBuffer.clear();
-            m_receiveWaitCondition.wakeAll();
-        }
-        
+    }
+
+    {
+        QMutexLocker locker(&m_bufferMutex);
+        m_receiveBuffer.clear();
+        m_frameBuffer.clear();
+        m_receiveWaitCondition.wakeAll();
+    }
+
+    if (wasOpen) {
         emit connectionStateChanged(false);
         LOG_INFO("串口已关闭");
     }
@@ -344,17 +368,16 @@ void SerialInterface::onReadyRead()
         return;
     }
     
+    bool bufferTruncated = false;
     {
         QMutexLocker locker(&m_bufferMutex);
-        
-        if (m_receiveBuffer.size() + data.size() > MAX_BUFFER_SIZE) {
-            int overflow = m_receiveBuffer.size() + data.size() - MAX_BUFFER_SIZE;
-            m_receiveBuffer.remove(0, overflow);
-            LOG_WARN("串口接收缓冲区溢出，丢弃旧数据");
-        }
-        
-        m_receiveBuffer.append(data);
+        bufferTruncated = appendBounded(m_receiveBuffer, data, MAX_BUFFER_SIZE);
+        bufferTruncated = appendBounded(m_frameBuffer, data, MAX_BUFFER_SIZE)
+                || bufferTruncated;
         m_receiveWaitCondition.wakeAll();
+    }
+    if (bufferTruncated) {
+        LOG_WARN("串口接收缓冲区溢出，丢弃旧数据");
     }
     
     emit dataReceived(data);
@@ -364,16 +387,22 @@ void SerialInterface::onReadyRead()
 
 void SerialInterface::processReceivedData()
 {
-    QMutexLocker locker(&m_bufferMutex);
-    
-    if (m_receiveBuffer.isEmpty()) {
-        return;
+    QByteArray frame;
+    {
+        QMutexLocker locker(&m_bufferMutex);
+
+        if (m_frameBuffer.isEmpty()) {
+            return;
+        }
+
+        frame = extractFrame(m_frameBuffer);
+        if (frame.isEmpty()) {
+            return;
+        }
+        m_frameBuffer.remove(0, frame.size());
     }
-    
-    QByteArray frame = extractFrame(m_receiveBuffer);
-    if (!frame.isEmpty()) {
-        emit dataFramed(frame);
-    }
+
+    emit dataFramed(frame);
 }
 
 QByteArray SerialInterface::extractFrame(const QByteArray& data)

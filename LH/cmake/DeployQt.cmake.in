@@ -1,0 +1,65 @@
+# Windows 安装阶段 Qt 运行库部署。
+set(_lh_qt_deploy_tool "@LH_WINDEPLOYQT_EXECUTABLE_FOR_INSTALL@")
+set(_lh_install_prefix "${CMAKE_INSTALL_PREFIX}")
+set(_lh_executable "${_lh_install_prefix}/bin/@PROJECT_NAME@.exe")
+if(DEFINED CMAKE_INSTALL_CONFIG_NAME)
+    set(_lh_install_config "${CMAKE_INSTALL_CONFIG_NAME}")
+else()
+    set(_lh_install_config "")
+endif()
+string(STRIP "${_lh_install_config}" _lh_install_config)
+string(TOLOWER "${_lh_install_config}" _lh_install_config_lower)
+if(_lh_install_config_lower STREQUAL "debug")
+    set(_lh_qt_deploy_mode "debug")
+    set(_lh_qt_plugin_suffix "d")
+else()
+    set(_lh_qt_deploy_mode "release")
+    set(_lh_qt_plugin_suffix "")
+endif()
+if(_lh_install_config STREQUAL "")
+    set(_lh_install_config_label "<empty/default-release>")
+else()
+    set(_lh_install_config_label "${_lh_install_config}")
+endif()
+
+if(NOT EXISTS "${_lh_executable}")
+    message(FATAL_ERROR
+        "Qt deployment cannot continue for config ${_lh_install_config_label}: "
+        "installed executable is missing: ${_lh_executable}"
+    )
+endif()
+
+execute_process(
+    COMMAND "${_lh_qt_deploy_tool}" "--${_lh_qt_deploy_mode}" "${_lh_executable}"
+    RESULT_VARIABLE _lh_deploy_result
+    OUTPUT_VARIABLE _lh_deploy_stdout
+    ERROR_VARIABLE _lh_deploy_stderr
+)
+if(NOT _lh_deploy_result EQUAL 0)
+    message(FATAL_ERROR
+        "windeployqt failed for config ${_lh_install_config_label} "
+        "(--${_lh_qt_deploy_mode}) and ${_lh_executable} "
+        "(exit ${_lh_deploy_result}).\n"
+        "stdout:\n${_lh_deploy_stdout}\n"
+        "stderr:\n${_lh_deploy_stderr}"
+    )
+endif()
+
+set(_lh_required_qt_plugins
+    "${_lh_install_prefix}/bin/platforms/qwindows${_lh_qt_plugin_suffix}.dll"
+    "${_lh_install_prefix}/bin/sqldrivers/qsqlite${_lh_qt_plugin_suffix}.dll"
+)
+foreach(_lh_plugin IN LISTS _lh_required_qt_plugins)
+    if(NOT EXISTS "${_lh_plugin}")
+        message(FATAL_ERROR
+            "windeployqt completed for config ${_lh_install_config_label} "
+            "(--${_lh_qt_deploy_mode}) but required Qt plugin is missing; "
+            "expected file: ${_lh_plugin}"
+        )
+    endif()
+endforeach()
+
+message(STATUS
+    "Qt runtime and required ${_lh_qt_deploy_mode} plugins deployed to "
+    "${_lh_install_prefix}/bin for config ${_lh_install_config_label}"
+)

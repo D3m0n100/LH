@@ -222,6 +222,7 @@ public:
     /// 获取当前脚本文本
     QString currentScript() const;
     QString scriptForSave() const;
+    int currentLineNumber() const;
     /// 设置脚本文本
     void setScript(const QString& text);
     /// 清空脚本

@@ -1,20 +1,20 @@
-// 文件: src/designer/DownloadDockWidget.cpp
+﻿// 文件：src/designer/DownloadDockWidget.cpp
 
 #include "DownloadDockWidget.h"
 
 #include <QComboBox>
+#include <QDir>
+#include <QFileDialog>
 #include <QFormLayout>
 #include <QGroupBox>
-#include <QSpinBox>
-#include <QPushButton>
-#include <QProgressBar>
-#include <QTextEdit>
-#include <QLabel>
-#include <QVBoxLayout>
 #include <QHBoxLayout>
+#include <QLabel>
+#include <QProgressBar>
+#include <QPushButton>
 #include <QSerialPortInfo>
-#include <QFileDialog>
-#include <QDir>
+#include <QSpinBox>
+#include <QTextEdit>
+#include <QVBoxLayout>
 
 #include "communication/DownloadManager.h"
 
@@ -27,35 +27,37 @@ DownloadDockWidget::DownloadDockWidget(QWidget* parent)
     }
 
     m_baud = new QComboBox(this);
-    m_baud->addItems({"1200", "2400", "4800", "9600", "19200", "38400", "57600", "115200"});
-    m_baud->setCurrentText("115200");
+    m_baud->addItems({QStringLiteral("1200"), QStringLiteral("2400"), QStringLiteral("4800"),
+                      QStringLiteral("9600"), QStringLiteral("19200"), QStringLiteral("38400"),
+                      QStringLiteral("57600"), QStringLiteral("115200")});
+    m_baud->setCurrentText(QStringLiteral("115200"));
 
     m_targetId = new QSpinBox(this);
     m_targetId->setRange(1, 247);
     m_targetId->setValue(2);
 
-    m_btnConnectProbe = new QPushButton("连接并探测", this);
-    m_btnDownload = new QPushButton("开始下载", this);
+    m_btnConnectProbe = new QPushButton(QStringLiteral("连接并探测"), this);
+    m_btnDownload = new QPushButton(QStringLiteral("开始下载"), this);
 
-    m_status = new QLabel("状态: -", this);
+    m_status = new QLabel(QStringLiteral("状态：-"), this);
     m_prog = new QProgressBar(this);
     m_prog->setRange(0, 100);
     m_prog->setTextVisible(true);
 
     m_log = new QTextEdit(this);
     m_log->setReadOnly(true);
-    m_log->setPlaceholderText("下载过程日志会显示在这里");
+    m_log->setPlaceholderText(QStringLiteral("下载过程日志会显示在这里"));
 
-    auto* commGroup = new QGroupBox("通信参数", this);
+    auto* commGroup = new QGroupBox(QStringLiteral("通信参数"), this);
     auto* commLayout = new QFormLayout(commGroup);
     commLayout->setContentsMargins(10, 10, 10, 10);
     commLayout->setHorizontalSpacing(12);
     commLayout->setVerticalSpacing(8);
-    commLayout->addRow("端口", m_port);
-    commLayout->addRow("波特率", m_baud);
-    commLayout->addRow("目标 ID", m_targetId);
+    commLayout->addRow(QStringLiteral("端口"), m_port);
+    commLayout->addRow(QStringLiteral("波特率"), m_baud);
+    commLayout->addRow(QStringLiteral("目标 ID"), m_targetId);
 
-    auto* actionGroup = new QGroupBox("操作", this);
+    auto* actionGroup = new QGroupBox(QStringLiteral("操作"), this);
     auto* actionLayout = new QHBoxLayout(actionGroup);
     actionLayout->setContentsMargins(10, 10, 10, 10);
     actionLayout->setSpacing(8);
@@ -63,7 +65,7 @@ DownloadDockWidget::DownloadDockWidget(QWidget* parent)
     actionLayout->addWidget(m_btnDownload);
     actionLayout->addStretch();
 
-    auto* statusGroup = new QGroupBox("状态日志", this);
+    auto* statusGroup = new QGroupBox(QStringLiteral("状态日志"), this);
     auto* statusLayout = new QVBoxLayout(statusGroup);
     statusLayout->setContentsMargins(10, 10, 10, 10);
     statusLayout->setSpacing(8);
@@ -86,13 +88,13 @@ DownloadDockWidget::DownloadDockWidget(QWidget* parent)
 
     connect(m_mgr, &DownloadManager::logLine, this, &DownloadDockWidget::appendLog);
     connect(m_mgr, &DownloadManager::statusChanged, this, [this](DownloadManager::State, const QString& msg) {
-        m_status->setText("状态: " + msg);
+        m_status->setText(QStringLiteral("状态：%1").arg(msg));
     });
     connect(m_mgr, &DownloadManager::progressChanged, this, [this](int percent, int, int, int, int) {
         m_prog->setValue(percent);
     });
     connect(m_mgr, &DownloadManager::errorOccurred, this, [this](DownloadManager::ErrorCode c, const QString& msg, const QString& det) {
-        appendLog(QString("[ERROR] code=%1 msg=%2 details=%3").arg(int(c)).arg(msg).arg(det));
+        appendLog(QStringLiteral("[错误] code=%1 msg=%2 details=%3").arg(int(c)).arg(msg, det));
     });
 }
 
@@ -107,38 +109,37 @@ QVariantMap DownloadDockWidget::buildCommConfig() const
     const int target = m_targetId->value();
 
     QVariantMap bridge {
-        {"enableHandshake", true},
-        {"enableTargetProbe", true},
-        {"controller", QVariantMap{{"slaveId", 1}}},
-        {"target", QVariantMap{{"deviceId", target}}},
-        {"addressing", QVariantMap{{"mode", "TargetAsSlaveId"}}},
-        // 注意：以下地址仅为示例，请按现场协议填写。
-        {"handshake", QVariantMap{{"slaveId", 1}, {"address", 38}, {"count", 1}}},
-        {"targetProbe", QVariantMap{{"slaveId", target}, {"address", 38}, {"count", 1}}}
+        {QStringLiteral("enableHandshake"), true},
+        {QStringLiteral("enableTargetProbe"), true},
+        {QStringLiteral("controller"), QVariantMap{{QStringLiteral("slaveId"), 1}}},
+        {QStringLiteral("target"), QVariantMap{{QStringLiteral("deviceId"), target}}},
+        {QStringLiteral("addressing"), QVariantMap{{QStringLiteral("mode"), QStringLiteral("TargetAsSlaveId")}}},
+        {QStringLiteral("handshake"), QVariantMap{{QStringLiteral("slaveId"), 1}, {QStringLiteral("address"), 38}, {QStringLiteral("count"), 1}}},
+        {QStringLiteral("targetProbe"), QVariantMap{{QStringLiteral("slaveId"), target}, {QStringLiteral("address"), 38}, {QStringLiteral("count"), 1}}}
     };
 
     QVariantMap comm {
-        {"protocol", "MODBUS"},
-        {"mode", "RTU"},
-        {"type", "Master"},
-        {"port", m_port->currentText()},
-        {"baudRate", baud},
-        {"parity", "None"},
-        {"dataBits", 8},
-        {"stopBits", 1},
-        {"address", 1},
-        {"responseTimeout", 300},
-        {"retryCount", 3},
-        {"enableBridge", true},
-        {"bridge", bridge}
+        {QStringLiteral("protocol"), QStringLiteral("MODBUS")},
+        {QStringLiteral("mode"), QStringLiteral("RTU")},
+        {QStringLiteral("type"), QStringLiteral("Master")},
+        {QStringLiteral("port"), m_port->currentText()},
+        {QStringLiteral("baudRate"), baud},
+        {QStringLiteral("parity"), QStringLiteral("None")},
+        {QStringLiteral("dataBits"), 8},
+        {QStringLiteral("stopBits"), 1},
+        {QStringLiteral("address"), 1},
+        {QStringLiteral("responseTimeout"), 300},
+        {QStringLiteral("retryCount"), 3},
+        {QStringLiteral("enableBridge"), true},
+        {QStringLiteral("bridge"), bridge}
     };
 
-    return QVariantMap{{"comm", comm}};
+    return QVariantMap{{QStringLiteral("comm"), comm}};
 }
 
 void DownloadDockWidget::onConnectProbe()
 {
-    appendLog("[界面] 开始连接并探测...");
+    appendLog(QStringLiteral("[界面] 开始连接并探测..."));
     m_mgr->setConfig(buildCommConfig());
     m_mgr->startConnectProbe();
 }
@@ -146,18 +147,24 @@ void DownloadDockWidget::onConnectProbe()
 void DownloadDockWidget::onDownload()
 {
     const QString profile = QFileDialog::getOpenFileName(
-        this, "选择下载配置 JSON", QDir::currentPath(), "JSON 文件 (*.json)");
+        this,
+        QStringLiteral("选择下载配置 JSON"),
+        QDir::currentPath(),
+        QStringLiteral("JSON 文件 (*.json)"));
     if (profile.isEmpty()) {
         return;
     }
 
     const QString payload = QFileDialog::getOpenFileName(
-        this, "选择下载载荷文件", QDir::currentPath(), "所有文件 (*.*)");
+        this,
+        QStringLiteral("选择下载载荷文件"),
+        QDir::currentPath(),
+        QStringLiteral("所有文件 (*.*)"));
     if (payload.isEmpty()) {
         return;
     }
 
-    appendLog("[界面] 开始下载...");
+    appendLog(QStringLiteral("[界面] 开始下载..."));
     m_mgr->setConfig(buildCommConfig());
     m_mgr->startDownload(profile, payload);
 }

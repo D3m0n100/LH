@@ -28,6 +28,7 @@ DslCompletionEngine::DslCompletionEngine(QObject* parent)
     m_completer = new QCompleter(this);
     m_completer->setCompletionMode(QCompleter::PopupCompletion);
     m_completer->setCaseSensitivity(Qt::CaseInsensitive);
+    m_completer->setFilterMode(Qt::MatchStartsWith);
     
     // 创建 Snippet 仓库
     m_repository = new SnippetRepository(this);

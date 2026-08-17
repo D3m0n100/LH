@@ -90,7 +90,7 @@ void DslSyntaxHighlighter::setupHighlightingRules()
         m_highlightingRules.append(rule);
     }
     
-    // ===== 鏁板瓧鏍煎紡 =====
+    // ===== 数字格式 =====
     m_numberFormat.setForeground(QColor("#098658"));
     {
         HighlightingRule rule;

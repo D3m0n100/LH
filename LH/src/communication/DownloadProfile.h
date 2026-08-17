@@ -8,6 +8,7 @@
 #include <QVariantMap>
 #include <QVector>
 #include <QString>
+#include <QStringList>
 
 /**
  * @brief DownloadProfile
@@ -37,6 +38,9 @@ public:
 
     static bool fromJson(const QByteArray& json, DownloadProfile& out, QString* err = nullptr);
     static bool fromJsonFile(const QString& path, DownloadProfile& out, QString* err = nullptr);
+
+    QVariantMap resolvedParams(const Step& step) const;
+    bool validate(QStringList* errors = nullptr) const;
 
     static QString stepTypeToString(StepType t);
     static StepType stepTypeFromString(const QString& s, bool* ok = nullptr);

@@ -57,6 +57,7 @@ target_link_libraries(monitor
 target_include_directories(monitor
     PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}
+        ${LX_PUBLIC_INCLUDE_DIRS}
 )
 
 # C++17 支持（用于 std::optional）

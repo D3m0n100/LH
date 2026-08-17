@@ -34,6 +34,7 @@ public:
     void setRuntimeState(const QString& runtimeState);
     void setBuildState(const QString& buildState);
     void setMonitoringState(const QString& monitoringState);
+    void setDownloadState(const QString& downloadState);
     void setOpcState(const QString& opcState);
     void setVariableSummary(const QString& summary);
     void setParameterSummary(const QString& summary);
@@ -56,6 +57,7 @@ private:
     void onParameterItemDoubleClicked(QTableWidgetItem* item);
     QString readbackStateFor(const ParameterDefinition& parameter) const;
     QString deviationStateFor(const ParameterDefinition& parameter) const;
+    QString issueSummaryFor(const ParameterDefinition& parameter) const;
 
     QLabel* m_projectPathValue = nullptr;
     QLabel* m_currentFileValue = nullptr;
@@ -63,10 +65,12 @@ private:
     QLabel* m_runtimeValue = nullptr;
     QLabel* m_buildValue = nullptr;
     QLabel* m_monitorValue = nullptr;
+    QLabel* m_downloadValue = nullptr;
     QLabel* m_opcValue = nullptr;
     QLabel* m_variableValue = nullptr;
     QLabel* m_parameterValue = nullptr;
     QLabel* m_resourceValue = nullptr;
+    QLabel* m_paramHint = nullptr;
     QTableWidget* m_parameterTable = nullptr;
     QToolButton* m_parameterEditButton = nullptr;
     QToolButton* m_applyParametersButton = nullptr;
@@ -75,6 +79,7 @@ private:
     QMap<QString, double> m_parameterDeviationMap;
     QMap<QString, ParameterStateInfo> m_parameterStateMap;
     PanelMode m_panelMode = PanelMode::Tuning;
+    QGroupBox* m_stateGroup = nullptr;
     QGroupBox* m_contextGroup = nullptr;
     QGroupBox* m_paramGroup = nullptr;
 };

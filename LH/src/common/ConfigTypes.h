@@ -443,7 +443,8 @@ struct OpcServerConfig
     int retries = 2;
     int maxRegistersPerRequest = 1;
     QString rootDescription = "Modbus Root";
-    QString classicServerName = "LM Compatible OPC";
+    QString classicServerName = "LH Compatible OPC";
+    QString opcProgId = "Matrikon.OPC.Modbus";
     bool exposeTagTable = true;
     QVariantMap metadata;
 
@@ -465,6 +466,7 @@ struct OpcServerConfig
         obj["maxRegistersPerRequest"] = maxRegistersPerRequest;
         obj["rootDescription"] = rootDescription;
         obj["classicServerName"] = classicServerName;
+        obj["opcProgId"] = opcProgId;
         obj["exposeTagTable"] = exposeTagTable;
         obj["metadata"] = QJsonObject::fromVariantMap(metadata);
         return obj;
@@ -487,7 +489,8 @@ struct OpcServerConfig
         cfg.retries = obj["retries"].toInt(2);
         cfg.maxRegistersPerRequest = obj["maxRegistersPerRequest"].toInt(1);
         cfg.rootDescription = obj["rootDescription"].toString("Modbus Root");
-        cfg.classicServerName = obj["classicServerName"].toString("LM Compatible OPC");
+        cfg.classicServerName = obj["classicServerName"].toString("LH Compatible OPC");
+        cfg.opcProgId = obj["opcProgId"].toString("Matrikon.OPC.Modbus");
         cfg.exposeTagTable = obj["exposeTagTable"].toBool(true);
         cfg.metadata = obj["metadata"].toObject().toVariantMap();
         return cfg;
@@ -500,7 +503,11 @@ struct OpcServerConfig
  */
 struct ProjectRuntimeConfig
 {
-    int schemaVersion = 3;
+    inline static constexpr int kMinimumSchemaVersion = 1;
+    inline static constexpr int kCurrentSchemaVersion = 3;
+    inline static constexpr int CurrentSchemaVersion = kCurrentSchemaVersion;
+
+    int schemaVersion = kCurrentSchemaVersion;
     TargetDeviceConfig target;
     ControllerConfig controller;
     TransportConfig transport;
@@ -580,7 +587,7 @@ struct ProjectRuntimeConfig
     static ProjectRuntimeConfig fromJson(const QJsonObject& obj)
     {
         ProjectRuntimeConfig cfg;
-        cfg.schemaVersion = obj["schemaVersion"].toInt(3);
+        cfg.schemaVersion = obj["schemaVersion"].toInt(kCurrentSchemaVersion);
         cfg.projectName = obj["projectName"].toString();
         cfg.protocol = obj["protocol"].toString();
         cfg.commParameters = obj["commParameters"].toObject().toVariantMap();
@@ -604,7 +611,76 @@ struct ProjectRuntimeConfig
         cfg.lastModified = QDateTime::fromString(obj["lastModified"].toString(), Qt::ISODate);
         cfg.target = TargetDeviceConfig::fromJson(obj["target"].toObject());
         cfg.controller = ControllerConfig::fromJson(obj["controller"].toObject());
-        cfg.transport = TransportConfig::fromJson(obj["transport"].toObject());
+        const QJsonObject transportObject = obj["transport"].toObject();
+        cfg.transport = TransportConfig::fromJson(transportObject);
+        const bool defaultTransportPlaceholder = !transportObject.isEmpty()
+                && cfg.transport.protocol.compare(QStringLiteral("modbus"), Qt::CaseInsensitive) == 0
+                && cfg.transport.mode.compare(QStringLiteral("rtu"), Qt::CaseInsensitive) == 0
+                && cfg.transport.parameters.isEmpty()
+                && [&transportObject]() {
+                    for (auto it = transportObject.constBegin(); it != transportObject.constEnd(); ++it) {
+                        if (it.key() != QStringLiteral("protocol")
+                                && it.key() != QStringLiteral("mode")
+                                && it.key() != QStringLiteral("parameters")) {
+                            return false;
+                        }
+                    }
+                    return true;
+                }();
+        if ((transportObject.isEmpty() || defaultTransportPlaceholder)
+                && !cfg.protocol.trimmed().isEmpty()) {
+            QString legacyProtocol = cfg.protocol.trimmed().toUpper();
+            legacyProtocol.remove(QLatin1Char('-'));
+            legacyProtocol.remove(QLatin1Char('_'));
+            legacyProtocol.remove(QLatin1Char(' '));
+
+            QString legacyMode = cfg.commParameters.value("mode").toString().trimmed().toLower();
+            if (legacyProtocol == QStringLiteral("MODBUSRTU")
+                    || legacyProtocol == QStringLiteral("RTU")) {
+                cfg.transport.protocol = QStringLiteral("modbus");
+                cfg.transport.mode = QStringLiteral("rtu");
+            } else if (legacyProtocol == QStringLiteral("MODBUSTCP")) {
+                cfg.transport.protocol = QStringLiteral("modbus");
+                cfg.transport.mode = QStringLiteral("tcp");
+            } else if (legacyProtocol == QStringLiteral("MODBUS")) {
+                cfg.transport.protocol = QStringLiteral("modbus");
+                cfg.transport.mode = legacyMode == QStringLiteral("tcp")
+                        ? QStringLiteral("tcp")
+                        : QStringLiteral("rtu");
+            } else if (legacyProtocol == QStringLiteral("ETHERNET")
+                       || legacyProtocol == QStringLiteral("TCP")
+                       || legacyProtocol == QStringLiteral("UDP")) {
+                cfg.transport.protocol = QStringLiteral("ethernet");
+                cfg.transport.mode = legacyProtocol == QStringLiteral("UDP")
+                        || legacyMode == QStringLiteral("udp")
+                        ? QStringLiteral("udp")
+                        : QStringLiteral("tcp");
+            } else if (legacyProtocol == QStringLiteral("SERIAL")
+                       || legacyProtocol == QStringLiteral("RS232")
+                       || legacyProtocol == QStringLiteral("RS485")) {
+                cfg.transport.protocol = QStringLiteral("serial");
+                cfg.transport.mode = legacyMode.isEmpty() ? QStringLiteral("raw") : legacyMode;
+            } else if (legacyProtocol == QStringLiteral("CANOPEN")) {
+                cfg.transport.protocol = QStringLiteral("canopen");
+                cfg.transport.mode = legacyMode;
+            } else if (legacyProtocol == QStringLiteral("J1939")) {
+                cfg.transport.protocol = QStringLiteral("j1939");
+                cfg.transport.mode = legacyMode;
+            } else if (legacyProtocol == QStringLiteral("CAN")) {
+                cfg.transport.protocol = QStringLiteral("can");
+                cfg.transport.mode = legacyMode;
+            } else {
+                cfg.transport.protocol = cfg.protocol.trimmed().toLower();
+                cfg.transport.mode = legacyMode;
+            }
+            cfg.transport.parameters = cfg.commParameters;
+        } else if (!cfg.commParameters.isEmpty()) {
+            for (auto it = cfg.commParameters.constBegin(); it != cfg.commParameters.constEnd(); ++it) {
+                if (!cfg.transport.parameters.contains(it.key())) {
+                    cfg.transport.parameters.insert(it.key(), it.value());
+                }
+            }
+        }
         cfg.bridge = BridgeConfig::fromJson(obj["bridge"].toObject());
         cfg.downloadArtifact = DownloadArtifactConfig::fromJson(obj["downloadArtifact"].toObject());
         cfg.opcServer = OpcServerConfig::fromJson(obj["opcServer"].toObject());
@@ -643,7 +719,7 @@ struct ProjectRuntimeConfig
     /// 清空配置
     void clear()
     {
-        schemaVersion = 3;
+        schemaVersion = kCurrentSchemaVersion;
         target = TargetDeviceConfig();
         controller = ControllerConfig();
         transport = TransportConfig();

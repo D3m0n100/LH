@@ -4,6 +4,7 @@
 #define DOWNLOADMANAGER_H
 
 #include <QObject>
+#include <QPointer>
 #include <QThread>
 #include <QVariantMap>
 
@@ -56,7 +57,7 @@ signals:
 private:
     QVariantMap m_cfg;
     QThread m_thread;
-    QObject* m_activeWorker = nullptr;
+    QPointer<QObject> m_activeWorker;
 };
 
 #endif // DOWNLOADMANAGER_H

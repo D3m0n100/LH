@@ -25,14 +25,14 @@ from lh_compiler.compiler import LHCompiler
 def main():
     parser = argparse.ArgumentParser(
         prog='lmc',
-        description='LH编译器 - 将LM源代码编译为.code字节码',
+        description='LH编译器 - 将LH源代码编译为.code字节码',
         epilog='示例: lmc program.lh -o output.code -v'
     )
     
     parser.add_argument(
         'input',
         nargs='+',
-        help='输入的.lm源文件（支持通配符）'
+        help='输入的.lh源文件（支持通配符）'
     )
     
     parser.add_argument(

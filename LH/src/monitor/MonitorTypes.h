@@ -15,6 +15,8 @@
 #include <functional>
 #include <optional>
 
+#include "../common/RuntimePointTypes.h"
+
 namespace Monitor {
 
 // ============================================================================
@@ -54,6 +56,8 @@ struct Sample {
     double value = 0.0;
     QString unit;
     QDateTime timestamp;
+    RuntimePointQuality quality = RuntimePointQuality::Good;
+    bool valueValid = true;
     QVariantMap metadata;
 
     Sample() = default;
@@ -66,6 +70,10 @@ struct Sample {
         , value(val)
         , unit(unitStr)
         , timestamp(time)
+        , quality(meta.contains(QStringLiteral("quality"))
+                      ? runtimePointQualityFromString(meta.value(QStringLiteral("quality")).toString())
+                      : RuntimePointQuality::Good)
+        , valueValid(meta.value(QStringLiteral("valueValid"), true).toBool())
         , metadata(meta)
     {}
     

@@ -257,4 +257,4 @@ void DataManagerTest::testOptimizeDatabase()
     QVERIFY(result.success);
 }
 
-// QTEST_MAIN(DataManagerTest)
+QTEST_MAIN(DataManagerTest)

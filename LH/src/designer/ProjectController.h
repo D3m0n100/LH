@@ -133,8 +133,8 @@ public slots:
     /// 保存当前项目
     bool saveProject();
     
-    /// 关闭当前项目
-    void closeProject();
+    /// 关闭当前项目；取消或保存失败时返回 false
+    bool closeProject();
     
     /// 从最近列表打开项目
     void openRecentProject(const QString& path);
@@ -192,10 +192,12 @@ private:
     // ===== 内部方法 =====
     
     /// 加载项目配置
-    bool loadProjectConfig(const QString& projectDir);
+    bool loadProjectConfig(const QString& projectDir, ProjectRuntimeConfig* loadedConfig = nullptr);
     
     /// 保存项目配置
     bool saveProjectConfig(const QString& projectDir);
+    bool saveDslScript(QString& savedScript);
+    bool confirmPendingChanges();
     void syncScriptConfigFields();
     
     /// 添加到最近项目列表

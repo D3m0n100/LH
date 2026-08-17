@@ -39,6 +39,7 @@ private:
     QSpinBox* m_maxRegistersSpin = nullptr;
     QLineEdit* m_rootDescriptionEdit = nullptr;
     QLineEdit* m_classicServerNameEdit = nullptr;
+    QLineEdit* m_opcProgIdEdit = nullptr;
 };
 
 #endif // OPCSERVERSETTINGSDIALOG_H

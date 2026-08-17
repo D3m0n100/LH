@@ -3,6 +3,9 @@
 #include <QtCore/QDir>
 #include <QtCore/QFile>
 #include <QtCore/QFileInfo>
+#include <QtCore/QJsonArray>
+#include <QtCore/QJsonDocument>
+#include <QtCore/QJsonObject>
 #include <QtCore/QStringList>
 #include <QtCore/QTextStream>
 
@@ -39,7 +42,7 @@ int main(int argc, char* argv[])
         QDir::cleanPath(QDir::currentPath() + QStringLiteral("/build/legacy_probe_runtime"));
     QDir().mkpath(runtimeRoot);
 
-    const QString sourcePath = QDir(runtimeRoot).filePath(QStringLiteral("main.dsl"));
+    const QString sourcePath = QDir(runtimeRoot).filePath(QStringLiteral("main.lh"));
     const QString outputDir = QDir(runtimeRoot).filePath(QStringLiteral("build_output/parameters"));
     QDir().mkpath(outputDir);
 
@@ -61,12 +64,52 @@ int main(int argc, char* argv[])
 
     DSLCompilerInterface compiler;
 
+    QString componentStdout;
+    QString componentStderr;
+    if (!compiler.listComponents(&componentStdout, &componentStderr)) {
+        if (componentStderr.contains(QStringLiteral("No suitable Python interpreter found"))) {
+            qWarning() << "LH compiler probe skipped: compiler runtime is unavailable.";
+            qWarning() << "stderr:" << componentStderr;
+            return 0;
+        }
+        qCritical() << "Compiler component list could not be loaded.";
+        qCritical() << "stdout:" << componentStdout;
+        qCritical() << "stderr:" << componentStderr;
+        return 14;
+    }
+    if (!componentStdout.contains(QStringLiteral("DrvDO"))
+            || componentStdout.contains(QStringLiteral("_DrvDO"))) {
+        qCritical() << "Compiler component list is not aligned with the LH compiler.";
+        qCritical() << "stdout:" << componentStdout;
+        qCritical() << "stderr:" << componentStderr;
+        return 14;
+    }
+
+    const QString componentDescription = compiler.describeComponents(&componentStderr);
+    const QJsonDocument componentDoc = QJsonDocument::fromJson(componentDescription.toUtf8());
+    const QJsonArray components = componentDoc.object().value(QStringLiteral("components")).toArray();
+    bool describedDrvDo = false;
+    for (const QJsonValue& value : components) {
+        const QJsonObject component = value.toObject();
+        if (component.value(QStringLiteral("name")).toString() == QStringLiteral("DrvDO")
+                && component.value(QStringLiteral("parameters")).toArray().size() == 4) {
+            describedDrvDo = true;
+            break;
+        }
+    }
+    if (!describedDrvDo) {
+        qCritical() << "Compiler component metadata did not describe DrvDO parameters.";
+        qCritical() << "description:" << componentDescription.left(500);
+        qCritical() << "stderr:" << componentStderr;
+        return 15;
+    }
+
     ProjectRuntimeConfig missingChildConfig;
     missingChildConfig.mainScriptPath = sourcePath;
     missingChildConfig.dslScriptPath = sourcePath;
     missingChildConfig.scriptFiles = QStringList{
         sourcePath,
-        QStringLiteral("missing_child.dsl")
+        QStringLiteral("missing_child.lh")
     };
     const CompileResult missingChildResult = compiler.compileProjectWithResult(
         runtimeRoot,
@@ -87,8 +130,8 @@ int main(int argc, char* argv[])
     QDir().mkpath(projectRoot);
     QDir().mkpath(projectOutputDir);
 
-    const QString projectMainPath = QDir(projectRoot).filePath(QStringLiteral("main.dsl"));
-    const QString projectSubPath = QDir(projectRoot).filePath(QStringLiteral("valve_auto.dsl"));
+    const QString projectMainPath = QDir(projectRoot).filePath(QStringLiteral("main.lh"));
+    const QString projectSubPath = QDir(projectRoot).filePath(QStringLiteral("valve_auto.lh"));
     const QString projectMainDsl = QStringLiteral(
         "PROGRAM Main\n"
         "VAR\n"
@@ -121,11 +164,11 @@ int main(int argc, char* argv[])
     }
 
     ProjectRuntimeConfig config;
-    config.mainScriptPath = QStringLiteral("main.dsl");
+    config.mainScriptPath = QStringLiteral("main.lh");
     config.dslScriptPath = config.mainScriptPath;
     config.scriptFiles = QStringList{
-        QStringLiteral("main.dsl"),
-        QStringLiteral("valve_auto.dsl")
+        QStringLiteral("main.lh"),
+        QStringLiteral("valve_auto.lh")
     };
 
     const CompileResult projectResult = compiler.compileProjectWithResult(
@@ -147,10 +190,10 @@ int main(int argc, char* argv[])
     }
 
     const QString assembledPath = QDir(projectOutputDir).filePath(
-        QStringLiteral(".compiler_staging/main_assembled.dsl"));
+        QStringLiteral(".compiler_staging/main_assembled.lh"));
     const QString assembledText = readTextFile(assembledPath);
-    if (!assembledText.contains(QStringLiteral("drv_ao_1 : _DrvAO;"))
-            || !assembledText.contains(QStringLiteral("drv_do_1 : _DrvDO;"))
+    if (!assembledText.contains(QStringLiteral("drv_ao_1 : DrvAO;"))
+            || !assembledText.contains(QStringLiteral("drv_do_1 : DrvDO;"))
             || !assembledText.contains(QStringLiteral("subReady : BOOL;"))
             || !assembledText.contains(QStringLiteral("drv_ao_1("))
             || !assembledText.contains(QStringLiteral("drv_do_1("))) {
@@ -171,6 +214,15 @@ int main(int argc, char* argv[])
         if (!QFileInfo::exists(projectOutputCodePath)) {
             qCritical() << "Project output .code file not found:" << projectOutputCodePath;
             return 9;
+        }
+        const QString projectCodeText = readTextFile(projectOutputCodePath);
+        if (!projectCodeText.startsWith(QStringLiteral("// Generated by LH compiler integration"))
+                || !projectCodeText.contains(QStringLiteral("// Source:"))
+                || !projectCodeText.contains(QStringLiteral("// Output:"))
+                || !projectCodeText.contains(QStringLiteral("// Format: .lh -> .code"))) {
+            qCritical() << "Project .code metadata header is missing.";
+            qCritical() << projectCodeText.left(500);
+            return 16;
         }
 
         bool artifactListsSubFile = false;
@@ -214,31 +266,107 @@ int main(int argc, char* argv[])
     }
 
     bool hasDownloadArtifact = false;
+    bool hasParameterInitialsArtifact = false;
+    bool hasParameterLayoutArtifact = false;
+    bool hasCompileReportArtifact = false;
     for (const CompileArtifact& artifact : result.artifacts) {
         if (artifact.type == QStringLiteral("download")
                 && artifact.format == QStringLiteral("dsl_custom")
                 && QFileInfo::exists(artifact.path)
                 && !artifact.checksum.isEmpty()) {
             hasDownloadArtifact = true;
-            break;
+        }
+        if (artifact.type == QStringLiteral("parameter_initials")
+                && artifact.format == QStringLiteral("lh_parameter_initials")
+                && QFileInfo::exists(artifact.path)
+                && !artifact.checksum.isEmpty()) {
+            hasParameterInitialsArtifact = true;
+        }
+        if (artifact.type == QStringLiteral("parameter_layout")
+                && artifact.format == QStringLiteral("lh_parameter_layout")
+                && QFileInfo::exists(artifact.path)
+                && !artifact.checksum.isEmpty()) {
+            hasParameterLayoutArtifact = true;
+        }
+        if (artifact.type == QStringLiteral("compile_report")
+                && artifact.format == QStringLiteral("lh_compile_report")
+                && QFileInfo::exists(artifact.path)
+                && !artifact.checksum.isEmpty()) {
+            hasCompileReportArtifact = true;
         }
     }
     if (!hasDownloadArtifact) {
         qCritical() << "CompileResult did not report a dsl_custom download artifact.";
         return 6;
     }
+    if (!hasParameterInitialsArtifact || !hasParameterLayoutArtifact || !hasCompileReportArtifact) {
+        qCritical() << "CompileResult did not report LH sidecar artifacts.";
+        qCritical() << "parameter_initials:" << hasParameterInitialsArtifact
+                    << "parameter_layout:" << hasParameterLayoutArtifact
+                    << "compile_report:" << hasCompileReportArtifact;
+        return 18;
+    }
 
-    const QString stagedDslPath = QDir(outputDir).filePath(QStringLiteral(".compiler_staging/main.dsl"));
+    const QString stagedDslPath = QDir(outputDir).filePath(QStringLiteral(".compiler_staging/main.lh"));
     const QString stagedText = readTextFile(stagedDslPath);
     if (stagedText.isEmpty()) {
-        qCritical() << "Staged DSL file missing or empty:" << stagedDslPath;
+        qCritical() << "Staged LH file missing or empty:" << stagedDslPath;
         return 4;
+    }
+
+    const QString codeText = readTextFile(outputCodePath);
+    if (!codeText.startsWith(QStringLiteral("// Generated by LH compiler integration"))
+            || !codeText.contains(QStringLiteral("// GeneratedAt:"))
+            || !codeText.contains(QStringLiteral("// Source:"))
+            || !codeText.contains(QStringLiteral("// Output:"))
+            || !codeText.contains(QStringLiteral("// Format: .lh -> .code"))) {
+        qCritical() << ".code metadata header is missing.";
+        qCritical() << codeText.left(500);
+        return 17;
+    }
+
+    const QString outputListPath = QDir(outputDir).filePath(QStringLiteral("main.list"));
+    const QString outputTypPath = QDir(outputDir).filePath(QStringLiteral("main.typ"));
+    const QString outputReportPath = QDir(outputDir).filePath(QStringLiteral("main.rep"));
+    if (!QFileInfo::exists(outputListPath)
+            || !QFileInfo::exists(outputTypPath)
+            || !QFileInfo::exists(outputReportPath)) {
+        qCritical() << "LH sidecar files were not generated.";
+        qCritical() << outputListPath << QFileInfo::exists(outputListPath);
+        qCritical() << outputTypPath << QFileInfo::exists(outputTypPath);
+        qCritical() << outputReportPath << QFileInfo::exists(outputReportPath);
+        return 19;
+    }
+
+    const QString listText = readTextFile(outputListPath);
+    const QString typText = readTextFile(outputTypPath);
+    const QString reportText = readTextFile(outputReportPath);
+    if (!listText.startsWith(QStringLiteral("# LH compiler generated file"))
+            || !typText.startsWith(QStringLiteral("# LH compiler generated file"))
+            || !reportText.startsWith(QStringLiteral("# LH compiler generated file"))
+            || listText.contains(QStringLiteral("LM compiler"), Qt::CaseInsensitive)
+            || typText.contains(QStringLiteral("LM compiler"), Qt::CaseInsensitive)
+            || reportText.contains(QStringLiteral("LM compiler"), Qt::CaseInsensitive)) {
+        qCritical() << "LH sidecar headers are not aligned with LH naming.";
+        qCritical() << listText.left(200);
+        qCritical() << typText.left(200);
+        qCritical() << reportText.left(200);
+        return 20;
+    }
+    if (!listText.contains(QStringLiteral("drv_ao_1"))
+            || !typText.contains(QStringLiteral("function_block"))
+            || !reportText.contains(QStringLiteral("status\tsuccess"))) {
+        qCritical() << "LH sidecar contents are incomplete.";
+        qCritical() << listText.left(500);
+        qCritical() << typText.left(500);
+        qCritical() << reportText.left(500);
+        return 21;
     }
 
     const bool wrapped = stagedText.contains(QStringLiteral("PROGRAM main"))
                       && stagedText.contains(QStringLiteral("END_PROGRAM"));
-    const bool declared = stagedText.contains(QStringLiteral("drv_ao_1 : _DrvAO;"))
-                       && stagedText.contains(QStringLiteral("drv_do_1 : _DrvDO;"));
+    const bool declared = stagedText.contains(QStringLiteral("drv_ao_1 : DrvAO;"))
+                       && stagedText.contains(QStringLiteral("drv_do_1 : DrvDO;"));
     const bool callConverted = stagedText.contains(QStringLiteral("drv_ao_1("))
                             && stagedText.contains(QStringLiteral("drv_do_1("))
                             && !stagedText.contains(QStringLiteral("= _DrvAO("))
