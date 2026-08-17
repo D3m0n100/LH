@@ -12,7 +12,12 @@ LH/build_codex_verify_mingw/
 
 # Local OCR and assistant-generated workspace data
 LH/.ocr/
+LH/.claude/
 LH/.claude/settings.local.json
+LH/Handoff.md
+LH/findings.md
+LH/progress.md
+LH/task_plan.md
 
 # IDE and editor files
 .vscode/
