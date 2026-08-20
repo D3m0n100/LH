@@ -787,6 +787,110 @@ bool controllerConfigurationEnabled(const ProjectRuntimeConfig& cfg)
             || cfg.target.linkProtocol.compare(QStringLiteral("unknown"), Qt::CaseInsensitive) != 0;
 }
 
+bool isContainedProjectPath(const QString& projectPath, const QString& configuredPath)
+{
+    if (projectPath.trimmed().isEmpty() || configuredPath.trimmed().isEmpty())
+        return false;
+
+    const QString root = QFileInfo(projectPath).canonicalFilePath();
+    if (root.isEmpty())
+        return false;
+    const QString absolute = QFileInfo(configuredPath).isRelative()
+            ? QDir(root).absoluteFilePath(configuredPath)
+            : QFileInfo(configuredPath).absoluteFilePath();
+    const QString clean = QDir::cleanPath(absolute);
+    const QString relative = QDir(root).relativeFilePath(clean);
+    if (relative == QStringLiteral("..")
+            || relative.startsWith(QStringLiteral("../"))
+            || relative.startsWith(QStringLiteral("..\\"))
+            || QDir::isAbsolutePath(relative)) {
+        return false;
+    }
+
+    const QFileInfo info(clean);
+    if (info.exists()) {
+        const QString canonical = info.canonicalFilePath();
+        const QString canonicalRelative = QDir(root).relativeFilePath(canonical);
+        return !canonical.isEmpty()
+                && canonicalRelative != QStringLiteral("..")
+                && !canonicalRelative.startsWith(QStringLiteral("../"))
+                && !canonicalRelative.startsWith(QStringLiteral("..\\"))
+                && !QDir::isAbsolutePath(canonicalRelative);
+    }
+
+    QDir parent = info.dir();
+    while (!parent.exists() && parent.absolutePath() != parent.dir().absolutePath())
+        parent = parent.dir();
+    const QString canonicalParent = parent.canonicalPath();
+    const QString parentRelative = QDir(root).relativeFilePath(canonicalParent);
+    return !canonicalParent.isEmpty()
+            && parentRelative != QStringLiteral("..")
+            && !parentRelative.startsWith(QStringLiteral("../"))
+            && !parentRelative.startsWith(QStringLiteral("..\\"))
+            && !QDir::isAbsolutePath(parentRelative);
+}
+
+QString relativeProjectPath(const QString& projectPath, const QString& configuredPath)
+{
+    if (!isContainedProjectPath(projectPath, configuredPath))
+        return QString();
+    const QString absolute = QFileInfo(configuredPath).isRelative()
+            ? QDir(projectPath).absoluteFilePath(configuredPath)
+            : QFileInfo(configuredPath).absoluteFilePath();
+    return QDir(projectPath).relativeFilePath(QDir::cleanPath(absolute));
+}
+
+bool normalizeDownloadArtifactPaths(const QString& projectPath,
+                                    ProjectRuntimeConfig* config,
+                                    QString* errorMessage)
+{
+    if (!config)
+        return true;
+
+    QString normalizedFilePath;
+    if (!config->downloadArtifact.filePath.trimmed().isEmpty()) {
+        normalizedFilePath = relativeProjectPath(projectPath,
+                                                  config->downloadArtifact.filePath);
+        if (normalizedFilePath.isEmpty()) {
+            if (errorMessage)
+                *errorMessage = QStringLiteral("下载产物路径越出项目根目录：%1")
+                        .arg(config->downloadArtifact.filePath);
+            return false;
+        }
+    }
+
+    QVariantMap normalizedMetadata = config->downloadArtifact.metadata;
+    const QStringList pathKeys = {
+        QStringLiteral("downloadProfilePath"),
+        QStringLiteral("downloadProfileSourcePath"),
+        QStringLiteral("profileJsonPath"),
+        QStringLiteral("profilePath"),
+        QStringLiteral("profileSourcePath"),
+        QStringLiteral("sourceProfilePath"),
+        QStringLiteral("runtimeManifestPath"),
+        QStringLiteral("manifestPath"),
+        QStringLiteral("runtimePointsPath")
+    };
+    for (const QString& key : pathKeys) {
+        const QString value = normalizedMetadata.value(key).toString().trimmed();
+        if (value.isEmpty())
+            continue;
+        const QString relative = relativeProjectPath(projectPath, value);
+        if (relative.isEmpty()) {
+            if (errorMessage)
+                *errorMessage = QStringLiteral("下载发布路径越出项目根目录（%1）：%2")
+                        .arg(key, value);
+            return false;
+        }
+        normalizedMetadata.insert(key, relative);
+    }
+
+    if (!normalizedFilePath.isEmpty())
+        config->downloadArtifact.filePath = normalizedFilePath;
+    config->downloadArtifact.metadata = normalizedMetadata;
+    return true;
+}
+
 } // namespace
 
 // ================= 构造 / 析构 =================
@@ -1029,6 +1133,14 @@ bool ProjectController::openProjectFromPath(const QString& projectPath)
         return false;
     }
 
+    QString artifactPathError;
+    if (!normalizeDownloadArtifactPaths(projectRoot,
+                                        &loadedConfig,
+                                        &artifactPathError)) {
+        emit errorOccurred("打开失败", artifactPathError);
+        return false;
+    }
+
     const QDir projectDir(projectRoot);
     const auto isWithinProjectRoot = [&](const QString& path) {
         const QString relativePath = projectDir.relativeFilePath(path);
@@ -1182,6 +1294,36 @@ bool ProjectController::saveProject()
     syncDslMappingsFromEditor();
     syncDslMappingsToEditor();
 
+    if (!m_currentScriptFile.isEmpty()
+            && !isContainedProjectPath(m_currentProject, m_currentScriptFile)) {
+        emit errorOccurred("保存失败", "当前 DSL 脚本路径越出项目根目录，已取消保存。");
+        return false;
+    }
+    const QStringList configuredScriptPaths = {
+        m_runtimeConfig.mainScriptPath,
+        m_runtimeConfig.dslScriptPath
+    };
+    for (const QString& script : configuredScriptPaths) {
+        if (!script.isEmpty() && !isContainedProjectPath(m_currentProject, script)) {
+            emit errorOccurred("保存失败", QString("项目脚本路径越出项目根目录，已取消保存: %1").arg(script));
+            return false;
+        }
+    }
+    for (const QString& script : m_runtimeConfig.scriptFiles) {
+        if (!isContainedProjectPath(m_currentProject, script)) {
+            emit errorOccurred("保存失败", QString("项目脚本路径越出项目根目录，已取消保存: %1").arg(script));
+            return false;
+        }
+    }
+
+    QString artifactPathError;
+    if (!normalizeDownloadArtifactPaths(m_currentProject,
+                                        &m_runtimeConfig,
+                                        &artifactPathError)) {
+        emit errorOccurred("保存失败", artifactPathError);
+        return false;
+    }
+
     const bool hasDslScript = m_dslEditor && !m_currentScriptFile.isEmpty();
     QString savedScript;
     QByteArray previousScriptBytes;
@@ -1200,7 +1342,7 @@ bool ProjectController::saveProject()
     if (!saveDslScript(savedScript)) {
         return false;
     }
-    
+
     // 保存项目配置
     if (!saveProjectConfig(m_currentProject)) {
         bool recovered = true;
@@ -1330,6 +1472,13 @@ bool ProjectController::loadProjectConfig(const QString& projectDir, ProjectRunt
 bool ProjectController::saveProjectConfig(const QString& projectDir)
 {
     syncScriptConfigFields();
+    QString artifactPathError;
+    if (!normalizeDownloadArtifactPaths(projectDir,
+                                        &m_runtimeConfig,
+                                        &artifactPathError)) {
+        emit errorOccurred("保存失败", artifactPathError);
+        return false;
+    }
     const QDateTime previousLastModified = m_runtimeConfig.lastModified;
     m_runtimeConfig.lastModified = QDateTime::currentDateTime();
     
@@ -1431,7 +1580,9 @@ void ProjectController::syncScriptConfigFields()
     };
 
     if (!m_currentScriptFile.isEmpty()) {
-        m_runtimeConfig.mainScriptPath = m_currentScriptFile;
+        const QString relative = relativeProjectPath(m_currentProject, m_currentScriptFile);
+        if (!relative.isEmpty())
+            m_runtimeConfig.mainScriptPath = relative;
     }
 
     if (!m_runtimeConfig.mainScriptPath.isEmpty() && !isLhScript(m_runtimeConfig.mainScriptPath)) {
@@ -1441,15 +1592,15 @@ void ProjectController::syncScriptConfigFields()
     if (m_runtimeConfig.mainScriptPath.isEmpty() && !m_currentProject.isEmpty()) {
         const QString mainLh = QDir(m_currentProject).absoluteFilePath(QStringLiteral("main.lh"));
         if (QFileInfo::exists(mainLh)) {
-            m_runtimeConfig.mainScriptPath = mainLh;
+            m_runtimeConfig.mainScriptPath = QStringLiteral("main.lh");
         }
     }
 
     QStringList lhScripts;
     for (const QString& script : m_runtimeConfig.scriptFiles) {
-        if (isLhScript(script)) {
-            lhScripts.append(script);
-        }
+        const QString relative = relativeProjectPath(m_currentProject, script);
+        if (isLhScript(relative))
+            lhScripts.append(relative);
     }
     m_runtimeConfig.scriptFiles = lhScripts;
 

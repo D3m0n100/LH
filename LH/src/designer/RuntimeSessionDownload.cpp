@@ -84,29 +84,80 @@ QVariantMap resolveDownloadOptions(const QVariantMap& options,
                                    const QString& projectPath)
 {
     QVariantMap resolved = options;
-    QString profilePath;
+    QString optionProfilePath;
     const QStringList profileKeys = {
         QStringLiteral("downloadProfilePath"),
         QStringLiteral("profileJsonPath"),
         QStringLiteral("profilePath")
     };
+    const QStringList sourceProfileKeys = {
+        QStringLiteral("downloadProfileSourcePath"),
+        QStringLiteral("profileSourcePath"),
+        QStringLiteral("sourceProfilePath")
+    };
     for (const QString& key : profileKeys) {
-        profilePath = options.value(key).toString().trimmed();
-        if (!profilePath.isEmpty()) {
+        optionProfilePath = options.value(key).toString().trimmed();
+        if (!optionProfilePath.isEmpty()) {
             break;
         }
     }
-    if (profilePath.isEmpty()) {
-        profilePath = config.downloadArtifact.metadata
-                              .value(QStringLiteral("downloadProfilePath"))
-                              .toString().trimmed();
-    }
-    if (!profilePath.isEmpty()) {
-        QFileInfo profileInfo(profilePath);
-        if (profileInfo.isRelative() && !projectPath.trimmed().isEmpty()) {
-            profilePath = QDir(projectPath).absoluteFilePath(profilePath);
+
+    QString configuredProfilePath;
+    for (const QString& key : profileKeys) {
+        configuredProfilePath = config.downloadArtifact.metadata.value(key).toString().trimmed();
+        if (!configuredProfilePath.isEmpty()) {
+            break;
         }
-        resolved.insert(QStringLiteral("downloadProfilePath"), QDir::cleanPath(profilePath));
+    }
+    const bool publishedBinding = !config.downloadArtifact.metadata
+            .value(QStringLiteral("generationId")).toString().trimmed().isEmpty()
+            || !config.downloadArtifact.metadata
+                    .value(QStringLiteral("runtimeManifestPath")).toString().trimmed().isEmpty();
+    if (configuredProfilePath.isEmpty() && !publishedBinding) {
+        for (const QString& key : sourceProfileKeys) {
+            configuredProfilePath = config.downloadArtifact.metadata.value(key).toString().trimmed();
+            if (!configuredProfilePath.isEmpty())
+                break;
+        }
+    }
+
+    const auto absoluteProfilePath = [&projectPath](const QString& path) {
+        if (path.trimmed().isEmpty())
+            return QString();
+        const QFileInfo info(path);
+        return QDir::cleanPath(info.isRelative() && !projectPath.trimmed().isEmpty()
+                                       ? QDir(projectPath).absoluteFilePath(path)
+                                       : info.absoluteFilePath());
+    };
+    const auto comparableProfilePath = [](const QString& path) {
+        const QString canonical = QFileInfo(path).canonicalFilePath();
+        return canonical.isEmpty() ? QDir::cleanPath(QFileInfo(path).absoluteFilePath()) : canonical;
+    };
+
+    const QString configuredAbsolute = absoluteProfilePath(configuredProfilePath);
+    const QString optionAbsolute = absoluteProfilePath(optionProfilePath);
+    if (publishedBinding) {
+        if (!optionAbsolute.isEmpty() && configuredAbsolute.isEmpty()) {
+            resolved.insert(QStringLiteral("profileOverrideConflict"), true);
+            resolved.insert(QStringLiteral("profileOverrideError"),
+                           QStringLiteral("正式下载禁止使用未绑定到已发布 generation 的 Profile override。"));
+        } else if (!optionAbsolute.isEmpty()
+                   && comparableProfilePath(optionAbsolute) != comparableProfilePath(configuredAbsolute)) {
+            resolved.insert(QStringLiteral("profileOverrideConflict"), true);
+            resolved.insert(QStringLiteral("profileOverrideError"),
+                           QStringLiteral("下载 Profile override 与项目配置/manifest 不一致。"));
+        }
+    }
+
+    const QString profilePath = !configuredAbsolute.isEmpty()
+            ? configuredAbsolute
+            : optionAbsolute;
+    if (!profilePath.isEmpty()) {
+        resolved.insert(QStringLiteral("downloadProfilePath"), profilePath);
+        for (const QString& key : profileKeys) {
+            if (key != QStringLiteral("downloadProfilePath"))
+                resolved.remove(key);
+        }
     }
     return resolved;
 }
@@ -116,6 +167,7 @@ QVariantMap resolveDownloadOptions(const QVariantMap& options,
 bool RuntimeSessionController::requestDownload(const QString& artifactPath, const QVariantMap& options)
 {
     m_downloadCancelled = false;
+    m_internalReconnect = false;
     setDownloadState(DownloadState::Precheck);
     emit downloadProgressChanged(0);
 
@@ -164,6 +216,13 @@ bool RuntimeSessionController::requestDownload(const QString& artifactPath, cons
         emit runtimeError(message);
         return false;
     };
+
+    if (effectiveOptions.value(QStringLiteral("profileOverrideConflict")).toBool()) {
+        return failPrecheck(effectiveOptions.value(QStringLiteral("profileOverrideError"))
+                                    .toString().trimmed().isEmpty()
+                                ? QStringLiteral("下载 Profile override 与已发布 generation 不一致。")
+                                : effectiveOptions.value(QStringLiteral("profileOverrideError")).toString());
+    }
 
     auto finishFailure = [&](DownloadState failureState,
                              const QString& rawMessage,
@@ -252,13 +311,12 @@ bool RuntimeSessionController::requestDownload(const QString& artifactPath, cons
             return false;
         }
 
-        if (m_state == RuntimeSessionState::Fault) {
-            return finishFailure(DownloadState::TransportFailed,
-                                 QStringLiteral("设备后端在下载期间断开。"),
-                                 attemptsUsed);
-        }
-
         if (ok) {
+            if (m_state == RuntimeSessionState::Fault) {
+                return finishFailure(DownloadState::TransportFailed,
+                                     QStringLiteral("设备后端在下载期间断开。"),
+                                     attemptsUsed);
+            }
             setDownloadState(DownloadState::Verifying);
             emit downloadProgressChanged(75);
 
@@ -297,11 +355,31 @@ bool RuntimeSessionController::requestDownload(const QString& artifactPath, cons
                                                                  ? QStringLiteral("未知错误")
                                                                  : errorMsg);
 
+        const bool ownedTransportRetry = attempt < maxAttempts
+                && lastFailureState == DownloadState::TransportFailed
+                && m_backend == m_ownedControllerBackend;
+        if (m_state == RuntimeSessionState::Fault && !ownedTransportRetry) {
+            return finishFailure(DownloadState::TransportFailed,
+                                 QStringLiteral("设备后端在下载期间断开。"),
+                                 attemptsUsed);
+        }
+
         if (attempt < maxAttempts && isDownloadRetryable(lastFailureState)) {
             setDownloadState(DownloadState::Retrying);
             emit logMessage(QStringLiteral("[%1] 下载失败，准备重试：%2")
                             .arg(currentTimeLabel(),
                                  lastErrorMsg));
+
+            if (ownedTransportRetry) {
+                m_internalReconnect = true;
+                m_backend->disconnectBackend();
+                const bool reconnected = m_backend->connectBackend();
+                m_internalReconnect = false;
+                if (!reconnected) {
+                    emit logMessage(QStringLiteral("[%1] 正式后端重连失败，将在下一次尝试中再次检查。")
+                                    .arg(currentTimeLabel()));
+                }
+            }
             continue;
         }
 
@@ -330,6 +408,14 @@ bool RuntimeSessionController::runDownloadPrecheck(const QString& artifactPath,
                                                    const QVariantMap& options,
                                                    QString* errorMessage)
 {
+    if (options.value(QStringLiteral("profileOverrideConflict")).toBool()) {
+        if (errorMessage) {
+            *errorMessage = options.value(QStringLiteral("profileOverrideError"))
+                                    .toString().trimmed();
+        }
+        return false;
+    }
+
     ProjectRuntimeConfig config;
     QString projectPath;
     if (m_projectController) {

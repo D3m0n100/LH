@@ -2,6 +2,7 @@
 
 #include "ControllerDeviceBackend.h"
 
+#include "Communication.h"
 #include "ControllerDebugProtocol.h"
 
 #include <QDateTime>
@@ -10,6 +11,38 @@
 #include <QtGlobal>
 
 namespace {
+class BackendOperationGuard
+{
+public:
+    explicit BackendOperationGuard(QMutex* mutex)
+        : m_mutex(mutex)
+    {
+    }
+
+    ~BackendOperationGuard()
+    {
+        if (m_locked) {
+            m_mutex->unlock();
+        }
+    }
+
+    bool tryLock()
+    {
+        m_locked = m_mutex && m_mutex->tryLock();
+        return m_locked;
+    }
+
+    void lock()
+    {
+        m_mutex->lock();
+        m_locked = true;
+    }
+
+private:
+    QMutex* m_mutex = nullptr;
+    bool m_locked = false;
+};
+
 bool readPositiveInt(const QVariantMap& map, const QStringList& keys, int* value)
 {
     for (const QString& key : keys) {
@@ -28,6 +61,8 @@ ControllerDeviceBackend::ControllerDeviceBackend(QObject* parent)
     : IDeviceBackend(parent)
     , m_ownedClient(new ControllerDebugClient(this))
     , m_client(m_ownedClient.data())
+    , m_portOwnerToken(QStringLiteral("formal-backend-%1")
+                               .arg(QString::number(reinterpret_cast<quintptr>(this), 16)))
 {
 }
 
@@ -148,12 +183,20 @@ void ControllerDeviceBackend::setDebugClientForTest(ControllerDebugClient* clien
 
 bool ControllerDeviceBackend::connectBackend()
 {
+    BackendOperationGuard operation(&m_operationMutex);
+    if (!operation.tryLock()) {
+        const QString message = QStringLiteral("控制器后端正忙，无法连接。");
+        setFailure(CommErrorCode::DeviceBusy, message);
+        return false;
+    }
+
     ControllerDebugClient* client = nullptr;
     QVariantMap cfg;
     int id = 1;
+    QString port;
     {
         QMutexLocker lock(&m_mutex);
-        if (m_online) {
+        if (m_online && m_client && m_client->isConnected()) {
             return true;
         }
         if (!m_configured) {
@@ -165,6 +208,7 @@ bool ControllerDeviceBackend::connectBackend()
         client = m_client;
         cfg = buildRtuConfig();
         id = deviceId();
+        port = cfg.value(QStringLiteral("port")).toString().trimmed();
     }
 
     if (!client) {
@@ -173,8 +217,40 @@ bool ControllerDeviceBackend::connectBackend()
         return false;
     }
 
+    QString currentOwner;
+    if (!Communication::tryClaimRtuPort(port, m_portOwnerToken, &currentOwner)) {
+        const QString message = currentOwner.isEmpty()
+                ? QStringLiteral("控制器后端无法占用串口 %1。").arg(port)
+                : QStringLiteral("串口 %1 正被其它通信 owner 占用：%2。")
+                          .arg(port, currentOwner);
+        setFailure(CommErrorCode::DeviceBusy,
+                   message,
+                   currentOwner.isEmpty()
+                           ? QString()
+                           : QStringLiteral("owner=%1").arg(currentOwner));
+        return false;
+    }
+    {
+        QMutexLocker lock(&m_mutex);
+        m_portClaimed = true;
+        m_claimedPortName = port;
+    }
+    const auto releaseClaim = [this, port]() {
+        bool claimed = false;
+        {
+            QMutexLocker lock(&m_mutex);
+            claimed = m_portClaimed;
+            m_portClaimed = false;
+            m_claimedPortName.clear();
+        }
+        if (claimed) {
+            Communication::releaseRtuPort(port, m_portOwnerToken);
+        }
+    };
+
     if (!client->isConnected() && !client->openRtu(cfg, id)) {
         const CommError err = currentDebugError(QStringLiteral("控制器连接失败。"));
+        releaseClaim();
         setFailure(err.code, err.message, err.details);
         return false;
     }
@@ -182,8 +258,9 @@ bool ControllerDeviceBackend::connectBackend()
     ControllerDebugStatus status;
     if (!client->readStatus(&status)) {
         const CommError err = currentDebugError(QStringLiteral("控制器状态读取失败。"));
-        setFailure(err.code, err.message, err.details);
         client->close();
+        releaseClaim();
+        setFailure(err.code, err.message, err.details);
         return false;
     }
 
@@ -204,14 +281,23 @@ bool ControllerDeviceBackend::connectBackend()
 
 void ControllerDeviceBackend::disconnectBackend()
 {
+    BackendOperationGuard operation(&m_operationMutex);
+    operation.lock();
+
     ControllerDebugClient* client = nullptr;
     bool wasOnline = false;
+    bool wasClaimed = false;
+    QString port;
     {
         QMutexLocker lock(&m_mutex);
         client = m_client;
         wasOnline = m_online;
+        wasClaimed = m_portClaimed;
+        port = m_claimedPortName;
         m_online = false;
         m_targetOnline = false;
+        m_portClaimed = false;
+        m_claimedPortName.clear();
         m_downloading = false;
         m_downloadPercent = 0;
     }
@@ -219,9 +305,31 @@ void ControllerDeviceBackend::disconnectBackend()
     if (client) {
         client->close();
     }
+    if (wasClaimed) {
+        Communication::releaseRtuPort(port, m_portOwnerToken);
+    }
     if (wasOnline) {
         emit connectionStateChanged(false);
     }
+}
+
+bool ControllerDeviceBackend::tryBeginOperation(QString* errorMessage)
+{
+    if (m_operationMutex.tryLock()) {
+        return true;
+    }
+
+    const QString message = QStringLiteral("控制器后端正忙，操作被拒绝。");
+    if (errorMessage) {
+        *errorMessage = message;
+    }
+    setFailure(CommErrorCode::DeviceBusy, message);
+    return false;
+}
+
+void ControllerDeviceBackend::endOperation()
+{
+    m_operationMutex.unlock();
 }
 
 bool ControllerDeviceBackend::isOnline() const

@@ -5,13 +5,42 @@
 #include "ControllerDebugProtocol.h"
 
 #include <QElapsedTimer>
+#include <QDir>
 #include <QFile>
 #include <QFileInfo>
+#include <QJsonDocument>
+#include <QJsonObject>
 #include <QMutexLocker>
 #include <QThread>
 #include <QtGlobal>
 
 namespace {
+class BackendOperationGuard
+{
+public:
+    explicit BackendOperationGuard(QMutex* mutex)
+        : m_mutex(mutex)
+    {
+    }
+
+    ~BackendOperationGuard()
+    {
+        if (m_locked) {
+            m_mutex->unlock();
+        }
+    }
+
+    bool tryLock()
+    {
+        m_locked = m_mutex && m_mutex->tryLock();
+        return m_locked;
+    }
+
+private:
+    QMutex* m_mutex = nullptr;
+    bool m_locked = false;
+};
+
 QVector<quint16> variantToRegisters(const QVariant& value)
 {
     QVector<quint16> registers;
@@ -73,7 +102,186 @@ QString profilePathFromOptions(const QVariantMap& options, const ProjectRuntimeC
             return value;
         }
     }
-    return config.downloadArtifact.metadata.value(QStringLiteral("downloadProfilePath")).toString().trimmed();
+    const QStringList configKeys = {
+        QStringLiteral("downloadProfilePath"),
+        QStringLiteral("profileJsonPath"),
+        QStringLiteral("profilePath"),
+        QStringLiteral("downloadProfileSourcePath"),
+        QStringLiteral("profileSourcePath"),
+        QStringLiteral("sourceProfilePath")
+    };
+    for (const QString& key : configKeys) {
+        const QString value = config.downloadArtifact.metadata.value(key).toString().trimmed();
+        if (!value.isEmpty())
+            return value;
+    }
+    return QString();
+}
+
+QString comparablePath(const QString& path)
+{
+    const QString canonical = QFileInfo(path).canonicalFilePath();
+    return canonical.isEmpty() ? QDir::cleanPath(QFileInfo(path).absoluteFilePath()) : canonical;
+}
+
+bool safeManifestRelativePath(const QString& path)
+{
+    const QString normalized = QDir::fromNativeSeparators(path.trimmed());
+    if (normalized.isEmpty() || QDir::isAbsolutePath(normalized))
+        return false;
+    const QStringList parts = normalized.split(QLatin1Char('/'), Qt::SkipEmptyParts);
+    for (const QString& part : parts) {
+        if (part == QStringLiteral(".."))
+            return false;
+    }
+    return true;
+}
+
+bool validatePublishedProfileBinding(const QString& artifactPath,
+                                     const QVariantMap& options,
+                                     const ProjectRuntimeConfig& config,
+                                     QString* profilePath,
+                                     QString* errorMessage)
+{
+    const QString selectedProfile = profilePathFromOptions(options, config).trimmed();
+    if (options.value(QStringLiteral("profileOverrideConflict")).toBool()) {
+        if (errorMessage) {
+            *errorMessage = options.value(QStringLiteral("profileOverrideError"))
+                                    .toString().trimmed();
+        }
+        return false;
+    }
+
+    const QString generationId = config.downloadArtifact.metadata
+                                         .value(QStringLiteral("generationId"))
+                                         .toString().trimmed();
+    const QString configuredManifest = config.downloadArtifact.metadata
+                                               .value(QStringLiteral("runtimeManifestPath"))
+                                               .toString().trimmed();
+    const bool requiresPublishedBinding = !generationId.isEmpty() || !configuredManifest.isEmpty();
+    if (!requiresPublishedBinding) {
+        if (profilePath)
+            *profilePath = selectedProfile;
+        return !selectedProfile.isEmpty();
+    }
+
+    const QFileInfo codeInfo(artifactPath);
+    const QDir generationDir(codeInfo.absolutePath());
+    if (generationDir.dirName().isEmpty()
+            || generationDir.dir().dirName() != QStringLiteral("generations")) {
+        if (errorMessage)
+            *errorMessage = QStringLiteral("下载产物不在已发布 generation 目录中。");
+        return false;
+    }
+    const QString actualGenerationId = generationDir.dirName();
+    if (!generationId.isEmpty() && generationId != actualGenerationId) {
+        if (errorMessage)
+            *errorMessage = QStringLiteral("下载产物 generationId 与项目配置不一致。");
+        return false;
+    }
+
+    const QString manifestPath = generationDir.filePath(QStringLiteral("runtime_manifest.json"));
+    QFile manifestFile(manifestPath);
+    if (!manifestFile.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        if (errorMessage)
+            *errorMessage = QStringLiteral("已发布 generation 缺少 runtime_manifest.json。");
+        return false;
+    }
+    QJsonParseError parseError;
+    const QJsonDocument manifestDocument = QJsonDocument::fromJson(manifestFile.readAll(), &parseError);
+    if (parseError.error != QJsonParseError::NoError || !manifestDocument.isObject()) {
+        if (errorMessage)
+            *errorMessage = QStringLiteral("runtime_manifest.json 无效。");
+        return false;
+    }
+    const QJsonObject manifest = manifestDocument.object();
+    if (!manifest.value(QStringLiteral("complete")).toBool(false)
+            || manifest.value(QStringLiteral("generationId")).toString() != actualGenerationId) {
+        if (errorMessage)
+            *errorMessage = QStringLiteral("runtime_manifest 未提交为当前 generation。");
+        return false;
+    }
+
+    if (!configuredManifest.isEmpty()) {
+        const QString normalized = QDir::fromNativeSeparators(configuredManifest);
+        const QString expectedSuffix = QStringLiteral("generations/%1/runtime_manifest.json")
+                .arg(actualGenerationId);
+        if ((QFileInfo(configuredManifest).isAbsolute()
+             && comparablePath(configuredManifest) != comparablePath(manifestPath))
+                || (QFileInfo(configuredManifest).isRelative()
+                    && !normalized.endsWith(expectedSuffix))) {
+            if (errorMessage)
+                *errorMessage = QStringLiteral("项目配置 runtime_manifest 与下载产物不一致。");
+            return false;
+        }
+    }
+
+    const QString codeRelative = manifest.value(QStringLiteral("codePath")).toString().trimmed();
+    const QString profileRelative = manifest.value(QStringLiteral("downloadProfilePath")).toString().trimmed();
+    const QString manifestRelative = manifest.value(QStringLiteral("runtimeManifestPath"))
+            .toString().trimmed();
+    if (!safeManifestRelativePath(codeRelative)
+            || !safeManifestRelativePath(profileRelative)
+            || manifestRelative != QStringLiteral("runtime_manifest.json")) {
+        if (errorMessage)
+            *errorMessage = QStringLiteral("runtime_manifest mandatory path 无效。");
+        return false;
+    }
+    const QString manifestCode = QDir(generationDir).cleanPath(
+            QDir(generationDir).absoluteFilePath(codeRelative));
+    const QString manifestProfile = QDir(generationDir).cleanPath(
+            QDir(generationDir).absoluteFilePath(profileRelative));
+    if (comparablePath(manifestCode) != comparablePath(codeInfo.absoluteFilePath())
+            || QFileInfo(manifestProfile).absolutePath() != generationDir.absolutePath()
+            || !QFileInfo(manifestProfile).isFile()) {
+        if (errorMessage)
+            *errorMessage = QStringLiteral("runtime_manifest code/profile 不属于同一 generation。");
+        return false;
+    }
+
+    const QString configuredProfile = [&config]() {
+        const QStringList keys = {
+            QStringLiteral("downloadProfilePath"),
+            QStringLiteral("profileJsonPath"),
+            QStringLiteral("profilePath")
+        };
+        for (const QString& key : keys) {
+            const QString value = config.downloadArtifact.metadata.value(key).toString().trimmed();
+            if (!value.isEmpty())
+                return value;
+        }
+        return QString();
+    }();
+    if (!configuredProfile.isEmpty()) {
+        const QString normalized = QDir::fromNativeSeparators(configuredProfile);
+        const QString expectedSuffix = QStringLiteral("generations/%1/download_profile.json")
+                .arg(actualGenerationId);
+        if ((QFileInfo(configuredProfile).isAbsolute()
+             && comparablePath(configuredProfile) != comparablePath(manifestProfile))
+                || (QFileInfo(configuredProfile).isRelative()
+                    && !normalized.endsWith(expectedSuffix))) {
+            if (errorMessage)
+                *errorMessage = QStringLiteral("项目配置 Profile 与已发布 generation 不一致。");
+            return false;
+        }
+    }
+
+    QString selectedComparable = selectedProfile;
+    if (QFileInfo(selectedProfile).isRelative()
+            && QDir::fromNativeSeparators(selectedProfile)
+                       .endsWith(QStringLiteral("generations/%1/download_profile.json")
+                                         .arg(actualGenerationId))) {
+        selectedComparable = manifestProfile;
+    }
+    if (selectedProfile.isEmpty()
+            || comparablePath(selectedComparable) != comparablePath(manifestProfile)) {
+        if (errorMessage)
+            *errorMessage = QStringLiteral("下载 Profile override 与已发布 generation 不一致。");
+        return false;
+    }
+    if (profilePath)
+        *profilePath = manifestProfile;
+    return true;
 }
 
 QVariantList stringsToVariantList(const QStringList& values)
@@ -109,10 +317,17 @@ bool ControllerDeviceBackend::downloadArtifact(const QString& artifactPath,
         return false;
     }
 
-    const QString downloadProfilePath = profilePathFromOptions(options, m_config);
-    if (downloadProfilePath.isEmpty()) {
+    QString downloadProfilePath;
+    QString profileBindingError;
+    if (!validatePublishedProfileBinding(path,
+                                         options,
+                                         m_config,
+                                         &downloadProfilePath,
+                                         &profileBindingError)) {
         return setOperationError(CommErrorCode::InvalidConfig,
-                                 QStringLiteral("未配置下载 Profile，已阻止下载。"),
+                                 profileBindingError.isEmpty()
+                                         ? QStringLiteral("未配置或未绑定已发布下载 Profile，已阻止下载。")
+                                         : profileBindingError,
                                  operationError,
                                  errorMessage);
     }
@@ -120,6 +335,14 @@ bool ControllerDeviceBackend::downloadArtifact(const QString& artifactPath,
     if (options.value(QStringLiteral("dryRun")).toBool()
             || options.value(QStringLiteral("validateOnly")).toBool()) {
         return dryRunDownloadArtifact(path, options, errorMessage, operationError);
+    }
+
+    BackendOperationGuard operation(&m_operationMutex);
+    if (!operation.tryLock()) {
+        return setOperationError(CommErrorCode::DeviceBusy,
+                                 QStringLiteral("控制器后端正忙，下载被拒绝。"),
+                                 operationError,
+                                 errorMessage);
     }
 
     if (!ensureOnline(errorMessage)) {
@@ -220,27 +443,31 @@ bool ControllerDeviceBackend::dryRunDownloadArtifact(const QString& artifactPath
     localReport.insert(QStringLiteral("payloadBytes"), payload.size());
     localReport.insert(QStringLiteral("payloadRegisters"), bytesToRegisters(payload).size());
 
-    const QString profilePath = profilePathFromOptions(options, m_config);
-    localReport.insert(QStringLiteral("profilePath"), profilePath);
-    if (profilePath.isEmpty()) {
-        const QString message = QStringLiteral("下载 dry-run 失败：未配置下载 Profile。");
+    QString profilePath;
+    QString profileBindingError;
+    if (!validatePublishedProfileBinding(path,
+                                         options,
+                                         m_config,
+                                         &profilePath,
+                                         &profileBindingError)) {
+        const QString message = QStringLiteral("下载 dry-run 失败：%1")
+                .arg(profileBindingError.isEmpty()
+                             ? QStringLiteral("未配置或未绑定已发布下载 Profile。")
+                             : profileBindingError);
         localReport.insert(QStringLiteral("mode"), QStringLiteral("profile"));
         localReport.insert(QStringLiteral("valid"), false);
-        localReport.insert(QStringLiteral("errors"),
-                           QVariantList{QStringLiteral("未配置下载 Profile")});
-        if (report) {
+        localReport.insert(QStringLiteral("errors"), QVariantList{message});
+        if (report)
             *report = localReport;
-        }
-        if (errorMessage) {
+        if (errorMessage)
             *errorMessage = message;
-        }
-        if (operationError) {
+        if (operationError)
             *operationError = CommError(CommProtocolType::ModbusRTU,
                                         CommErrorCode::InvalidConfig,
                                         message);
-        }
         return false;
     }
+    localReport.insert(QStringLiteral("profilePath"), profilePath);
 
     DownloadProfile profile;
     QString profileError;

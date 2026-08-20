@@ -147,6 +147,7 @@ private:
     bool m_pendingRunAfterCompile = false;
     bool m_skipNextBuildSave = false;
     bool m_downloadCancelled = false;
+    bool m_internalReconnect = false;
     QString m_artifactPath;
 };
 

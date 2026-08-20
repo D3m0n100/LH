@@ -22,6 +22,7 @@
 #include <QHash>
 #include <QFileInfo>
 #include <QSaveFile>
+#include <functional>
 
 #include "MonitorExportHelper.h"
 #include "MonitorTypes.h"
@@ -357,6 +358,62 @@ private slots:
         QVERIFY(headerLine.contains("flow"));
         
         qInfo() << "多通道 TSV 导出测试通过";
+    }
+
+    void testCommitFailurePreservesExistingTargets()
+    {
+        QTemporaryDir tempDir;
+        QVERIFY(tempDir.isValid());
+
+        const QList<Monitor::Sample> samples = generateTestSamples("pressure", 2);
+        const ExportDataPackage package = buildTestPackage();
+        using ExportCall = std::function<ExportResult(CommitFailingExportHelper&, const QString&)>;
+        struct ExportCase {
+            const char* name;
+            const char* extension;
+            ExportCall call;
+        };
+        const QList<ExportCase> cases = {
+            {"single-csv", "csv", [&](CommitFailingExportHelper& helper, const QString& path) {
+                return helper.exportDataAsCsvToFile("pressure", samples, path);
+            }},
+            {"single-json", "json", [&](CommitFailingExportHelper& helper, const QString& path) {
+                return helper.exportDataAsJsonToFile("pressure", samples, path);
+            }},
+            {"single-tsv", "tsv", [&](CommitFailingExportHelper& helper, const QString& path) {
+                return helper.exportDataAsTsvToFile("pressure", samples, path);
+            }},
+            {"package-csv", "csv", [&](CommitFailingExportHelper& helper, const QString& path) {
+                return helper.exportPackageAsCsv(package, path);
+            }},
+            {"package-json", "json", [&](CommitFailingExportHelper& helper, const QString& path) {
+                return helper.exportPackageAsJson(package, path);
+            }},
+            {"package-tsv", "tsv", [&](CommitFailingExportHelper& helper, const QString& path) {
+                return helper.exportPackageAsTsv(package, path);
+            }}
+        };
+        const QByteArray oldContent = QByteArrayLiteral("pre-existing-target-content");
+
+        for (const ExportCase& testCase : cases) {
+            const QString filePath = tempDir.path() + QStringLiteral("/commit_failure_%1.%2")
+                .arg(QString::fromLatin1(testCase.name),
+                     QString::fromLatin1(testCase.extension));
+            QFile oldFile(filePath);
+            QVERIFY(oldFile.open(QIODevice::WriteOnly | QIODevice::Truncate));
+            QCOMPARE(oldFile.write(oldContent), qint64(oldContent.size()));
+            oldFile.close();
+
+            CommitFailingExportHelper helper;
+            const ExportResult result = testCase.call(helper, filePath);
+            QVERIFY2(!result.success, testCase.name);
+            QVERIFY2(!result.errorMessage.isEmpty(), testCase.name);
+
+            QFile preservedFile(filePath);
+            QVERIFY2(QFileInfo::exists(filePath), testCase.name);
+            QVERIFY2(preservedFile.open(QIODevice::ReadOnly), testCase.name);
+            QCOMPARE(preservedFile.readAll(), oldContent);
+        }
     }
 
     // =========================================================================

@@ -4,9 +4,30 @@
 #define DOWNLOADMANAGER_H
 
 #include <QObject>
+#include <QMutex>
 #include <QPointer>
 #include <QThread>
 #include <QVariantMap>
+
+#include <atomic>
+#include <memory>
+
+class ControllerBridge;
+
+struct DownloadCancellationHandle
+{
+    std::atomic_bool requested{false};
+    QMutex bridgeMutex;
+    ControllerBridge* bridge = nullptr;
+
+    void request();
+    void setBridge(ControllerBridge* value);
+    void clearBridge();
+    bool isRequested() const
+    {
+        return requested.load(std::memory_order_acquire);
+    }
+};
 
 class DownloadManager : public QObject
 {
@@ -34,7 +55,9 @@ public:
         CAN_TIMEOUT,
         DOWNLOAD_NACK,
         DOWNLOAD_VERIFY_FAIL,
-        INVALID_CONFIG
+        INVALID_CONFIG,
+        DEVICE_BUSY,
+        CANCELLED
     };
     Q_ENUM(ErrorCode)
 
@@ -58,6 +81,7 @@ private:
     QVariantMap m_cfg;
     QThread m_thread;
     QPointer<QObject> m_activeWorker;
+    std::shared_ptr<DownloadCancellationHandle> m_activeCancelState;
 };
 
 #endif // DOWNLOADMANAGER_H

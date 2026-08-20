@@ -11,6 +11,31 @@
 #include <QVariantList>
 #include <QVariantMap>
 
+namespace {
+class BackendOperationGuard
+{
+public:
+    BackendOperationGuard(ControllerDeviceBackend* backend, QString* errorMessage)
+        : m_backend(backend)
+        , m_locked(m_backend && m_backend->tryBeginOperation(errorMessage))
+    {
+    }
+
+    ~BackendOperationGuard()
+    {
+        if (m_locked) {
+            m_backend->endOperation();
+        }
+    }
+
+    bool locked() const { return m_locked; }
+
+private:
+    ControllerDeviceBackend* m_backend = nullptr;
+    bool m_locked = false;
+};
+} // namespace
+
 bool RuntimeSessionController::pauseController()
 {
     auto* backend = controllerBackend();
@@ -20,6 +45,11 @@ bool RuntimeSessionController::pauseController()
     }
 
     QString errorMessage;
+    BackendOperationGuard operation(backend, &errorMessage);
+    if (!operation.locked()) {
+        emit runtimeError(errorMessage);
+        return false;
+    }
     if (!backend->pause(&errorMessage)) {
         emit runtimeError(errorMessage.isEmpty() ? QStringLiteral("控制器暂停失败。") : errorMessage);
         return false;
@@ -39,6 +69,11 @@ bool RuntimeSessionController::resumeController()
     }
 
     QString errorMessage;
+    BackendOperationGuard operation(backend, &errorMessage);
+    if (!operation.locked()) {
+        emit runtimeError(errorMessage);
+        return false;
+    }
     if (!backend->resume(&errorMessage)) {
         emit runtimeError(errorMessage.isEmpty() ? QStringLiteral("控制器继续失败。") : errorMessage);
         return false;
@@ -58,6 +93,11 @@ bool RuntimeSessionController::stepController()
     }
 
     QString errorMessage;
+    BackendOperationGuard operation(backend, &errorMessage);
+    if (!operation.locked()) {
+        emit runtimeError(errorMessage);
+        return false;
+    }
     if (!backend->step(&errorMessage)) {
         emit runtimeError(errorMessage.isEmpty() ? QStringLiteral("控制器单步失败。") : errorMessage);
         return false;
@@ -77,6 +117,11 @@ bool RuntimeSessionController::runControllerToCursor(int lineNumber)
     }
 
     QString errorMessage;
+    BackendOperationGuard operation(backend, &errorMessage);
+    if (!operation.locked()) {
+        emit runtimeError(errorMessage);
+        return false;
+    }
     if (!backend->runToCursor(lineNumber, &errorMessage)) {
         emit runtimeError(errorMessage.isEmpty() ? QStringLiteral("控制器运行到光标失败。") : errorMessage);
         return false;
@@ -97,6 +142,11 @@ bool RuntimeSessionController::setControllerBreakpoints(int firstLine, int secon
     }
 
     QString errorMessage;
+    BackendOperationGuard operation(backend, &errorMessage);
+    if (!operation.locked()) {
+        emit runtimeError(errorMessage);
+        return false;
+    }
     if (!backend->setBreakpoints(firstLine, secondLine, &errorMessage)) {
         emit runtimeError(errorMessage.isEmpty() ? QStringLiteral("控制器断点设置失败。") : errorMessage);
         return false;
@@ -125,6 +175,11 @@ bool RuntimeSessionController::testControllerConnection()
 
     ControllerConnectionDiagnostic diagnostic;
     QString errorMessage;
+    BackendOperationGuard operation(backend, &errorMessage);
+    if (!operation.locked()) {
+        emit runtimeError(errorMessage);
+        return false;
+    }
     if (!backend->testConnection(&diagnostic, &errorMessage)) {
         const QString message = errorMessage.isEmpty()
                 ? QStringLiteral("控制器连接测试失败。")
@@ -258,16 +313,16 @@ bool RuntimeSessionController::ensureControllerBackend()
         return false;
     }
 
+    if (m_backend != m_ownedControllerBackend) {
+        setDeviceBackend(m_ownedControllerBackend);
+    }
+
     if (!m_ownedControllerBackend->isOnline() && !m_ownedControllerBackend->connectBackend()) {
         const CommError err = m_ownedControllerBackend->lastError();
         emit runtimeError(err.message.isEmpty() ? QStringLiteral("控制器后端连接失败。") : err.message);
         return false;
     }
 
-    if (m_backend != m_ownedControllerBackend) {
-        m_backend = m_ownedControllerBackend;
-        Monitor::MonitorManager::instance().setDeviceBackend(m_backend);
-    }
     return true;
 }
 

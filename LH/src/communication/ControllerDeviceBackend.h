@@ -72,6 +72,8 @@ public:
     bool setBreakpoints(int firstLine, int secondLine, QString* errorMessage = nullptr);
     bool testConnection(ControllerConnectionDiagnostic* diagnostic = nullptr,
                         QString* errorMessage = nullptr);
+    bool tryBeginOperation(QString* errorMessage = nullptr);
+    void endOperation();
     bool preflight(QString* errorMessage = nullptr, QVariantMap* report = nullptr) const;
     bool dryRunDownloadArtifact(const QString& artifactPath,
                                 const QVariantMap& options,
@@ -139,6 +141,7 @@ private:
 
 private:
     mutable QMutex m_mutex;
+    QMutex m_operationMutex;
     ProjectRuntimeConfig m_config;
     bool m_configured = false;
     bool m_online = false;
@@ -155,6 +158,9 @@ private:
 
     QScopedPointer<ControllerDebugClient> m_ownedClient;
     ControllerDebugClient* m_client = nullptr;
+    QString m_portOwnerToken;
+    QString m_claimedPortName;
+    bool m_portClaimed = false;
 };
 
 #endif // CONTROLLERDEVICEBACKEND_H

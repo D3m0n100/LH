@@ -200,7 +200,7 @@ void RuntimeSessionController::requestStop()
 
     // 先发布 Idle，再断开后端，避免断开信号把停止过程短暂推入 Fault。
     setState(RuntimeSessionState::Idle);
-    if (m_backend) {
+    if (m_backend == m_ownedControllerBackend) {
         m_backend->disconnectBackend();
     }
     if (wasDownloading) {
@@ -352,6 +352,10 @@ void RuntimeSessionController::handleBackendConnectionStateChanged(bool connecte
 
     if (m_state == RuntimeSessionState::Idle || m_state == RuntimeSessionState::Fault)
         return;
+
+    if (m_internalReconnect) {
+        return;
+    }
 
     const bool wasMonitoring = m_state == RuntimeSessionState::Monitoring;
     Monitor::MonitorManager::instance().stopMonitoring();

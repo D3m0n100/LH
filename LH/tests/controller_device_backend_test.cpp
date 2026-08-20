@@ -6,6 +6,7 @@
 #include <QtTest/QtTest>
 #include <QTemporaryFile>
 
+#include "communication/Communication.h"
 #include "communication/ControllerDeviceBackend.h"
 
 class FakeControllerTransport : public IControllerDebugTransport
@@ -91,6 +92,84 @@ class ControllerDeviceBackendTest : public QObject
     Q_OBJECT
 
 private slots:
+    void rtuPortClaimRejectsWrongOwnerRelease()
+    {
+        const QString port = QStringLiteral("LH-claim-isolation");
+        Communication::releaseRtuPort(port, QStringLiteral("owner-a"));
+        QVERIFY(Communication::tryClaimRtuPort(port, QStringLiteral("owner-a")));
+        QCOMPARE(Communication::currentRtuPortOwner(port), QStringLiteral("owner-a"));
+
+        QString currentOwner;
+        QVERIFY(!Communication::tryClaimRtuPort(port, QStringLiteral("owner-b"), &currentOwner));
+        QCOMPARE(currentOwner, QStringLiteral("owner-a"));
+        Communication::releaseRtuPort(port, QStringLiteral("owner-b"));
+        QCOMPARE(Communication::currentRtuPortOwner(port), QStringLiteral("owner-a"));
+
+        Communication::releaseRtuPort(port, QStringLiteral("owner-a"));
+        QVERIFY(Communication::currentRtuPortOwner(port).isEmpty());
+    }
+
+    void rtuPortNormalizationPreservesUnixCase()
+    {
+        const QString port = QStringLiteral("LH/Port-A");
+#ifdef Q_OS_WIN
+        QCOMPARE(Communication::normalizedRtuPortName(port), port.toLower());
+#else
+        QCOMPARE(Communication::normalizedRtuPortName(port), port);
+#endif
+    }
+
+    void backendConnectFailsFastWhenDiagnosticOwnsPort()
+    {
+        const QString port = QStringLiteral("LH-backend-busy");
+        QVERIFY(Communication::tryClaimRtuPort(port, QStringLiteral("diagnostic-worker")));
+
+        FakeControllerTransport transport;
+        ControllerDebugClient client(&transport);
+        ControllerDeviceBackend backend;
+        backend.setDebugClientForTest(&client);
+
+        ProjectRuntimeConfig cfg;
+        cfg.transport.parameters.insert(QStringLiteral("port"), port);
+        QVERIFY(backend.configure(cfg));
+        QVERIFY(!backend.connectBackend());
+        QCOMPARE(backend.lastError().code, CommErrorCode::DeviceBusy);
+        QVERIFY(backend.lastError().details.contains(QStringLiteral("diagnostic-worker")));
+
+        Communication::releaseRtuPort(port, QStringLiteral("diagnostic-worker"));
+        QVERIFY(backend.connectBackend());
+    }
+
+    void backendOperationBusyFailsFastAndReleases()
+    {
+        FakeControllerTransport transport;
+        ControllerDebugClient client(&transport);
+        ControllerDeviceBackend backend;
+        backend.setDebugClientForTest(&client);
+
+        ProjectRuntimeConfig cfg;
+        cfg.transport.parameters.insert(QStringLiteral("port"), QStringLiteral("LH-operation-busy"));
+        QVERIFY(backend.configure(cfg));
+        QVERIFY(backend.tryBeginOperation());
+
+        QHash<QString, QVariant> values;
+        QString errorMessage;
+        QHash<QString, CommError> pointErrors;
+        QVERIFY(!backend.readPoints({QStringLiteral("controller.version")},
+                                    values,
+                                    &errorMessage,
+                                    &pointErrors));
+        QCOMPARE(backend.lastError().code, CommErrorCode::DeviceBusy);
+        QCOMPARE(pointErrors.value(QStringLiteral("controller.version")).code,
+                 CommErrorCode::DeviceBusy);
+        QVERIFY(errorMessage.contains(QStringLiteral("忙")));
+
+        backend.endOperation();
+        QVERIFY(backend.connectBackend());
+        QVERIFY(backend.readPoints({QStringLiteral("controller.version")}, values));
+        QCOMPARE(values.value(QStringLiteral("controller.version")).toInt(), 105);
+    }
+
     void configureRejectsMissingPort()
     {
         ControllerDeviceBackend backend;

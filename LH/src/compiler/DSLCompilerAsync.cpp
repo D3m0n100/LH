@@ -39,7 +39,9 @@ void DSLCompilerInterface::startAsyncCompilerProcess(const QString& logPrefix,
                                                      const QString& outputDir,
                                                      const QString& projectName,
                                                      const QString& outputFile,
-                                                     const QString& compilerInputFile)
+                                                     const QString& compilerInputFile,
+                                                     const QString& projectPath,
+                                                     const QString& generationId)
 {
     m_process = new QProcess(this);
     m_asyncStdOut.clear();
@@ -56,6 +58,9 @@ void DSLCompilerInterface::startAsyncCompilerProcess(const QString& logPrefix,
     m_process->setProperty("projectName", projectName);
     m_process->setProperty("expectedOutputFile", outputFile);
     m_process->setProperty("compilerInputFile", compilerInputFile);
+    m_process->setProperty("projectPath", projectPath);
+    m_process->setProperty("generationId", generationId);
+    m_process->setProperty("projectCompile", !projectPath.isEmpty());
     m_process->setProperty("compileTimedOut", false);
 
     connect(m_process,
@@ -163,11 +168,46 @@ void DSLCompilerInterface::compileProjectAsync(const QString& projectPath,
         return;
     }
 
+    QString pathError;
+    if (!DSLCompilerInternal::validateProjectScriptPath(projectPath,
+                                                        config.mainScriptPath.isEmpty()
+                                                                ? QStringLiteral("main.lh")
+                                                                : config.mainScriptPath,
+                                                        &pathError)) {
+        emit compileFailedToStart(pathError);
+        return;
+    }
+
+    for (const QString& script : config.scriptFiles) {
+        if (!DSLCompilerInternal::validateProjectScriptPath(projectPath, script, &pathError)) {
+            emit compileFailedToStart(pathError);
+            return;
+        }
+    }
+
     const QStringList scriptFiles = DSLCompilerInternal::normalizeProjectScriptFiles(projectPath, config, mainScriptFile);
+    for (const QString& scriptFile : scriptFiles) {
+        if (!DSLCompilerInternal::validateProjectScriptPath(projectPath, scriptFile, &pathError)) {
+            emit compileFailedToStart(pathError);
+            return;
+        }
+    }
+
+    QString generationId;
+    QString generationError;
+    const QString generationDir = DSLCompilerInternal::createProjectGeneration(projectPath,
+                                                                                config,
+                                                                                outputDir,
+                                                                                &generationId,
+                                                                                &generationError);
+    if (generationDir.isEmpty()) {
+        emit compileFailedToStart(generationError);
+        return;
+    }
 
     QString assemblyError;
     const QString compilerInputFile = DSLCompilerInternal::assembleProjectCompilerInput(projectPath,
-                                                                                       outputDir,
+                                                                                       generationDir,
                                                                                        mainScriptFile,
                                                                                        scriptFiles,
                                                                                        &assemblyError);
@@ -192,7 +232,7 @@ void DSLCompilerInterface::compileProjectAsync(const QString& projectPath,
         return;
     }
 
-    const QString outputFile = DSLCompilerInternal::defaultOutputFileForSource(mainScriptFile, outputDir);
+    const QString outputFile = DSLCompilerInternal::projectOutputFile(generationDir);
     m_asyncProjectConfig = config;
     const QStringList args = DSLCompilerInternal::buildCompilerProcessArgs(entryScript, compilerInputFile, outputFile);
     startAsyncCompilerProcess(QStringLiteral("[DSLCompilerInterface] Running project compile (async)"),
@@ -202,10 +242,12 @@ void DSLCompilerInterface::compileProjectAsync(const QString& projectPath,
                               mainScriptFile,
                               mainScriptFile,
                               scriptFiles,
-                              outputDir,
+                              generationDir,
                               projectName,
                               outputFile,
-                              compilerInputFile);
+                              compilerInputFile,
+                              projectPath,
+                              generationId);
 }
 
 void DSLCompilerInterface::cancelCurrentCompile()
@@ -312,7 +354,7 @@ void DSLCompilerInterface::onProcessFinished(int exitCode, QProcess::ExitStatus 
                  .arg(normalExit));
     }
 
-    if (!m_asyncProjectConfig.isEmpty()) {
+    if (m_process->property("projectCompile").toBool()) {
         m_lastCompileResult = buildCompileResult(m_process->property("sourceFile").toString(),
                                                  m_process->property("outputDir").toString(),
                                                  m_process->property("projectName").toString(),
@@ -321,7 +363,9 @@ void DSLCompilerInterface::onProcessFinished(int exitCode, QProcess::ExitStatus 
                                                  success,
                                                  m_asyncStdOut,
                                                  m_asyncStdErr,
-                                                 m_asyncProjectConfig);
+                                                 m_asyncProjectConfig,
+                                                 m_process->property("projectPath").toString(),
+                                                 m_process->property("generationId").toString());
         m_asyncProjectConfig.clear();
     } else {
         m_lastCompileResult = buildCompileResult(m_process->property("sourceFile").toString(),
@@ -334,7 +378,11 @@ void DSLCompilerInterface::onProcessFinished(int exitCode, QProcess::ExitStatus 
                                                  m_asyncStdErr);
     }
 
-    emit compileFinished(success ? 0 : exitCode, normalExit && success, m_asyncStdOut, m_asyncStdErr);
+    success = success && m_lastCompileResult.success;
+    emit compileFinished(success ? 0 : (exitCode == 0 ? 1 : exitCode),
+                         normalExit && success,
+                         m_asyncStdOut,
+                         m_asyncStdErr);
 
     m_process->deleteLater();
     m_process = nullptr;

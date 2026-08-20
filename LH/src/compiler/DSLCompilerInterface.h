@@ -30,6 +30,8 @@ struct CompileResult
 {
     bool success = false;
     QString projectName;
+    QString generationId;
+    QVariantMap metadata;
     QList<CompileArtifact> artifacts;
     QString stdOut;
     QString stdErr;
@@ -147,7 +149,9 @@ private:
                                    const QString& outputDir,
                                    const QString& projectName,
                                    const QString& outputFile,
-                                   const QString& compilerInputFile);
+                                   const QString& compilerInputFile,
+                                   const QString& projectPath = QString(),
+                                   const QString& generationId = QString());
     CompileResult buildCompileResult(const QString& sourceFile,
                                      const QString& outputDir,
                                      const QString& projectName,
@@ -167,10 +171,23 @@ private:
                                      const QString& stdErr,
                                      const ProjectRuntimeConfig& config) const;
 
+    CompileResult buildCompileResult(const QString& sourceFile,
+                                     const QString& outputDir,
+                                     const QString& projectName,
+                                     const QString& mainScriptFile,
+                                     const QStringList& scriptFiles,
+                                     bool success,
+                                     const QString& stdOut,
+                                     const QString& stdErr,
+                                     const ProjectRuntimeConfig& config,
+                                     const QString& projectPath,
+                                     const QString& generationId) const;
+
     CompileArtifact generateRuntimePointsJson(const QString& outputDir,
                                               const ProjectRuntimeConfig& config) const;
 
     CompileArtifact generateRuntimeManifestJson(const QString& outputDir,
+                                                const QString& projectPath,
                                                 const QString& projectName,
                                                 const QString& mainScriptFile,
                                                 const QStringList& scriptFiles,

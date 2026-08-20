@@ -9,6 +9,10 @@
 namespace DSLCompilerInternal {
 
 QString defaultOutputFileForSource(const QString& sourceFile, const QString& outputDir);
+QString projectOutputFile(const QString& outputDir);
+QString outputSidecarFileForSource(const QString& sourceFile,
+                                   const QString& outputDir,
+                                   const QString& suffix);
 QStringList buildCompilerProcessArgs(const QString& entryScript,
                                      const QString& compilerInputFile,
                                      const QString& outputFile);
@@ -39,6 +43,14 @@ QString assembleProjectCompilerInput(const QString& projectPath,
                                      const QString& mainScriptFile,
                                      const QStringList& scriptFiles,
                                      QString* errorMessage);
+QString createProjectGeneration(const QString& projectPath,
+                                const ProjectRuntimeConfig& config,
+                                const QString& baseOutputDir,
+                                QString* generationId,
+                                QString* errorMessage);
+bool validateProjectScriptPath(const QString& projectPath,
+                               const QString& path,
+                               QString* errorMessage);
 
 } // namespace DSLCompilerInternal
 

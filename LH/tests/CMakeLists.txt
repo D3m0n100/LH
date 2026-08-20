@@ -254,6 +254,21 @@ configure_lh_test(monitor_export_test
     ${CMAKE_SOURCE_DIR}/src/monitor
 )
 
+# Monitor history paging + export integration contract test
+add_executable(monitor_history_export_integration_test
+    monitor_history_export_integration_test.cpp
+)
+target_link_libraries(monitor_history_export_integration_test
+    Qt5::Core
+    Qt5::Test
+    Qt5::Sql
+    monitor
+    core_module
+)
+configure_lh_test(monitor_history_export_integration_test
+    ${CMAKE_SOURCE_DIR}/src/monitor
+)
+
 # ProtocolDetector offline tests
 add_executable(protocol_detector_test protocol_detector_test.cpp)
 target_link_libraries(protocol_detector_test
@@ -398,6 +413,7 @@ register_lh_test(LegacyDslCompileProbe dsl_legacy_compile_probe)
 register_lh_test(DslCompilerSemanticsTest dsl_compiler_semantics_test)
 set_tests_properties(DslCompilerSemanticsTest PROPERTIES SKIP_RETURN_CODE 77)
 register_lh_test(MonitorExportTest monitor_export_test)
+register_lh_test(MonitorHistoryExportIntegrationTest monitor_history_export_integration_test)
 register_lh_test(ProtocolDetectorTest protocol_detector_test)
 register_lh_test(CommunicationRoutingTest communication_routing_test)
 register_lh_test(SerialInterfaceTest serial_interface_test)

@@ -4,7 +4,12 @@
  */
 
 #include <QtTest/QtTest>
+#include <QCryptographicHash>
+#include <QDir>
 #include <QFile>
+#include <QJsonArray>
+#include <QJsonDocument>
+#include <QJsonObject>
 #include <QTemporaryDir>
 #include <QTemporaryFile>
 
@@ -134,6 +139,101 @@ public:
     QVector<quint16> lastWriteValues;
     int station = 1;
 };
+
+class BorrowedTrackingBackend : public VirtualDeviceBackend
+{
+public:
+    using VirtualDeviceBackend::VirtualDeviceBackend;
+
+    void disconnectBackend() override
+    {
+        ++disconnectCount;
+        VirtualDeviceBackend::disconnectBackend();
+    }
+
+    int disconnectCount = 0;
+};
+
+namespace {
+
+QByteArray fixtureChecksum(const QByteArray& bytes)
+{
+    return QCryptographicHash::hash(bytes, QCryptographicHash::Sha256).toHex();
+}
+
+bool writeFixtureFile(const QString& path, const QByteArray& bytes)
+{
+    QFile file(path);
+    return file.open(QIODevice::WriteOnly | QIODevice::Truncate)
+            && file.write(bytes) == bytes.size();
+}
+
+bool writePublishedBundle(const QString& projectPath,
+                          const QString& generationId,
+                          const QByteArray& code = QByteArrayLiteral("payload"),
+                          const QByteArray& profile = QByteArrayLiteral(
+                                  "{\"name\":\"fixture\",\"slaveId\":1,\"steps\":["
+                                  "{\"type\":\"sendChunk\",\"params\":{\"dataAddress\":210,"
+                                  "\"chunkWords\":1}}]}"))
+{
+    const QString generationPath = QDir(projectPath).filePath(
+            QStringLiteral("build_output/configuration/generations/%1").arg(generationId));
+    if (!QDir().mkpath(generationPath))
+        return false;
+
+    const QByteArray points = QByteArrayLiteral("[]");
+    const QString codePath = QDir(generationPath).filePath(QStringLiteral("main.code"));
+    const QString profilePath = QDir(generationPath).filePath(QStringLiteral("download_profile.json"));
+    const QString pointsPath = QDir(generationPath).filePath(QStringLiteral("runtime_points.json"));
+    if (!writeFixtureFile(codePath, code)
+            || !writeFixtureFile(profilePath, profile)
+            || !writeFixtureFile(pointsPath, points)) {
+        return false;
+    }
+
+    QJsonObject checksums;
+    checksums.insert(QStringLiteral("main.code"), QString::fromLatin1(fixtureChecksum(code)));
+    checksums.insert(QStringLiteral("download_profile.json"), QString::fromLatin1(fixtureChecksum(profile)));
+    checksums.insert(QStringLiteral("runtime_points.json"), QString::fromLatin1(fixtureChecksum(points)));
+
+    QJsonObject sourcePaths;
+    sourcePaths.insert(QStringLiteral("mainScriptPath"), QStringLiteral("main.lh"));
+    sourcePaths.insert(QStringLiteral("dslScriptPath"), QStringLiteral("main.lh"));
+    QJsonArray scripts;
+    scripts.append(QStringLiteral("main.lh"));
+    QJsonArray artifactPaths;
+    artifactPaths.append(QStringLiteral("main.code"));
+    artifactPaths.append(QStringLiteral("download_profile.json"));
+    artifactPaths.append(QStringLiteral("runtime_points.json"));
+
+    QJsonObject manifest;
+    manifest.insert(QStringLiteral("generationId"), generationId);
+    manifest.insert(QStringLiteral("complete"), true);
+    manifest.insert(QStringLiteral("projectName"), QStringLiteral("fixture"));
+    manifest.insert(QStringLiteral("mainScriptPath"), QStringLiteral("main.lh"));
+    manifest.insert(QStringLiteral("dslScriptPath"), QStringLiteral("main.lh"));
+    manifest.insert(QStringLiteral("scriptFiles"), scripts);
+    manifest.insert(QStringLiteral("sourcePaths"), sourcePaths);
+    manifest.insert(QStringLiteral("sourceFileCount"), 1);
+    manifest.insert(QStringLiteral("scriptFileCount"), 1);
+    manifest.insert(QStringLiteral("artifactPaths"), artifactPaths);
+    manifest.insert(QStringLiteral("artifactChecksums"), checksums);
+    manifest.insert(QStringLiteral("codePath"), QStringLiteral("main.code"));
+    manifest.insert(QStringLiteral("codeChecksum"), QString::fromLatin1(fixtureChecksum(code)));
+    manifest.insert(QStringLiteral("downloadProfilePath"), QStringLiteral("download_profile.json"));
+    manifest.insert(QStringLiteral("downloadProfileChecksum"),
+                    QString::fromLatin1(fixtureChecksum(profile)));
+    manifest.insert(QStringLiteral("runtimePointsPath"), QStringLiteral("runtime_points.json"));
+    manifest.insert(QStringLiteral("runtimePointsChecksum"),
+                    QString::fromLatin1(fixtureChecksum(points)));
+    manifest.insert(QStringLiteral("runtimeManifestPath"), QStringLiteral("runtime_manifest.json"));
+    manifest.insert(QStringLiteral("pointCount"), 0);
+    manifest.insert(QStringLiteral("parameterCount"), 0);
+    return writeFixtureFile(QDir(generationPath).filePath(QStringLiteral("runtime_manifest.json")),
+                            QJsonDocument(manifest).toJson(QJsonDocument::Indented));
+}
+
+} // namespace
 
 class RuntimeSessionControllerTest : public QObject
 {
@@ -266,6 +366,38 @@ private slots:
         QVERIFY(!ctrl.isRunning());
     }
 
+    void requestStopDoesNotDisconnectBorrowedBackend()
+    {
+        RuntimeSessionController ctrl;
+        BorrowedTrackingBackend backend;
+        QVERIFY(backend.connectBackend());
+        ctrl.setDeviceBackend(&backend);
+        ctrl.executeRun();
+
+        ctrl.requestStop();
+
+        QCOMPARE(backend.disconnectCount, 0);
+        QVERIFY(backend.isOnline());
+        QCOMPARE(ctrl.state(), RuntimeSessionState::Idle);
+    }
+
+    void internalReconnectGateSuppressesMarkedDisconnect()
+    {
+        RuntimeSessionController ctrl;
+        BorrowedTrackingBackend backend;
+        QVERIFY(backend.connectBackend());
+        ctrl.setDeviceBackend(&backend);
+        ctrl.executeRun();
+
+        ctrl.m_internalReconnect = true;
+        backend.disconnectBackend();
+        ctrl.m_internalReconnect = false;
+
+        QCOMPARE(ctrl.state(), RuntimeSessionState::Running);
+        QVERIFY(!backend.isOnline());
+        QVERIFY(backend.connectBackend());
+    }
+
     void startMonitoringFromRunningGoesToMonitoring()
     {
         RuntimeSessionController ctrl;
@@ -368,6 +500,28 @@ private slots:
         QCOMPARE(static_cast<DownloadState>(stateSpy.at(2).at(1).toInt()), DownloadState::Verifying);
         QCOMPARE(ctrl.downloadState(), DownloadState::Succeeded);
         QCOMPARE(ctrl.state(), RuntimeSessionState::Running);
+    }
+
+    void realBackendDisconnectDuringDownloadFailsTransport()
+    {
+        RuntimeSessionController ctrl;
+        BorrowedTrackingBackend backend;
+        QVERIFY(backend.connectBackend());
+        ctrl.setDeviceBackend(&backend);
+        ctrl.executeRun();
+
+        QTemporaryFile artifactFile;
+        QVERIFY(artifactFile.open());
+        connect(&ctrl, &RuntimeSessionController::downloadStateChanged,
+                &ctrl, [&backend](DownloadState, DownloadState newState) {
+                    if (newState == DownloadState::Downloading)
+                        backend.disconnectBackend();
+                });
+
+        QVERIFY(!ctrl.requestDownload(artifactFile.fileName()));
+        QCOMPARE(ctrl.state(), RuntimeSessionState::Fault);
+        QCOMPARE(ctrl.downloadState(), DownloadState::TransportFailed);
+        QVERIFY(backend.disconnectCount >= 1);
     }
 
     void downloadFaultInjectionRestoresRunning()
@@ -780,6 +934,11 @@ private slots:
         projectConfig.write("{}");
         projectConfig.close();
 
+        QFile mainScript(projectDir.filePath(QStringLiteral("main.lh")));
+        QVERIFY(mainScript.open(QIODevice::WriteOnly | QIODevice::Truncate));
+        mainScript.write("PROGRAM Main\nEND_PROGRAM\n");
+        mainScript.close();
+
         const QString artifactPath = projectDir.filePath(QStringLiteral("main.code"));
         QFile artifactFile(artifactPath);
         QVERIFY(artifactFile.open(QIODevice::WriteOnly | QIODevice::Truncate));
@@ -827,32 +986,167 @@ private slots:
     {
         QTemporaryDir projectDir;
         QVERIFY(projectDir.isValid());
-        const QString artifactPath = projectDir.filePath(QStringLiteral("main.code"));
-        QFile artifactFile(artifactPath);
-        QVERIFY(artifactFile.open(QIODevice::WriteOnly | QIODevice::Truncate));
-        artifactFile.write("payload");
-        artifactFile.close();
+        QVERIFY(writePublishedBundle(projectDir.path(), QStringLiteral("generation-1")));
+        const QString sourceProfilePath = projectDir.filePath(
+                QStringLiteral("profiles/download_profile.json"));
+        QVERIFY(QDir().mkpath(QFileInfo(sourceProfilePath).absolutePath()));
+        QVERIFY(writeFixtureFile(sourceProfilePath,
+                                 QByteArrayLiteral("{\"steps\":[{\"type\":\"sendChunk\","
+                                                   "\"params\":{\"dataAddress\":210,"
+                                                   "\"chunkWords\":1}}]}")));
 
         ProjectRuntimeConfig config;
-        config.downloadArtifact.metadata.insert(QStringLiteral("downloadProfilePath"),
-                                                QStringLiteral("config/download_profile.json"));
+        config.downloadArtifact.metadata.insert(QStringLiteral("downloadProfileSourcePath"),
+                                                QStringLiteral("profiles/download_profile.json"));
         config.downloadArtifact.metadata.insert(QStringLiteral("projectOwned"), true);
 
         CompileArtifact artifact;
         artifact.type = QStringLiteral("download");
         artifact.format = QStringLiteral("dsl_custom");
-        artifact.path = artifactPath;
-        artifact.checksum = QStringLiteral("checksum");
-        artifact.metadata.insert(QStringLiteral("sourceFile"), QStringLiteral("main.lh"));
+        artifact.path = projectDir.filePath(
+                QStringLiteral("build_output/configuration/generations/generation-1/main.code"));
+        artifact.checksum = QString::fromLatin1(fixtureChecksum(QByteArrayLiteral("payload")));
+        artifact.metadata.insert(QStringLiteral("generationId"), QStringLiteral("generation-1"));
         CompileResult result;
+        result.success = true;
         result.artifacts.append(artifact);
 
         QVERIFY(RunController::writeDownloadArtifact(config, projectDir.path(), result));
         QCOMPARE(config.downloadArtifact.metadata.value(QStringLiteral("downloadProfilePath")).toString(),
-                 QStringLiteral("config/download_profile.json"));
+                 QStringLiteral("build_output/configuration/generations/generation-1/download_profile.json"));
+        QCOMPARE(config.downloadArtifact.metadata.value(QStringLiteral("downloadProfileSourcePath")).toString(),
+                 QStringLiteral("profiles/download_profile.json"));
         QCOMPARE(config.downloadArtifact.metadata.value(QStringLiteral("projectOwned")).toBool(), true);
-        QCOMPARE(config.downloadArtifact.metadata.value(QStringLiteral("sourceFile")).toString(),
-                 QStringLiteral("main.lh"));
+        QVERIFY(!config.downloadArtifact.metadata.contains(QStringLiteral("sourceFile")));
+    }
+
+    void staleGenerationWithoutManifestIsNotConsumed()
+    {
+        QTemporaryDir projectDir;
+        QVERIFY(projectDir.isValid());
+        const QString generationPath = projectDir.filePath(
+                QStringLiteral("build_output/configuration/generations/stale"));
+        QVERIFY(QDir().mkpath(generationPath));
+        QVERIFY(writeFixtureFile(QDir(generationPath).filePath(QStringLiteral("main.code")),
+                                 QByteArrayLiteral("payload")));
+
+        ProjectRuntimeConfig config;
+        config.downloadArtifact.filePath =
+                QStringLiteral("build_output/configuration/generations/stale/main.code");
+        config.downloadArtifact.checksum =
+                QString::fromLatin1(fixtureChecksum(QByteArrayLiteral("payload")));
+        config.downloadArtifact.metadata.insert(QStringLiteral("generationId"), QStringLiteral("stale"));
+        config.downloadArtifact.metadata.insert(
+                QStringLiteral("runtimeManifestPath"),
+                QStringLiteral("build_output/configuration/generations/stale/runtime_manifest.json"));
+
+        QCOMPARE(RunController::findDownloadArtifactPath(config, projectDir.path(), CompileResult()),
+                 QString());
+        const auto report = RunController::validateDownloadArtifact(
+                config,
+                projectDir.path(),
+                QDir(generationPath).filePath(QStringLiteral("main.code")));
+        QVERIFY(!report.valid);
+    }
+
+    void failedPublicationKeepsExistingConfigPointer()
+    {
+        QTemporaryDir projectDir;
+        QVERIFY(projectDir.isValid());
+        QVERIFY(writePublishedBundle(projectDir.path(), QStringLiteral("old-generation")));
+        const QString oldCode = QStringLiteral(
+                "build_output/configuration/generations/old-generation/main.code");
+        const QString oldManifest = QStringLiteral(
+                "build_output/configuration/generations/old-generation/runtime_manifest.json");
+
+        const QString newGeneration = projectDir.filePath(
+                QStringLiteral("build_output/configuration/generations/new-generation"));
+        QVERIFY(QDir().mkpath(newGeneration));
+        const QString newCode = QDir(newGeneration).filePath(QStringLiteral("main.code"));
+        QVERIFY(writeFixtureFile(newCode, QByteArrayLiteral("new-payload")));
+
+        ProjectRuntimeConfig config;
+        config.downloadArtifact.filePath = oldCode;
+        config.downloadArtifact.checksum =
+                QString::fromLatin1(fixtureChecksum(QByteArrayLiteral("payload")));
+        config.downloadArtifact.metadata.insert(QStringLiteral("generationId"),
+                                                QStringLiteral("old-generation"));
+        config.downloadArtifact.metadata.insert(QStringLiteral("runtimeManifestPath"), oldManifest);
+
+        CompileArtifact artifact;
+        artifact.type = QStringLiteral("download");
+        artifact.format = QStringLiteral("dsl_custom");
+        artifact.path = newCode;
+        artifact.metadata.insert(QStringLiteral("generationId"), QStringLiteral("new-generation"));
+        CompileResult result;
+        result.success = true;
+        result.artifacts.append(artifact);
+
+        QVERIFY(!RunController::writeDownloadArtifact(config, projectDir.path(), result));
+        QCOMPARE(config.downloadArtifact.filePath, oldCode);
+        QCOMPARE(config.downloadArtifact.metadata.value(QStringLiteral("generationId")).toString(),
+                 QStringLiteral("old-generation"));
+        QCOMPARE(config.downloadArtifact.metadata.value(QStringLiteral("runtimeManifestPath")).toString(),
+                 oldManifest);
+    }
+
+    void projectRelativePublishedBundleResolvesAfterMove()
+    {
+        QTemporaryDir tempDir;
+        QVERIFY(tempDir.isValid());
+        const QString originalPath = QDir(tempDir.path()).filePath(QStringLiteral("original"));
+        const QString movedPath = QDir(tempDir.path()).filePath(QStringLiteral("moved"));
+        QVERIFY(QDir().mkpath(originalPath));
+        QVERIFY(writePublishedBundle(originalPath, QStringLiteral("generation-1")));
+
+        ProjectRuntimeConfig config;
+        config.downloadArtifact.filePath =
+                QStringLiteral("build_output/configuration/generations/generation-1/main.code");
+        config.downloadArtifact.checksum =
+                QString::fromLatin1(fixtureChecksum(QByteArrayLiteral("payload")));
+        config.downloadArtifact.metadata.insert(QStringLiteral("generationId"), QStringLiteral("generation-1"));
+        config.downloadArtifact.metadata.insert(
+                QStringLiteral("runtimeManifestPath"),
+                QStringLiteral("build_output/configuration/generations/generation-1/runtime_manifest.json"));
+        config.downloadArtifact.metadata.insert(
+                QStringLiteral("downloadProfilePath"),
+                QStringLiteral("build_output/configuration/generations/generation-1/download_profile.json"));
+
+        QVERIFY(QDir().rename(originalPath, movedPath));
+        QCOMPARE(RunController::findDownloadArtifactPath(config, movedPath, CompileResult()),
+                 QDir(movedPath).filePath(
+                         QStringLiteral("build_output/configuration/generations/generation-1/main.code")));
+    }
+
+    void publishedGenerationRejectsProfileOverride()
+    {
+        RuntimeSessionController ctrl;
+        VirtualDeviceBackend backend;
+        QVERIFY(backend.connectBackend());
+        ctrl.setDeviceBackend(&backend);
+        ProjectController projectController;
+        projectController.runtimeConfig().downloadArtifact.metadata.insert(
+                QStringLiteral("generationId"), QStringLiteral("generation-1"));
+        projectController.runtimeConfig().downloadArtifact.metadata.insert(
+                QStringLiteral("runtimeManifestPath"),
+                QStringLiteral("build_output/configuration/generations/generation-1/runtime_manifest.json"));
+        ctrl.setProjectController(&projectController);
+        ctrl.executeRun();
+
+        QTemporaryFile overrideProfile;
+        QVERIFY(overrideProfile.open());
+        overrideProfile.write(QByteArrayLiteral("{\"steps\":[{\"type\":\"sendChunk\","
+                                                "\"params\":{\"dataAddress\":210,"
+                                                "\"chunkWords\":1}}]}"));
+        overrideProfile.flush();
+
+        QSignalSpy errorSpy(&ctrl, &RuntimeSessionController::runtimeError);
+        QVERIFY(!ctrl.requestDownload(QStringLiteral("unused.code"),
+                                      {{QStringLiteral("downloadProfilePath"),
+                                        overrideProfile.fileName()}}));
+        QCOMPARE(ctrl.downloadState(), DownloadState::PrecheckFailed);
+        QCOMPARE(errorSpy.count(), 1);
+        QVERIFY(errorSpy.first().first().toString().contains(QStringLiteral("override")));
     }
 
     void pendingRunFlag()

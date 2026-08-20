@@ -62,6 +62,19 @@ int main(int argc, char* argv[])
         return 1;
     }
 
+    const QString profileJson = QStringLiteral(
+        "{\n"
+        "  \"name\": \"legacy_probe\",\n"
+        "  \"slaveId\": 1,\n"
+        "  \"steps\": [\n"
+        "    {\"type\": \"sendChunk\", \"params\": {\"dataAddress\": 210, \"chunkWords\": 1}}\n"
+        "  ]\n"
+        "}\n");
+    const QString runtimeProfilePath = QDir(runtimeRoot).filePath(QStringLiteral("download_profile.json"));
+    if (!writeTextFile(runtimeProfilePath, profileJson)) {
+        return 1;
+    }
+
     DSLCompilerInterface compiler;
 
     QString componentStdout;
@@ -111,6 +124,8 @@ int main(int argc, char* argv[])
         sourcePath,
         QStringLiteral("missing_child.lh")
     };
+    missingChildConfig.downloadArtifact.metadata.insert(
+        QStringLiteral("downloadProfilePath"), QStringLiteral("download_profile.json"));
     const CompileResult missingChildResult = compiler.compileProjectWithResult(
         runtimeRoot,
         missingChildConfig,
@@ -159,7 +174,9 @@ int main(int argc, char* argv[])
         "END_PROGRAM\n");
 
     if (!writeTextFile(projectMainPath, projectMainDsl)
-            || !writeTextFile(projectSubPath, projectSubDsl)) {
+            || !writeTextFile(projectSubPath, projectSubDsl)
+            || !writeTextFile(QDir(projectRoot).filePath(QStringLiteral("download_profile.json")),
+                              profileJson)) {
         return 7;
     }
 
@@ -170,6 +187,8 @@ int main(int argc, char* argv[])
         QStringLiteral("main.lh"),
         QStringLiteral("valve_auto.lh")
     };
+    config.downloadArtifact.metadata.insert(
+        QStringLiteral("downloadProfilePath"), QStringLiteral("download_profile.json"));
 
     const CompileResult projectResult = compiler.compileProjectWithResult(
         projectRoot,
@@ -189,7 +208,17 @@ int main(int argc, char* argv[])
         return 8;
     }
 
-    const QString assembledPath = QDir(projectOutputDir).filePath(
+    QString projectGenerationDir;
+    if (!projectResult.generationId.isEmpty()) {
+        projectGenerationDir = QDir(projectOutputDir).filePath(
+            QStringLiteral("generations/%1").arg(projectResult.generationId));
+    } else {
+        const QFileInfoList generations = QDir(QDir(projectOutputDir).filePath(QStringLiteral("generations")))
+                .entryInfoList(QDir::Dirs | QDir::NoDotAndDotDot, QDir::Time);
+        if (!generations.isEmpty())
+            projectGenerationDir = generations.constFirst().absoluteFilePath();
+    }
+    const QString assembledPath = QDir(projectGenerationDir).filePath(
         QStringLiteral(".compiler_staging/main_assembled.lh"));
     const QString assembledText = readTextFile(assembledPath);
     if (!assembledText.contains(QStringLiteral("drv_ao_1 : DrvAO;"))
@@ -210,7 +239,7 @@ int main(int argc, char* argv[])
     }
 
     if (projectResult.success) {
-        const QString projectOutputCodePath = QDir(projectOutputDir).filePath(QStringLiteral("main.code"));
+        const QString projectOutputCodePath = QDir(projectGenerationDir).filePath(QStringLiteral("main.code"));
         if (!QFileInfo::exists(projectOutputCodePath)) {
             qCritical() << "Project output .code file not found:" << projectOutputCodePath;
             return 9;
@@ -225,10 +254,34 @@ int main(int argc, char* argv[])
             return 16;
         }
 
+        const QString manifestPath = QDir(projectGenerationDir).filePath(
+                QStringLiteral("runtime_manifest.json"));
+        const QJsonDocument manifestDocument = QJsonDocument::fromJson(
+                readTextFile(manifestPath).toUtf8());
+        const QJsonObject manifest = manifestDocument.object();
+        if (!manifest.value(QStringLiteral("complete")).toBool(false)
+                || manifest.value(QStringLiteral("generationId")).toString()
+                           != projectResult.generationId) {
+            qCritical() << "Project runtime manifest is not a committed generation manifest.";
+            return 22;
+        }
+        const QStringList mandatoryPaths = {
+            manifest.value(QStringLiteral("codePath")).toString(),
+            manifest.value(QStringLiteral("downloadProfilePath")).toString(),
+            manifest.value(QStringLiteral("runtimePointsPath")).toString()
+        };
+        for (const QString& path : mandatoryPaths) {
+            if (path.isEmpty() || QDir::isAbsolutePath(path)
+                    || path.contains(QStringLiteral(".."))) {
+                qCritical() << "Project runtime manifest contains an unsafe mandatory path:" << path;
+                return 23;
+            }
+        }
+
         bool artifactListsSubFile = false;
         for (const CompileArtifact& artifact : projectResult.artifacts) {
             const QStringList scriptFiles = artifact.metadata.value(QStringLiteral("scriptFiles")).toStringList();
-            if (scriptFiles.contains(projectSubPath)) {
+            if (scriptFiles.contains(QStringLiteral("valve_auto.lh"))) {
                 artifactListsSubFile = true;
                 break;
             }

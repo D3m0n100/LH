@@ -27,12 +27,85 @@
 // 以太网
 #include "EthernetInterface.h"
 
+#include <QHash>
+#include <QMutex>
+#include <QMutexLocker>
+
 /**
  * @brief 通信模块命名空间
  * 
  * 提供工厂方法创建通信接口实例
  */
 namespace Communication {
+
+// 进程内 RTU 端口 owner。ponytail: one process-wide mutex; per-port locks if throughput matters.
+inline QString normalizedRtuPortName(QString portName)
+{
+    portName = portName.trimmed();
+#ifdef Q_OS_WIN
+    return portName.toLower();
+#else
+    return portName;
+#endif
+}
+
+inline QMutex& rtuPortClaimMutex()
+{
+    static QMutex mutex;
+    return mutex;
+}
+
+inline QHash<QString, QString>& rtuPortClaims()
+{
+    static QHash<QString, QString> claims;
+    return claims;
+}
+
+inline bool tryClaimRtuPort(const QString& portName,
+                            const QString& ownerToken,
+                            QString* currentOwner = nullptr)
+{
+    const QString port = normalizedRtuPortName(portName);
+    const QString owner = ownerToken.trimmed();
+    if (currentOwner) {
+        currentOwner->clear();
+    }
+    if (port.isEmpty() || owner.isEmpty()) {
+        return false;
+    }
+
+    QMutexLocker lock(&rtuPortClaimMutex());
+    const auto it = rtuPortClaims().constFind(port);
+    if (it != rtuPortClaims().constEnd() && it.value() != owner) {
+        if (currentOwner) {
+            *currentOwner = it.value();
+        }
+        return false;
+    }
+    rtuPortClaims().insert(port, owner);
+    return true;
+}
+
+inline void releaseRtuPort(const QString& portName, const QString& ownerToken)
+{
+    const QString port = normalizedRtuPortName(portName);
+    const QString owner = ownerToken.trimmed();
+    if (port.isEmpty() || owner.isEmpty()) {
+        return;
+    }
+
+    QMutexLocker lock(&rtuPortClaimMutex());
+    const auto it = rtuPortClaims().constFind(port);
+    if (it != rtuPortClaims().constEnd() && it.value() == owner) {
+        rtuPortClaims().erase(it);
+    }
+}
+
+inline QString currentRtuPortOwner(const QString& portName)
+{
+    QMutexLocker lock(&rtuPortClaimMutex());
+    return rtuPortClaims().value(normalizedRtuPortName(portName));
+}
 
 struct ResolvedCommConfig
 {

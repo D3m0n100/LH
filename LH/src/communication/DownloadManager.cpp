@@ -8,10 +8,30 @@
 #include "ICommInterface.h"
 
 #include <QFile>
-#include <QMetaObject>
+#include <QMutexLocker>
 #include <QPointer>
 
-#include <atomic>
+void DownloadCancellationHandle::request()
+{
+    requested.store(true, std::memory_order_release);
+    QMutexLocker lock(&bridgeMutex);
+    if (bridge)
+        bridge->requestAbort();
+}
+
+void DownloadCancellationHandle::setBridge(ControllerBridge* value)
+{
+    QMutexLocker lock(&bridgeMutex);
+    bridge = value;
+    if (bridge && requested.load(std::memory_order_acquire))
+        bridge->requestAbort();
+}
+
+void DownloadCancellationHandle::clearBridge()
+{
+    QMutexLocker lock(&bridgeMutex);
+    bridge = nullptr;
+}
 
 class DownloadWorker : public QObject
 {
@@ -23,31 +43,40 @@ public:
     }
 
     void setConfig(const QVariantMap& cfg) { m_cfg = cfg; }
+    void setCancellationState(const std::shared_ptr<DownloadCancellationHandle>& state)
+    {
+        m_cancelState = state;
+    }
 
 public slots:
     void requestCancel()
     {
-        m_cancelRequested = true;
-        if (m_bridge) {
-            m_bridge->requestAbort();
-        }
+        if (m_cancelState)
+            m_cancelState->request();
     }
 
     void doConnectProbe()
     {
-        m_cancelRequested = false;
+        if (!claimRtuPort()) {
+            emit errorOccurred(DownloadManager::ErrorCode::DEVICE_BUSY,
+                               "RTU port busy",
+                               m_claimErrorDetails);
+            finish();
+            return;
+        }
         emit statusChanged(DownloadManager::State::ConnectSerial, "Opening serial(ModbusRTU)...");
 
         ICommInterface* iface = Communication::createAndOpen(m_cfg.value("comm").toMap(), nullptr);
         m_iface = iface;
         ControllerBridge* bridge = Communication::getControllerBridge(iface);
-        m_bridge = bridge;
+        if (m_cancelState)
+            m_cancelState->setBridge(bridge);
 
         if (!iface) {
             emit errorOccurred(DownloadManager::ErrorCode::SERIAL_OPEN_FAIL,
                                "Open communication failed",
                                "Communication::createAndOpen returned nullptr");
-            emit finished();
+            finish();
             return;
         }
 
@@ -65,22 +94,18 @@ public slots:
             emit errorOccurred(DownloadManager::ErrorCode::INVALID_CONFIG,
                                "ControllerBridge not available",
                                "Ensure comm.enableBridge=true and comm.bridge.* configured");
-            delete iface;
-            m_iface = nullptr;
-            m_bridge = nullptr;
-            emit finished();
+            destroyInterface();
+            finish();
             return;
         }
 
         QObject::connect(bridge, &ControllerBridge::logLine, this, &DownloadWorker::logLine);
         QObject::connect(bridge, &ControllerBridge::downloadProgress, this, &DownloadWorker::progressChanged);
 
-        if (m_cancelRequested) {
-            emit errorOccurred(DownloadManager::ErrorCode::DOWNLOAD_NACK, "Cancelled", "Cancelled before handshake");
-            delete iface;
-            m_iface = nullptr;
-            m_bridge = nullptr;
-            emit finished();
+        if (isCancelRequested()) {
+            emit errorOccurred(DownloadManager::ErrorCode::CANCELLED, "Cancelled", "Cancelled before handshake");
+            destroyInterface();
+            finish();
             return;
         }
 
@@ -90,10 +115,8 @@ public slots:
             emit errorOccurred(DownloadManager::ErrorCode::CONTROLLER_NO_RESPONSE,
                                "Controller no response (serial OK but controller offline)",
                                QString("lastError=%1 %2").arg(int(last.code)).arg(last.message));
-            delete iface;
-            m_iface = nullptr;
-            m_bridge = nullptr;
-            emit finished();
+            destroyInterface();
+            finish();
             return;
         }
 
@@ -103,36 +126,38 @@ public slots:
             emit errorOccurred(DownloadManager::ErrorCode::TARGET_NO_RESPONSE,
                                "Target no response (controller online but target offline)",
                                QString("lastError=%1 %2").arg(int(last.code)).arg(last.message));
-            delete iface;
-            m_iface = nullptr;
-            m_bridge = nullptr;
-            emit finished();
+            destroyInterface();
+            finish();
             return;
         }
 
         emit statusChanged(DownloadManager::State::Finish, "Connect/Probe OK");
-        delete iface;
-        m_iface = nullptr;
-        m_bridge = nullptr;
-        emit finished();
+        destroyInterface();
+        finish();
     }
 
     void doDownload(const QString& profileJsonPath, const QString& payloadFilePath)
     {
-        m_cancelRequested = false;
+        if (!claimRtuPort()) {
+            emit errorOccurred(DownloadManager::ErrorCode::DEVICE_BUSY,
+                               "RTU port busy",
+                               m_claimErrorDetails);
+            finish();
+            return;
+        }
 
         DownloadProfile profile;
         QString perr;
         if (!DownloadProfile::fromJsonFile(profileJsonPath, profile, &perr)) {
             emit errorOccurred(DownloadManager::ErrorCode::INVALID_CONFIG, "Failed to load profile", perr);
-            emit finished();
+            finish();
             return;
         }
 
         QFile pf(payloadFilePath);
         if (!pf.open(QIODevice::ReadOnly)) {
             emit errorOccurred(DownloadManager::ErrorCode::INVALID_CONFIG, "Failed to load payload", pf.errorString());
-            emit finished();
+            finish();
             return;
         }
         const QByteArray payload = pf.readAll();
@@ -141,13 +166,14 @@ public slots:
         ICommInterface* iface = Communication::createAndOpen(m_cfg.value("comm").toMap(), nullptr);
         m_iface = iface;
         ControllerBridge* bridge = Communication::getControllerBridge(iface);
-        m_bridge = bridge;
+        if (m_cancelState)
+            m_cancelState->setBridge(bridge);
 
         if (!iface) {
             emit errorOccurred(DownloadManager::ErrorCode::SERIAL_OPEN_FAIL,
                                "Open communication failed",
                                "Communication::createAndOpen returned nullptr");
-            emit finished();
+            finish();
             return;
         }
 
@@ -165,22 +191,18 @@ public slots:
             emit errorOccurred(DownloadManager::ErrorCode::INVALID_CONFIG,
                                "ControllerBridge not available",
                                "Ensure comm.enableBridge=true and comm.bridge.* configured");
-            delete iface;
-            m_iface = nullptr;
-            m_bridge = nullptr;
-            emit finished();
+            destroyInterface();
+            finish();
             return;
         }
 
         QObject::connect(bridge, &ControllerBridge::logLine, this, &DownloadWorker::logLine);
         QObject::connect(bridge, &ControllerBridge::downloadProgress, this, &DownloadWorker::progressChanged);
 
-        if (m_cancelRequested) {
-            emit errorOccurred(DownloadManager::ErrorCode::DOWNLOAD_NACK, "Cancelled", "Cancelled before transfer");
-            delete iface;
-            m_iface = nullptr;
-            m_bridge = nullptr;
-            emit finished();
+        if (isCancelRequested()) {
+            emit errorOccurred(DownloadManager::ErrorCode::CANCELLED, "Cancelled", "Cancelled before transfer");
+            destroyInterface();
+            finish();
             return;
         }
 
@@ -190,10 +212,8 @@ public slots:
             emit errorOccurred(DownloadManager::ErrorCode::CONTROLLER_NO_RESPONSE,
                                "Controller no response (serial OK but controller offline)",
                                QString("lastError=%1 %2").arg(int(last.code)).arg(last.message));
-            delete iface;
-            m_iface = nullptr;
-            m_bridge = nullptr;
-            emit finished();
+            destroyInterface();
+            finish();
             return;
         }
 
@@ -203,35 +223,35 @@ public slots:
             emit errorOccurred(DownloadManager::ErrorCode::TARGET_NO_RESPONSE,
                                "Target no response (controller online but target offline)",
                                QString("lastError=%1 %2").arg(int(last.code)).arg(last.message));
-            delete iface;
-            m_iface = nullptr;
-            m_bridge = nullptr;
-            emit finished();
+            destroyInterface();
+            finish();
             return;
         }
 
         emit statusChanged(DownloadManager::State::Transfer, "Downloading...");
+        if (isCancelRequested()) {
+            emit errorOccurred(DownloadManager::ErrorCode::CANCELLED, "Cancelled", "Cancelled before transfer");
+            destroyInterface();
+            finish();
+            return;
+        }
         if (!bridge->download(profile, payload)) {
             const CommError last = iface->lastError();
             const DownloadManager::ErrorCode code =
                 (last.code == CommErrorCode::OperationCancelled)
-                    ? DownloadManager::ErrorCode::DOWNLOAD_VERIFY_FAIL
+                    ? DownloadManager::ErrorCode::CANCELLED
                     : DownloadManager::ErrorCode::DOWNLOAD_NACK;
             emit errorOccurred(code,
                                "Download failed during transfer",
                                QString("lastError=%1 %2").arg(int(last.code)).arg(last.message));
-            delete iface;
-            m_iface = nullptr;
-            m_bridge = nullptr;
-            emit finished();
+            destroyInterface();
+            finish();
             return;
         }
 
         emit statusChanged(DownloadManager::State::Finish, "Download success");
-        delete iface;
-        m_iface = nullptr;
-        m_bridge = nullptr;
-        emit finished();
+        destroyInterface();
+        finish();
     }
 
 signals:
@@ -242,10 +262,65 @@ signals:
     void finished();
 
 private:
+    bool claimRtuPort()
+    {
+        const Communication::ResolvedCommConfig resolved =
+                Communication::resolveConfig(m_cfg.value("comm").toMap());
+        if (resolved.type != CommProtocolType::ModbusRTU) {
+            return true;
+        }
+
+        const QString port = resolved.parameters.value(QStringLiteral("port"),
+                                                        resolved.parameters.value(QStringLiteral("portName")))
+                                      .toString().trimmed();
+        if (port.isEmpty()) {
+            return true;
+        }
+
+        m_claimOwner = QStringLiteral("diagnostic-download-%1")
+                .arg(QString::number(reinterpret_cast<quintptr>(this), 16));
+        QString currentOwner;
+        if (!Communication::tryClaimRtuPort(port, m_claimOwner, &currentOwner)) {
+            m_claimErrorDetails = QStringLiteral("port=%1 owner=%2")
+                    .arg(port, currentOwner);
+            return false;
+        }
+        m_claimedPort = port;
+        m_portClaimed = true;
+        return true;
+    }
+
+    void destroyInterface()
+    {
+        QPointer<ICommInterface> iface;
+        if (m_cancelState)
+            m_cancelState->clearBridge();
+        iface = m_iface;
+        m_iface = nullptr;
+        delete iface.data();
+    }
+
+    bool isCancelRequested() const
+    {
+        return m_cancelState && m_cancelState->isRequested();
+    }
+
+    void finish()
+    {
+        if (m_portClaimed) {
+            Communication::releaseRtuPort(m_claimedPort, m_claimOwner);
+            m_portClaimed = false;
+        }
+        emit finished();
+    }
+
     QVariantMap m_cfg;
     QPointer<ICommInterface> m_iface;
-    QPointer<ControllerBridge> m_bridge;
-    std::atomic_bool m_cancelRequested{false};
+    std::shared_ptr<DownloadCancellationHandle> m_cancelState;
+    QString m_claimedPort;
+    QString m_claimOwner;
+    QString m_claimErrorDetails;
+    bool m_portClaimed = false;
 };
 
 DownloadManager::DownloadManager(QObject* parent)
@@ -255,13 +330,12 @@ DownloadManager::DownloadManager(QObject* parent)
 
 DownloadManager::~DownloadManager()
 {
-    QPointer<QObject> activeWorker = m_activeWorker;
-    if (activeWorker) {
-        QMetaObject::invokeMethod(activeWorker.data(), "requestCancel", Qt::QueuedConnection);
-    }
+    if (m_activeCancelState)
+        m_activeCancelState->request();
     m_thread.quit();
     m_thread.wait();
     m_activeWorker.clear();
+    m_activeCancelState.reset();
 }
 
 void DownloadManager::setConfig(const QVariantMap& cfg)
@@ -276,8 +350,11 @@ void DownloadManager::startConnectProbe()
     }
 
     auto* worker = new DownloadWorker();
+    const auto cancelState = std::make_shared<DownloadCancellationHandle>();
     m_activeWorker = worker;
+    m_activeCancelState = cancelState;
     worker->setConfig(m_cfg);
+    worker->setCancellationState(cancelState);
     worker->moveToThread(&m_thread);
 
     connect(&m_thread, &QThread::started, worker, &DownloadWorker::doConnectProbe);
@@ -290,13 +367,17 @@ void DownloadManager::startConnectProbe()
     connect(worker, &DownloadWorker::finished, worker, &QObject::deleteLater);
     connect(&m_thread, &QThread::finished, worker, &QObject::deleteLater);
     const QPointer<QObject> workerGuard(worker);
-    connect(worker, &DownloadWorker::finished, this, [this, workerGuard]() {
+    connect(worker, &DownloadWorker::finished, this, [this, workerGuard, cancelState]() {
         if (m_activeWorker.data() == workerGuard.data())
             m_activeWorker.clear();
+        if (m_activeCancelState == cancelState)
+            m_activeCancelState.reset();
     });
-    connect(&m_thread, &QThread::finished, this, [this, workerGuard]() {
+    connect(&m_thread, &QThread::finished, this, [this, workerGuard, cancelState]() {
         if (m_activeWorker.data() == workerGuard.data())
             m_activeWorker.clear();
+        if (m_activeCancelState == cancelState)
+            m_activeCancelState.reset();
     });
 
     m_thread.start();
@@ -309,8 +390,11 @@ void DownloadManager::startDownload(const QString& profileJsonPath, const QStrin
     }
 
     auto* worker = new DownloadWorker();
+    const auto cancelState = std::make_shared<DownloadCancellationHandle>();
     m_activeWorker = worker;
+    m_activeCancelState = cancelState;
     worker->setConfig(m_cfg);
+    worker->setCancellationState(cancelState);
     worker->moveToThread(&m_thread);
 
     connect(&m_thread, &QThread::started, worker, [worker, profileJsonPath, payloadFilePath]() {
@@ -326,13 +410,17 @@ void DownloadManager::startDownload(const QString& profileJsonPath, const QStrin
     connect(worker, &DownloadWorker::finished, worker, &QObject::deleteLater);
     connect(&m_thread, &QThread::finished, worker, &QObject::deleteLater);
     const QPointer<QObject> workerGuard(worker);
-    connect(worker, &DownloadWorker::finished, this, [this, workerGuard]() {
+    connect(worker, &DownloadWorker::finished, this, [this, workerGuard, cancelState]() {
         if (m_activeWorker.data() == workerGuard.data())
             m_activeWorker.clear();
+        if (m_activeCancelState == cancelState)
+            m_activeCancelState.reset();
     });
-    connect(&m_thread, &QThread::finished, this, [this, workerGuard]() {
+    connect(&m_thread, &QThread::finished, this, [this, workerGuard, cancelState]() {
         if (m_activeWorker.data() == workerGuard.data())
             m_activeWorker.clear();
+        if (m_activeCancelState == cancelState)
+            m_activeCancelState.reset();
     });
 
     m_thread.start();
@@ -340,11 +428,8 @@ void DownloadManager::startDownload(const QString& profileJsonPath, const QStrin
 
 void DownloadManager::cancel()
 {
-    const QPointer<QObject> activeWorker = m_activeWorker;
-    if (!activeWorker) {
-        return;
-    }
-    QMetaObject::invokeMethod(activeWorker.data(), "requestCancel", Qt::QueuedConnection);
+    if (m_activeCancelState)
+        m_activeCancelState->request();
 }
 
 #include "DownloadManager.moc"

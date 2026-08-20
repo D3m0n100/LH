@@ -430,6 +430,103 @@ private slots:
                  QFileInfo(QDir(projectPath).absoluteFilePath(QStringLiteral("main.lh"))).canonicalFilePath());
     }
 
+    void legacyInternalAbsoluteScriptPathsMigrateOnSave()
+    {
+        QTemporaryDir tempDir;
+        QVERIFY(tempDir.isValid());
+        const QString projectPath = createProject(tempDir.path(), QStringLiteral("legacy_absolute_project"),
+                                                  QStringLiteral("PROGRAM Legacy\nEND_PROGRAM\n"));
+        QVERIFY(!projectPath.isEmpty());
+
+        ProjectRuntimeConfig config;
+        const QString mainPath = QFileInfo(QDir(projectPath).absoluteFilePath(QStringLiteral("main.lh")))
+                .canonicalFilePath();
+        config.projectName = QStringLiteral("legacy_absolute_project");
+        config.mainScriptPath = mainPath;
+        config.dslScriptPath = mainPath;
+        config.scriptFiles = {mainPath};
+        QVERIFY(writeProjectConfig(projectPath, config));
+
+        DslScriptEditor editor;
+        ProjectController controller;
+        bindEditor(controller, editor);
+        QVERIFY(controller.openProjectFromPath(projectPath));
+        QVERIFY(controller.saveProject());
+
+        QFile configFile(QDir(projectPath).absoluteFilePath(QStringLiteral("project_config.json")));
+        QVERIFY(configFile.open(QIODevice::ReadOnly | QIODevice::Text));
+        const QJsonObject saved = QJsonDocument::fromJson(configFile.readAll()).object();
+        QCOMPARE(saved.value(QStringLiteral("mainScriptPath")).toString(), QStringLiteral("main.lh"));
+        QCOMPARE(saved.value(QStringLiteral("dslScriptPath")).toString(), QStringLiteral("main.lh"));
+        QCOMPARE(saved.value(QStringLiteral("scriptFiles")).toArray().value(0).toString(),
+                 QStringLiteral("main.lh"));
+    }
+
+    void legacyInternalArtifactPathsMigrateOnSaveAndExternalPathsAreRejected()
+    {
+        QTemporaryDir tempDir;
+        QVERIFY(tempDir.isValid());
+        const QString projectPath = createProject(tempDir.path(), QStringLiteral("legacy_artifact_project"),
+                                                  QStringLiteral("PROGRAM LegacyArtifact\nEND_PROGRAM\n"));
+        QVERIFY(!projectPath.isEmpty());
+
+        const QString generationPath = QDir(projectPath).filePath(
+                QStringLiteral("build_output/configuration/generations/generation-1"));
+        QVERIFY(QDir().mkpath(generationPath));
+        const QString codePath = QDir(generationPath).filePath(QStringLiteral("main.code"));
+        const QString profilePath = QDir(generationPath).filePath(QStringLiteral("download_profile.json"));
+        const QString pointsPath = QDir(generationPath).filePath(QStringLiteral("runtime_points.json"));
+        const QString manifestPath = QDir(generationPath).filePath(QStringLiteral("runtime_manifest.json"));
+        const QString sourceProfilePath = QDir(projectPath).filePath(QStringLiteral("profiles/source.json"));
+        QVERIFY(QDir().mkpath(QFileInfo(sourceProfilePath).absolutePath()));
+        QVERIFY(writeFile(codePath, QByteArrayLiteral("payload")));
+        QVERIFY(writeFile(profilePath, QByteArrayLiteral("{}")));
+        QVERIFY(writeFile(pointsPath, QByteArrayLiteral("[]")));
+        QVERIFY(writeFile(manifestPath, QByteArrayLiteral("{}")));
+        QVERIFY(writeFile(sourceProfilePath, QByteArrayLiteral("{}")));
+
+        ProjectRuntimeConfig config;
+        config.projectName = QStringLiteral("legacy_artifact_project");
+        const QString mainPath = QFileInfo(QDir(projectPath).absoluteFilePath(QStringLiteral("main.lh")))
+                .canonicalFilePath();
+        config.mainScriptPath = mainPath;
+        config.dslScriptPath = mainPath;
+        config.scriptFiles = {mainPath};
+        config.downloadArtifact.filePath = codePath;
+        config.downloadArtifact.metadata.insert(QStringLiteral("downloadProfilePath"), profilePath);
+        config.downloadArtifact.metadata.insert(QStringLiteral("downloadProfileSourcePath"), sourceProfilePath);
+        config.downloadArtifact.metadata.insert(QStringLiteral("runtimeManifestPath"), manifestPath);
+        config.downloadArtifact.metadata.insert(QStringLiteral("runtimePointsPath"), pointsPath);
+        QVERIFY(writeProjectConfig(projectPath, config));
+
+        DslScriptEditor editor;
+        ProjectController controller;
+        bindEditor(controller, editor);
+        QVERIFY(controller.openProjectFromPath(projectPath));
+        QVERIFY(controller.saveProject());
+
+        QFile configFile(QDir(projectPath).absoluteFilePath(QStringLiteral("project_config.json")));
+        QVERIFY(configFile.open(QIODevice::ReadOnly | QIODevice::Text));
+        const QJsonObject saved = QJsonDocument::fromJson(configFile.readAll()).object();
+        const QJsonObject savedArtifact = saved.value(QStringLiteral("downloadArtifact")).toObject();
+        QCOMPARE(savedArtifact.value(QStringLiteral("filePath")).toString(),
+                 QStringLiteral("build_output/configuration/generations/generation-1/main.code"));
+        const QJsonObject savedMetadata = savedArtifact.value(QStringLiteral("metadata")).toObject();
+        QCOMPARE(savedMetadata.value(QStringLiteral("downloadProfilePath")).toString(),
+                 QStringLiteral("build_output/configuration/generations/generation-1/download_profile.json"));
+        QCOMPARE(savedMetadata.value(QStringLiteral("downloadProfileSourcePath")).toString(),
+                 QStringLiteral("profiles/source.json"));
+        QCOMPARE(savedMetadata.value(QStringLiteral("runtimeManifestPath")).toString(),
+                 QStringLiteral("build_output/configuration/generations/generation-1/runtime_manifest.json"));
+        QCOMPARE(savedMetadata.value(QStringLiteral("runtimePointsPath")).toString(),
+                 QStringLiteral("build_output/configuration/generations/generation-1/runtime_points.json"));
+
+        controller.runtimeConfig().downloadArtifact.metadata.insert(
+                QStringLiteral("runtimeManifestPath"),
+                QDir(tempDir.path()).filePath(QStringLiteral("outside/runtime_manifest.json")));
+        QVERIFY(!controller.saveProject());
+    }
+
     void emptyMainScriptPathFallsBackToProjectMain()
     {
         QTemporaryDir tempDir;

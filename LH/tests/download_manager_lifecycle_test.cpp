@@ -15,6 +15,10 @@
 #define private public
 #include "communication/DownloadManager.h"
 #undef private
+#define private public
+#include "communication/ControllerBridge.h"
+#undef private
+#include "communication/Communication.h"
 
 Q_DECLARE_METATYPE(DownloadManager::ErrorCode)
 
@@ -78,6 +82,44 @@ private slots:
 
         QVERIFY(managerGuard.isNull());
         QCOMPARE(finishedCount, 1);
+    }
+
+    void diagnosticPortBusyFailsBeforeWorkerOpen()
+    {
+        const QString port = QStringLiteral("LH-diagnostic-busy");
+        QVERIFY(Communication::tryClaimRtuPort(port, QStringLiteral("formal-backend")));
+
+        DownloadManager manager;
+        const QVariantMap comm {
+            {QStringLiteral("protocol"), QStringLiteral("MODBUS")},
+            {QStringLiteral("mode"), QStringLiteral("RTU")},
+            {QStringLiteral("port"), port}
+        };
+        manager.setConfig({{QStringLiteral("comm"), comm}});
+        QSignalSpy errorSpy(&manager, &DownloadManager::errorOccurred);
+        manager.startConnectProbe();
+
+        QTRY_COMPARE(errorSpy.count(), 1);
+        QCOMPARE(errorSpy.first().at(0).value<DownloadManager::ErrorCode>(),
+                 DownloadManager::ErrorCode::DEVICE_BUSY);
+        QTRY_VERIFY(!manager.m_thread.isRunning());
+        QTRY_VERIFY(manager.m_activeWorker.isNull());
+        Communication::releaseRtuPort(port, QStringLiteral("formal-backend"));
+    }
+
+    void cancelReachesBridgeWithoutWorkerEventLoop()
+    {
+        ControllerBridge bridge(nullptr);
+        DownloadManager manager;
+        const auto cancellation = std::make_shared<DownloadCancellationHandle>();
+        cancellation->setBridge(&bridge);
+        manager.m_activeCancelState = cancellation;
+
+        manager.cancel();
+
+        QVERIFY(cancellation->isRequested());
+        QVERIFY(bridge.m_abortRequested.load(std::memory_order_acquire));
+        cancellation->clearBridge();
     }
 };
 

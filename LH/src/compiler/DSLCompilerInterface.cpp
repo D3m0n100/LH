@@ -332,13 +332,66 @@ CompileResult DSLCompilerInterface::compileProjectWithResult(const QString& proj
         result.success = false;
         result.projectName = projectName;
         result.errors.append(QStringLiteral("Main script not found for project compile."));
-        return result;
+        m_lastCompileResult = result;
+        return m_lastCompileResult;
+    }
+
+    QString pathError;
+    if (!DSLCompilerInternal::validateProjectScriptPath(projectPath,
+                                                        config.mainScriptPath.isEmpty()
+                                                                ? QStringLiteral("main.lh")
+                                                                : config.mainScriptPath,
+                                                        &pathError)) {
+        CompileResult result;
+        result.projectName = projectName;
+        result.errors.append(pathError);
+        result.stdErr = pathError;
+        m_lastCompileResult = result;
+        return m_lastCompileResult;
+    }
+
+    for (const QString& script : config.scriptFiles) {
+        if (!DSLCompilerInternal::validateProjectScriptPath(projectPath, script, &pathError)) {
+            CompileResult result;
+            result.projectName = projectName;
+            result.errors.append(pathError);
+            result.stdErr = pathError;
+            m_lastCompileResult = result;
+            return m_lastCompileResult;
+        }
     }
 
     const QStringList scriptFiles = DSLCompilerInternal::normalizeProjectScriptFiles(projectPath, config, mainScriptFile);
+    for (const QString& scriptFile : scriptFiles) {
+        if (!DSLCompilerInternal::validateProjectScriptPath(projectPath, scriptFile, &pathError)) {
+            CompileResult result;
+            result.projectName = projectName;
+            result.errors.append(pathError);
+            result.stdErr = pathError;
+            m_lastCompileResult = result;
+            return m_lastCompileResult;
+        }
+    }
+
+    QString generationId;
+    QString generationError;
+    const QString generationDir = DSLCompilerInternal::createProjectGeneration(projectPath,
+                                                                                config,
+                                                                                outputDir,
+                                                                                &generationId,
+                                                                                &generationError);
+    if (generationDir.isEmpty()) {
+        CompileResult result;
+        result.projectName = projectName;
+        result.errors.append(generationError);
+        result.stdErr = generationError;
+        m_lastCompileResult = result;
+        return m_lastCompileResult;
+    }
+
     QString assemblyError;
     const QString compilerInputFile = DSLCompilerInternal::assembleProjectCompilerInput(projectPath,
-                                                                                       outputDir,
+                                                                                       generationDir,
                                                                                        mainScriptFile,
                                                                                        scriptFiles,
                                                                                        &assemblyError);
@@ -380,7 +433,7 @@ CompileResult DSLCompilerInterface::compileProjectWithResult(const QString& proj
 
     QString stdOut;
     QString stdErr;
-    const QString outputFile = DSLCompilerInternal::defaultOutputFileForSource(mainScriptFile, outputDir);
+    const QString outputFile = DSLCompilerInternal::projectOutputFile(generationDir);
     const QString compileError = DSLCompilerInternal::runDslCompilerProcess(python,
                                                                            entryScript,
                                                                            compilerInputFile,
@@ -401,13 +454,15 @@ CompileResult DSLCompilerInterface::compileProjectWithResult(const QString& proj
         }
     }
     m_lastCompileResult = buildCompileResult(mainScriptFile,
-                                             outputDir,
+                                             generationDir,
                                              projectName,
                                              mainScriptFile,
                                              scriptFiles,
                                              ok,
                                              stdOut,
                                              stdErr,
-                                             config);
+                                             config,
+                                             projectPath,
+                                             generationId);
     return m_lastCompileResult;
 }

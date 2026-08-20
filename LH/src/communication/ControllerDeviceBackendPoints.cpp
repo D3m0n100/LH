@@ -8,6 +8,37 @@
 #include <QtGlobal>
 
 namespace {
+class BackendOperationGuard
+{
+public:
+    explicit BackendOperationGuard(QMutex* mutex)
+        : m_mutex(mutex)
+    {
+    }
+
+    ~BackendOperationGuard()
+    {
+        if (m_locked) {
+            m_mutex->unlock();
+        }
+    }
+
+    bool tryLock()
+    {
+        m_locked = m_mutex && m_mutex->tryLock();
+        return m_locked;
+    }
+
+private:
+    QMutex* m_mutex = nullptr;
+    bool m_locked = false;
+};
+
+QString busyMessage()
+{
+    return QStringLiteral("控制器后端正忙，点位操作被拒绝。");
+}
+
 bool readPositiveInt(const QVariantMap& map, const QStringList& keys, int* value)
 {
     for (const QString& key : keys) {
@@ -94,6 +125,23 @@ bool ControllerDeviceBackend::readPoints(const QStringList& pointIds,
         pointErrors->clear();
     }
 
+    BackendOperationGuard operation(&m_operationMutex);
+    if (!operation.tryLock()) {
+        const QString message = busyMessage();
+        if (errorMessage) {
+            *errorMessage = message;
+        }
+        setFailure(CommErrorCode::DeviceBusy, message);
+        if (pointErrors) {
+            const CommError error(CommProtocolType::ModbusRTU,
+                                  CommErrorCode::DeviceBusy,
+                                  message);
+            for (const QString& pointId : pointIds) {
+                pointErrors->insert(pointId, error);
+            }
+        }
+        return false;
+    }
     if (!ensureOnline(errorMessage)) {
         return false;
     }
@@ -182,6 +230,23 @@ bool ControllerDeviceBackend::writePoints(const QHash<QString, QVariant>& writes
 {
     if (pointErrors) {
         pointErrors->clear();
+    }
+    BackendOperationGuard operation(&m_operationMutex);
+    if (!operation.tryLock()) {
+        const QString message = busyMessage();
+        if (errorMessage) {
+            *errorMessage = message;
+        }
+        setFailure(CommErrorCode::DeviceBusy, message);
+        if (pointErrors) {
+            const CommError error(CommProtocolType::ModbusRTU,
+                                  CommErrorCode::DeviceBusy,
+                                  message);
+            for (auto it = writes.constBegin(); it != writes.constEnd(); ++it) {
+                pointErrors->insert(it.key(), error);
+            }
+        }
+        return false;
     }
     if (!ensureOnline(errorMessage)) {
         return false;

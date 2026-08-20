@@ -1710,20 +1710,50 @@ void MainWindow::onCompileSucceeded(BuildType type)
         m_globalStatusBar->setBuildState(QStringLiteral("成功"));
     }
 
+    bool publicationCommitted = (type != BuildType::Configuration);
     if (type == BuildType::Configuration && m_buildController && m_projectController) {
         const CompileResult result = m_buildController->lastCompileResult();
         ProjectRuntimeConfig& cfg = m_projectController->runtimeConfig();
-        if (RunController::writeDownloadArtifact(cfg,
-                                                 m_projectController->currentProjectPath(),
-                                                 result)) {
-            m_projectController->saveProject();
+        const ProjectRuntimeConfig previousConfig = cfg;
+        const bool bundlePrepared = RunController::writeDownloadArtifact(
+                cfg,
+                m_projectController->currentProjectPath(),
+                result);
+        if (!bundlePrepared) {
+            cfg = previousConfig;
+            publicationCommitted = false;
+            m_lastBuildSaveSucceeded = false;
+            m_sessionController->setPendingRunAfterCompile(false);
+            const QString message = QStringLiteral(
+                    "编译成功，但 generation 发布失败；旧下载产物和项目配置保持不变。\n"
+                    "未启动待运行任务。");
+            appendOutput(QStringLiteral("[%1] %2")
+                         .arg(QDateTime::currentDateTime().toString("HH:mm:ss"), message));
+            addProblem("error", "发布", message);
+        } else if (!m_projectController->saveProject()) {
+            cfg = previousConfig;
+            publicationCommitted = false;
+            m_lastBuildSaveSucceeded = false;
+            m_sessionController->setPendingRunAfterCompile(false);
+            const QString message = QStringLiteral(
+                    "编译成功，但项目配置 pointer 提交失败；已恢复旧配置，未启动待运行任务。");
+            appendOutput(QStringLiteral("[%1] %2")
+                         .arg(QDateTime::currentDateTime().toString("HH:mm:ss"), message));
+            addProblem("error", "发布", message);
+        } else {
+            m_lastBuildSaveSucceeded = true;
             appendOutput(QString("[%1] 已更新下载产物路径：%2")
                          .arg(QDateTime::currentDateTime().toString("HH:mm:ss"))
                          .arg(cfg.downloadArtifact.filePath));
+            publicationCommitted = true;
         }
+    } else if (type == BuildType::Configuration) {
+        publicationCommitted = false;
+        m_sessionController->setPendingRunAfterCompile(false);
     }
 
-    if (m_sessionController->hasPendingRunAfterCompile() && type == BuildType::Configuration) {
+    if (publicationCommitted && m_sessionController->hasPendingRunAfterCompile()
+            && type == BuildType::Configuration) {
         const CompileResult compileResult = m_buildController
                 ? m_buildController->lastCompileResult()
                 : CompileResult();
@@ -1845,6 +1875,4 @@ void MainWindow::onMonitorThresholdExceeded(const QString& channelName, double v
                .arg(value, 0, 'f', 3)
                .arg(thresholdValue, 0, 'f', 3));
 }
-
-
 
