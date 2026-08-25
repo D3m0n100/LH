@@ -14,10 +14,10 @@
 #include <QApplication>
 #include <QClipboard>
 #include <QFileDialog>
-#include <QFile>
 #include <QTextStream>
 #include <QDateTime>
 #include <QMessageBox>
+#include <QSaveFile>
 
 OutputPaneController::OutputPaneController(QDockWidget* dockWidget, QObject* parent)
     : QObject(parent)
@@ -205,18 +205,38 @@ void OutputPaneController::saveToFile()
         return;
     }
 
-    QFile file(fileName);
-    if (file.open(QIODevice::WriteOnly | QIODevice::Text)) {
-        QTextStream stream(&file);
-        TextEncoding::setUtf8(stream);
-        stream << allText();
-        file.close();
-
-        appendInfo(QString("输出已保存到: %1").arg(fileName));
-    } else {
+    QSaveFile file(fileName);
+    file.setDirectWriteFallback(false);
+    if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
         QMessageBox::warning(nullptr, "保存失败",
-                             QString("无法保存文件: %1").arg(file.errorString()));
+                             QString("无法打开文件: %1\n%2")
+                                 .arg(fileName, file.errorString()));
+        return;
     }
+
+    QTextStream stream(&file);
+    TextEncoding::setUtf8(stream);
+    stream << allText();
+    stream.flush();
+    if (stream.status() != QTextStream::Ok) {
+        const QString error = file.errorString();
+        file.cancelWriting();
+        QMessageBox::warning(nullptr, "保存失败",
+                             QString("写入文件失败: %1\n%2")
+                                 .arg(fileName, error));
+        return;
+    }
+
+    if (!file.commit()) {
+        const QString error = file.errorString();
+        file.cancelWriting();
+        QMessageBox::warning(nullptr, "保存失败",
+                             QString("提交文件失败: %1\n%2")
+                                 .arg(fileName, error));
+        return;
+    }
+
+    appendInfo(QString("输出已保存到: %1").arg(fileName));
 }
 
 void OutputPaneController::showContextMenu(const QPoint& pos)

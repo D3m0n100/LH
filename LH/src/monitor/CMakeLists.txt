@@ -15,6 +15,8 @@ set(MONITOR_SOURCES
     MonitorChannel.cpp
     MonitorManager.h
     MonitorManager.cpp
+    MonitorManagerPolling.cpp
+    MonitorManagerHistory.cpp
 
     # 监控采样落库（新增）
     MonitorDataLogger.h
@@ -68,13 +70,4 @@ if(MSVC)
     target_compile_options(monitor PRIVATE /W4)
 else()
     target_compile_options(monitor PRIVATE -Wall -Wextra -Wpedantic)
-endif()
-
-# 性能优化编译选项
-if(CMAKE_BUILD_TYPE STREQUAL "Release")
-    if(MSVC)
-        target_compile_options(monitor PRIVATE /O2)
-    else()
-        target_compile_options(monitor PRIVATE -O3 -march=native)
-    endif()
 endif()

@@ -28,21 +28,68 @@ RuntimeSessionController::RuntimeSessionController(QObject* parent)
     connectOpcServerSignals();
 }
 
+IDeviceBackend* RuntimeSessionController::deviceBackend() const
+{
+    return m_backend.data();
+}
+
 void RuntimeSessionController::setDeviceBackend(IDeviceBackend* backend)
 {
-    if (m_backend && m_backend != backend) {
-        disconnect(m_backend, nullptr, this, nullptr);
+    if (m_backend == backend) {
+        Monitor::MonitorManager::instance().setDeviceBackend(backend);
+        if (m_backend && m_backend->isOnline()
+                && (m_state == RuntimeSessionState::Idle
+                    || m_state == RuntimeSessionState::Compiled)) {
+            setState(RuntimeSessionState::Connected);
+        }
+        return;
     }
+
+    const QString message = QStringLiteral("设备后端已切换，OPC 写入已取消");
+    cancelPendingOpcWrite(message);
+    if (m_parameterController)
+        m_parameterController->cancelPendingReadback(message);
+
+    IDeviceBackend* oldBackend = m_backend.data();
+    if (oldBackend)
+        disconnect(oldBackend, nullptr, this, nullptr);
     if (m_ownedControllerBackend && backend != m_ownedControllerBackend) {
         m_ownedControllerBackend->disconnectBackend();
         m_ownedControllerBackend->deleteLater();
         m_ownedControllerBackend = nullptr;
     }
+    const quint64 generation = ++m_backendGeneration;
     m_backend = backend;
     if (m_backend) {
-        connect(m_backend, &IDeviceBackend::connectionStateChanged,
+        auto* currentBackend = m_backend.data();
+        connect(currentBackend, &IDeviceBackend::connectionStateChanged,
                 this, &RuntimeSessionController::handleBackendConnectionStateChanged,
                 Qt::UniqueConnection);
+        connect(currentBackend, &QObject::destroyed, this,
+                [this, generation, currentBackend]() {
+                    if (m_backendGeneration != generation)
+                        return;
+
+                    if (m_ownedControllerBackend == currentBackend)
+                        m_ownedControllerBackend = nullptr;
+                    m_backend = nullptr;
+                    const QString failure = QStringLiteral("设备后端已销毁，运行操作已取消");
+                    cancelPendingOpcWrite(failure);
+                    if (m_parameterController)
+                        m_parameterController->cancelPendingReadback(failure);
+                    stopOpcServer();
+                    Monitor::MonitorManager::instance().setDeviceBackend(nullptr);
+                    if (m_downloadState == DownloadState::Precheck
+                            || m_downloadState == DownloadState::Downloading
+                            || m_downloadState == DownloadState::Retrying
+                            || m_downloadState == DownloadState::Verifying) {
+                        setDownloadState(DownloadState::TransportFailed);
+                    }
+                    if (m_state != RuntimeSessionState::Idle
+                            && m_state != RuntimeSessionState::Fault) {
+                        setState(RuntimeSessionState::Fault);
+                    }
+                });
     }
     Monitor::MonitorManager::instance().setDeviceBackend(backend);
     if (m_backend && m_backend->isOnline()) {
@@ -59,8 +106,13 @@ void RuntimeSessionController::setOpcServer(IOpcServer* opcServer)
         return;
     }
 
-    if (m_opcServer && m_opcServer->parent() == this) {
-        m_opcServer->deleteLater();
+    cancelPendingOpcWrite(QStringLiteral("OPC 服务已切换，写入已取消"));
+
+    if (m_opcServer) {
+        disconnect(m_opcServer, nullptr, this, nullptr);
+        if (m_opcServer->parent() == this) {
+            m_opcServer->deleteLater();
+        }
     }
 
     m_opcServer = opcServer;
@@ -84,7 +136,28 @@ void RuntimeSessionController::setBuildController(BuildController* controller)
 
 void RuntimeSessionController::setParameterController(ParameterController* controller)
 {
+    if (m_parameterController == controller) {
+        return;
+    }
+
+    const QString message = QStringLiteral("参数控制器已切换，回读已取消");
+    cancelPendingOpcWrite(message);
+    if (m_parameterController)
+        m_parameterController->cancelPendingReadback(message);
+    if (m_parameterController) {
+        disconnect(m_parameterController,
+                   &ParameterController::readbackFinished,
+                   this,
+                   &RuntimeSessionController::handleParameterReadbackFinished);
+    }
     m_parameterController = controller;
+    if (m_parameterController) {
+        connect(m_parameterController,
+                &ParameterController::readbackFinished,
+                this,
+                &RuntimeSessionController::handleParameterReadbackFinished,
+                Qt::UniqueConnection);
+    }
 }
 
 bool RuntimeSessionController::prepareRun()
@@ -184,9 +257,18 @@ void RuntimeSessionController::executeRun()
 
 void RuntimeSessionController::requestStop()
 {
-    if (m_state == RuntimeSessionState::Idle && m_downloadState == DownloadState::Idle)
+    if (m_state == RuntimeSessionState::Idle && m_downloadState == DownloadState::Idle) {
+        const QString message = QStringLiteral("运行会话已停止，OPC 写入已取消");
+        cancelPendingOpcWrite(message);
+        if (m_parameterController)
+            m_parameterController->cancelPendingReadback(message);
         return;
+    }
 
+    const QString message = QStringLiteral("运行会话已停止，OPC 写入已取消");
+    cancelPendingOpcWrite(message);
+    if (m_parameterController)
+        m_parameterController->cancelPendingReadback(message);
     m_downloadCancelled = true;
     const bool wasMonitoring = m_state == RuntimeSessionState::Monitoring;
     const bool wasDownloading = m_state == RuntimeSessionState::Downloading

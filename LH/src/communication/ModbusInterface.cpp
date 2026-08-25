@@ -467,8 +467,19 @@ CommErrorCode ModbusInterface::mapReplyErrorToCommError(int replyError) const
     }
 }
 
-bool ModbusInterface::waitForReply(QModbusReply* reply, QString& outErr)
+CommErrorCode ModbusInterface::classifyReplyFailure(bool guardTimedOut, int replyError) const
 {
+    if (guardTimedOut) {
+        return CommErrorCode::ReceiveTimeout;
+    }
+
+    const CommErrorCode code = mapReplyErrorToCommError(replyError);
+    return code == CommErrorCode::NoError ? CommErrorCode::InvalidResponse : code;
+}
+
+bool ModbusInterface::waitForReply(QModbusReply* reply, QString& outErr, bool& guardTimedOut)
+{
+    guardTimedOut = false;
     if (!reply) {
         outErr = "reply=null";
         return false;
@@ -487,7 +498,10 @@ bool ModbusInterface::waitForReply(QModbusReply* reply, QString& outErr)
     timer.setSingleShot(true);
 
     connect(reply, &QModbusReply::finished, &loop, &QEventLoop::quit);
-    connect(&timer, &QTimer::timeout, &loop, &QEventLoop::quit);
+    connect(&timer, &QTimer::timeout, &loop, [&loop, &guardTimedOut]() {
+        guardTimedOut = true;
+        loop.quit();
+    });
 
     // 超时裕量：timeout * attempts + 200ms
     const int attempts = qMax(1, m_config.retryCount);
@@ -496,7 +510,7 @@ bool ModbusInterface::waitForReply(QModbusReply* reply, QString& outErr)
 
     loop.exec();
 
-    if (!timer.isActive()) {
+    if (guardTimedOut) {
         outErr = QString("等待应答超时（%1ms）").arg(waitMs);
         return false;
     }
@@ -524,8 +538,9 @@ bool ModbusInterface::readDataUnit(const QModbusDataUnit& unit, int serverAddres
     connect(reply, &QModbusReply::finished, reply, &QObject::deleteLater);
 
     QString err;
-    if (!waitForReply(reply, err)) {
-        const CommErrorCode code = mapReplyErrorToCommError(reply->error());
+    bool guardTimedOut = false;
+    if (!waitForReply(reply, err, guardTimedOut)) {
+        const CommErrorCode code = classifyReplyFailure(guardTimedOut, reply->error());
         reportError(code, "Modbus 读请求失败", err);
         return false;
     }
@@ -581,8 +596,9 @@ bool ModbusInterface::writeDataUnit(const QModbusDataUnit& unit, int serverAddre
     connect(reply, &QModbusReply::finished, reply, &QObject::deleteLater);
 
     QString err;
-    if (!waitForReply(reply, err)) {
-        const CommErrorCode code = mapReplyErrorToCommError(reply->error());
+    bool guardTimedOut = false;
+    if (!waitForReply(reply, err, guardTimedOut)) {
+        const CommErrorCode code = classifyReplyFailure(guardTimedOut, reply->error());
         reportError(code, "Modbus 写请求失败", err);
         return false;
     }

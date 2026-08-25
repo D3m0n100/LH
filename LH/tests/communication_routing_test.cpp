@@ -5,6 +5,7 @@
 
 #include <QtTest/QtTest>
 #include <QScopedPointer>
+#include <QtSerialBus/QModbusDevice>
 
 #include "common/ConfigTypes.h"
 #include "communication/Communication.h"
@@ -38,6 +39,29 @@ private slots:
 
         QScopedPointer<ICommInterface> interface(Communication::createInterface(resolved.type));
         QVERIFY(qobject_cast<ModbusInterface*>(interface.data()));
+    }
+
+    void modbusReplyFailureClassificationNeverReportsNoError()
+    {
+        ModbusInterface interface;
+
+        QCOMPARE(interface.classifyReplyFailure(true, QModbusDevice::NoError),
+                 CommErrorCode::ReceiveTimeout);
+        QCOMPARE(interface.classifyReplyFailure(false, QModbusDevice::ProtocolError),
+                 CommErrorCode::ProtocolError);
+        QCOMPARE(interface.classifyReplyFailure(false, QModbusDevice::ConnectionError),
+                 CommErrorCode::ConnectionLost);
+        QCOMPARE(interface.classifyReplyFailure(false, QModbusDevice::NoError),
+                 CommErrorCode::InvalidResponse);
+
+        QVERIFY(interface.classifyReplyFailure(true, QModbusDevice::NoError)
+                != CommErrorCode::NoError);
+        QVERIFY(interface.classifyReplyFailure(false, QModbusDevice::ProtocolError)
+                != CommErrorCode::NoError);
+        QVERIFY(interface.classifyReplyFailure(false, QModbusDevice::ConnectionError)
+                != CommErrorCode::NoError);
+        QVERIFY(interface.classifyReplyFailure(false, QModbusDevice::NoError)
+                != CommErrorCode::NoError);
     }
 
     void typedModbusTcpConfigResolvesToModbus()

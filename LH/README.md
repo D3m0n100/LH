@@ -52,7 +52,7 @@ ServoValvePlatform/
 
 ## 构建要求
 
-- Qt 5.15+ 或 Qt 6.x
+- Qt 5.15+
 - CMake 3.16+
 - C++17 兼容编译器
 - Python 3.8+

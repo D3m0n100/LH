@@ -1,8 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
 
-find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Core Network SerialPort SerialBus)
-find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Core Network SerialPort SerialBus)
-
 set(COMM_SOURCES
     CANInterface.cpp
     CANOpenInterface.cpp
@@ -21,6 +18,7 @@ set(COMM_SOURCES
     ControllerDeviceBackendPoints.cpp
     ControllerDebugClient.cpp
     ControllerDebugProtocol.cpp
+    RuntimePointRegisterCodec.cpp
     DownloadProfile.cpp
     VirtualDeviceBackend.cpp
     ClassicOpcServer.cpp
@@ -44,6 +42,7 @@ set(COMM_HEADERS
     ControllerDeviceBackend.h
     ControllerDebugClient.h
     ControllerDebugProtocol.h
+    RuntimePointRegisterCodec.h
     DownloadProfile.h
     IDownloadTransport.h
     IDeviceBackend.h
@@ -68,10 +67,10 @@ target_include_directories(ServoValveComm
 
 target_link_libraries(ServoValveComm
     PUBLIC
-        Qt${QT_VERSION_MAJOR}::Core
-        Qt${QT_VERSION_MAJOR}::Network
-        Qt${QT_VERSION_MAJOR}::SerialPort
-        Qt${QT_VERSION_MAJOR}::SerialBus
+        Qt5::Core
+        Qt5::Network
+        Qt5::SerialPort
+        Qt5::SerialBus
 )
 
 if(WIN32)
@@ -110,10 +109,10 @@ if(BUILD_SHARED_LIBS)
 
     target_link_libraries(ServoValveCommShared
         PUBLIC
-            Qt${QT_VERSION_MAJOR}::Core
-            Qt${QT_VERSION_MAJOR}::Network
-            Qt${QT_VERSION_MAJOR}::SerialPort
-            Qt${QT_VERSION_MAJOR}::SerialBus
+            Qt5::Core
+            Qt5::Network
+            Qt5::SerialPort
+            Qt5::SerialBus
     )
 
     if(WIN32)

@@ -4,6 +4,8 @@
  */
 
 #include <QtTest/QtTest>
+#include <QCoreApplication>
+#include <QEventLoop>
 #include <QCryptographicHash>
 #include <QDir>
 #include <QFile>
@@ -69,11 +71,13 @@ public:
 
     void updatePointValues(const QList<RuntimePointValue>& values) override
     {
-        Q_UNUSED(values)
+        m_updatedValues.append(values);
     }
 
     void recordWriteResult(const QString& pointId, bool success, const QString& message) override
     {
+        ++m_recordCount;
+        m_recordSuccesses.append(success);
         m_lastWritePointId = pointId;
         m_lastWriteSuccess = success;
         m_lastWriteMessage = message;
@@ -94,6 +98,9 @@ public:
     QString m_lastWritePointId;
     bool m_lastWriteSuccess = false;
     QString m_lastWriteMessage;
+    int m_recordCount = 0;
+    QList<bool> m_recordSuccesses;
+    QList<RuntimePointValue> m_updatedValues;
 };
 
 class FakeRuntimeControllerTransport : public IControllerDebugTransport
@@ -1248,6 +1255,66 @@ private slots:
         QCOMPARE(ctrl.deviceBackend(), nullptr);
     }
 
+    void destroyingReplacedBackendDoesNotClearCurrentBackend()
+    {
+        RuntimeSessionController ctrl;
+        auto* backendA = new VirtualDeviceBackend;
+        auto* backendB = new VirtualDeviceBackend;
+
+        ctrl.setDeviceBackend(backendA);
+        ctrl.setDeviceBackend(backendB);
+        delete backendA;
+
+        QCOMPARE(ctrl.deviceBackend(), backendB);
+        QCOMPARE(Monitor::MonitorManager::instance().deviceBackend(), backendB);
+
+        delete backendB;
+        QCOMPARE(ctrl.deviceBackend(), nullptr);
+        QCOMPARE(Monitor::MonitorManager::instance().deviceBackend(), nullptr);
+    }
+
+    void destroyingBackendDuringOpcWriteFailsOnceWithoutGoodUpdate()
+    {
+        RuntimeSessionController ctrl;
+        ParameterController parameterController;
+        ParameterDefinition def;
+        def.id = QStringLiteral("param.kp");
+        def.name = QStringLiteral("Kp");
+        def.dataType = QStringLiteral("REAL");
+        def.defaultValue = QStringLiteral("1.0");
+        def.currentValue = def.defaultValue;
+        def.onlineEditable = true;
+        parameterController.loadDefinitions({def});
+
+        auto* backend = new VirtualDeviceBackend;
+        RuntimePointDefinition point = RuntimePointConverter::fromParameter(def);
+        point.access = RuntimePointAccess::ReadWrite;
+        backend->loadPointDefinitions({point});
+        backend->connectBackend();
+
+        auto* opc = new TestOpcServer;
+        ctrl.setDeviceBackend(backend);
+        ctrl.setParameterController(&parameterController);
+        ctrl.setOpcServer(opc);
+        ctrl.handleOpcWriteRequest(QStringLiteral("param.kp"), QVariant(3.5));
+        QVERIFY(ctrl.m_pendingOpcWriteActive);
+
+        delete backend;
+
+        QCOMPARE(opc->m_recordCount, 1);
+        QVERIFY(!opc->m_lastWriteSuccess);
+        QCOMPARE(opc->m_updatedValues.size(), 0);
+        QVERIFY(!ctrl.m_pendingOpcWriteActive);
+        QVERIFY(ctrl.m_pendingOpcPointId.isEmpty());
+        QVERIFY(ctrl.m_pendingOpcParameterName.isEmpty());
+        QCOMPARE(parameterController.parameterState(QStringLiteral("Kp")).state,
+                 ParameterState::Timeout);
+
+        QCoreApplication::processEvents(QEventLoop::AllEvents);
+        QCOMPARE(opc->m_recordCount, 1);
+        QCOMPARE(opc->m_updatedValues.size(), 0);
+    }
+
     void executeRunSkipsOpcWhenDisabled()
     {
         RuntimeSessionController ctrl;
@@ -1364,9 +1431,378 @@ private slots:
 
         ctrl.handleOpcWriteRequest(QStringLiteral("param.kp"), QVariant(3.5));
 
+        QCOMPARE(opc->m_recordCount, 0);
+        QCOMPARE(opc->m_updatedValues.size(), 0);
+        QTRY_COMPARE(opc->m_recordCount, 1);
         QCOMPARE(opc->m_lastWritePointId, QStringLiteral("param.kp"));
         QVERIFY(opc->m_lastWriteSuccess);
         QVERIFY(opc->m_lastWriteMessage.contains(QStringLiteral("OPC 写入成功")));
+        QCOMPARE(opc->m_updatedValues.size(), 1);
+        QCOMPARE(opc->m_updatedValues.first().value.toString(), QStringLiteral("3.5"));
+    }
+
+    void opcWriteOnlyAppliesRequestedPoint()
+    {
+        RuntimeSessionController ctrl;
+        ParameterController parameterController;
+        ParameterDefinition first;
+        first.id = QStringLiteral("param.a");
+        first.name = QStringLiteral("A");
+        first.dataType = QStringLiteral("REAL");
+        first.defaultValue = QStringLiteral("1.0");
+        first.currentValue = first.defaultValue;
+        first.onlineEditable = true;
+        ParameterDefinition second = first;
+        second.id = QStringLiteral("param.b");
+        second.name = QStringLiteral("B");
+        parameterController.loadDefinitions({first, second});
+        parameterController.editParameter(QStringLiteral("B"), QStringLiteral("8.0"));
+
+        VirtualDeviceBackend backend;
+        RuntimePointDefinition firstPoint = RuntimePointConverter::fromParameter(first);
+        firstPoint.access = RuntimePointAccess::ReadWrite;
+        RuntimePointDefinition secondPoint = RuntimePointConverter::fromParameter(second);
+        secondPoint.access = RuntimePointAccess::ReadWrite;
+        backend.loadPointDefinitions({firstPoint, secondPoint});
+        backend.connectBackend();
+
+        auto* opc = new TestOpcServer;
+        ctrl.setDeviceBackend(&backend);
+        ctrl.setParameterController(&parameterController);
+        ctrl.setOpcServer(opc);
+        ctrl.handleOpcWriteRequest(QStringLiteral("param.a"), QVariant(3.5));
+
+        QTRY_COMPARE(opc->m_recordCount, 1);
+        QVERIFY(opc->m_lastWriteSuccess);
+        QCOMPARE(parameterController.parameterState(QStringLiteral("A")).state,
+                 ParameterState::Confirmed);
+        QCOMPARE(parameterController.parameterState(QStringLiteral("B")).state,
+                 ParameterState::Modified);
+        QCOMPARE(opc->m_updatedValues.size(), 1);
+        QCOMPARE(opc->m_updatedValues.first().pointId, QStringLiteral("param.a"));
+    }
+
+    void opcWriteFailureDoesNotPublishGood()
+    {
+        RuntimeSessionController ctrl;
+        ParameterController parameterController;
+        ParameterDefinition def;
+        def.id = QStringLiteral("param.kp");
+        def.name = QStringLiteral("Kp");
+        def.dataType = QStringLiteral("REAL");
+        def.defaultValue = QStringLiteral("1.0");
+        def.currentValue = def.defaultValue;
+        def.onlineEditable = true;
+        parameterController.loadDefinitions({def});
+
+        VirtualDeviceBackend backend;
+        RuntimePointDefinition point = RuntimePointConverter::fromParameter(def);
+        point.access = RuntimePointAccess::ReadOnly;
+        backend.loadPointDefinitions({point});
+        backend.connectBackend();
+
+        auto* opc = new TestOpcServer;
+        ctrl.setDeviceBackend(&backend);
+        ctrl.setParameterController(&parameterController);
+        ctrl.setOpcServer(opc);
+        ctrl.handleOpcWriteRequest(QStringLiteral("param.kp"), QVariant(3.5));
+
+        QCOMPARE(opc->m_recordCount, 1);
+        QVERIFY(!opc->m_lastWriteSuccess);
+        QCOMPARE(opc->m_updatedValues.size(), 0);
+        QCOMPARE(parameterController.parameterState(QStringLiteral("Kp")).state,
+                 ParameterState::ApplyFailed);
+    }
+
+    void opcWriteReadbackTimeoutDoesNotPublishGood()
+    {
+        RuntimeSessionController ctrl;
+        ParameterController parameterController;
+        ParameterDefinition def;
+        def.id = QStringLiteral("param.kp");
+        def.name = QStringLiteral("Kp");
+        def.dataType = QStringLiteral("REAL");
+        def.defaultValue = QStringLiteral("1.0");
+        def.currentValue = def.defaultValue;
+        def.onlineEditable = true;
+        parameterController.loadDefinitions({def});
+
+        VirtualDeviceBackend backend;
+        RuntimePointDefinition point = RuntimePointConverter::fromParameter(def);
+        point.access = RuntimePointAccess::ReadWrite;
+        backend.loadPointDefinitions({point});
+        backend.connectBackend();
+        backend.setFaultInjection(true, false, false);
+
+        auto* opc = new TestOpcServer;
+        ctrl.setDeviceBackend(&backend);
+        ctrl.setParameterController(&parameterController);
+        ctrl.setOpcServer(opc);
+        ctrl.handleOpcWriteRequest(QStringLiteral("param.kp"), QVariant(3.5));
+
+        QCOMPARE(opc->m_recordCount, 0);
+        QCOMPARE(opc->m_updatedValues.size(), 0);
+        QCoreApplication::processEvents(QEventLoop::AllEvents);
+        QCOMPARE(opc->m_recordCount, 1);
+        QVERIFY(!opc->m_lastWriteSuccess);
+        QVERIFY(opc->m_lastWriteMessage.contains(QStringLiteral("回读失败")));
+        QCOMPARE(opc->m_updatedValues.size(), 0);
+        QCOMPARE(parameterController.parameterState(QStringLiteral("Kp")).state,
+                 ParameterState::Timeout);
+    }
+
+    void opcWriteReadbackMismatchDoesNotPublishGood()
+    {
+        RuntimeSessionController ctrl;
+        ParameterController parameterController;
+        ParameterDefinition def;
+        def.id = QStringLiteral("param.kp");
+        def.name = QStringLiteral("Kp");
+        def.dataType = QStringLiteral("REAL");
+        def.defaultValue = QStringLiteral("1.0");
+        def.currentValue = def.defaultValue;
+        def.onlineEditable = true;
+        parameterController.loadDefinitions({def});
+
+        VirtualDeviceBackend backend;
+        RuntimePointDefinition point = RuntimePointConverter::fromParameter(def);
+        point.access = RuntimePointAccess::ReadWrite;
+        backend.loadPointDefinitions({point});
+        backend.connectBackend();
+
+        auto* opc = new TestOpcServer;
+        ctrl.setDeviceBackend(&backend);
+        ctrl.setParameterController(&parameterController);
+        ctrl.setOpcServer(opc);
+        ctrl.handleOpcWriteRequest(QStringLiteral("param.kp"), QVariant(3.5));
+
+        QCOMPARE(opc->m_recordCount, 0);
+        QCOMPARE(opc->m_updatedValues.size(), 0);
+        QCOMPARE(parameterController.parameterState(QStringLiteral("Kp")).state,
+                 ParameterState::PendingReadback);
+        QHash<QString, QVariant> mismatch;
+        mismatch.insert(QStringLiteral("param.kp"), QVariant(999.0));
+        parameterController.onReadbackValues(mismatch);
+        QCOMPARE(opc->m_recordCount, 0);
+        QCOMPARE(opc->m_updatedValues.size(), 0);
+
+        QCoreApplication::processEvents(QEventLoop::AllEvents);
+        QCOMPARE(opc->m_recordCount, 1);
+        QVERIFY(!opc->m_lastWriteSuccess);
+        QVERIFY(opc->m_lastWriteMessage.contains(QStringLiteral("不匹配")));
+        QCOMPARE(opc->m_updatedValues.size(), 0);
+        QCOMPARE(parameterController.parameterState(QStringLiteral("Kp")).state,
+                 ParameterState::Mismatch);
+    }
+
+    void opcWriteReentryIsRejected()
+    {
+        RuntimeSessionController ctrl;
+        ParameterController parameterController;
+        ParameterDefinition first;
+        first.id = QStringLiteral("param.a");
+        first.name = QStringLiteral("A");
+        first.dataType = QStringLiteral("REAL");
+        first.defaultValue = QStringLiteral("1.0");
+        first.currentValue = first.defaultValue;
+        first.onlineEditable = true;
+        ParameterDefinition second = first;
+        second.id = QStringLiteral("param.b");
+        second.name = QStringLiteral("B");
+        parameterController.loadDefinitions({first, second});
+
+        VirtualDeviceBackend backend;
+        RuntimePointDefinition firstPoint = RuntimePointConverter::fromParameter(first);
+        RuntimePointDefinition secondPoint = RuntimePointConverter::fromParameter(second);
+        firstPoint.access = RuntimePointAccess::ReadWrite;
+        secondPoint.access = RuntimePointAccess::ReadWrite;
+        backend.loadPointDefinitions({firstPoint, secondPoint});
+        backend.connectBackend();
+
+        auto* opc = new TestOpcServer;
+        ctrl.setDeviceBackend(&backend);
+        ctrl.setParameterController(&parameterController);
+        ctrl.setOpcServer(opc);
+        ctrl.handleOpcWriteRequest(QStringLiteral("param.a"), QVariant(3.5));
+        ctrl.handleOpcWriteRequest(QStringLiteral("param.b"), QVariant(4.5));
+
+        QTRY_COMPARE(opc->m_recordCount, 2);
+        QCOMPARE(opc->m_lastWritePointId, QStringLiteral("param.a"));
+        QVERIFY(opc->m_lastWriteSuccess);
+        QVERIFY(opc->m_recordSuccesses.contains(false));
+        QCOMPARE(parameterController.parameterState(QStringLiteral("B")).state,
+                 ParameterState::Clean);
+    }
+
+    void opcStopOrSwitchDoesNotCancelIndependentUiReadback()
+    {
+        for (const bool switchServer : {false, true}) {
+            RuntimeSessionController ctrl;
+            ParameterController parameterController;
+            ParameterDefinition def;
+            def.id = QStringLiteral("param.kp");
+            def.name = QStringLiteral("Kp");
+            def.dataType = QStringLiteral("REAL");
+            def.defaultValue = QStringLiteral("1.0");
+            def.currentValue = def.defaultValue;
+            def.onlineEditable = true;
+            parameterController.loadDefinitions({def});
+
+            VirtualDeviceBackend backend;
+            RuntimePointDefinition point = RuntimePointConverter::fromParameter(def);
+            point.access = RuntimePointAccess::ReadWrite;
+            backend.loadPointDefinitions({point});
+            backend.connectBackend();
+            backend.setFaultInjection(true, false, false);
+
+            ctrl.setDeviceBackend(&backend);
+            ctrl.setParameterController(&parameterController);
+            ctrl.setOpcServer(new TestOpcServer);
+            parameterController.editParameter(QStringLiteral("Kp"), QStringLiteral("2.0"));
+            QSignalSpy finishedSpy(&parameterController, &ParameterController::readbackFinished);
+            QVERIFY(parameterController.applyModifiedParametersWithReadbackAsync(&backend, 1, 0));
+
+            if (switchServer) {
+                ctrl.setOpcServer(new TestOpcServer);
+            } else {
+                ctrl.stopOpcServer();
+            }
+            QCOMPARE(finishedSpy.count(), 0);
+            QCoreApplication::processEvents(QEventLoop::AllEvents);
+            QCOMPARE(finishedSpy.count(), 1);
+            QCOMPARE(finishedSpy.first().at(0).toBool(), false);
+        }
+    }
+
+    void opcPendingWriteClearsOnSessionStop()
+    {
+        RuntimeSessionController ctrl;
+        ParameterController parameterController;
+        ParameterDefinition def;
+        def.id = QStringLiteral("param.kp");
+        def.name = QStringLiteral("Kp");
+        def.dataType = QStringLiteral("REAL");
+        def.defaultValue = QStringLiteral("1.0");
+        def.currentValue = def.defaultValue;
+        def.onlineEditable = true;
+        parameterController.loadDefinitions({def});
+        VirtualDeviceBackend backend;
+        RuntimePointDefinition point = RuntimePointConverter::fromParameter(def);
+        point.access = RuntimePointAccess::ReadWrite;
+        backend.loadPointDefinitions({point});
+        backend.connectBackend();
+        auto* opc = new TestOpcServer;
+        ctrl.setDeviceBackend(&backend);
+        ctrl.setParameterController(&parameterController);
+        ctrl.setOpcServer(opc);
+
+        ctrl.handleOpcWriteRequest(QStringLiteral("param.kp"), QVariant(3.5));
+        ctrl.requestStop();
+
+        QCOMPARE(opc->m_recordCount, 1);
+        QVERIFY(!opc->m_lastWriteSuccess);
+        QVERIFY(!ctrl.m_pendingOpcWriteActive);
+        QCoreApplication::processEvents(QEventLoop::AllEvents);
+        QCOMPARE(opc->m_recordCount, 1);
+    }
+
+    void opcPendingWriteClearsOnControllerSwitch()
+    {
+        RuntimeSessionController ctrl;
+        ParameterController firstController;
+        ParameterController secondController;
+        ParameterDefinition def;
+        def.id = QStringLiteral("param.kp");
+        def.name = QStringLiteral("Kp");
+        def.dataType = QStringLiteral("REAL");
+        def.defaultValue = QStringLiteral("1.0");
+        def.currentValue = def.defaultValue;
+        def.onlineEditable = true;
+        firstController.loadDefinitions({def});
+        secondController.loadDefinitions({def});
+        VirtualDeviceBackend backend;
+        RuntimePointDefinition point = RuntimePointConverter::fromParameter(def);
+        point.access = RuntimePointAccess::ReadWrite;
+        backend.loadPointDefinitions({point});
+        backend.connectBackend();
+        auto* opc = new TestOpcServer;
+        ctrl.setDeviceBackend(&backend);
+        ctrl.setParameterController(&firstController);
+        ctrl.setOpcServer(opc);
+
+        ctrl.handleOpcWriteRequest(QStringLiteral("param.kp"), QVariant(3.5));
+        ctrl.setParameterController(&secondController);
+
+        QCOMPARE(opc->m_recordCount, 1);
+        QVERIFY(!opc->m_lastWriteSuccess);
+        QVERIFY(!ctrl.m_pendingOpcWriteActive);
+        QCoreApplication::processEvents(QEventLoop::AllEvents);
+        QCOMPARE(opc->m_recordCount, 1);
+    }
+
+    void opcPendingWriteClearsOnBackendSwitch()
+    {
+        RuntimeSessionController ctrl;
+        ParameterController parameterController;
+        ParameterDefinition def;
+        def.id = QStringLiteral("param.kp");
+        def.name = QStringLiteral("Kp");
+        def.dataType = QStringLiteral("REAL");
+        def.defaultValue = QStringLiteral("1.0");
+        def.currentValue = def.defaultValue;
+        def.onlineEditable = true;
+        parameterController.loadDefinitions({def});
+        VirtualDeviceBackend backend;
+        RuntimePointDefinition point = RuntimePointConverter::fromParameter(def);
+        point.access = RuntimePointAccess::ReadWrite;
+        backend.loadPointDefinitions({point});
+        backend.connectBackend();
+        auto* opc = new TestOpcServer;
+        ctrl.setDeviceBackend(&backend);
+        ctrl.setParameterController(&parameterController);
+        ctrl.setOpcServer(opc);
+
+        ctrl.handleOpcWriteRequest(QStringLiteral("param.kp"), QVariant(3.5));
+        ctrl.setDeviceBackend(nullptr);
+
+        QCOMPARE(opc->m_recordCount, 1);
+        QVERIFY(!opc->m_lastWriteSuccess);
+        QVERIFY(!ctrl.m_pendingOpcWriteActive);
+        QCoreApplication::processEvents(QEventLoop::AllEvents);
+        QCOMPARE(opc->m_recordCount, 1);
+    }
+
+    void opcPendingWriteClearsOnOpcServerSwitch()
+    {
+        RuntimeSessionController ctrl;
+        ParameterController parameterController;
+        ParameterDefinition def;
+        def.id = QStringLiteral("param.kp");
+        def.name = QStringLiteral("Kp");
+        def.dataType = QStringLiteral("REAL");
+        def.defaultValue = QStringLiteral("1.0");
+        def.currentValue = def.defaultValue;
+        def.onlineEditable = true;
+        parameterController.loadDefinitions({def});
+        VirtualDeviceBackend backend;
+        RuntimePointDefinition point = RuntimePointConverter::fromParameter(def);
+        point.access = RuntimePointAccess::ReadWrite;
+        backend.loadPointDefinitions({point});
+        backend.connectBackend();
+        auto* oldOpc = new TestOpcServer;
+        auto* newOpc = new TestOpcServer;
+        ctrl.setDeviceBackend(&backend);
+        ctrl.setParameterController(&parameterController);
+        ctrl.setOpcServer(oldOpc);
+
+        ctrl.handleOpcWriteRequest(QStringLiteral("param.kp"), QVariant(3.5));
+        ctrl.setOpcServer(newOpc);
+
+        QCOMPARE(oldOpc->m_recordCount, 1);
+        QVERIFY(!oldOpc->m_lastWriteSuccess);
+        QVERIFY(!ctrl.m_pendingOpcWriteActive);
+        QCoreApplication::processEvents(QEventLoop::AllEvents);
+        QCOMPARE(oldOpc->m_recordCount, 1);
     }
 
     void controllerDebugCommandsUseConfiguredBackend()

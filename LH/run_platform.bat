@@ -43,12 +43,12 @@ set "PYTHON=%VENV_PY%"
 set "PATH=%VENV_DIR%\Scripts;%PATH%"
 
 REM === 4. Launch app ===
-set "APP_EXE=%CD%\build_current_mingw\bin\ServoValvePlatform.exe"
+set "APP_EXE=%CD%\build_current_mingw\bin\LH.exe"
 
 if not exist "%APP_EXE%" (
     echo [ERROR] Executable not found:
     echo   %APP_EXE%
-    echo Build first to generate build_current_mingw\bin\ServoValvePlatform.exe
+    echo Build first to generate build_current_mingw\bin\LH.exe
     pause
     goto :EOF
 )

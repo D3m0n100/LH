@@ -100,6 +100,8 @@ private slots:
     void onDeviceError(int error);
 
 private:
+    friend class CommunicationRoutingTest;
+
     bool createClientIfNeeded();
     bool configureRtuClient();
     bool configureTcpClient();
@@ -107,9 +109,10 @@ private:
 
     CommErrorCode mapQtErrorToCommError(int qtError) const;
     CommErrorCode mapReplyErrorToCommError(int replyError) const;
+    CommErrorCode classifyReplyFailure(bool guardTimedOut, int replyError) const;
 
     // 同步等待 reply 完成（为了对接现有同步 bool API）
-    bool waitForReply(QModbusReply* reply, QString& outErr);
+    bool waitForReply(QModbusReply* reply, QString& outErr, bool& guardTimedOut);
 
     bool readDataUnit(const QModbusDataUnit& unit, int serverAddress);
     bool writeDataUnit(const QModbusDataUnit& unit, int serverAddress);

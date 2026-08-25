@@ -1,154 +1,149 @@
 # LH 项目整改交接
 
-更新时间：2026-08-19
+更新时间：2026-08-23
 
-## 1. 当前目标与验收口径
+## 1. 当前目标与执行口径
 
-当前按 `LH_current_tasks_requirements_v3.md` 分批整改 OPC/监控线程模型、运行数据完整性、历史查询与导出、artifact 安全发布、下载连接生命周期及测试体系。
+当前按仓库根目录 `LH_current_tasks_requirements_v4.2_mac.md` 的任务 ID 和合同边界，收口 OPC/监控线程安全、运行数据正确性、历史查询与导出、artifact/下载生命周期、构建脚本及维护性问题。
 
-项目规则以根目录 `AGENTS.md` 为准，本文件不重复通用委派规则。当前环境默认只做静态验收；缺少 Windows、Qt/CMake/CTest、Matrikon 或真实控制器时，结论最高为 **L1：静态验收通过，编译与运行验证待补**。
+项目规则以根目录 `AGENTS.md` 为准，本文件只记录实际完成状态和验证债务，不重复通用委派规则。当前环境对 C++/Qt/Windows 相关批次默认只做静态验收：
 
-## 2. 需求合同任务状态
+- **L1**：源码、直接调用链、失败路径和测试代码静态验收通过；
+- **L2**：目标平台 clean build、CTest 或 UI/脚本运行通过；
+- **L3**：Matrikon、真实控制器、旧 CPU 或目标规模数据验证通过。
 
-| 任务 | 当前状态 | 验收等级 | 说明 |
+除 COMP-F1 的独立 Python package 验证外，本轮没有把旧构建目录或旧二进制当作运行证据。
+
+## 2. 当前任务状态
+
+| 任务 | 当前状态 | 等级 | 说明 / 后续验证 |
 |---|---|---:|---|
-| EXP-1 | 已完成，总控验收通过 | L1 | 普通 CSV/JSON/TSV 导出 commit failure 保留旧文件回归已补齐 |
-| HIST-B1 | 已完成，总控验收通过 | L1 | DB → Sample → 分页流式导出的 quality/error/origin 完整性保护已补齐 |
-| EXP-D1 | 决策已完成并确认 | N/A | 逐 Sample 无损导出与 aligned 视图分开；不把同时间戳碰撞误当成 HIST-B1 缺陷 |
-| OPC-D1 | 决策已完成并确认 | N/A | master/per-item HRESULT、null payload、quality failure 和 callback generation 合同已确定 |
-| DL-D1 | 决策已完成并确认 | N/A | 正式项目下载链与诊断下载链的产品职责已确定 |
-| COMP-S1 | 已完成并确认 | N/A | artifact bundle、generation、commit point 和可移植路径合同已追踪 |
-| COMP-1 | 已完成，总控静态验收通过 | L1 | generation staging、一致性发布、manifest commit point 和可移植路径已实现 |
-| OPC-1 | 未实施，目标环境阻断 | L0 | 合同要求 Windows Qt/CMake 条件分支可编译后再写/验收 |
-| DL-1 | 第一实施轮完成，总控静态验收通过 | L1 | 连接 owner、端口互斥、DeviceBusy、后端操作互斥及诊断取消已收敛 |
-| P3-1 | 未实施，仍阻断 | L0 | 等前述功能稳定且 Windows clean build 恢复后重新评估 |
-| VAL-1 | 未执行 | L0 | 需要 Windows clean configure/build/CTest |
-| VAL-2 | 未执行 | L0 | 需要 Windows + Matrikon OPC DA |
-| VAL-3 | 未执行 | L0 | 需要真实控制器和串口环境 |
-| VAL-4 | 未执行 | L0 | 需要目标规模数据库和长时间导出环境 |
+| COR-B1 | 已完成，总控验收通过 | L1 | typed codec、严格数值转换、access/error、deviceId alias/default/conflict 已闭合；待 Windows CTest 与真机寄存器验证 |
+| PAR-B1 | 已完成，总控验收通过 | L1 | partial success、typed readback、backend 销毁安全、OPC 单点 scope/Confirmed 发布已闭合；待 Windows CTest/Matrikon |
+| MON-1 | 已完成，总控复验通过 | L1 | MonitorChannel 配置与 threshold snapshot 锁策略已统一；待 Windows CTest |
+| DB-1 | 已完成，总控验收通过 | L1 | init/migration/index/cleanup/version hard-failure 语义已闭合；待 Windows CTest 与大库验证 |
+| COMM-B2 | 已完成，总控验收通过 | L1 | outer timeout 固定映射 ReceiveTimeout，失败不再产生 NoError；待 Windows CTest/真机 |
+| OUT-B1 | 已完成，总控验收通过 | L1 | 两个输出保存入口改为 QSaveFile 原子提交并覆盖 open/write/commit 失败反馈；待 Windows UI 复验 |
+| EXP-1 | 已完成，总控验收通过 | L1 | 普通 CSV/JSON/TSV commit failure 保留旧文件回归已补齐；待 Windows CTest |
+| HIST-B1 | 已完成，总控验收通过 | L1 | DB → Sample → 分页流式导出的 quality/error/origin 完整性保护已补齐；待 Windows CTest/大库 |
+| EXP-D1 | 决策已确认 | N/A | 逐 Sample 无损导出与 aligned 视图保持不同语义，不重复决策 |
+| OPC-D1 | 决策已确认 | N/A | HRESULT/null/quality/generation 合同已确定，OPC-1 必须沿用 |
+| DL-D1 | 决策已确认 | N/A | 正式项目下载链与诊断下载链职责已确定，不重复决策 |
+| COMP-S1 | 调查与合同已确认 | N/A | generation bundle、commit point、consumer/path 合同已追踪，不重复调查 |
+| COMP-1 | 已完成，总控验收通过 | L1 | generation staging、一致性发布、manifest commit 与 portable path 已实现；待 Windows CTest/真机 |
+| COMP-F1 | 已完成，总控验收通过 | L1 | standalone wheel/子包/console entry 已验证；未实现的 compile/check 明确失败；Python CLI 测试 2/2 通过 |
+| DL-1A | 第一实施轮完成，总控验收通过 | L1 | 端口 owner、DeviceBusy、操作互斥、借用 backend 生命周期及诊断取消已收敛；待真机 VAL-3 |
+| P3-1 | 已完成，总控验收通过 | L1 | MainWindowOutput/MainWindowMonitor、MonitorManagerHistory/Polling 已拆分并注册；待 Windows clean build |
+| BUILD-B1 | 已完成，总控验收通过 | L1 | monitor 自定义 `-O3 -march=native` Release 块已删除；待 Windows/旧 CPU build/run |
+| WIN-B1 | 已完成，总控验收通过 | L1 | 根与 communication CMake 统一 Qt5，README 只声明 Qt 5.15+；待 Windows clean configure/build |
+| WIN-B2 | 已完成，总控复验通过 | L1 | CMake target 与三个 Windows 脚本均使用 `LH.exe`；待 Windows 脚本实跑 |
+| WIN-B3 | 已完成，总控验收通过 | L1 | stdout/stderr 同时异步消费，真实退出码与报告语义保留；待 Windows 大量双流输出实测 |
+| CLEAN-1 | 已完成，总控验收通过 | L1 | 已删除无构建/无引用的 `CANCommon.cpp` 与 `project_controller_stub.cpp`；待 Windows clean build |
+| MON-I1 | 调查关闭 | N/A | 现有 render timer 主动 drain，无生产缺陷证据；只有新测量证据才重开 |
+| OPC-1 | 未实施，Windows 阻断 | L0 | 需要 Windows 条件源码可编译后补完整 OPC 测试矩阵 |
+| VAL-1 | 阻断 | L0 | 需要 Windows clean configure/build/targeted CTest/full CTest |
+| VAL-2 | 阻断 | L0 | 需要 Windows + Matrikon OPC DA |
+| VAL-3 | 阻断 | L0 | 需要真实控制器、串口和正式/诊断下载链 |
+| VAL-4 | 阻断 | L0 | 需要目标规模数据库和长时间导出环境 |
 
-## 3. 已完成工作的当前合同
+当前 v4.2 合同下，普通 macOS 静态代码任务已完成；剩余工作集中在 Windows、Matrikon、真实控制器和规模环境验证。不得因需求文档中的实施前状态文字尚未同步而重复执行本表已达到 L1/N/A 的任务。
 
-### 3.1 历史数据与导出
+## 3. 已完成工作的关键合同
 
-- 历史查询使用 `(timestamp, id)` keyset 分页，并固定最近数据查询结束时间。
-- 历史记录持久化 `quality`、`origin`、`error_code`、`error_text`；通信失败不再作为正常数值 `0` 传播。
-- CSV、JSON、TSV 大批量导出采用有界分页流式写入和 `QSaveFile`；provider、写入或 commit 失败时保留旧文件。
-- 普通非分页导出的 commit failure 已有直接回归。
-- `tests/monitor_history_export_integration_test.cpp` 覆盖 DB → Sample → 分页导出链，`tests/monitor_export_test.cpp` 覆盖普通和流式导出失败语义。
-- aligned CSV/TSV 是按时间戳对齐的视图，不承诺在同一 channel、同一 timestamp 出现多条 Sample 时逐条无损；逐 Sample 无损需求由行式导出承担。
+### 3.1 RuntimePoint、参数与通信
 
-### 3.2 配置与测试体系
+- RuntimePoint 寄存器 codec 统一处理 BOOL、整数和 REAL/FLOAT32，严格校验字符串、范围、寄存器宽度、byte/word order、scale/offset；非法值不得 fallback 为 0。
+- `elementCount` 表示逻辑元素数，寄存器数量由目标类型宽度推导。
+- 显式 `slaveId/stationAddress/serverAddress` 优先于默认 `unitId=1`；冲突或非法 alias 在 I/O 前 hard-fail。
+- mapped access violation 返回 `PermissionDenied`，transport error 保留原错误，不得覆盖为地址或参数错误。
+- Modbus 外层等待超时固定为 `ReceiveTimeout`；所有失败路径禁止留下 `CommErrorCode::NoError`。
+- 参数批量提交允许成功点继续回读，最终结果以本次目标集合计算；BOOL/整数/REAL 按目标类型比较，REAL 使用 float32 representation-aware 语义。
+- 借用 backend 用 QPointer/destroyed guard 隔离异步回读；销毁或替换后 pending 必须一次失败收口，不发布 Good。
+- OPC 单点写只作用于该 pointId；只有 readback `Confirmed` 后才能记录成功并发布新 Good 值。
 
-- 配置 schema、字段类型、provider/映射/controller/OPC/transport 参数边界和可定位错误提示已加强。
-- 配置加载失败不会覆盖当前项目路径、modified 状态或有效运行配置。
-- `dsl_script_editor_save_test`、core DataManager/TaskScheduler 测试已纳入构建。
-- Python DSL 编译语义测试已补齐，未修改第三方/Python DSL 编译语义；环境依赖缺失返回 77，超时仍为失败。
-- 测试 fixture 使用临时目录，避免旧 artifact 造成假绿或假红。
+### 3.2 历史数据、数据库与导出
 
-### 3.3 OPC 合同
+- 历史查询使用 `(timestamp, id)` keyset 分页，并固定查询结束时间。
+- 历史记录持久化 `quality`、`origin`、`error_code`、`error_text`；通信失败不能作为正常数值 0 传播。
+- DataManager batch insert 保持事务语义；初始化必要 SQL、版本读取、required index、schema version 更新与 connection cleanup 均按 hard failure 处理。
+- 非整数、负数或未来 schema version 被拒绝，不新增 schema v5。
+- CSV/JSON/TSV 大批量导出采用有界分页流式写入和 QSaveFile；provider、写入或 commit 失败保留旧文件。
+- aligned CSV/TSV 是按时间戳对齐视图，不承诺同一 channel/timestamp 多条 Sample 逐条无损；行式导出承担逐 Sample 无损语义。
 
-OPC-D1 已确认以下方向，OPC-1 后续测试必须以此为准：
+### 3.3 Monitor、输出保存与结构拆分
 
-- master callback 失败与 per-item HRESULT 分层处理；单点失败不能伪装为整批 Good。
-- null/不可转换 payload、bad/uncertain quality 必须保留失败或质量语义，不能生成正常值。
-- callback 必须绑定 owner/context 和 generation；stop 后旧 callback、旧 generation callback 不得污染当前状态。
-- 当前仓库已有部分 Windows 条件保护，但尚未完成 OPC-1 的目标平台编译与最终测试矩阵。
+- MonitorChannel 的公开 config getter、threshold 读取和 samples 修改统一受 mutex 保护。
+- threshold evaluation 使用锁内复制的配置快照，解锁后判断并 emit，不在持锁状态触发外部可重入 signal。
+- MainWindow 与 OutputPaneController 的日志保存均使用 `QSaveFile + QTextStream::status() + commit()`；打开、写入或提交失败不会提示成功，也不会破坏旧目标文件。
+- P3-1 只移动 implementation，没有改 API：`MainWindowOutput.cpp`、`MainWindowMonitor.cpp`、`MonitorManagerHistory.cpp`、`MonitorManagerPolling.cpp` 已进入 CMake。
+- CLEAN-1 只删除两个确认死文件；`src/compiler/dummy.cpp` 位于冻结区，仍保留。
 
-### 3.4 Artifact bundle 与正式消费者
+### 3.4 Artifact、Compiler package 与下载链
 
-- `RuntimeSessionController -> ControllerDeviceBackend` 是唯一正式项目下载链和正式 artifact consumer。
-- `DownloadDockWidget -> DownloadManager -> ControllerBridge` 保留为工程/诊断/手工下载工具，不作为正式项目 artifact consumer。
-- 一次编译的正式产物按 generation bundle 发布；新 generation 在隔离位置完成并校验后，以 `runtime_manifest.json` 作为提交点。
-- consumer 只读取已提交且完整的 generation，发布失败时旧 generation 保持可用。
-- 新写入使用 manifest-relative/project-relative 路径；阻止 absolute path、`..` 或越出允许 root 的路径成为正式下载输入。
-- legacy absolute path 只在规范化后仍位于允许 root 内时兼容；工程外绝对路径不再静默成为正式依赖。
-- COMP-1 获得过用户对冻结目录的狭窄授权；该授权只覆盖已实施批次，不代表后续可继续任意修改 `src/compiler/**`。
+- 正式链固定为 `RuntimeSessionController -> RunController artifact validation -> ControllerDeviceBackend`；诊断链保留为工程工具，不是正式 artifact consumer。
+- 正式产物按 generation bundle 隔离生成并校验，以 `runtime_manifest.json` 为提交点；失败时旧 generation 继续可用。
+- 新路径使用 manifest-relative/project-relative；absolute path、`..` 和越出允许 root 的输入不得成为正式下载依赖。
+- standalone Python package 使用 setuptools 子包发现并复用现有 `COMPILER_GUIDE.md`；wheel 中已包含 CLI/后端/功能块子包，console entry 可导入。
+- package 的 `compile`/`check` 仍未实现，但现在明确以退出码 1 失败，不再输出成功结论。本任务不等于实现 Python compiler semantics。
+- COMP-F1 获得过用户对三个精确文件的狭窄授权；该授权不延伸到后续 `src/compiler/**` 或第三方 Compiler 修改。
+- DL-1A 的正式下载仍为同步调用。诊断链可取消不等于正式链可即时取消；只有 VAL-3 提供真实 UI/设备失败证据后才允许定义 DL-1B。
 
-主要实现与回归位于：
+### 3.5 Windows/构建前置整理
 
-- `src/compiler/DSLCompilerArtifacts.cpp`
-- `src/compiler/DSLCompilerAsync.cpp`
-- `src/compiler/DSLCompilerInterface.cpp`
-- `src/designer/RunController.cpp`
-- `src/designer/RuntimeSessionDownload.cpp`
-- `src/communication/ControllerDeviceBackendDownload.cpp`
-- `tests/dsl_legacy_compile_probe.cpp`
-- `tests/project_save_close_test.cpp`
-- `tests/runtime_session_controller_test.cpp`
-
-### 3.5 DL-1 第一实施轮
-
-- 正式后端与诊断 worker 共用进程内 RTU port owner；错误 owner 不能释放占用。
-- Windows 端口名按大小写不敏感处理，Unix/macOS 保留大小写。
-- 正式链占用端口时诊断链立即返回 `DEVICE_BUSY`；诊断链占用时正式后端返回 `CommErrorCode::DeviceBusy` 并报告 owner，不强制抢占或断开。
-- `ControllerDeviceBackend` 的连接、点位 IO、调试操作和正式下载使用操作级互斥；Monitor 轮询与下载不能同时访问设备。
-- `RuntimeSessionController::ensureControllerBackend()` 统一通过 `setDeviceBackend()` 建立信号和 MonitorManager 绑定。
-- `requestStop()` 不再断开注入/借用的 backend；只有 owned formal backend 由 RuntimeSession 负责 disconnect/reconnect。
-- 正式 transport retry 的内部重连有明确门控，真实下载中掉线仍进入 `Fault/TransportFailed`。
-- 诊断下载取消使用独立共享取消句柄，不再依赖被同步 worker 阻塞的 queued slot，也不再跨线程解引用可能已析构的 worker。
-- 已补端口 owner、错误 owner release、busy fast-fail、操作锁释放、借用后端停止、下载中真实断线和诊断取消回归。
-
-DL-1 当前仍有明确边界：正式项目下载仍是同步调用，`requestStop()` 只能保护调用前后和状态恢复，尚未提供可从 UI 即时中断正在执行的正式下载。不要把诊断链已修复的中途取消能力误写成正式链也已异步可取消。
+- 当前产品基线是 Qt 5.15+，不支持 Qt6 构建；communication 子模块不得自行选择另一 Qt major。
+- target 名称是 `LH`，`build.bat`、`run_platform.bat`、`tools/workflow_dev.ps1` 均定位 `bin\LH.exe`。
+- monitor 不再使用 host-specific `-march=native`，依赖 CMake/toolchain 标准 Release flags，warning flags 保留。
+- `Invoke-Logged` 在 `WaitForExit()` 前同时启动 stdout/stderr `ReadToEndAsync()`，避免一侧管道填满造成父子进程互等；输出仍写控制台和报告，非零退出仍失败。
 
 ## 4. 当前阻断与未验证项
 
-### 4.1 OPC-1 不能在当前 macOS 静态环境闭环
+### 4.1 OPC-1 只能在 Windows 继续
 
-合同明确要求 Windows 条件分支可编译后再实施/验收 OPC-1。剩余内容包括 master/per-item HRESULT 矩阵、更多 `VARIANT` 类型、quality/null payload 和 callback generation 竞态测试。macOS 静态阅读不能替代 Windows 编译，更不能替代 Matrikon 联调。
+OPC-1 需要覆盖 master/per-item HRESULT、更多 VARIANT 类型、quality/null payload、callback generation、stop/reconnect 后迟到回调等 Windows 条件测试。macOS 静态阅读不能证明 COM 分支可编译，也不能替代 Matrikon 行为。
 
-### 4.2 所有已完成代码批次仍缺 L2/L3
+### 4.2 L1 不能写成运行通过
 
-当前没有本轮源码对应的 clean configure/build/CTest 结果。旧构建目录不能证明当前测试已注册或已通过。以下必须在目标环境补做：
+当前 C++ 工作树没有对应的 clean configure/build/CTest 证据。必须在目标环境补做：
 
-- Windows clean build 和完整 CTest（VAL-1）；
-- Matrikon activation、browse、group/item、同步读写、订阅、断线重连、停止后迟到回调（VAL-2）；
-- 正式/诊断端口互斥、下载 retry/reconnect、真实掉线、取消和 artifact generation 消费（VAL-3）；
-- 大数据库分页稳定性、内存上界、吞吐及失败保留旧文件（VAL-4）。
+- VAL-1：Windows clean configure/build、targeted CTest、full CTest；
+- VAL-2：Matrikon activation、browse、group/item、同步读写、订阅、断线重连和 late callback；
+- VAL-3：真实寄存器编码、设备号 alias、端口互斥、retry/reconnect、取消和 artifact generation 消费；
+- VAL-4：大数据库分页稳定性、内存上界、吞吐和导出失败保留旧文件；
+- WIN-B3：同时大量 stdout/stderr 且 child 非零退出的 PowerShell 实测；
+- BUILD-B1：目标部署 CPU 运行，确认无 illegal instruction。
 
-### 4.3 DL-1 后续是否扩展需要真机证据
+### 4.3 工作树不是干净基线
 
-第一轮没有把正式下载改造成异步任务，也没有合并两套下载实现。若 VAL-3 证明同步正式下载导致 UI 无法及时取消，再单独定义 DL-1 第二轮文件清单；不要为了形式统一提前重写 backend 或删除诊断工具。
-
-### 4.4 P3-1 继续阻断
-
-`MainWindow`、`MonitorManager` 的 implementation split、未接入 controller 清理和文档收口都应等 Windows clean build 恢复后再评估。`MonitorController`、`OutputPaneController` 可能存在仓库外 API 消费者，未经确认不得直接删除。
-
-### 4.5 工作树不是干净基线
-
-当前工作树同时包含已验收批次、用户已有修改、删除的历史工作文档以及未跟踪文件。不得根据整个 `git status` 推断某一批的改动来源，不得为“清理”执行回退、恢复或全项目格式化。
+当前工作树包含多批已验收修改、用户已有修改、已删除旧需求文档及未跟踪的新实现文件。不得根据整个 `git status` 推断单批来源，不得为“清理”执行全局回退、恢复、格式化或删除未跟踪文件。
 
 ## 5. 下一步计划
 
-1. **VAL-1：Windows clean configure/build/CTest**
-   - 重新配置构建目录，不复用旧 `CTestTestfile.cmake` 作为证据。
-   - 优先构建并运行本合同新增或受影响的导出、历史集成、Compiler artifact、RuntimeSession、ControllerDeviceBackend、DownloadManager 和 OPC 测试。
-2. **OPC-1：在 Windows 编译条件恢复后实施**
-   - 重新确认精确测试文件；按 OPC-D1 矩阵补测试并完成总控验收。
-3. **VAL-2 / VAL-3**
-   - 分别完成 Matrikon OPC DA 和真实控制器验证，记录设备、驱动、串口参数、复现步骤和结果。
-4. **根据 VAL-3 决定是否需要 DL-1 第二轮**
-   - 只有正式下载即时取消或配置切换确有失败证据时，才扩展为异步正式下载或更严格的连接重绑定。
-5. **VAL-4 后再评估 P3-1**
-   - 只做有回归保护、能降低真实维护成本的定向拆分；不为行数或外观重构。
+1. 准备 Windows 新环境并执行 VAL-1；必须使用全新 build 目录。
+2. 在 Windows 编译条件恢复后实施 OPC-1，再运行其 targeted CTest。
+3. 使用 Matrikon 完成 VAL-2，记录版本、配置、回调线程和断线/重连结果。
+4. 连接真实控制器完成 VAL-3；只有真实证据表明同步正式下载不可接受时才新建 DL-1B。
+5. 使用目标规模数据完成 VAL-4，并记录分页次数、峰值内存、吞吐和失败恢复。
+6. 每项验证完成后只更新状态和证据，不重复实现已有 L1 代码。
 
 ## 6. 绝对不要再踩的坑
 
-1. 不要把子智能体报告当成总控验收；必须检查本批差异、失败路径和测试是否真的覆盖声称的语义。
-2. 不要把 L1 写成“测试通过”；当前所有 C++ 改动仍需 clean build/CTest，Windows/硬件行为仍需 L2/L3。
-3. 不要使用旧构建目录、固定输出目录或残留 artifact 证明当前代码正确。
-4. 不要回退或格式化整个脏工作树；只审查和修改本批精确授权文件。
-5. 不要把 COMP-1 的一次性冻结目录授权扩展到后续任务，也不要修改第三方/Python DSL 编译语义。
-6. 不要再讨论下载链产品定位：正式 consumer 与诊断工具职责已经确认；后续只验证和收紧生命周期。
-7. 不要让错误 owner release 端口，不要让借用 backend 被 RuntimeSession stop/retry 断开，也不要把内部重连门控用于掩盖真实掉线。
-8. 不要把诊断下载可取消等同于正式同步下载可即时取消。
-9. 不要在 macOS 上宣称 OPC Windows 分支已编译，更不要把单元测试等同于真实 Matrikon 验收。
-10. 不要在 clean build 恢复前启动 P3 文件拆分，也不要未经外部 API 确认删除未接入 controller。
+1. 不要把子智能体完成报告当成总控验收；必须复核 scoped diff、直接调用链和失败路径。
+2. 不要把 L1 写成“编译/测试通过”，也不要使用旧 build、旧 CTest 注册或旧二进制作证据。
+3. 不要回退或格式化整个脏工作树；只操作当前任务精确授权文件。
+4. 不要恢复 v3/v4/v4.1 的旧任务状态；以 v4.2 合同边界和本文件当前完成证据为准。
+5. 不要重复执行 MON-1、P3-1、WIN-B2、COMP-1、DL-1A、已确认决策或本轮已达到 L1 的 correctness/build 批次。
+6. 不要把 Compiler 的一次狭窄授权扩展成永久写权限；任何新 Compiler 修改必须重新列最终最小文件清单并获批。
+7. 不要把 COMP-F1 误写成编译器核心已实现；standalone `compile/check` 当前只保证诚实失败。
+8. 不要让通信失败变成正常 0、让失败保留 NoError、让非法 alias 发起 I/O，或让 partial success 提前终止成功点回读。
+9. 不要在持有 MonitorChannel mutex 时 emit，不要在 backend 销毁后继续回读，也不要让旧 OPC callback 污染新 generation。
+10. 不要把诊断下载可取消等同于正式同步下载可即时取消，也不要重新讨论已确认的正式 consumer 职责。
+11. 不要在 macOS 上宣称 Windows COM、PowerShell、windeployqt 或脚本路径已运行通过。
+12. 不要重新加入 `CANCommon.cpp` 或 `project_controller_stub.cpp`；前者会与 header inline 实现重定义，后者属于失效测试拓扑。
 
 ## 7. 接手后的第一步
 
-1. 完整阅读根目录 `AGENTS.md` 和当前需求合同。
-2. 查看本文件第 2 节任务状态，不再使用旧 `findings.md`、`progress.md`、`task_plan.md` 恢复状态。
-3. 查看工作树但不回退任何现有修改；按具体任务建立精确授权清单。
-4. 当前首选动作是准备 Windows VAL-1；若目标环境仍不可用，不要用重复静态扫描冒充进展。
-5. 每批完成后更新本文件的任务表、验证等级、未验证项和下一步，不复制整份需求合同。
+1. 完整阅读根目录 `AGENTS.md`、`LH_current_tasks_requirements_v4.2_mac.md` 和本文件。
+2. 查看工作树但不回退任何现有修改；按任务 ID 建立 scoped 文件清单。
+3. 若仍在 macOS，确认没有新的普通代码任务后停止重复静态扫描，准备 Windows/目标环境验证材料。
+4. 若已在 Windows，先执行 VAL-1 clean configure/build，再按失败证据修真实 blocker，不顺带做 Qt6 migration 或结构整理。
+5. 每批完成后更新本文件的任务状态、验证等级、证据与剩余阻断。

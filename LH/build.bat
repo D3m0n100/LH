@@ -22,7 +22,7 @@ if errorlevel 1 goto :build_error
 
 echo [3/3] Done.
 echo.
-echo Executable should be at: %BUILD_DIR%\bin\ServoValvePlatform.exe
+echo Executable should be at: %BUILD_DIR%\bin\LH.exe
 echo.
 pause
 exit /b 0

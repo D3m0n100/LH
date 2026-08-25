@@ -174,6 +174,7 @@ void RuntimeSessionController::startOpcServerIfEnabled()
 
 void RuntimeSessionController::stopOpcServer()
 {
+    cancelPendingOpcWrite(QStringLiteral("OPC 服务已停止，写入已取消"));
     if (!m_opcServer || !m_opcServer->isRunning()) {
         return;
     }
@@ -190,7 +191,7 @@ void RuntimeSessionController::connectOpcServerSignals()
     }
 
     connect(m_opcServer, &IOpcServer::runningStateChanged,
-            this, &RuntimeSessionController::opcRunningChanged,
+            this, &RuntimeSessionController::handleOpcRunningStateChanged,
             Qt::UniqueConnection);
     connect(m_opcServer, &IOpcServer::errorOccurred,
             this, &RuntimeSessionController::opcErrorOccurred,
@@ -200,9 +201,24 @@ void RuntimeSessionController::connectOpcServerSignals()
             Qt::UniqueConnection);
 }
 
+void RuntimeSessionController::handleOpcRunningStateChanged(bool running)
+{
+    emit opcRunningChanged(running);
+    if (!running) {
+        cancelPendingOpcWrite(QStringLiteral("OPC 服务已停止，写入已取消"));
+    }
+}
+
 void RuntimeSessionController::handleOpcWriteRequest(const QString& pointId, const QVariant& value)
 {
     if (!m_opcServer) {
+        return;
+    }
+
+    if (m_pendingOpcWriteActive) {
+        const QString message = QStringLiteral("OPC 写入失败：已有参数写入正在等待回读确认");
+        m_opcServer->recordWriteResult(pointId, false, message);
+        emit runtimeError(message);
         return;
     }
 
@@ -236,29 +252,90 @@ void RuntimeSessionController::handleOpcWriteRequest(const QString& pointId, con
         return;
     }
 
+    m_pendingOpcWriteActive = true;
+    m_pendingOpcPointId = pointId;
+    m_pendingOpcParameterName = stateInfo.name;
+
     QString applyError;
-    const bool ok = m_parameterController->applyModifiedParametersWithReadbackAsync(
-            m_backend, 1, 0, &applyError);
+    const bool ok = m_parameterController->applyParameterByPointIdWithReadbackAsync(
+            deviceBackend(), pointId, 1, 0, &applyError);
     if (!ok) {
         const QString message = applyError.isEmpty()
                 ? QStringLiteral("OPC 写入失败：参数 %1 下发失败").arg(stateInfo.name)
                 : QStringLiteral("OPC 写入失败：%1").arg(applyError);
-        m_opcServer->recordWriteResult(pointId, false, message);
+        if (m_pendingOpcWriteActive) {
+            m_opcServer->recordWriteResult(pointId, false, message);
+            m_pendingOpcWriteActive = false;
+            m_pendingOpcPointId.clear();
+            m_pendingOpcParameterName.clear();
+        }
         emit runtimeError(message);
         return;
     }
 
-    const QString successMessage = QStringLiteral("OPC 写入成功：%1=%2")
-            .arg(stateInfo.name, valueText);
-    m_opcServer->recordWriteResult(pointId, true, successMessage);
-    RuntimePointValue syncedValue;
-    syncedValue.pointId = pointId;
-    syncedValue.value = stateInfo.appliedValue.isEmpty() ? valueText : stateInfo.appliedValue;
-    syncedValue.quality = RuntimePointQuality::Good;
-    syncedValue.timestamp = QDateTime::currentDateTime();
-    syncedValue.origin = QStringLiteral("opc-write");
-    m_opcServer->updatePointValues({syncedValue});
-    emit logMessage(QStringLiteral("[%1] %2")
+    emit logMessage(QStringLiteral("[%1] OPC 写入已受理，等待回读确认：%2=%3")
                     .arg(QDateTime::currentDateTime().toString(QStringLiteral("HH:mm:ss")),
-                         successMessage));
+                         stateInfo.name,
+                         valueText));
+}
+
+void RuntimeSessionController::handleParameterReadbackFinished(bool success,
+                                                                const QString& message)
+{
+    if (!m_pendingOpcWriteActive || !m_opcServer || !m_parameterController) {
+        return;
+    }
+
+    const QString pointId = m_pendingOpcPointId;
+    const QString parameterName = m_pendingOpcParameterName;
+    const ParameterStateInfo stateInfo = m_parameterController->parameterStateByPointId(pointId);
+    const bool confirmed = success && stateInfo.state == ParameterState::Confirmed;
+    const QString finalMessage = confirmed
+            ? QStringLiteral("OPC 写入成功：%1=%2").arg(parameterName, stateInfo.readbackValue)
+            : (message.isEmpty()
+                       ? QStringLiteral("OPC 写入失败：参数 %1 未完成回读确认").arg(parameterName)
+                       : QStringLiteral("OPC 写入失败：%1").arg(message));
+
+    if (!confirmed) {
+        m_opcServer->recordWriteResult(pointId, false, finalMessage);
+        emit runtimeError(finalMessage);
+    } else {
+        m_opcServer->recordWriteResult(pointId, true, finalMessage);
+        RuntimePointValue syncedValue;
+        syncedValue.pointId = pointId;
+        syncedValue.value = stateInfo.readbackValue;
+        syncedValue.quality = RuntimePointQuality::Good;
+        syncedValue.timestamp = QDateTime::currentDateTime();
+        syncedValue.origin = QStringLiteral("opc-write");
+        m_opcServer->updatePointValues({syncedValue});
+        emit logMessage(QStringLiteral("[%1] %2")
+                        .arg(QDateTime::currentDateTime().toString(QStringLiteral("HH:mm:ss")),
+                             finalMessage));
+    }
+
+    m_pendingOpcWriteActive = false;
+    m_pendingOpcPointId.clear();
+    m_pendingOpcParameterName.clear();
+}
+
+void RuntimeSessionController::cancelPendingOpcWrite(const QString& message)
+{
+    if (m_pendingOpcWriteActive && m_parameterController) {
+        m_parameterController->cancelPendingReadback(message);
+    }
+
+    if (!m_pendingOpcWriteActive) {
+        return;
+    }
+
+    const QString pointId = m_pendingOpcPointId;
+    const QString finalMessage = message.isEmpty()
+            ? QStringLiteral("OPC 写入已取消")
+            : QStringLiteral("OPC 写入失败：%1").arg(message);
+    if (m_opcServer) {
+        m_opcServer->recordWriteResult(pointId, false, finalMessage);
+    }
+    m_pendingOpcWriteActive = false;
+    m_pendingOpcPointId.clear();
+    m_pendingOpcParameterName.clear();
 }

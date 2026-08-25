@@ -31,10 +31,10 @@ public:
     ~MonitorChannel() override;
 
     // ===== 配置 =====
-    QString name() const { return m_config.name; }
-    QString displayName() const { return m_config.displayName; }
-    QString unit() const { return m_config.unit; }
-    ChannelConfig config() const { return m_config; }
+    QString name() const;
+    QString displayName() const;
+    QString unit() const;
+    ChannelConfig config() const;
     void updateConfig(const ChannelConfig& config);
 
     // ===== 数据操作 =====
@@ -50,7 +50,7 @@ public:
     // ===== 阈值 =====
     void addThreshold(const Threshold& threshold);
     void removeThreshold(const QString& name);
-    QList<Threshold> thresholds() const { return m_config.thresholds; }
+    QList<Threshold> thresholds() const;
 
 signals:
     void sampleAdded(const Sample& sample);

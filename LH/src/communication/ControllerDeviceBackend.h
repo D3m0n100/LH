@@ -7,6 +7,7 @@
 #include "ControllerDebugClient.h"
 #include "DownloadProfile.h"
 #include "IDeviceBackend.h"
+#include "RuntimePointRegisterCodec.h"
 
 #include "common/ConfigTypes.h"
 #include "common/RuntimePointTypes.h"
@@ -87,6 +88,7 @@ private:
         int deviceId = 1;
         int address = -1;
         int count = 1;
+        RuntimePointRegisterCodecSpec codec;
         bool readable = true;
         bool writable = false;
     };

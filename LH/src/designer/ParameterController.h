@@ -7,8 +7,11 @@
 #include <QString>
 #include <QStringList>
 #include <QMap>
+#include <QHash>
 #include <QVariant>
 #include <QList>
+#include <QPointer>
+#include <QtGlobal>
 
 #include "common/ConfigTypes.h"
 
@@ -30,6 +33,7 @@ struct ParameterStateInfo
 {
     QString pointId;
     QString name;
+    QString dataType;
     ParameterState state = ParameterState::Clean;
     QString definitionValue;
     QString editedValue;
@@ -62,6 +66,12 @@ public:
                                                   int maxReadbackRetries = 1,
                                                   int readbackRetryIntervalMs = 0,
                                                   QString* errorMessage = nullptr);
+    bool applyParameterByPointIdWithReadbackAsync(IDeviceBackend* backend,
+                                                  const QString& pointId,
+                                                  int maxReadbackRetries = 1,
+                                                  int readbackRetryIntervalMs = 0,
+                                                  QString* errorMessage = nullptr);
+    void cancelPendingReadback(const QString& message = QString());
     void onReadbackValues(const QHash<QString, QVariant>& readbackValues);
 
     ParameterStateInfo parameterState(const QString& name) const;
@@ -76,18 +86,41 @@ signals:
     void readbackFinished(bool success, const QString& message);
 
 private:
-    QStringList pendingReadbackPointIds() const;
-    void setPendingReadbackError(const QString& errorMessage);
+    enum class ReadbackDecision {
+        Success,
+        Continue,
+        Failure
+    };
+
+    bool applyModifiedParametersForTargets(IDeviceBackend* backend,
+                                           const QStringList& targetPointIds,
+                                           QStringList* batchTargetPointIds,
+                                           QString* errorMessage);
+    bool applyModifiedParametersWithReadbackAsyncForTargets(
+            IDeviceBackend* backend,
+            const QStringList& targetPointIds,
+            int maxReadbackRetries,
+            int readbackRetryIntervalMs,
+            QString* errorMessage);
+    QStringList pendingReadbackPointIds(const QStringList& targetPointIds) const;
+    void applyReadbackValues(const QHash<QString, QVariant>& readbackValues,
+                             const QStringList& targetPointIds);
+    ReadbackDecision evaluateReadback(const QStringList& targetPointIds,
+                                      QString* message) const;
+    void setPendingReadbackError(const QString& errorMessage,
+                                 const QStringList& targetPointIds);
     void pollReadbackAttempt();
     void finishReadback(bool success, const QString& message);
 
     QMap<QString, ParameterStateInfo> m_states;
-    IDeviceBackend* m_pendingReadbackBackend = nullptr;
+    QPointer<IDeviceBackend> m_pendingReadbackBackend;
     int m_pendingReadbackMaxRetries = 0;
     int m_pendingReadbackRetryIntervalMs = 0;
     int m_pendingReadbackAttempt = 0;
     bool m_pendingReadbackActive = false;
+    QStringList m_pendingReadbackTargetPointIds;
     QString m_pendingReadbackMessage;
+    quint64 m_pendingReadbackGeneration = 0;
 };
 
 #endif // PARAMETERCONTROLLER_H

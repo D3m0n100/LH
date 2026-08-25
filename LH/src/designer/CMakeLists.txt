@@ -3,6 +3,8 @@
 
 add_library(designer_module STATIC
     MainWindow.cpp
+    MainWindowMonitor.cpp
+    MainWindowOutput.cpp
     MainWindowUi.cpp
     MainWindowInspector.cpp
     MainWindowExplorer.cpp

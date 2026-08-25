@@ -402,7 +402,10 @@ private:
     QueryResult executeSql(const QString& sql, const QString& description);
     
     /// 获取当前数据库版本
-    int getDatabaseVersion();
+    bool getDatabaseVersion(int& version);
+
+    /// 清理数据库连接（调用方必须持有 m_dbMutex）
+    void cleanupDatabaseConnection();
     
     /// 设置数据库版本
     bool setDatabaseVersion(int version);

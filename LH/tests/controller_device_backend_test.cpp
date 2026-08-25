@@ -27,10 +27,11 @@ public:
         lastReadAddress = address;
         lastReadCount = count;
         lastReadStation = station;
-        if (!connected || failRead) {
+        if (!connected || failRead || address == failReadAddress) {
             error = CommError(CommProtocolType::ModbusRTU,
                               CommErrorCode::ReceiveFailed,
-                              QStringLiteral("fake read failed"));
+                              QStringLiteral("fake read failed"),
+                              QStringLiteral("fake read details"));
             return false;
         }
         return registers.value(station).contains(address);
@@ -47,10 +48,11 @@ public:
         lastWriteValues = values;
         lastWriteStation = station;
         writes.append({station, address, values});
-        if (!connected || failWrite) {
+        if (!connected || failWrite || address == failWriteAddress) {
             error = CommError(CommProtocolType::ModbusRTU,
                               CommErrorCode::SendFailed,
-                              QStringLiteral("fake write failed"));
+                              QStringLiteral("fake write failed"),
+                              QStringLiteral("fake write details"));
             return false;
         }
         registers[station].insert(address, values);
@@ -62,6 +64,8 @@ public:
     bool connected = true;
     bool failRead = false;
     bool failWrite = false;
+    int failReadAddress = -1;
+    int failWriteAddress = -1;
     int station = 1;
     mutable CommError error;
     QHash<int, QHash<int, QVector<quint16>>> registers {
@@ -405,6 +409,530 @@ private slots:
         QCOMPARE(transport.lastWriteStation, 2);
         QCOMPARE(transport.lastWriteAddress, 120);
         QCOMPARE(transport.lastWriteValues, QVector<quint16>({88}));
+    }
+
+    void metadataDeviceAliasesOverrideNormalizedAddressing()
+    {
+        FakeControllerTransport transport;
+        ControllerDebugClient client(&transport);
+        ControllerDeviceBackend backend;
+        backend.setDebugClientForTest(&client);
+
+        ProjectRuntimeConfig cfg;
+        cfg.transport.parameters.insert(QStringLiteral("port"), QStringLiteral("COM7"));
+        const auto addPoint = [&cfg](const QString& id,
+                                     int address,
+                                     const QVariantMap& aliases) {
+            HardwareResourceBinding point;
+            point.id = id;
+            point.resourceName = id;
+            point.resourceType = QStringLiteral("holding");
+            point.channel = id;
+            point.metadata.insert(QStringLiteral("address"), address);
+            for (auto it = aliases.constBegin(); it != aliases.constEnd(); ++it) {
+                point.metadata.insert(it.key(), it.value());
+            }
+            cfg.resources.append(point);
+        };
+        addPoint(QStringLiteral("alias.single"), 120,
+                 {{QStringLiteral("slaveId"), 2}});
+        addPoint(QStringLiteral("alias.same"), 38,
+                 {{QStringLiteral("unitId"), 2},
+                  {QStringLiteral("stationAddress"), 2},
+                  {QStringLiteral("serverAddress"), 2}});
+        addPoint(QStringLiteral("alias.conflict"), 100,
+                 {{QStringLiteral("unitId"), 1},
+                  {QStringLiteral("slaveId"), 2}});
+        addPoint(QStringLiteral("alias.invalidString"), 10,
+                 {{QStringLiteral("slaveId"), QStringLiteral("invalid")}});
+        addPoint(QStringLiteral("alias.nonInteger"), 23,
+                 {{QStringLiteral("slaveId"), 2.5}});
+        addPoint(QStringLiteral("alias.outOfRange"), 26,
+                 {{QStringLiteral("slaveId"), 64}});
+
+        QVERIFY(backend.configure(cfg));
+        QVERIFY(backend.connectBackend());
+
+        QHash<QString, QVariant> values;
+        QVERIFY(backend.readPoints({QStringLiteral("alias.single")}, values));
+        QCOMPARE(values.value(QStringLiteral("alias.single")).toInt(), 77);
+        QCOMPARE(transport.lastReadStation, 2);
+
+        values.clear();
+        QVERIFY(backend.readPoints({QStringLiteral("alias.same")}, values));
+        QCOMPARE(values.value(QStringLiteral("alias.same")).toInt(), 2812);
+        QCOMPARE(transport.lastReadStation, 2);
+
+        const auto expectInvalidConfig = [&backend](const QString& pointId) {
+            QHash<QString, QVariant> rejectedValues;
+            QHash<QString, CommError> pointErrors;
+            QVERIFY(!backend.readPoints({pointId}, rejectedValues, nullptr, &pointErrors));
+            QCOMPARE(pointErrors.value(pointId).code, CommErrorCode::InvalidConfig);
+            QVERIFY(!rejectedValues.contains(pointId));
+        };
+        expectInvalidConfig(QStringLiteral("alias.conflict"));
+        expectInvalidConfig(QStringLiteral("alias.invalidString"));
+        expectInvalidConfig(QStringLiteral("alias.nonInteger"));
+        expectInvalidConfig(QStringLiteral("alias.outOfRange"));
+    }
+
+    void mappedTypedHoldingRegisterPointsUseCodecContract()
+    {
+        FakeControllerTransport transport;
+        transport.registers[1].insert(140, {0x4000, 0x0000});
+        transport.registers[1].insert(142, {0xffff});
+        transport.registers[1].insert(144, {0x0000, 0x3f80});
+        transport.registers[1].insert(146, {1, 2});
+        transport.registers[1].insert(158, {5, 6});
+        transport.registers[1].insert(156, {3});
+        transport.registers[1].insert(154, {0x7fc0, 0x0000});
+        transport.registers[1].insert(162, {1});
+        transport.registers[1].insert(164, {0x1234, 0x5678});
+        transport.registers[1].insert(166, {0xffff, 0xfffe});
+        transport.registers[1].insert(174, {0x0000, 0x803f});
+        transport.registers[1].insert(176, {0x3f80, 0x0000, 0x4000, 0x0000});
+        transport.registers[1].insert(180, {0xffff});
+        transport.registers[1].insert(182, {0xffff, 0xfffe});
+        transport.registers[1].insert(186, {11});
+        transport.registers[1].insert(187, {12});
+        ControllerDebugClient client(&transport);
+        ControllerDeviceBackend backend;
+        backend.setDebugClientForTest(&client);
+
+        ProjectRuntimeConfig cfg;
+        cfg.transport.parameters.insert(QStringLiteral("port"), QStringLiteral("COM7"));
+        const auto addPoint = [&cfg](const QString& id,
+                                     int address,
+                                     const QString& dataType,
+                                     int elementCount = 1,
+                                     const QString& byteOrder = QStringLiteral("BigEndian"),
+                                     const QString& wordOrder = QStringLiteral("BigEndian")) {
+            HardwareResourceBinding point;
+            point.id = id;
+            point.resourceName = id;
+            point.resourceType = QStringLiteral("holding");
+            point.channel = id;
+            point.metadata.insert(QStringLiteral("address"), address);
+            point.metadata.insert(QStringLiteral("dataType"), dataType);
+            point.metadata.insert(QStringLiteral("elementCount"), elementCount);
+            point.metadata.insert(QStringLiteral("byteOrder"), byteOrder);
+            point.metadata.insert(QStringLiteral("wordOrder"), wordOrder);
+            cfg.resources.append(point);
+        };
+        addPoint(QStringLiteral("typed.real"), 140, QStringLiteral("REAL"));
+        addPoint(QStringLiteral("typed.i16"), 142, QStringLiteral("INT16"));
+        addPoint(QStringLiteral("typed.f32LittleWord"), 144, QStringLiteral("FLOAT32"), 1,
+                 QStringLiteral("BigEndian"), QStringLiteral("LittleEndian"));
+        addPoint(QStringLiteral("typed.u16Array"), 146, QStringLiteral("UINT16"), 2);
+        addPoint(QStringLiteral("typed.u16LittleByte"), 148, QStringLiteral("UINT16"), 1,
+                 QStringLiteral("LittleEndian"));
+        addPoint(QStringLiteral("typed.bool"), 162, QStringLiteral("BOOL"));
+        addPoint(QStringLiteral("typed.u32"), 164, QStringLiteral("UINT32"));
+        addPoint(QStringLiteral("typed.i32"), 166, QStringLiteral("INT32"));
+        addPoint(QStringLiteral("typed.realLittleBoth"), 174, QStringLiteral("REAL"), 1,
+                 QStringLiteral("LittleEndian"), QStringLiteral("LittleEndian"));
+        addPoint(QStringLiteral("typed.realArray"), 176, QStringLiteral("REAL"), 2);
+        addPoint(QStringLiteral("typed.intAlias"), 180, QStringLiteral("INT"));
+        addPoint(QStringLiteral("typed.dintAlias"), 182, QStringLiteral("DINT"));
+        HardwareResourceBinding badCount;
+        badCount.id = QStringLiteral("typed.badCount");
+        badCount.resourceName = badCount.id;
+        badCount.resourceType = QStringLiteral("holding");
+        badCount.channel = badCount.id;
+        badCount.metadata.insert(QStringLiteral("address"), 152);
+        badCount.metadata.insert(QStringLiteral("dataType"), QStringLiteral("REAL"));
+        badCount.metadata.insert(QStringLiteral("count"), 1);
+        cfg.resources.append(badCount);
+        HardwareResourceBinding scaled;
+        scaled.id = QStringLiteral("typed.scaled");
+        scaled.resourceName = scaled.id;
+        scaled.resourceType = QStringLiteral("holding");
+        scaled.channel = scaled.id;
+        scaled.metadata.insert(QStringLiteral("address"), 156);
+        scaled.metadata.insert(QStringLiteral("dataType"), QStringLiteral("UINT16"));
+        scaled.metadata.insert(QStringLiteral("scale"), 2.0);
+        scaled.metadata.insert(QStringLiteral("offset"), 1.0);
+        cfg.resources.append(scaled);
+        HardwareResourceBinding legacy;
+        legacy.id = QStringLiteral("legacy.rawArray");
+        legacy.resourceName = legacy.id;
+        legacy.resourceType = QStringLiteral("holding");
+        legacy.channel = legacy.id;
+        legacy.metadata.insert(QStringLiteral("address"), 158);
+        legacy.metadata.insert(QStringLiteral("elementCount"), 2);
+        cfg.resources.append(legacy);
+        HardwareResourceBinding badReal;
+        badReal.id = QStringLiteral("typed.badReal");
+        badReal.resourceName = badReal.id;
+        badReal.resourceType = QStringLiteral("holding");
+        badReal.channel = badReal.id;
+        badReal.metadata.insert(QStringLiteral("address"), 154);
+        badReal.metadata.insert(QStringLiteral("dataType"), QStringLiteral("REAL"));
+        cfg.resources.append(badReal);
+        HardwareResourceBinding badType;
+        badType.id = QStringLiteral("typed.badType");
+        badType.resourceName = badType.id;
+        badType.resourceType = QStringLiteral("holding");
+        badType.channel = badType.id;
+        badType.metadata.insert(QStringLiteral("address"), 160);
+        badType.metadata.insert(QStringLiteral("dataType"), QStringLiteral("STRING"));
+        cfg.resources.append(badType);
+        HardwareResourceBinding badFraction;
+        badFraction.id = QStringLiteral("legacy.badFraction");
+        badFraction.resourceName = badFraction.id;
+        badFraction.resourceType = QStringLiteral("holding");
+        badFraction.channel = badFraction.id;
+        badFraction.metadata.insert(QStringLiteral("address"), 172);
+        badFraction.metadata.insert(QStringLiteral("count"), 1.5);
+        cfg.resources.append(badFraction);
+        HardwareResourceBinding badScale;
+        badScale.id = QStringLiteral("typed.badScale");
+        badScale.resourceName = badScale.id;
+        badScale.resourceType = QStringLiteral("holding");
+        badScale.channel = badScale.id;
+        badScale.metadata.insert(QStringLiteral("address"), 184);
+        badScale.metadata.insert(QStringLiteral("dataType"), QStringLiteral("REAL"));
+        badScale.metadata.insert(QStringLiteral("scale"), 0.0);
+        cfg.resources.append(badScale);
+        HardwareResourceBinding writeOnly;
+        writeOnly.id = QStringLiteral("typed.writeOnly");
+        writeOnly.resourceName = writeOnly.id;
+        writeOnly.resourceType = QStringLiteral("holding");
+        writeOnly.channel = writeOnly.id;
+        writeOnly.metadata.insert(QStringLiteral("address"), 186);
+        writeOnly.metadata.insert(QStringLiteral("tagAccess"), QStringLiteral("WriteOnly"));
+        cfg.resources.append(writeOnly);
+        HardwareResourceBinding readOnly;
+        readOnly.id = QStringLiteral("typed.readOnly");
+        readOnly.resourceName = readOnly.id;
+        readOnly.resourceType = QStringLiteral("holding");
+        readOnly.channel = readOnly.id;
+        readOnly.metadata.insert(QStringLiteral("address"), 187);
+        readOnly.metadata.insert(QStringLiteral("tagAccess"), QStringLiteral("ReadOnly"));
+        cfg.resources.append(readOnly);
+        HardwareResourceBinding offsetOnly;
+        offsetOnly.id = QStringLiteral("typed.offsetOnly");
+        offsetOnly.resourceName = offsetOnly.id;
+        offsetOnly.resourceType = QStringLiteral("holding");
+        offsetOnly.channel = offsetOnly.id;
+        offsetOnly.metadata.insert(QStringLiteral("offset"), 188);
+        cfg.resources.append(offsetOnly);
+
+        QVERIFY(backend.configure(cfg));
+        QVERIFY(backend.connectBackend());
+
+        QHash<QString, QVariant> values;
+        QVERIFY(backend.readPoints({QStringLiteral("typed.real")}, values));
+        QVERIFY(qFuzzyCompare(values.value(QStringLiteral("typed.real")).toFloat(), 2.0f));
+        values.clear();
+        QVERIFY(backend.readPoints({QStringLiteral("typed.f32LittleWord")}, values));
+        QVERIFY(qFuzzyCompare(values.value(QStringLiteral("typed.f32LittleWord")).toFloat(), 1.0f));
+        values.clear();
+        QVERIFY(backend.readPoints({QStringLiteral("typed.u16Array")}, values));
+        const QVariantList arrayValues = values.value(QStringLiteral("typed.u16Array")).toList();
+        QCOMPARE(arrayValues.size(), 2);
+        QCOMPARE(arrayValues.at(0).toInt(), 1);
+        QCOMPARE(arrayValues.at(1).toInt(), 2);
+        values.clear();
+        QVERIFY(backend.readPoints({QStringLiteral("typed.scaled")}, values));
+        QCOMPARE(values.value(QStringLiteral("typed.scaled")).toDouble(), 7.0);
+        values.clear();
+        QVERIFY(backend.readPoints({QStringLiteral("legacy.rawArray")}, values));
+        const QVariantList legacyValues = values.value(QStringLiteral("legacy.rawArray")).toList();
+        QCOMPARE(legacyValues.size(), 2);
+        QCOMPARE(legacyValues.at(0).toInt(), 5);
+        QCOMPARE(legacyValues.at(1).toInt(), 6);
+        values.clear();
+        QVERIFY(backend.readPoints({QStringLiteral("typed.bool")}, values));
+        QVERIFY(values.value(QStringLiteral("typed.bool")).toBool());
+        values.clear();
+        QVERIFY(backend.readPoints({QStringLiteral("typed.u32")}, values));
+        QCOMPARE(values.value(QStringLiteral("typed.u32")).toULongLong(), 0x12345678ULL);
+        values.clear();
+        QVERIFY(backend.readPoints({QStringLiteral("typed.i32")}, values));
+        QCOMPARE(values.value(QStringLiteral("typed.i32")).toLongLong(), -2LL);
+        values.clear();
+        QVERIFY(backend.readPoints({QStringLiteral("typed.realLittleBoth")}, values));
+        QVERIFY(qFuzzyCompare(values.value(QStringLiteral("typed.realLittleBoth")).toFloat(), 1.0f));
+        QCOMPARE(transport.lastReadCount, 2);
+        values.clear();
+        QVERIFY(backend.readPoints({QStringLiteral("typed.realArray")}, values));
+        const QVariantList realArrayValues = values.value(QStringLiteral("typed.realArray")).toList();
+        QCOMPARE(realArrayValues.size(), 2);
+        QVERIFY(qFuzzyCompare(realArrayValues.at(0).toFloat(), 1.0f));
+        QVERIFY(qFuzzyCompare(realArrayValues.at(1).toFloat(), 2.0f));
+        QCOMPARE(transport.lastReadCount, 4);
+        values.clear();
+        QVERIFY(backend.readPoints({QStringLiteral("typed.intAlias")}, values));
+        QCOMPARE(values.value(QStringLiteral("typed.intAlias")).toInt(), -1);
+        values.clear();
+        QVERIFY(backend.readPoints({QStringLiteral("typed.dintAlias")}, values));
+        QCOMPARE(values.value(QStringLiteral("typed.dintAlias")).toLongLong(), -2LL);
+
+        QHash<QString, QVariant> writes;
+        QHash<QString, CommError> pointErrors;
+        writes.insert(QStringLiteral("typed.real"), QStringLiteral("2.0"));
+        QVERIFY(backend.writePoints(writes));
+        QCOMPARE(transport.lastWriteValues, QVector<quint16>({0x4000, 0x0000}));
+        values.clear();
+        QVERIFY(backend.readPoints({QStringLiteral("typed.real")}, values));
+        QVERIFY(qFuzzyCompare(values.value(QStringLiteral("typed.real")).toFloat(), 2.0f));
+
+        writes.clear();
+        writes.insert(QStringLiteral("typed.f32LittleWord"), 1.0);
+        QVERIFY(backend.writePoints(writes));
+        QCOMPARE(transport.lastWriteValues, QVector<quint16>({0x0000, 0x3f80}));
+
+        writes.clear();
+        writes.insert(QStringLiteral("typed.bool"), true);
+        QVERIFY(backend.writePoints(writes));
+        QCOMPARE(transport.lastWriteValues, QVector<quint16>({1}));
+
+        writes.clear();
+        writes.insert(QStringLiteral("typed.u32"), 0x12345678);
+        QVERIFY(backend.writePoints(writes));
+        QCOMPARE(transport.lastWriteValues, QVector<quint16>({0x1234, 0x5678}));
+
+        writes.clear();
+        writes.insert(QStringLiteral("typed.i32"), -2);
+        QVERIFY(backend.writePoints(writes));
+        QCOMPARE(transport.lastWriteValues, QVector<quint16>({0xffff, 0xfffe}));
+
+        writes.clear();
+        writes.insert(QStringLiteral("typed.i16"), QStringLiteral("-1"));
+        QVERIFY(backend.writePoints(writes));
+        QCOMPARE(transport.lastWriteValues, QVector<quint16>({0xffff}));
+
+        writes.clear();
+        writes.insert(QStringLiteral("typed.intAlias"), QStringLiteral("-1"));
+        QVERIFY(backend.writePoints(writes));
+        QCOMPARE(transport.lastWriteValues, QVector<quint16>({0xffff}));
+
+        writes.clear();
+        writes.insert(QStringLiteral("typed.dintAlias"), QStringLiteral("-2"));
+        QVERIFY(backend.writePoints(writes));
+        QCOMPARE(transport.lastWriteValues, QVector<quint16>({0xffff, 0xfffe}));
+
+        writes.clear();
+        writes.insert(QStringLiteral("typed.u16LittleByte"), 65535);
+        QVERIFY(backend.writePoints(writes));
+        QCOMPARE(transport.lastWriteValues, QVector<quint16>({0xffff}));
+
+        writes.clear();
+        writes.insert(QStringLiteral("typed.u16LittleByte"), 0x1234);
+        QVERIFY(backend.writePoints(writes));
+        QCOMPARE(transport.lastWriteValues, QVector<quint16>({0x3412}));
+
+        writes.clear();
+        writes.insert(QStringLiteral("typed.u16Array"), QVariantList({1, 2}));
+        QVERIFY(backend.writePoints(writes));
+        QCOMPARE(transport.lastWriteValues, QVector<quint16>({1, 2}));
+
+        writes.clear();
+        writes.insert(QStringLiteral("typed.scaled"), 7.0);
+        QVERIFY(backend.writePoints(writes));
+        QCOMPARE(transport.lastWriteValues, QVector<quint16>({3}));
+
+        writes.clear();
+        writes.insert(QStringLiteral("typed.scaled"), 8.0);
+        QVERIFY(!backend.writePoints(writes, nullptr, &pointErrors));
+        QCOMPARE(pointErrors.value(QStringLiteral("typed.scaled")).code,
+                 CommErrorCode::InvalidParameter);
+
+        writes.clear();
+        writes.insert(QStringLiteral("legacy.rawArray"), QVariantList({7, 8}));
+        QVERIFY(backend.writePoints(writes));
+        QCOMPARE(transport.lastWriteValues, QVector<quint16>({7, 8}));
+
+        writes.clear();
+        writes.insert(QStringLiteral("legacy.rawArray"), QVariantList({7}));
+        QVERIFY(!backend.writePoints(writes, nullptr, &pointErrors));
+        QCOMPARE(pointErrors.value(QStringLiteral("legacy.rawArray")).code,
+                 CommErrorCode::InvalidParameter);
+
+        writes.clear();
+        writes.insert(QStringLiteral("typed.u16Array"), QVariantList({1}));
+        QVERIFY(!backend.writePoints(writes, nullptr, &pointErrors));
+        QCOMPARE(pointErrors.value(QStringLiteral("typed.u16Array")).code,
+                 CommErrorCode::InvalidParameter);
+
+        writes.clear();
+        writes.insert(QStringLiteral("typed.i16"), QStringLiteral("abc"));
+        QVERIFY(!backend.writePoints(writes, nullptr, &pointErrors));
+        QCOMPARE(pointErrors.value(QStringLiteral("typed.i16")).code,
+                 CommErrorCode::InvalidParameter);
+        QVERIFY(!pointErrors.value(QStringLiteral("typed.i16")).details.isEmpty());
+        QVERIFY(!pointErrors.value(QStringLiteral("typed.i16")).details.contains(QStringLiteral("拒绝字符串")));
+
+        writes.clear();
+        writes.insert(QStringLiteral("typed.i16"), QStringLiteral("2.0abc"));
+        QVERIFY(!backend.writePoints(writes, nullptr, &pointErrors));
+        QCOMPARE(pointErrors.value(QStringLiteral("typed.i16")).code,
+                 CommErrorCode::InvalidParameter);
+
+        writes.clear();
+        writes.insert(QStringLiteral("typed.i16"), QStringLiteral("   "));
+        QVERIFY(!backend.writePoints(writes, nullptr, &pointErrors));
+        QCOMPARE(pointErrors.value(QStringLiteral("typed.i16")).code,
+                 CommErrorCode::InvalidParameter);
+
+        writes.clear();
+        writes.insert(QStringLiteral("typed.real"), QStringLiteral("nan"));
+        QVERIFY(!backend.writePoints(writes, nullptr, &pointErrors));
+        QCOMPARE(pointErrors.value(QStringLiteral("typed.real")).code,
+                 CommErrorCode::InvalidParameter);
+
+        writes.clear();
+        writes.insert(QStringLiteral("typed.real"), QStringLiteral("inf"));
+        QVERIFY(!backend.writePoints(writes, nullptr, &pointErrors));
+        QCOMPARE(pointErrors.value(QStringLiteral("typed.real")).code,
+                 CommErrorCode::InvalidParameter);
+
+        writes.clear();
+        writes.insert(QStringLiteral("typed.u16LittleByte"), 65536);
+        QVERIFY(!backend.writePoints(writes, nullptr, &pointErrors));
+        QCOMPARE(pointErrors.value(QStringLiteral("typed.u16LittleByte")).code,
+                 CommErrorCode::InvalidParameter);
+
+        writes.clear();
+        writes.insert(QStringLiteral("typed.u16LittleByte"), QStringLiteral("65535"));
+        QVERIFY(backend.writePoints(writes));
+        QCOMPARE(transport.lastWriteValues, QVector<quint16>({0xffff}));
+
+        writes.clear();
+        writes.insert(QStringLiteral("typed.badCount"), 1.0);
+        QVERIFY(!backend.writePoints(writes, nullptr, &pointErrors));
+        QCOMPARE(pointErrors.value(QStringLiteral("typed.badCount")).code,
+                 CommErrorCode::InvalidConfig);
+
+        writes.clear();
+        writes.insert(QStringLiteral("typed.badType"), QStringLiteral("abc"));
+        QVERIFY(!backend.writePoints(writes, nullptr, &pointErrors));
+        QCOMPARE(pointErrors.value(QStringLiteral("typed.badType")).code,
+                 CommErrorCode::InvalidConfig);
+
+        writes.clear();
+        writes.insert(QStringLiteral("legacy.badFraction"), 1);
+        QVERIFY(!backend.writePoints(writes, nullptr, &pointErrors));
+        QCOMPARE(pointErrors.value(QStringLiteral("legacy.badFraction")).code,
+                 CommErrorCode::InvalidConfig);
+
+        writes.clear();
+        writes.insert(QStringLiteral("typed.badScale"), 1.0);
+        QVERIFY(!backend.writePoints(writes, nullptr, &pointErrors));
+        QCOMPARE(pointErrors.value(QStringLiteral("typed.badScale")).code,
+                 CommErrorCode::InvalidConfig);
+
+        writes.clear();
+        writes.insert(QStringLiteral("typed.writeOnly"), 13);
+        QVERIFY(backend.writePoints(writes));
+        QCOMPARE(transport.lastWriteValues, QVector<quint16>({13}));
+        QHash<QString, QVariant> accessValues;
+        QVERIFY(!backend.readPoints({QStringLiteral("typed.writeOnly")},
+                                    accessValues,
+                                    nullptr,
+                                    &pointErrors));
+        QCOMPARE(pointErrors.value(QStringLiteral("typed.writeOnly")).code,
+                 CommErrorCode::PermissionDenied);
+
+        accessValues.clear();
+        QVERIFY(backend.readPoints({QStringLiteral("typed.readOnly")}, accessValues));
+        QCOMPARE(accessValues.value(QStringLiteral("typed.readOnly")).toInt(), 12);
+        writes.clear();
+        writes.insert(QStringLiteral("typed.readOnly"), 14);
+        QVERIFY(!backend.writePoints(writes, nullptr, &pointErrors));
+        QCOMPARE(pointErrors.value(QStringLiteral("typed.readOnly")).code,
+                 CommErrorCode::PermissionDenied);
+
+        accessValues.clear();
+        QVERIFY(!backend.readPoints({QStringLiteral("typed.offsetOnly")},
+                                    accessValues,
+                                    nullptr,
+                                    &pointErrors));
+        QCOMPARE(pointErrors.value(QStringLiteral("typed.offsetOnly")).code,
+                 CommErrorCode::InvalidConfig);
+
+        QHash<QString, QVariant> decodeValues;
+        QVERIFY(!backend.readPoints({QStringLiteral("typed.badReal")},
+                                    decodeValues,
+                                    nullptr,
+                                    &pointErrors));
+        QCOMPARE(pointErrors.value(QStringLiteral("typed.badReal")).code,
+                 CommErrorCode::InvalidParameter);
+        QVERIFY(!pointErrors.value(QStringLiteral("typed.badReal")).details.isEmpty());
+
+        RuntimePointRegisterCodecSpec realSpec;
+        realSpec.dataType = QStringLiteral("REAL");
+        QVariant decoded;
+        QString decodeError;
+        QVERIFY(!RuntimePointRegisterCodec::decode(realSpec,
+                                                   QVector<quint16>({0x4000}),
+                                                   &decoded,
+                                                   &decodeError));
+        QVERIFY(!decodeError.isEmpty());
+    }
+
+    void mappedTransportErrorsRemainSpecific()
+    {
+        FakeControllerTransport transport;
+        transport.registers[1].insert(190, {7});
+        transport.registers[1].insert(192, {8});
+        ControllerDebugClient client(&transport);
+        ControllerDeviceBackend backend;
+        backend.setDebugClientForTest(&client);
+
+        ProjectRuntimeConfig cfg;
+        cfg.transport.parameters.insert(QStringLiteral("port"), QStringLiteral("COM7"));
+        const auto addPoint = [&cfg](const QString& id, int address) {
+            HardwareResourceBinding point;
+            point.id = id;
+            point.resourceName = id;
+            point.resourceType = QStringLiteral("holding");
+            point.channel = id;
+            point.metadata.insert(QStringLiteral("address"), address);
+            point.metadata.insert(QStringLiteral("dataType"), QStringLiteral("UINT16"));
+            cfg.resources.append(point);
+        };
+        addPoint(QStringLiteral("mapped.readFailure"), 190);
+        addPoint(QStringLiteral("mapped.writeFailure"), 192);
+        QVERIFY(backend.configure(cfg));
+        QVERIFY(backend.connectBackend());
+
+        transport.failReadAddress = 190;
+        QHash<QString, QVariant> values;
+        QHash<QString, CommError> pointErrors;
+        QString errorMessage;
+        QVERIFY(!backend.readPoints({QStringLiteral("mapped.readFailure")},
+                                    values,
+                                    &errorMessage,
+                                    &pointErrors));
+        QCOMPARE(pointErrors.value(QStringLiteral("mapped.readFailure")).code,
+                 CommErrorCode::ReceiveFailed);
+        QCOMPARE(pointErrors.value(QStringLiteral("mapped.readFailure")).message,
+                 QStringLiteral("fake read failed"));
+        QCOMPARE(pointErrors.value(QStringLiteral("mapped.readFailure")).details,
+                 QStringLiteral("fake read details"));
+        QCOMPARE(backend.lastError().code, CommErrorCode::ReceiveFailed);
+        QCOMPARE(backend.lastError().message, QStringLiteral("fake read failed"));
+        QCOMPARE(backend.lastError().details, QStringLiteral("fake read details"));
+        QCOMPARE(errorMessage, QStringLiteral("fake read failed"));
+
+        transport.failReadAddress = -1;
+        transport.failWriteAddress = 192;
+        QHash<QString, QVariant> writes;
+        writes.insert(QStringLiteral("mapped.writeFailure"), 9);
+        errorMessage.clear();
+        QVERIFY(!backend.writePoints(writes, &errorMessage, &pointErrors));
+        QCOMPARE(pointErrors.value(QStringLiteral("mapped.writeFailure")).code,
+                 CommErrorCode::SendFailed);
+        QCOMPARE(pointErrors.value(QStringLiteral("mapped.writeFailure")).message,
+                 QStringLiteral("fake write failed"));
+        QCOMPARE(pointErrors.value(QStringLiteral("mapped.writeFailure")).details,
+                 QStringLiteral("fake write details"));
+        QCOMPARE(backend.lastError().code, CommErrorCode::SendFailed);
+        QCOMPARE(backend.lastError().message, QStringLiteral("fake write failed"));
+        QCOMPARE(backend.lastError().details, QStringLiteral("fake write details"));
+        QCOMPARE(errorMessage, QStringLiteral("fake write failed"));
     }
 
     void targetProbeFailureDoesNotBreakControllerConnection()

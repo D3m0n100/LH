@@ -18,6 +18,30 @@ MonitorChannel::MonitorChannel(const ChannelConfig& config, QObject* parent)
 
 MonitorChannel::~MonitorChannel() = default;
 
+QString MonitorChannel::name() const
+{
+    QMutexLocker locker(&m_mutex);
+    return m_config.name;
+}
+
+QString MonitorChannel::displayName() const
+{
+    QMutexLocker locker(&m_mutex);
+    return m_config.displayName;
+}
+
+QString MonitorChannel::unit() const
+{
+    QMutexLocker locker(&m_mutex);
+    return m_config.unit;
+}
+
+ChannelConfig MonitorChannel::config() const
+{
+    QMutexLocker locker(&m_mutex);
+    return m_config;
+}
+
 void MonitorChannel::updateConfig(const ChannelConfig& config)
 {
     QMutexLocker locker(&m_mutex);
@@ -138,9 +162,21 @@ void MonitorChannel::removeThreshold(const QString& name)
         m_config.thresholds.end());
 }
 
+QList<Threshold> MonitorChannel::thresholds() const
+{
+    QMutexLocker locker(&m_mutex);
+    return m_config.thresholds;
+}
+
 void MonitorChannel::checkThresholds(const Sample& sample)
 {
-    for (const Threshold& threshold : m_config.thresholds) {
+    ChannelConfig configSnapshot;
+    {
+        QMutexLocker locker(&m_mutex);
+        configSnapshot = m_config;
+    }
+
+    for (const Threshold& threshold : configSnapshot.thresholds) {
         if (!threshold.enabled) {
             continue;
         }
@@ -153,7 +189,7 @@ void MonitorChannel::checkThresholds(const Sample& sample)
         }
         
         if (exceeded) {
-            emit thresholdExceeded(m_config.name, sample.value, 
+            emit thresholdExceeded(configSnapshot.name, sample.value,
                                    sample.unit, threshold.value, threshold.mode);
         }
     }

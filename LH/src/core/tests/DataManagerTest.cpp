@@ -4,8 +4,61 @@
  */
 
 #include "DataManagerTest.h"
+#include <QFile>
+#include <QSqlDatabase>
+#include <QSqlQuery>
 #include <QThread>
 #include <QSignalSpy>
+#include <QUuid>
+
+namespace {
+
+bool executeTestSql(const QString& dbPath, const QStringList& statements)
+{
+    const QString connectionName = QStringLiteral("DataManagerTest_%1")
+                                       .arg(QUuid::createUuid().toString(QUuid::WithoutBraces));
+    bool success = false;
+    {
+        QSqlDatabase database = QSqlDatabase::addDatabase(QStringLiteral("QSQLITE"), connectionName);
+        database.setDatabaseName(dbPath);
+        if (database.open()) {
+            success = true;
+            for (const QString& statement : statements) {
+                QSqlQuery query(database);
+                if (!query.exec(statement)) {
+                    success = false;
+                    break;
+                }
+            }
+            database.close();
+        }
+    }
+    QSqlDatabase::removeDatabase(connectionName);
+    return success;
+}
+
+bool queryTestScalar(const QString& dbPath, const QString& statement, QVariant& value)
+{
+    const QString connectionName = QStringLiteral("DataManagerTest_%1")
+                                       .arg(QUuid::createUuid().toString(QUuid::WithoutBraces));
+    bool success = false;
+    {
+        QSqlDatabase database = QSqlDatabase::addDatabase(QStringLiteral("QSQLITE"), connectionName);
+        database.setDatabaseName(dbPath);
+        if (database.open()) {
+            QSqlQuery query(database);
+            if (query.exec(statement) && query.next()) {
+                value = query.value(0);
+                success = true;
+            }
+            database.close();
+        }
+    }
+    QSqlDatabase::removeDatabase(connectionName);
+    return success;
+}
+
+} // namespace
 
 void DataManagerTest::initTestCase()
 {
@@ -67,6 +120,153 @@ void DataManagerTest::testReinitialize()
     auto records = DataManager::instance().getLatestRecords("testVar", 1);
     QCOMPARE(records.size(), 1);
     QCOMPARE(records[0].value, 123.456);
+}
+
+void DataManagerTest::testInvalidSchemaVersionsRejected()
+{
+    DataManager::instance().shutdown();
+
+    const QStringList invalidVersions = {
+        QString::number(DataManager::CURRENT_SCHEMA_VERSION + 1),
+        QStringLiteral("-1"),
+        QStringLiteral("'not-an-integer'"),
+        QStringLiteral("1.5"),
+        QStringLiteral("9223372036854775808")
+    };
+
+    for (int i = 0; i < invalidVersions.size(); ++i) {
+        const QString dbPath = m_tempDir.path() + QStringLiteral("/invalid_schema_version_%1.db").arg(i);
+        QFile::remove(dbPath);
+        QVERIFY(executeTestSql(dbPath, {
+            QStringLiteral("CREATE TABLE schema_version (id INTEGER PRIMARY KEY, version INTEGER NOT NULL, "
+                           "updated_at DATETIME)"),
+            QStringLiteral("INSERT INTO schema_version (id, version) VALUES (1, ")
+                + invalidVersions[i] + QLatin1Char(')')
+        }));
+
+        QVERIFY(!DataManager::instance().initialize(dbPath));
+        QVERIFY(!DataManager::instance().isInitialized());
+        QCOMPARE(DataManager::instance().schemaVersion(), -1);
+
+        if (i == 0) {
+            QVariant storedVersion;
+            QVERIFY(queryTestScalar(dbPath,
+                                    QStringLiteral("SELECT version FROM schema_version WHERE id = 1"),
+                                    storedVersion));
+            QCOMPARE(storedVersion.toLongLong(),
+                     static_cast<qlonglong>(DataManager::CURRENT_SCHEMA_VERSION + 1));
+
+            QVERIFY(QFile::remove(dbPath));
+            QVERIFY(DataManager::instance().initialize(dbPath));
+            QVERIFY(DataManager::instance().isInitialized());
+            DataManager::instance().shutdown();
+        } else {
+            QVERIFY(QFile::remove(dbPath));
+        }
+    }
+}
+
+void DataManagerTest::testInitializationFailureRecovery()
+{
+    const QString createFailurePath = m_tempDir.path() + "/version_table_create_failure.db";
+    QFile::remove(createFailurePath);
+    QVERIFY(executeTestSql(createFailurePath, {
+        QStringLiteral("CREATE VIEW schema_version AS SELECT 1 AS version")
+    }));
+
+    QVERIFY(!DataManager::instance().initialize(createFailurePath));
+    QVERIFY(!DataManager::instance().isInitialized());
+    QCOMPARE(DataManager::instance().schemaVersion(), -1);
+    QVERIFY(QFile::remove(createFailurePath));
+
+    const QString dbPath = m_tempDir.path() + "/version_query_failure.db";
+    QFile::remove(dbPath);
+    QVERIFY(executeTestSql(dbPath, {
+        QStringLiteral("CREATE TABLE schema_version (id INTEGER PRIMARY KEY)")
+    }));
+
+    QVERIFY(!DataManager::instance().initialize(dbPath));
+    QVERIFY(!DataManager::instance().isInitialized());
+    QCOMPARE(DataManager::instance().schemaVersion(), -1);
+
+    QVERIFY(QFile::remove(dbPath));
+    QVERIFY(DataManager::instance().initialize(dbPath));
+    QVERIFY(DataManager::instance().isInitialized());
+}
+
+void DataManagerTest::testInitialRequiredIndexFailureRollsBack()
+{
+    const QString dbPath = m_tempDir.path() + "/initial_index_failure.db";
+    QFile::remove(dbPath);
+    QVERIFY(executeTestSql(dbPath, {
+        QStringLiteral("CREATE TABLE idx_runtime_timestamp (id INTEGER)")
+    }));
+
+    QVERIFY(!DataManager::instance().initialize(dbPath));
+    QVERIFY(!DataManager::instance().isInitialized());
+    QCOMPARE(DataManager::instance().schemaVersion(), -1);
+
+    QVariant value;
+    QVERIFY(queryTestScalar(dbPath,
+                            QStringLiteral("SELECT COUNT(*) FROM sqlite_master "
+                                           "WHERE type = 'table' AND name = 'runtime_data'"),
+                            value));
+    QCOMPARE(value.toInt(), 0);
+    QVERIFY(queryTestScalar(dbPath,
+                            QStringLiteral("SELECT COUNT(*) FROM schema_version WHERE id = 1"),
+                            value));
+    QCOMPARE(value.toInt(), 0);
+}
+
+void DataManagerTest::testVersion2CompositeIndexFailureRollsBack()
+{
+    const QString dbPath = m_tempDir.path() + "/version2_index_failure.db";
+    QFile::remove(dbPath);
+    QVERIFY(executeTestSql(dbPath, {
+        QStringLiteral("CREATE TABLE schema_version (id INTEGER PRIMARY KEY, version INTEGER NOT NULL, "
+                       "updated_at DATETIME)"),
+        QStringLiteral("INSERT INTO schema_version (id, version) VALUES (1, 1)"),
+        QStringLiteral("CREATE TABLE runtime_data (id INTEGER PRIMARY KEY, timestamp DATETIME, "
+                       "variable_name TEXT NOT NULL, value REAL, unit TEXT)"),
+        QStringLiteral("CREATE TABLE idx_runtime_var_time (id INTEGER)")
+    }));
+
+    QVERIFY(!DataManager::instance().initialize(dbPath));
+    QVERIFY(!DataManager::instance().isInitialized());
+    QCOMPARE(DataManager::instance().schemaVersion(), -1);
+
+    QVariant value;
+    QVERIFY(queryTestScalar(dbPath,
+                            QStringLiteral("SELECT version FROM schema_version WHERE id = 1"),
+                            value));
+    QCOMPARE(value.toInt(), 1);
+    QVERIFY(queryTestScalar(dbPath,
+                            QStringLiteral("SELECT COUNT(*) FROM sqlite_master "
+                                           "WHERE type = 'table' AND name = 'data_summary'"),
+                            value));
+    QCOMPARE(value.toInt(), 0);
+}
+
+void DataManagerTest::testRequiredIndexesExist()
+{
+    const QStringList requiredIndexes = {
+        QStringLiteral("idx_runtime_timestamp"),
+        QStringLiteral("idx_runtime_variable"),
+        QStringLiteral("idx_runtime_var_time"),
+        QStringLiteral("idx_logs_timestamp"),
+        QStringLiteral("idx_logs_level"),
+        QStringLiteral("idx_logs_level_time")
+    };
+
+    for (const QString& indexName : requiredIndexes) {
+        QVariant value;
+        QVERIFY(queryTestScalar(
+            m_dbPath,
+            QStringLiteral("SELECT COUNT(*) FROM sqlite_master WHERE type = 'index' AND name = '%1'")
+                .arg(indexName),
+            value));
+        QCOMPARE(value.toInt(), 1);
+    }
 }
 
 // ============================================================================

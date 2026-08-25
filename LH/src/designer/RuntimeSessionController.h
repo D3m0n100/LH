@@ -5,9 +5,11 @@
 
 #include <QObject>
 #include <QMetaType>
+#include <QPointer>
 #include <QString>
 #include <QStringList>
 #include <QVariantMap>
+#include <QtGlobal>
 
 #include "common/ConfigTypes.h"
 
@@ -55,7 +57,7 @@ public:
     explicit RuntimeSessionController(QObject* parent = nullptr);
 
     void setDeviceBackend(IDeviceBackend* backend);
-    IDeviceBackend* deviceBackend() const { return m_backend; }
+    IDeviceBackend* deviceBackend() const;
     void setOpcServer(IOpcServer* opcServer);
     IOpcServer* opcServer() const { return m_opcServer; }
 
@@ -126,14 +128,17 @@ private:
                              QString* errorMessage);
     bool shouldAutoDownload() const;
     void connectOpcServerSignals();
+    void handleOpcRunningStateChanged(bool running);
     void handleOpcWriteRequest(const QString& pointId, const QVariant& value);
+    void handleParameterReadbackFinished(bool success, const QString& message);
+    void cancelPendingOpcWrite(const QString& message);
     void syncOpcRuntimePoints();
     void startOpcServerIfEnabled();
     void stopOpcServer();
     bool ensureControllerBackend();
     ControllerDeviceBackend* controllerBackend() const;
 
-    IDeviceBackend* m_backend = nullptr;
+    QPointer<IDeviceBackend> m_backend;
     ControllerDeviceBackend* m_ownedControllerBackend = nullptr;
     IOpcServer* m_opcServer = nullptr;
     SampleDataProvider* m_sampleDataProvider = nullptr;
@@ -149,6 +154,10 @@ private:
     bool m_downloadCancelled = false;
     bool m_internalReconnect = false;
     QString m_artifactPath;
+    bool m_pendingOpcWriteActive = false;
+    QString m_pendingOpcPointId;
+    QString m_pendingOpcParameterName;
+    quint64 m_backendGeneration = 0;
 };
 
 #endif // RUNTIMESESSIONCONTROLLER_H

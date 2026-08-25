@@ -991,6 +991,111 @@ private slots:
         }
     }
 
+    void testMonitorChannelConcurrentConfigSnapshots()
+    {
+        Monitor::ChannelConfig initial;
+        initial.name = QStringLiteral("channel-a");
+        initial.displayName = QStringLiteral("Channel A");
+        initial.unit = QStringLiteral("bar");
+        initial.maxSamples = 8;
+        initial.thresholds.append(Monitor::Threshold{});
+
+        Monitor::MonitorChannel channel(initial);
+        std::atomic_bool started{false};
+        bool validSnapshots = true;
+        FunctionThread writer([&channel, &started, initial]() mutable {
+            while (!started.load(std::memory_order_acquire)) {
+            }
+            for (int i = 0; i < 2000; ++i) {
+                const bool first = (i % 2) == 0;
+                initial.name = first ? QStringLiteral("channel-a")
+                                     : QStringLiteral("channel-b");
+                initial.displayName = first ? QStringLiteral("Channel A")
+                                            : QStringLiteral("Channel B");
+                initial.unit = first ? QStringLiteral("bar")
+                                     : QStringLiteral("kPa");
+                initial.maxSamples = first ? 8 : 16;
+                channel.updateConfig(initial);
+            }
+        });
+
+        FunctionThread reader([&channel, &started, &validSnapshots]() {
+            while (!started.load(std::memory_order_acquire)) {
+            }
+            for (int i = 0; i < 4000; ++i) {
+                const Monitor::ChannelConfig config = channel.config();
+                const bool first = config.name == QStringLiteral("channel-a");
+                const bool configValid = (first || config.name == QStringLiteral("channel-b"))
+                    && config.displayName == (first ? QStringLiteral("Channel A")
+                                                     : QStringLiteral("Channel B"))
+                    && config.unit == (first ? QStringLiteral("bar") : QStringLiteral("kPa"))
+                    && config.maxSamples == (first ? 8 : 16)
+                    && config.thresholds.size() == 1;
+                const bool gettersValid = !channel.name().isEmpty()
+                    && !channel.displayName().isEmpty() && !channel.unit().isEmpty();
+                const QList<Monitor::Threshold> thresholds = channel.thresholds();
+                if (!configValid || !gettersValid
+                    || thresholds.size() != 1) {
+                    validSnapshots = false;
+                    return;
+                }
+            }
+        });
+
+        writer.start();
+        reader.start();
+        started.store(true, std::memory_order_release);
+        writer.wait();
+        reader.wait();
+        QVERIFY(validSnapshots);
+    }
+
+    void testMonitorChannelThresholdSignalReentrantConfigAccess()
+    {
+        Monitor::ChannelConfig config;
+        config.name = QStringLiteral("reentrant-channel");
+        config.displayName = QStringLiteral("Reentrant Channel");
+        config.unit = QStringLiteral("bar");
+
+        Monitor::Threshold threshold;
+        threshold.name = QStringLiteral("upper");
+        threshold.value = 1.0;
+        threshold.unit = config.unit;
+        threshold.mode = Monitor::ThresholdMode::Above;
+        config.thresholds.append(threshold);
+
+        Monitor::MonitorChannel channel(config);
+        bool callbackInvoked = false;
+        connect(&channel, &Monitor::MonitorChannel::thresholdExceeded,
+                &channel,
+                [&channel, &callbackInvoked](
+                    const QString&, double, const QString&, double,
+                    Monitor::ThresholdMode) {
+                    const Monitor::ChannelConfig snapshot = channel.config();
+                    if (snapshot.name.isEmpty() || channel.thresholds().isEmpty()) {
+                        return;
+                    }
+
+                    Monitor::ChannelConfig updated = snapshot;
+                    updated.displayName = QStringLiteral("Updated in callback");
+                    updated.thresholds.first().value = 3.0;
+                    channel.updateConfig(updated);
+                    callbackInvoked = true;
+                },
+                Qt::DirectConnection);
+
+        Monitor::Sample sample;
+        sample.channelName = QStringLiteral("reentrant-channel");
+        sample.value = 2.0;
+        sample.unit = QStringLiteral("bar");
+        sample.timestamp = QDateTime::currentDateTimeUtc();
+        channel.appendSample(sample);
+
+        QVERIFY(callbackInvoked);
+        QCOMPARE(channel.displayName(), QStringLiteral("Updated in callback"));
+        QCOMPARE(channel.thresholds().first().value, 3.0);
+    }
+
     void testInvalidSamplesKeepQualityWithoutNumericPoint()
     {
         MonitorDataProcessor processor;

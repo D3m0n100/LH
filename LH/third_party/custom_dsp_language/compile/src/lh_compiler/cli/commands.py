@@ -11,11 +11,17 @@ from rich.console import Console
 from rich.table import Table
 from rich import print as rprint
 
-from ..function_blocks.registry import get_registry
+from ..function_blocks.registry import FunctionBlockRegistry
 from ..utils.logger import setup_logger
 
 
 console = Console()
+
+
+def _get_registry():
+    registry = FunctionBlockRegistry()
+    registry.load_defaults()
+    return registry
 
 
 @click.group()
@@ -34,15 +40,7 @@ def main(verbose):
 def compile(input_file, output, format):
     """Compile an LH source file"""
     console.print(f"[bold blue]Compiling:[/bold blue] {input_file}")
-    
-    try:
-        # TODO: Implement compilation
-        console.print("[yellow]Compilation not yet implemented[/yellow]")
-        console.print("[green]✓[/green] Syntax check passed")
-        
-    except Exception as e:
-        console.print(f"[bold red]Error:[/bold red] {e}")
-        sys.exit(1)
+    raise click.ClickException("compile command is not yet implemented")
 
 
 @main.command(name='list-blocks')
@@ -50,7 +48,7 @@ def compile(input_file, output, format):
 @click.option('--search', help='Search in names and descriptions')
 def list_blocks(category, search):
     """List available function blocks"""
-    registry = get_registry()
+    registry = _get_registry()
     
     # Get function blocks
     if category:
@@ -87,7 +85,7 @@ def list_blocks(category, search):
 @click.argument('block_name')
 def describe(block_name):
     """Show detailed information about a function block"""
-    registry = get_registry()
+    registry = _get_registry()
     block = registry.get(block_name)
     
     if not block:
@@ -141,15 +139,7 @@ def describe(block_name):
 def check(input_file):
     """Check syntax without compiling"""
     console.print(f"[bold blue]Checking:[/bold blue] {input_file}")
-    
-    try:
-        # TODO: Implement syntax checking
-        console.print("[yellow]Syntax checking not yet implemented[/yellow]")
-        console.print("[green]✓[/green] No syntax errors found")
-        
-    except Exception as e:
-        console.print(f"[bold red]Error:[/bold red] {e}")
-        sys.exit(1)
+    raise click.ClickException("check command is not yet implemented")
 
 
 @main.command()
@@ -165,7 +155,7 @@ def repl():
 @main.command()
 def categories():
     """List all function block categories"""
-    registry = get_registry()
+    registry = _get_registry()
     cats = registry.list_categories()
     
     table = Table(title="Function Block Categories")

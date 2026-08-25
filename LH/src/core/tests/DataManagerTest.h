@@ -25,6 +25,11 @@ private slots:
     void testInitializeAndShutdown();
     void testSchemaVersion();
     void testReinitialize();
+    void testInvalidSchemaVersionsRejected();
+    void testInitializationFailureRecovery();
+    void testInitialRequiredIndexFailureRollsBack();
+    void testVersion2CompositeIndexFailureRollsBack();
+    void testRequiredIndexesExist();
     
     // ===== 运行时数据测试 =====
     void testLogRuntimeData();

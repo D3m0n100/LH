@@ -64,8 +64,6 @@
 #include <QSize>
 #include <QToolButton>
 #include <QApplication>
-#include <QClipboard>
-#include <QScrollBar>
 #include <QMenu>
 #include <QTextStream>
 #include <QFile>
@@ -589,18 +587,6 @@ void MainWindow::updateConnectionStatus(bool connected)
     refreshInspectorPanel();
 }
 
-void MainWindow::appendOutput(const QString& message)
-{
-    if (m_outputViewer) {
-        m_outputViewer->append(message);
-        
-        if (m_settingsController->autoScrollLog()) {
-            QScrollBar* scrollBar = m_outputViewer->verticalScrollBar();
-            scrollBar->setValue(scrollBar->maximum());
-        }
-    }
-}
-
 void MainWindow::updateWindowTitle()
 {
     QString title = "LH v1.0.0";
@@ -696,38 +682,6 @@ void MainWindow::showValidationErrors(const QStringList& errors)
 const ProjectRuntimeConfig& MainWindow::runtimeConfig() const
 {
     return m_projectController->runtimeConfig();
-}
-
-
-void MainWindow::startDemoModeIfNeeded(const QString& reason)
-{
-    m_sessionController->startDemoMode(reason);
-    m_demoModeActive = m_sessionController->isDemoMode();
-}
-
-void MainWindow::stopDemoMode(const QString& reason)
-{
-    m_sessionController->stopDemoMode(reason);
-    m_demoModeActive = m_sessionController->isDemoMode();
-}
-
-bool MainWindow::applyRuntimeConfigToMonitor()
-{
-    // 更新 GlobalStatusBar 协议和采样率
-    if (m_projectController && m_globalStatusBar) {
-        const auto& cfg = m_projectController->runtimeConfig();
-        m_globalStatusBar->setProtocolName(cfg.protocol);
-        int maxHz = 0;
-        for (const auto& provider : cfg.providers) {
-            if (provider.periodMs > 0) {
-                const int hz = qMax(1, 1000 / provider.periodMs);
-                maxHz = qMax(maxHz, hz);
-            }
-        }
-        m_globalStatusBar->setSamplingRateHz(maxHz);
-    }
-
-    return m_sessionController->applyRuntimeConfig();
 }
 
 
@@ -877,27 +831,6 @@ void MainWindow::onFocusChanged(QWidget* old, QWidget* now)
 
 // ================= 视图操作槽函数 =================
 
-void MainWindow::onToggleOutputDock(bool checked)
-{
-    if (m_logDock) {
-        m_logDock->setVisible(checked);
-    }
-}
-
-void MainWindow::onToggleMonitorDock(bool checked)
-{
-    if (m_workspaceTabs && m_workspaceMonitorPage) {
-        if (checked) {
-            m_workspaceTabs->setCurrentWidget(m_workspaceMonitorPage);
-        } else if (m_workspaceDslPage) {
-            m_workspaceTabs->setCurrentWidget(m_workspaceDslPage);
-        }
-    } else if (m_monitorDock) {
-        m_monitorDock->setVisible(checked);
-    }
-}
-
-
 void MainWindow::onToggleDownloadDock(bool checked)
 {
     if (m_workspaceTabs && m_workspaceBuildPage) {
@@ -983,13 +916,6 @@ void MainWindow::onResetLayout()
     if (m_actToggleMonitorDock) m_actToggleMonitorDock->setChecked(false);
     if (m_actToggleExplorerDock) m_actToggleExplorerDock->setChecked(true);
     if (m_actToggleFunctionList) m_actToggleFunctionList->setChecked(false);
-}
-
-void MainWindow::onClearOutput()
-{
-    if (m_outputViewer) {
-        m_outputViewer->clear();
-    }
 }
 
 void MainWindow::onDslEditorSubWindowDestroyed()
@@ -1211,27 +1137,6 @@ void MainWindow::onTestControllerConnection()
 
 // ================= 监控操作槽函数 =================
 
-void MainWindow::onOpenMonitor()
-{
-    if (m_workspaceTabs && m_workspaceMonitorPage) {
-        m_workspaceTabs->setCurrentWidget(m_workspaceMonitorPage);
-    } else if (m_monitorDock) {
-        m_monitorDock->setVisible(true);
-    }
-    if (m_actToggleMonitorDock) {
-        m_actToggleMonitorDock->setChecked(true);
-    }
-
-    const bool demoWasActive = m_demoModeActive;
-    startDemoModeIfNeeded(QStringLiteral("打开监控"));
-
-    if (!demoWasActive && m_demoModeActive && m_monitorWidget && !m_monitorWidget->isMonitoring()) {
-        // Demo Mode 激活后，自动开始监控，方便一打开面板就能看到数据变化
-        m_monitorWidget->startMonitoring();
-    }
-    refreshInspectorPanel();
-}
-
 void MainWindow::onOpenParameterTuningWindow()
 {
     if (!m_parameterTuningWindow) {
@@ -1242,55 +1147,6 @@ void MainWindow::onOpenParameterTuningWindow()
         m_parameterTuningWindow->show();
         m_parameterTuningWindow->raise();
         m_parameterTuningWindow->activateWindow();
-    }
-}
-
-void MainWindow::onStartMonitoring()
-{
-    if (m_projectController && m_projectController->hasOpenProject()) {
-        if (!applyRuntimeConfigToMonitor()) {
-            return;
-        }
-
-        m_sessionController->startMonitoring();
-        return;
-    } else {
-        appendOutput(QString("[%1] 未打开项目，进入演示模式进行监控")
-                         .arg(QDateTime::currentDateTime().toString("HH:mm:ss")));
-    }
-
-    startDemoModeIfNeeded(QStringLiteral("开始监控"));
-
-    if (m_monitorWidget) {
-        m_monitorWidget->startMonitoring();
-    }
-    refreshInspectorPanel();
-}
-
-void MainWindow::onStopMonitoring()
-{
-    if (m_sessionController->isMonitoring()) {
-        m_sessionController->stopMonitoring();
-    } else if (m_monitorWidget) {
-        m_monitorWidget->stopMonitoring();
-    }
-
-    // 若处于 Demo Mode，则停止演示数据采集
-    stopDemoMode(QStringLiteral("停止监控"));
-    refreshInspectorPanel();
-}
-
-void MainWindow::onExportMonitorData()
-{
-    if (m_monitorWidget) {
-        m_monitorWidget->onExportData();
-    }
-}
-
-void MainWindow::onExportMonitorImage()
-{
-    if (m_monitorWidget) {
-        m_monitorWidget->exportCurrentChartImage();
     }
 }
 
@@ -1486,68 +1342,6 @@ void MainWindow::onDropError(const QString& errorMessage)
                  .arg(errorMessage));
     addProblem("warning", "DSL编辑器", errorMessage);
 }
-
-// ================= 输出窗口右键菜单槽函数 =================
-
-void MainWindow::onOutputContextMenu(const QPoint& pos)
-{
-    QMenu menu(this);
-    
-    QAction* actCopy = menu.addAction("复制选中");
-    connect(actCopy, &QAction::triggered, this, &MainWindow::onCopySelectedOutput);
-    
-    QAction* actCopyAll = menu.addAction("复制全部");
-    connect(actCopyAll, &QAction::triggered, this, &MainWindow::onCopyAllOutput);
-    
-    menu.addSeparator();
-    
-    QAction* actSave = menu.addAction("保存到文件...");
-    connect(actSave, &QAction::triggered, this, &MainWindow::onSaveOutputToFile);
-    
-    menu.addSeparator();
-    
-    QAction* actClear = menu.addAction("清空");
-    connect(actClear, &QAction::triggered, this, &MainWindow::onClearOutput);
-    
-    menu.exec(m_outputViewer->mapToGlobal(pos));
-}
-
-void MainWindow::onCopySelectedOutput()
-{
-    if (m_outputViewer) {
-        m_outputViewer->copy();
-    }
-}
-
-void MainWindow::onCopyAllOutput()
-{
-    if (m_outputViewer) {
-        QApplication::clipboard()->setText(m_outputViewer->toPlainText());
-    }
-}
-
-void MainWindow::onSaveOutputToFile()
-{
-    QString fileName = QFileDialog::getSaveFileName(
-        this, "保存输出", QString(), "文本文件 (*.txt);;所有文件 (*.*)");
-    
-    if (fileName.isEmpty()) {
-        return;
-    }
-    
-    QFile file(fileName);
-    if (file.open(QIODevice::WriteOnly | QIODevice::Text)) {
-        QTextStream stream(&file);
-        TextEncoding::setUtf8(stream);
-        stream << m_outputViewer->toPlainText();
-        file.close();
-        
-        appendOutput(QString("[%1] 输出已保存到: %2")
-                     .arg(QDateTime::currentDateTime().toString("HH:mm:ss"))
-                     .arg(fileName));
-    }
-}
-
 
 // ================= ProjectController 信号处理槽函数 =================
 
@@ -1861,18 +1655,3 @@ void MainWindow::onWarningOccurred(const QString& title, const QString& message)
     addProblem("warning", title, message);
     QMessageBox::warning(this, title, message);
 }
-
-void MainWindow::onMonitorThresholdExceeded(const QString& channelName, double value, double thresholdValue)
-{
-    const QString ts = QDateTime::currentDateTime().toString("HH:mm:ss.zzz");
-    appendOutput(QString("[%1] [ALARM] 阈值超限: %2 当前值=%3 阈值=%4")
-                    .arg(ts)
-                    .arg(channelName)
-                     .arg(value, 0, 'f', 3)
-                     .arg(thresholdValue, 0, 'f', 3));
-    addProblem("error", "监控", QString("%1 value=%2 threshold=%3")
-               .arg(channelName)
-               .arg(value, 0, 'f', 3)
-               .arg(thresholdValue, 0, 'f', 3));
-}
-

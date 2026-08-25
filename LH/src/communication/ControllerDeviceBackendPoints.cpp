@@ -4,8 +4,12 @@
 
 #include "ControllerDebugProtocol.h"
 
+#include <QMetaType>
 #include <QMutexLocker>
 #include <QtGlobal>
+
+#include <cmath>
+#include <limits>
 
 namespace {
 class BackendOperationGuard
@@ -80,38 +84,149 @@ bool isHoldingArea(const QString& area, const QString& registerType)
             || normalizedType == QStringLiteral("holdingregisters");
 }
 
-QVector<quint16> variantToRegisters(const QVariant& value)
+bool variantToStrictPositiveInt(const QVariant& value, int* result)
 {
-    QVector<quint16> registers;
-    if (value.type() == QVariant::List || value.type() == QVariant::StringList) {
-        const QVariantList list = value.toList();
-        registers.reserve(list.size());
-        for (const QVariant& item : list) {
-            registers.append(static_cast<quint16>(item.toUInt()));
+    if (value.userType() == QMetaType::QString) {
+        const QString text = value.toString().trimmed();
+        if (text.isEmpty()) {
+            return false;
         }
-        return registers;
+        bool ok = false;
+        const double number = text.toDouble(&ok);
+        if (!ok || !std::isfinite(number) || std::trunc(number) != number
+                || number <= 0.0 || number > std::numeric_limits<int>::max()) {
+            return false;
+        }
+        *result = static_cast<int>(number);
+        return true;
     }
-
-    if (value.canConvert<QVector<quint16>>()) {
-        return value.value<QVector<quint16>>();
+    switch (value.userType()) {
+    case QMetaType::Char:
+    case QMetaType::UChar:
+    case QMetaType::Short:
+    case QMetaType::UShort:
+    case QMetaType::Int:
+    case QMetaType::UInt:
+    case QMetaType::LongLong:
+    case QMetaType::ULongLong:
+    case QMetaType::Float:
+    case QMetaType::Double:
+        break;
+    default:
+        return false;
     }
-
-    registers.append(static_cast<quint16>(value.toUInt()));
-    return registers;
+    bool ok = false;
+    const double number = value.toDouble(&ok);
+    if (!ok || !std::isfinite(number) || std::trunc(number) != number
+            || number <= 0.0 || number > std::numeric_limits<int>::max()) {
+        return false;
+    }
+    *result = static_cast<int>(number);
+    return true;
 }
 
-QVariant registersToVariant(const QVector<quint16>& values)
+bool readExplicitDeviceId(const QVariantMap& metadata,
+                          int* value,
+                          bool* present,
+                          QString* errorMessage)
 {
-    if (values.size() == 1) {
-        return values.first();
+    *present = false;
+    QString firstPresentKey;
+    const QStringList keys {
+        QStringLiteral("unitId"),
+        QStringLiteral("slaveId"),
+        QStringLiteral("stationAddress"),
+        QStringLiteral("serverAddress")
+    };
+    for (const QString& key : keys) {
+        if (!metadata.contains(key)) {
+            continue;
+        }
+        int candidate = 0;
+        if (!variantToStrictPositiveInt(metadata.value(key), &candidate)) {
+            if (errorMessage) {
+                *errorMessage = QStringLiteral("显式装置号 %1 必须为严格正整数").arg(key);
+            }
+            return false;
+        }
+        if (!ControllerDebugProtocol::canReadDeviceId(candidate)) {
+            if (errorMessage) {
+                *errorMessage = QStringLiteral("显式装置号 %1 超出当前可读范围").arg(key);
+            }
+            return false;
+        }
+        if (*present && *value != candidate) {
+            if (errorMessage) {
+                *errorMessage = QStringLiteral("显式装置号别名冲突：%1=%2 与 %3=%4")
+                        .arg(firstPresentKey)
+                        .arg(*value)
+                        .arg(key)
+                        .arg(candidate);
+            }
+            return false;
+        }
+        if (!*present) {
+            firstPresentKey = key;
+        }
+        *value = candidate;
+        *present = true;
     }
+    return true;
+}
 
-    QVariantList list;
-    list.reserve(values.size());
-    for (quint16 value : values) {
-        list.append(value);
+bool readOptionalPositiveInt(const QVariantMap& map,
+                             const QStringList& keys,
+                             int* value,
+                             bool* present,
+                             QString* errorMessage)
+{
+    *present = false;
+    QString firstPresentKey;
+    for (const QString& key : keys) {
+        if (!map.contains(key)) {
+            continue;
+        }
+        int candidate = 0;
+        if (!variantToStrictPositiveInt(map.value(key), &candidate)) {
+            if (errorMessage) {
+                *errorMessage = QStringLiteral("%1 必须为正整数").arg(key);
+            }
+            return false;
+        }
+        if (*present && *value != candidate) {
+            if (errorMessage) {
+                *errorMessage = QStringLiteral("寄存器数量字段冲突：%1=%2 与 %3=%4")
+                        .arg(firstPresentKey)
+                        .arg(*value)
+                        .arg(key)
+                        .arg(candidate);
+            }
+            return false;
+        }
+        if (!*present) {
+            firstPresentKey = key;
+        }
+        *value = candidate;
+        *present = true;
     }
-    return list;
+    return true;
+}
+
+CommError codecPointError(const QString& pointId,
+                          const QString& action,
+                          const QString& details)
+{
+    return CommError(CommProtocolType::ModbusRTU,
+                     CommErrorCode::InvalidParameter,
+                     QStringLiteral("控制器点位%1失败：%2").arg(action, pointId),
+                     details);
+}
+
+CommError pointAccessError(const QString& pointId, const QString& action)
+{
+    return CommError(CommProtocolType::ModbusRTU,
+                     CommErrorCode::PermissionDenied,
+                     QStringLiteral("控制器点位%1权限不足：%2").arg(action, pointId));
 }
 } // namespace
 
@@ -177,11 +292,40 @@ bool ControllerDeviceBackend::readPoints(const QStringList& pointIds,
         }
 
         const auto mappingIt = m_pointMappings.constFind(pointId);
-        if (mappingIt != m_pointMappings.constEnd() && mappingIt.value().readable) {
+        if (mappingIt != m_pointMappings.constEnd()) {
             const PointMapping mapping = mappingIt.value();
+            if (!mapping.readable) {
+                const CommError pointError = pointAccessError(pointId, QStringLiteral("读取"));
+                localPointErrors.insert(pointId, pointError);
+                if (!hasError) {
+                    firstError = pointError;
+                    hasError = true;
+                }
+                continue;
+            }
             QVector<quint16> registers;
             if (m_client->readHoldingRegisters(mapping.deviceId, mapping.address, mapping.count, &registers)) {
-                values.insert(pointId, registersToVariant(registers));
+                QVariant decoded;
+                QString codecError;
+                if (RuntimePointRegisterCodec::decode(mapping.codec,
+                                                      registers,
+                                                      &decoded,
+                                                      &codecError)) {
+                    values.insert(pointId, decoded);
+                    continue;
+                }
+                const CommError pointError = codecPointError(
+                        pointId,
+                        QStringLiteral("读取解码"),
+                        QStringLiteral("address=%1 registerCount=%2; %3")
+                                .arg(mapping.address)
+                                .arg(mapping.count)
+                                .arg(codecError));
+                localPointErrors.insert(pointId, pointError);
+                if (!hasError) {
+                    firstError = pointError;
+                    hasError = true;
+                }
                 continue;
             }
 
@@ -194,9 +338,15 @@ bool ControllerDeviceBackend::readPoints(const QStringList& pointIds,
             continue;
         }
 
-        CommError pointError(CommProtocolType::ModbusRTU,
-                             CommErrorCode::InvalidAddress,
-                             QStringLiteral("控制器点位不存在：%1").arg(pointId));
+        const QString rejectReason = m_unmappedPointReasons.value(pointId);
+        const bool invalidConfig = m_pointDefinitions.contains(pointId);
+        const CommError pointError(
+                CommProtocolType::ModbusRTU,
+                invalidConfig ? CommErrorCode::InvalidConfig : CommErrorCode::InvalidAddress,
+                invalidConfig
+                        ? QStringLiteral("控制器点位映射配置无效：%1").arg(pointId)
+                        : QStringLiteral("控制器点位不存在：%1").arg(pointId),
+                invalidConfig ? rejectReason : QString());
         localPointErrors.insert(pointId, pointError);
         if (!hasError) {
             firstError = pointError;
@@ -216,7 +366,7 @@ bool ControllerDeviceBackend::readPoints(const QStringList& pointIds,
         if (errorMessage) {
             *errorMessage = firstError.message;
         }
-        setFailure(firstError.code, firstError.message);
+        setFailure(firstError.code, firstError.message, firstError.details);
         return false;
     }
 
@@ -267,13 +417,44 @@ bool ControllerDeviceBackend::writePoints(const QHash<QString, QVariant>& writes
             ok = m_client->runToCursor(boundedLine(it.value().toInt()));
         } else {
             const auto mappingIt = m_pointMappings.constFind(it.key());
-            if (mappingIt != m_pointMappings.constEnd() && mappingIt.value().writable) {
+            if (mappingIt != m_pointMappings.constEnd()) {
                 const PointMapping mapping = mappingIt.value();
-                const QVector<quint16> registers = variantToRegisters(it.value());
-                if (registers.isEmpty() || registers.size() > mapping.count) {
-                    CommError pointError(CommProtocolType::ModbusRTU,
-                                         CommErrorCode::InvalidParameter,
-                                         QStringLiteral("控制器点位写入值数量不匹配：%1").arg(it.key()));
+                if (!mapping.writable) {
+                    const CommError pointError = pointAccessError(it.key(), QStringLiteral("写入"));
+                    localPointErrors.insert(it.key(), pointError);
+                    if (!hasError) {
+                        firstError = pointError;
+                        hasError = true;
+                    }
+                    continue;
+                }
+                QVector<quint16> registers;
+                QString codecError;
+                if (!RuntimePointRegisterCodec::encode(mapping.codec,
+                                                       it.value(),
+                                                       &registers,
+                                                       &codecError)) {
+                    const CommError pointError = codecPointError(
+                            it.key(),
+                            QStringLiteral("写入编码"),
+                            QStringLiteral("address=%1 registerCount=%2; %3")
+                                    .arg(mapping.address)
+                                    .arg(mapping.count)
+                                    .arg(codecError));
+                    localPointErrors.insert(it.key(), pointError);
+                    if (!hasError) {
+                        firstError = pointError;
+                        hasError = true;
+                    }
+                    continue;
+                }
+                if (registers.size() != mapping.count) {
+                    const CommError pointError = codecPointError(
+                            it.key(),
+                            QStringLiteral("写入编码"),
+                            QStringLiteral("寄存器数量不匹配：expected=%1 got=%2")
+                                    .arg(mapping.count)
+                                    .arg(registers.size()));
                     localPointErrors.insert(it.key(), pointError);
                     if (!hasError) {
                         firstError = pointError;
@@ -286,11 +467,24 @@ bool ControllerDeviceBackend::writePoints(const QHash<QString, QVariant>& writes
                     changed.insert(it.key(), it.value());
                     continue;
                 }
+                const CommError pointError = currentDebugError(QStringLiteral("控制器点位写入失败。"));
+                localPointErrors.insert(it.key(), pointError);
+                if (!hasError) {
+                    firstError = pointError;
+                    hasError = true;
+                }
+                continue;
             }
 
-            CommError pointError(CommProtocolType::ModbusRTU,
-                                 CommErrorCode::InvalidAddress,
-                                 QStringLiteral("控制器点位不可写：%1").arg(it.key()));
+            const QString rejectReason = m_unmappedPointReasons.value(it.key());
+            const bool invalidConfig = m_pointDefinitions.contains(it.key());
+            const CommError pointError(
+                    CommProtocolType::ModbusRTU,
+                    invalidConfig ? CommErrorCode::InvalidConfig : CommErrorCode::InvalidAddress,
+                    invalidConfig
+                            ? QStringLiteral("控制器点位映射配置无效或不可写：%1").arg(it.key())
+                            : QStringLiteral("控制器点位不可写：%1").arg(it.key()),
+                    invalidConfig ? rejectReason : QString());
             localPointErrors.insert(it.key(), pointError);
             if (!hasError) {
                 firstError = pointError;
@@ -435,40 +629,107 @@ bool ControllerDeviceBackend::parsePointMapping(const RuntimePointDefinition& po
         return false;
     }
 
+    RuntimePointRegisterCodecSpec codec;
+    QString codecReason;
+    if (!RuntimePointRegisterCodec::buildSpec(point, &codec, &codecReason)) {
+        if (rejectReason) {
+            *rejectReason = QStringLiteral("codec: %1").arg(codecReason);
+        }
+        return false;
+    }
+
     int regAddress = -1;
-    if (!readNonNegativeInt(address,
-                            {QStringLiteral("address"),
-                             QStringLiteral("regAddress"),
-                             QStringLiteral("registerAddress"),
-                             QStringLiteral("offset")},
-                             &regAddress)) {
+    QStringList addressKeys {
+        QStringLiteral("address"),
+        QStringLiteral("regAddress"),
+        QStringLiteral("registerAddress")
+    };
+    if (!readNonNegativeInt(address, addressKeys, &regAddress)) {
         if (rejectReason) {
             *rejectReason = QStringLiteral("缺少寄存器地址");
         }
         return false;
     }
 
-    int count = 1;
-    readPositiveInt(address,
-                    {QStringLiteral("elementCount"),
-                     QStringLiteral("length"),
-                     QStringLiteral("count"),
-                     QStringLiteral("registerCount")},
-                     &count);
+    int count = codec.registerCount;
+    if (codec.isTyped()) {
+        int explicitRegisterCount = 0;
+        bool hasExplicitRegisterCount = false;
+        QString countReason;
+        if (!readOptionalPositiveInt(address,
+                                     {QStringLiteral("registerCount"),
+                                      QStringLiteral("count"),
+                                      QStringLiteral("length")},
+                                     &explicitRegisterCount,
+                                     &hasExplicitRegisterCount,
+                                     &countReason)) {
+            if (rejectReason) {
+                *rejectReason = QStringLiteral("codec: %1").arg(countReason);
+            }
+            return false;
+        }
+        if (hasExplicitRegisterCount && explicitRegisterCount != count) {
+            if (rejectReason) {
+                *rejectReason = QStringLiteral("codec: 显式寄存器数量与类型宽度冲突：expected=%1 got=%2")
+                        .arg(count)
+                        .arg(explicitRegisterCount);
+            }
+            return false;
+        }
+    } else {
+        int explicitRegisterCount = 0;
+        bool hasExplicitRegisterCount = false;
+        QString countReason;
+        if (!readOptionalPositiveInt(address,
+                                     {QStringLiteral("registerCount"),
+                                      QStringLiteral("count"),
+                                      QStringLiteral("length")},
+                                     &explicitRegisterCount,
+                                     &hasExplicitRegisterCount,
+                                     &countReason)) {
+            if (rejectReason) {
+                *rejectReason = QStringLiteral("codec: %1").arg(countReason);
+            }
+            return false;
+        }
+        if (hasExplicitRegisterCount) {
+            count = explicitRegisterCount;
+        }
+        codec.registerCount = count;
+    }
     if (count <= 0 || count > 125) {
         if (rejectReason) {
-            *rejectReason = QStringLiteral("寄存器数量超出 1..125");
+            *rejectReason = QStringLiteral("codec: 寄存器数量超出 1..125");
+        }
+        return false;
+    }
+    if (regAddress > 0xffff || count > 0x10000 - regAddress) {
+        if (rejectReason) {
+            *rejectReason = QStringLiteral("寄存器地址范围越界：address=%1 count=%2")
+                    .arg(regAddress)
+                    .arg(count);
         }
         return false;
     }
 
-    int unitId = deviceId();
-    readPositiveInt(address,
-                    {QStringLiteral("unitId"),
-                     QStringLiteral("slaveId"),
-                     QStringLiteral("stationAddress"),
-                     QStringLiteral("serverAddress")},
-                     &unitId);
+    int unitId = 0;
+    bool hasExplicitUnitId = false;
+    QString deviceIdReason;
+    if (!readExplicitDeviceId(point.metadata, &unitId, &hasExplicitUnitId, &deviceIdReason)) {
+        if (rejectReason) {
+            *rejectReason = QStringLiteral("deviceId: %1").arg(deviceIdReason);
+        }
+        return false;
+    }
+    if (!hasExplicitUnitId) {
+        unitId = deviceId();
+        readPositiveInt(address,
+                        {QStringLiteral("unitId"),
+                         QStringLiteral("slaveId"),
+                         QStringLiteral("stationAddress"),
+                         QStringLiteral("serverAddress")},
+                        &unitId);
+    }
     if (!ControllerDebugProtocol::canReadDeviceId(unitId)) {
         if (rejectReason) {
             *rejectReason = QStringLiteral("装置号必须为 1..63");
@@ -480,7 +741,27 @@ bool ControllerDeviceBackend::parsePointMapping(const RuntimePointDefinition& po
     mapping->deviceId = unitId;
     mapping->address = regAddress;
     mapping->count = count;
-    mapping->readable = point.access != RuntimePointAccess::WriteOnly;
-    mapping->writable = point.access != RuntimePointAccess::ReadOnly;
+    mapping->codec = codec;
+    bool readable = point.access != RuntimePointAccess::WriteOnly;
+    bool writable = point.access != RuntimePointAccess::ReadOnly;
+    const QString tagAccess = address.value(QStringLiteral("tagAccess")).toString().trimmed();
+    if (!tagAccess.isEmpty()) {
+        const QString normalizedTagAccess = tagAccess.toLower();
+        if (normalizedTagAccess == QStringLiteral("readonly")
+                || normalizedTagAccess == QStringLiteral("read-only")) {
+            writable = false;
+        } else if (normalizedTagAccess == QStringLiteral("writeonly")
+                   || normalizedTagAccess == QStringLiteral("write-only")) {
+            readable = false;
+        } else if (normalizedTagAccess != QStringLiteral("readwrite")
+                   && normalizedTagAccess != QStringLiteral("read-write")) {
+            if (rejectReason) {
+                *rejectReason = QStringLiteral("tagAccess 无效：%1").arg(tagAccess);
+            }
+            return false;
+        }
+    }
+    mapping->readable = readable;
+    mapping->writable = writable;
     return true;
 }

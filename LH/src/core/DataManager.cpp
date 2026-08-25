@@ -197,18 +197,7 @@ bool DataManager::initialize(const QString& dbPath)
         // 如果已经初始化，在同一把锁内关闭旧连接（避免 unlock/relock 竞态）
         if (m_initialized) {
             LOG_INFO("DataManager 重新初始化，先关闭旧连接");
-            {
-                QMutexLocker cacheLocker(&m_cacheMutex);
-                m_runtimeCache.clear();
-            }
-            if (m_db.isOpen()) {
-                m_db.close();
-            }
-            QString connName = m_connectionName;
-            m_db = QSqlDatabase();
-            QSqlDatabase::removeDatabase(connName);
-            m_initialized = false;
-            m_schemaVersion = -1;
+            cleanupDatabaseConnection();
         }
 
         // 确保目录存在
@@ -229,34 +218,48 @@ bool DataManager::initialize(const QString& dbPath)
             if (!m_db.open()) {
                 initError = "数据库打开失败: " + m_db.lastError().text();
                 LOG_ERROR(initError);
-                QSqlDatabase::removeDatabase(m_connectionName);
             }
         }
 
         if (initError.isEmpty()) {
             // 启用外键约束
-            executeSql("PRAGMA foreign_keys = ON", "启用外键约束");
-
-            // 检查并创建版本表
-            executeSql(SchemaDefinitions::CREATE_VERSION_TABLE, "创建版本表");
-
-            // 获取当前版本
-            int currentVersion = getDatabaseVersion();
-            LOG_INFO(QString("当前数据库版本: %1, 目标版本: %2")
-                     .arg(currentVersion).arg(CURRENT_SCHEMA_VERSION));
-
-            // 执行迁移
-            if (currentVersion < CURRENT_SCHEMA_VERSION) {
-                if (!migrateSchema(currentVersion, CURRENT_SCHEMA_VERSION)) {
-                    initError = "Schema 迁移失败";
-                    LOG_ERROR(initError);
-                    m_db.close();
-                    QSqlDatabase::removeDatabase(m_connectionName);
-                }
+            if (!executeSql("PRAGMA foreign_keys = ON", "启用外键约束")) {
+                initError = "启用外键约束失败";
+                LOG_ERROR(initError);
             }
         }
 
         if (initError.isEmpty()) {
+            // 检查并创建版本表
+            if (!executeSql(SchemaDefinitions::CREATE_VERSION_TABLE, "创建版本表")) {
+                initError = "创建版本表失败";
+                LOG_ERROR(initError);
+            }
+        }
+
+        if (initError.isEmpty()) {
+            // 获取当前版本
+            int currentVersion = 0;
+            if (!getDatabaseVersion(currentVersion)) {
+                initError = "读取数据库版本失败";
+                LOG_ERROR(initError);
+            } else {
+                LOG_INFO(QString("当前数据库版本: %1, 目标版本: %2")
+                         .arg(currentVersion).arg(CURRENT_SCHEMA_VERSION));
+
+                // 执行迁移
+                if (currentVersion < CURRENT_SCHEMA_VERSION) {
+                    if (!migrateSchema(currentVersion, CURRENT_SCHEMA_VERSION)) {
+                        initError = "Schema 迁移失败";
+                        LOG_ERROR(initError);
+                    }
+                }
+            }
+        }
+
+        if (!initError.isEmpty()) {
+            cleanupDatabaseConnection();
+        } else {
             m_schemaVersion = CURRENT_SCHEMA_VERSION;
             m_initialized = true;
             LOG_INFO("数据库初始化完成: " + dbPath);
@@ -275,33 +278,17 @@ bool DataManager::initialize(const QString& dbPath)
 void DataManager::shutdown()
 {
     QMutexLocker dbLocker(&m_dbMutex);
-    
-    if (!m_initialized) {
-        return;
+    const bool wasInitialized = m_initialized;
+
+    if (wasInitialized) {
+        LOG_INFO("DataManager 正在关闭...");
     }
-    
-    LOG_INFO("DataManager 正在关闭...");
-    
-    // 清空运行时缓存
-    {
-        QMutexLocker cacheLocker(&m_cacheMutex);
-        m_runtimeCache.clear();
+
+    cleanupDatabaseConnection();
+
+    if (wasInitialized) {
+        LOG_INFO("DataManager 已关闭");
     }
-    
-    // 关闭数据库连接
-    if (m_db.isOpen()) {
-        m_db.close();
-    }
-    
-    // 移除数据库连接
-    QString connName = m_connectionName;
-    m_db = QSqlDatabase();
-    QSqlDatabase::removeDatabase(connName);
-    
-    m_initialized = false;
-    m_schemaVersion = -1;
-    
-    LOG_INFO("DataManager 已关闭");
 }
 
 bool DataManager::isInitialized() const
@@ -318,17 +305,55 @@ int DataManager::schemaVersion() const
 // Schema 迁移
 // ============================================================================
 
-int DataManager::getDatabaseVersion()
+bool DataManager::getDatabaseVersion(int& version)
 {
+    version = 0;
     QSqlQuery query(m_db);
-    query.prepare("SELECT version FROM schema_version WHERE id = 1");
-    
-    if (query.exec() && query.next()) {
-        return query.value(0).toInt();
+    query.prepare("SELECT typeof(version), version FROM schema_version WHERE id = 1");
+
+    if (!query.exec()) {
+        logSqlError(query, "读取数据库版本");
+        return false;
     }
-    
-    // 没有版本记录，返回 0 表示全新数据库
-    return 0;
+
+    // 查询成功但没有版本记录，表示全新数据库。
+    if (!query.next()) {
+        return true;
+    }
+
+    if (query.value(0).toString() != QStringLiteral("integer")) {
+        LOG_ERROR("数据库版本必须是 SQLite INTEGER");
+        return false;
+    }
+
+    bool ok = false;
+    const qlonglong storedVersion = query.value(1).toLongLong(&ok);
+    if (!ok || storedVersion < 0 || storedVersion > CURRENT_SCHEMA_VERSION) {
+        LOG_ERROR(QString("数据库版本无效: %1").arg(query.value(1).toString()));
+        return false;
+    }
+
+    version = static_cast<int>(storedVersion);
+    return true;
+}
+
+void DataManager::cleanupDatabaseConnection()
+{
+    // 调用方持有 m_dbMutex；按 m_db -> m_cacheMutex 的既有锁顺序清理。
+    {
+        QMutexLocker cacheLocker(&m_cacheMutex);
+        m_runtimeCache.clear();
+    }
+
+    if (m_db.isOpen()) {
+        m_db.close();
+    }
+
+    const QString connName = m_connectionName;
+    m_db = QSqlDatabase();
+    QSqlDatabase::removeDatabase(connName);
+    m_initialized = false;
+    m_schemaVersion = -1;
 }
 
 bool DataManager::setDatabaseVersion(int version)
@@ -421,7 +446,9 @@ bool DataManager::createInitialSchema()
     for (const QString& sql : indexSqls) {
         QString trimmed = sql.trimmed();
         if (!trimmed.isEmpty()) {
-            executeSql(trimmed, "创建运行时数据索引");
+            if (!executeSql(trimmed, "创建运行时数据索引")) {
+                return false;
+            }
         }
     }
     
@@ -429,7 +456,9 @@ bool DataManager::createInitialSchema()
     for (const QString& sql : indexSqls) {
         QString trimmed = sql.trimmed();
         if (!trimmed.isEmpty()) {
-            executeSql(trimmed, "创建日志索引");
+            if (!executeSql(trimmed, "创建日志索引")) {
+                return false;
+            }
         }
     }
     
@@ -443,10 +472,8 @@ bool DataManager::upgradeToVersion2()
     if (!result) return false;
     
     // 为运行时数据表添加复合索引（如果不存在）
-    executeSql("CREATE INDEX IF NOT EXISTS idx_runtime_var_time ON runtime_data(variable_name, timestamp)",
-               "创建复合索引");
-    
-    return true;
+    return executeSql("CREATE INDEX IF NOT EXISTS idx_runtime_var_time ON runtime_data(variable_name, timestamp)",
+                      "创建复合索引").success;
 }
 
 bool DataManager::upgradeToVersion3()

@@ -60,9 +60,11 @@ function Invoke-Logged {
     $process = New-Object System.Diagnostics.Process
     $process.StartInfo = $psi
     [void]$process.Start()
-    $stdout = $process.StandardOutput.ReadToEnd()
-    $stderr = $process.StandardError.ReadToEnd()
+    $stdoutTask = $process.StandardOutput.ReadToEndAsync()
+    $stderrTask = $process.StandardError.ReadToEndAsync()
     $process.WaitForExit()
+    $stdout = $stdoutTask.GetAwaiter().GetResult()
+    $stderr = $stderrTask.GetAwaiter().GetResult()
     $exitCode = $process.ExitCode
 
     foreach ($text in @($stdout, $stderr)) {
@@ -164,7 +166,7 @@ try {
         "--output-on-failure"
     )
 
-    $appExe = Join-Path $BuildPath "bin\ServoValvePlatform.exe"
+    $appExe = Join-Path $BuildPath "bin\LH.exe"
     if (-not (Test-Path $appExe)) {
         throw "Application executable not found: $appExe"
     }
