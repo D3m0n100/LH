@@ -216,6 +216,35 @@ private slots:
         QCOMPARE(snapshot.extras.value(QStringLiteral("unmatchedItemCount")).toInt(), 0);
     }
 
+    void matrikonBackendReportsOfflineCapabilityState()
+    {
+        MatrikonOpcServer server;
+
+        RuntimePointDefinition point;
+        point.id = QStringLiteral("unresolved.point");
+        point.kind = RuntimePointKind::Status;
+        point.dataType = QStringLiteral("REAL");
+        point.access = RuntimePointAccess::ReadOnly;
+        server.setRuntimePoints({point});
+
+        OpcServerConfig config;
+        config.metadata.insert(QStringLiteral("subscriptionMode"), QStringLiteral("required"));
+        QString errorMessage;
+        QVERIFY(server.applyConfig(config, &errorMessage));
+
+        const BackendStatusSnapshot snapshot = server.statusSnapshot();
+        QVERIFY(!snapshot.online);
+        QCOMPARE(snapshot.extras.value(QStringLiteral("lifecycleStatus")).toString(),
+                 QStringLiteral("offline"));
+        QCOMPARE(snapshot.extras.value(QStringLiteral("configuredItemCount")).toInt(), 1);
+        QCOMPARE(snapshot.extras.value(QStringLiteral("activeItemCount")).toInt(), 0);
+        QVERIFY(!snapshot.extras.value(QStringLiteral("configuredItemsAvailable")).toBool());
+        QCOMPARE(snapshot.extras.value(QStringLiteral("subscriptionMode")).toString(),
+                 QStringLiteral("required"));
+        QVERIFY(snapshot.extras.value(QStringLiteral("subscriptionRequired")).toBool());
+        QVERIFY(!snapshot.extras.value(QStringLiteral("readProbeAvailable")).toBool());
+    }
+
     void matrikonBackendBuildsLhStyleModbusItemCandidates()
     {
         MatrikonOpcServer server;
@@ -438,6 +467,109 @@ private slots:
         QVERIFY(!snapshot.extras.value(QStringLiteral("lastCallbackTime")).toString().isEmpty());
 
         VariantClear(&values[0]);
+    }
+
+    void matrikonBackendRejectsCallbackMasterItemAndNullFailures()
+    {
+        MatrikonOpcServer server;
+
+        RuntimePointDefinition point;
+        point.id = QStringLiteral("status.invalid-callback");
+        point.name = QStringLiteral("Invalid Callback");
+        point.kind = RuntimePointKind::Status;
+        point.dataType = QStringLiteral("REAL");
+        point.access = RuntimePointAccess::ReadOnly;
+        point.opcItemName = QStringLiteral("CommPort.InitDevParamnt.4:24");
+        server.setRuntimePoints({point});
+
+        MatrikonOpcServer::ItemBinding binding;
+        binding.pointId = point.id;
+        binding.itemId = point.opcItemName;
+        binding.clientHandle = 45;
+        binding.serverHandle = 1004;
+        binding.active = true;
+        server.m_itemsByPointId.insert(point.id, binding);
+        server.m_pointIdByClientHandle.clear();
+        server.m_pointIdByClientHandle.insert(binding.clientHandle, point.id);
+
+        VARIANT value;
+        VariantInit(&value);
+        value.vt = VT_R8;
+        value.dblVal = 18.25;
+        const unsigned long clientHandles[1] = {binding.clientHandle};
+        const unsigned short qualities[1] = {0x40};
+        long itemErrors[1] = {S_OK};
+
+        auto dispatch = [&](long masterQuality, long masterError) {
+            server.handleDataChange(4,
+                                    0,
+                                    masterQuality,
+                                    masterError,
+                                    1,
+                                    clientHandles,
+                                    &value,
+                                    qualities,
+                                    nullptr,
+                                    itemErrors);
+        };
+
+        dispatch(S_OK, S_OK);
+        QCOMPARE(server.m_values.value(point.id).quality, RuntimePointQuality::Stale);
+
+        dispatch(S_OK, E_FAIL);
+        QVERIFY(!server.m_values.contains(point.id));
+        QVERIFY(server.m_lastReadMessage.contains(QStringLiteral("master status")));
+
+        itemErrors[0] = E_FAIL;
+        dispatch(S_OK, S_OK);
+        QVERIFY(!server.m_values.contains(point.id));
+        QVERIFY(server.m_lastReadMessage.contains(QStringLiteral("item failed")));
+
+        itemErrors[0] = S_OK;
+        VariantClear(&value);
+        VariantInit(&value);
+        value.vt = VT_EMPTY;
+        dispatch(S_OK, S_OK);
+        QVERIFY(!server.m_values.contains(point.id));
+        QVERIFY(server.m_lastReadMessage.contains(QStringLiteral("null or unsupported")));
+        QCOMPARE(server.m_failedReadCount, 3);
+        QVERIFY(server.statusSnapshot().lastErrorMessage.contains(QStringLiteral("null or unsupported")));
+
+        VariantClear(&value);
+    }
+
+    void matrikonBackendSupportsOpcVariantTypes()
+    {
+        VARIANT variant;
+        VariantInit(&variant);
+
+        variant.vt = VT_I8;
+        variant.llVal = 1234567890123LL;
+        QCOMPARE(MatrikonOpcServer::variantToQVariant(&variant).toLongLong(), 1234567890123LL);
+
+        variant.vt = VT_UI8;
+        variant.ullVal = 1234567890123ULL;
+        QCOMPARE(MatrikonOpcServer::variantToQVariant(&variant).toULongLong(), 1234567890123ULL);
+
+        variant.vt = VT_R4;
+        variant.fltVal = 1.25f;
+        QCOMPARE(MatrikonOpcServer::variantToQVariant(&variant).toFloat(), 1.25f);
+
+        variant.vt = VT_EMPTY;
+        QVERIFY(!MatrikonOpcServer::variantToQVariant(&variant).isValid());
+
+        QString errorMessage;
+        QVERIFY(MatrikonOpcServer::setVariantValue(QVariant::fromValue<qlonglong>(42),
+                                                   &variant,
+                                                   &errorMessage));
+        QCOMPARE(variant.vt, static_cast<VARTYPE>(VT_I8));
+        QCOMPARE(variant.llVal, 42LL);
+        QVERIFY(errorMessage.isEmpty());
+
+        QVERIFY(!MatrikonOpcServer::setVariantValue(QVariant(), &variant, &errorMessage));
+        QVERIFY(errorMessage.contains(QStringLiteral("null value")));
+
+        VariantClear(&variant);
     }
 
     void matrikonBackendQueuesCallbackToOwnerThread()

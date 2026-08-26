@@ -285,6 +285,40 @@ private slots:
         QVERIFY(processor.getChannelData(QStringLiteral("channel.1")).isEmpty());
     }
 
+    void invalidCandidateKeepsExistingRuntimeState()
+    {
+        auto& manager = MonitorManager::instance();
+        const ProjectRuntimeConfig valid = makeConfig();
+        QVERIFY(manager.applyConfiguration(valid));
+        manager.startMonitoring();
+
+        const QStringList channelsBefore = manager.channelNames();
+        const QStringList providersBefore = manager.providerIds();
+        QSignalSpy changedSpy(&manager, &MonitorManager::channelsChanged);
+
+        ProjectRuntimeConfig invalid = valid;
+        MonitorProviderRuntimeConfig broken;
+        broken.id = QStringLiteral("broken");
+        broken.channelName.clear();
+        broken.periodMs = 50;
+        invalid.providers.append(broken);
+
+        QVERIFY(!manager.applyConfiguration(invalid));
+        QCOMPARE(manager.channelNames(), channelsBefore);
+        QCOMPARE(manager.providerIds(), providersBefore);
+        QVERIFY(manager.isMonitoring());
+        QCOMPARE(changedSpy.count(), 0);
+    }
+
+    void successfulApplyEmitsOneCollectionChange()
+    {
+        auto& manager = MonitorManager::instance();
+        QSignalSpy changedSpy(&manager, &MonitorManager::channelsChanged);
+
+        QVERIFY(manager.applyConfiguration(makeConfig()));
+        QCOMPARE(changedSpy.count(), 1);
+    }
+
     void destroyedObserversAreCleared()
     {
         auto& manager = MonitorManager::instance();

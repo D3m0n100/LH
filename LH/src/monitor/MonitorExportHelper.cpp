@@ -27,6 +27,34 @@
 #include <cmath>
 #include <algorithm>
 
+namespace {
+
+QString encodeDelimitedField(QString value,
+                             const QString& separator,
+                             bool protectFormula)
+{
+    if (protectFormula && !value.isEmpty()) {
+        const QChar first = value.at(0);
+        if (first == QLatin1Char('=') || first == QLatin1Char('+')
+            || first == QLatin1Char('-') || first == QLatin1Char('@')) {
+            value.prepend(QLatin1Char('\''));
+        }
+    }
+
+    const bool needsQuotes = (!separator.isEmpty() && value.contains(separator))
+        || value.contains(QLatin1Char('"'))
+        || value.contains(QLatin1Char('\r'))
+        || value.contains(QLatin1Char('\n'));
+    if (!needsQuotes) {
+        return value;
+    }
+
+    value.replace(QLatin1Char('"'), QStringLiteral("\"\""));
+    return QStringLiteral("\"") + value + QStringLiteral("\"");
+}
+
+}
+
 // ============================================================================
 // 构造 / 析构
 // ============================================================================
@@ -909,41 +937,46 @@ QByteArray MonitorExportHelper::generateCsvContent(
     stream.setRealNumberPrecision(m_config.csvPrecision);
     stream.setRealNumberNotation(QTextStream::SmartNotation);
     
-    QString sep = m_config.csvSeparator;
+    const QString sep = m_config.csvSeparator;
+    const auto field = [&sep](const QString& value, bool protectFormula) {
+        return encodeDelimitedField(value, sep, protectFormula);
+    };
     
     // 写入元数据注释（如果启用）
     if (m_config.includeMetadataComments) {
         stream << "# ServoValvePlatform Monitor Data Export\n";
         stream << "# Export Time: " << QDateTime::currentDateTime().toString(Qt::ISODate) << "\n";
-        stream << "# Channel: " << channelName << "\n";
+        stream << "# Channel: " << field(channelName, true) << "\n";
         stream << "# Sample Count: " << samples.size() << "\n";
         if (!samples.isEmpty()) {
-            stream << "# Unit: " << samples.first().unit << "\n";
+            stream << "# Unit: " << field(samples.first().unit, true) << "\n";
         }
         stream << "#\n";
     }
     
     // 写入表头
     if (m_config.csvIncludeHeader) {
-        stream << "timestamp" << sep 
-               << "timestamp_ms" << sep 
-               << "channel" << sep 
-               << "value" << sep 
-               << "unit" << sep
-               << "quality" << sep
-               << "value_valid\n";
+        stream << field(QStringLiteral("timestamp"), false) << sep
+               << field(QStringLiteral("timestamp_ms"), false) << sep
+               << field(QStringLiteral("channel"), false) << sep
+               << field(QStringLiteral("value"), false) << sep
+               << field(QStringLiteral("unit"), false) << sep
+               << field(QStringLiteral("quality"), false) << sep
+               << field(QStringLiteral("value_valid"), false) << '\n';
     }
     
     // 写入数据行
     for (const Monitor::Sample& sample : samples) {
-        stream << sample.timestamp.toString(m_config.timestampFormat) << sep
-               << sample.timestamp.toMSecsSinceEpoch() << sep
-               << sample.channelName << sep
-               << (sample.valueValid ? QString::number(sample.value, 'g', m_config.csvPrecision)
-                                     : QString()) << sep
-               << sample.unit << sep
-               << runtimePointQualityToString(sample.quality) << sep
-               << (sample.valueValid ? 1 : 0) << "\n";
+        stream << field(sample.timestamp.toString(m_config.timestampFormat), false) << sep
+               << field(QString::number(sample.timestamp.toMSecsSinceEpoch()), false) << sep
+               << field(sample.channelName, true) << sep
+               << field(sample.valueValid
+                               ? QString::number(sample.value, 'g', m_config.csvPrecision)
+                               : QString(), false) << sep
+               << field(sample.unit, true) << sep
+               << field(runtimePointQualityToString(sample.quality), false) << sep
+               << field(sample.valueValid ? QStringLiteral("1") : QStringLiteral("0"), false)
+               << '\n';
     }
     
     return content.toUtf8();
@@ -958,23 +991,32 @@ QByteArray MonitorExportHelper::generateMultiChannelCsvContent(
     stream.setRealNumberPrecision(m_config.csvPrecision);
     stream.setRealNumberNotation(QTextStream::SmartNotation);
     
-    QString sep = m_config.csvSeparator;
+    const QString sep = m_config.csvSeparator;
+    const auto field = [&sep](const QString& value, bool protectFormula) {
+        return encodeDelimitedField(value, sep, protectFormula);
+    };
     
     // 写入元数据注释
     if (m_config.includeMetadataComments) {
         stream << "# ServoValvePlatform Monitor Data Export\n";
         stream << "# Export Time: " << package.metadata.exportTime.toString(Qt::ISODate) << "\n";
+        stream << "# Project: " << field(package.metadata.projectName, true) << "\n";
+        for (auto it = package.metadata.customFields.constBegin();
+             it != package.metadata.customFields.constEnd(); ++it) {
+            stream << "# Custom: " << field(it.key(), true) << "="
+                   << field(it.value().toString(), true) << "\n";
+        }
         stream << "# Time Window: " << package.metadata.timeWindowMs << " ms\n";
         stream << "# Total Channels: " << package.channelInfos.size() << "\n";
         stream << "# Total Samples: " << package.totalSampleCount() << "\n";
-        stream << "# Software Version: " << package.metadata.softwareVersion << "\n";
+        stream << "# Software Version: " << field(package.metadata.softwareVersion, true) << "\n";
         stream << "#\n";
         stream << "# Channel Definitions:\n";
         int idx = 1;
         for (const ExportChannelInfo& info : package.channelInfos) {
-            stream << "# [" << idx++ << "] " << info.channelId 
-                   << " | " << info.displayName 
-                   << " | " << info.unit 
+            stream << "# [" << idx++ << "] " << field(info.channelId, true)
+                   << " | " << field(info.displayName, true)
+                   << " | " << field(info.unit, true)
                    << " | Period: " << info.samplePeriodMs << "ms\n";
         }
         stream << "#\n";
@@ -1006,61 +1048,68 @@ QByteArray MonitorExportHelper::generateMultiChannelCsvContent(
         
         // 写入表头
         if (m_config.csvIncludeHeader) {
-            stream << "timestamp" << sep << "timestamp_ms";
+            stream << field(QStringLiteral("timestamp"), false) << sep
+                   << field(QStringLiteral("timestamp_ms"), false);
             for (const ExportChannelInfo& info : package.channelInfos) {
-                stream << sep << info.channelId
-                       << sep << info.channelId << "_quality"
-                       << sep << info.channelId << "_value_valid";
+                stream << sep << field(info.channelId, true)
+                       << sep << field(info.channelId + QStringLiteral("_quality"), true)
+                       << sep << field(info.channelId + QStringLiteral("_value_valid"), true);
             }
-            stream << "\n";
+            stream << '\n';
         }
         
         // 写入数据行
         for (qint64 ts : sortedTimestamps) {
             QDateTime dt = QDateTime::fromMSecsSinceEpoch(ts);
-            stream << dt.toString(m_config.timestampFormat) << sep << ts;
+            stream << field(dt.toString(m_config.timestampFormat), false) << sep
+                   << field(QString::number(ts), false);
             
             for (const ExportChannelInfo& info : package.channelInfos) {
                 const QMap<qint64, Monitor::Sample>& sampleMap = channelSampleMaps.value(info.channelId);
                 if (sampleMap.contains(ts)) {
                     const Monitor::Sample& sample = sampleMap.value(ts);
-                    stream << sep;
-                    if (sample.valueValid) {
-                        stream << sample.value;
-                    }
-                    stream << sep << runtimePointQualityToString(sample.quality)
-                           << sep << (sample.valueValid ? 1 : 0);
+                    stream << sep
+                           << field(sample.valueValid
+                                        ? QString::number(sample.value, 'g', m_config.csvPrecision)
+                                        : QString(), false)
+                           << sep << field(runtimePointQualityToString(sample.quality), false)
+                           << sep << field(sample.valueValid ? QStringLiteral("1")
+                                                               : QStringLiteral("0"), false);
                 } else {
-                    stream << sep << sep << sep;
+                    stream << sep << field(QString(), false)
+                           << sep << field(QString(), false)
+                           << sep << field(QString(), false);
                 }
             }
-            stream << "\n";
+            stream << '\n';
         }
     } else {
         // 非对齐模式：每个样本一行，包含通道标识
         if (m_config.csvIncludeHeader) {
-            stream << "timestamp" << sep 
-                   << "timestamp_ms" << sep 
-                   << "channel_id" << sep 
-                   << "channel_name" << sep 
-                   << "value" << sep 
-                   << "unit" << sep
-                   << "quality" << sep
-                   << "value_valid\n";
+            stream << field(QStringLiteral("timestamp"), false) << sep
+                   << field(QStringLiteral("timestamp_ms"), false) << sep
+                   << field(QStringLiteral("channel_id"), false) << sep
+                   << field(QStringLiteral("channel_name"), false) << sep
+                   << field(QStringLiteral("value"), false) << sep
+                   << field(QStringLiteral("unit"), false) << sep
+                   << field(QStringLiteral("quality"), false) << sep
+                   << field(QStringLiteral("value_valid"), false) << '\n';
         }
         
         for (const ExportChannelInfo& info : package.channelInfos) {
             const QList<Monitor::Sample>& samples = package.channelSamples.value(info.channelId);
             for (const Monitor::Sample& sample : samples) {
-                stream << sample.timestamp.toString(m_config.timestampFormat) << sep
-                       << sample.timestampMs() << sep
-                       << info.channelId << sep
-                       << info.displayName << sep
-                       << (sample.valueValid ? QString::number(sample.value, 'g', m_config.csvPrecision)
-                                             : QString()) << sep
-                       << info.unit << sep
-                       << runtimePointQualityToString(sample.quality) << sep
-                       << (sample.valueValid ? 1 : 0) << "\n";
+                stream << field(sample.timestamp.toString(m_config.timestampFormat), false) << sep
+                       << field(QString::number(sample.timestampMs()), false) << sep
+                       << field(info.channelId, true) << sep
+                       << field(info.displayName, true) << sep
+                       << field(sample.valueValid
+                                       ? QString::number(sample.value, 'g', m_config.csvPrecision)
+                                       : QString(), false) << sep
+                       << field(info.unit, true) << sep
+                       << field(runtimePointQualityToString(sample.quality), false) << sep
+                       << field(sample.valueValid ? QStringLiteral("1") : QStringLiteral("0"), false)
+                       << '\n';
             }
         }
     }
@@ -1182,32 +1231,44 @@ QByteArray MonitorExportHelper::generateTsvContent(
     stream.setRealNumberPrecision(m_config.csvPrecision);
     stream.setRealNumberNotation(QTextStream::SmartNotation);
     
+    const QString sep = QStringLiteral("\t");
+    const auto field = [&sep](const QString& value, bool protectFormula) {
+        return encodeDelimitedField(value, sep, protectFormula);
+    };
+
     // 写入元数据注释
     if (m_config.includeMetadataComments) {
         stream << "# ServoValvePlatform Monitor Data Export\n";
         stream << "# Export Time: " << QDateTime::currentDateTime().toString(Qt::ISODate) << "\n";
-        stream << "# Channel: " << channelName << "\n";
+        stream << "# Channel: " << field(channelName, true) << "\n";
         stream << "# Sample Count: " << samples.size() << "\n";
         if (!samples.isEmpty()) {
-            stream << "# Unit: " << samples.first().unit << "\n";
+            stream << "# Unit: " << field(samples.first().unit, true) << "\n";
         }
         stream << "#\n";
     }
     
     // 写入表头（TSV 使用制表符分隔）
     if (m_config.csvIncludeHeader) {
-        stream << "timestamp\ttimestamp_ms\tvalue\tunit\tquality\tvalue_valid\n";
+        stream << field(QStringLiteral("timestamp"), false) << sep
+               << field(QStringLiteral("timestamp_ms"), false) << sep
+               << field(QStringLiteral("value"), false) << sep
+               << field(QStringLiteral("unit"), false) << sep
+               << field(QStringLiteral("quality"), false) << sep
+               << field(QStringLiteral("value_valid"), false) << '\n';
     }
     
     // 写入数据行
     for (const Monitor::Sample& sample : samples) {
-        stream << sample.timestamp.toString(m_config.timestampFormat) << "\t"
-               << sample.timestampMs() << "\t"
-               << (sample.valueValid ? QString::number(sample.value, 'g', m_config.csvPrecision)
-                                     : QString()) << "\t"
-               << sample.unit << "\t"
-               << runtimePointQualityToString(sample.quality) << "\t"
-               << (sample.valueValid ? 1 : 0) << "\n";
+        stream << field(sample.timestamp.toString(m_config.timestampFormat), false) << sep
+               << field(QString::number(sample.timestampMs()), false) << sep
+               << field(sample.valueValid
+                               ? QString::number(sample.value, 'g', m_config.csvPrecision)
+                               : QString(), false) << sep
+               << field(sample.unit, true) << sep
+               << field(runtimePointQualityToString(sample.quality), false) << sep
+               << field(sample.valueValid ? QStringLiteral("1") : QStringLiteral("0"), false)
+               << '\n';
     }
     
     return content.toUtf8();
@@ -1221,7 +1282,11 @@ QByteArray MonitorExportHelper::generateMultiChannelTsvContent(
     
     stream.setRealNumberPrecision(m_config.csvPrecision);
     stream.setRealNumberNotation(QTextStream::SmartNotation);
-    
+    const QString sep = QStringLiteral("\t");
+    const auto field = [&sep](const QString& value, bool protectFormula) {
+        return encodeDelimitedField(value, sep, protectFormula);
+    };
+
     // 写入元数据头
     stream << generateTsvMetadataHeader(package);
     
@@ -1250,35 +1315,40 @@ QByteArray MonitorExportHelper::generateMultiChannelTsvContent(
     
     // 写入表头
     if (m_config.csvIncludeHeader) {
-        stream << "timestamp\ttimestamp_ms";
+        stream << field(QStringLiteral("timestamp"), false) << sep
+               << field(QStringLiteral("timestamp_ms"), false);
         for (const ExportChannelInfo& info : package.channelInfos) {
-            stream << "\t" << info.channelId
-                   << "\t" << info.channelId << "_quality"
-                   << "\t" << info.channelId << "_value_valid";
+            stream << sep << field(info.channelId, true)
+                   << sep << field(info.channelId + QStringLiteral("_quality"), true)
+                   << sep << field(info.channelId + QStringLiteral("_value_valid"), true);
         }
-        stream << "\n";
+        stream << '\n';
     }
     
     // 写入数据行
     for (qint64 ts : sortedTimestamps) {
         QDateTime dt = QDateTime::fromMSecsSinceEpoch(ts);
-        stream << dt.toString(m_config.timestampFormat) << "\t" << ts;
+        stream << field(dt.toString(m_config.timestampFormat), false) << sep
+               << field(QString::number(ts), false);
         
         for (const ExportChannelInfo& info : package.channelInfos) {
             const QMap<qint64, Monitor::Sample>& sampleMap = channelSampleMaps.value(info.channelId);
             if (sampleMap.contains(ts)) {
                 const Monitor::Sample& sample = sampleMap.value(ts);
-                stream << "\t";
-                if (sample.valueValid) {
-                    stream << sample.value;
-                }
-                stream << "\t" << runtimePointQualityToString(sample.quality)
-                       << "\t" << (sample.valueValid ? 1 : 0);
+                stream << sep
+                       << field(sample.valueValid
+                                    ? QString::number(sample.value, 'g', m_config.csvPrecision)
+                                    : QString(), false)
+                       << sep << field(runtimePointQualityToString(sample.quality), false)
+                       << sep << field(sample.valueValid ? QStringLiteral("1")
+                                                           : QStringLiteral("0"), false);
             } else {
-                stream << "\t\t\t";
+                stream << sep << field(QString(), false)
+                       << sep << field(QString(), false)
+                       << sep << field(QString(), false);
             }
         }
-        stream << "\n";
+        stream << '\n';
     }
     
     return content.toUtf8();
@@ -1289,21 +1359,31 @@ QString MonitorExportHelper::generateTsvMetadataHeader(
 {
     QString header;
     QTextStream stream(&header);
+    const QString sep = QStringLiteral("\t");
+    const auto field = [&sep](const QString& value, bool protectFormula) {
+        return encodeDelimitedField(value, sep, protectFormula);
+    };
     
     stream << "# ServoValvePlatform Monitor Data Export\n";
     stream << "# Export Time: " << package.metadata.exportTime.toString(Qt::ISODate) << "\n";
+    stream << "# Project: " << field(package.metadata.projectName, true) << "\n";
+    for (auto it = package.metadata.customFields.constBegin();
+         it != package.metadata.customFields.constEnd(); ++it) {
+        stream << "# Custom: " << field(it.key(), true) << "="
+               << field(it.value().toString(), true) << "\n";
+    }
     stream << "# Time Window: " << package.metadata.timeWindowMs << " ms\n";
     stream << "# Total Channels: " << package.channelInfos.size() << "\n";
     stream << "# Total Samples: " << package.totalSampleCount() << "\n";
-    stream << "# Software Version: " << package.metadata.softwareVersion << "\n";
+    stream << "# Software Version: " << field(package.metadata.softwareVersion, true) << "\n";
     stream << "#\n";
     stream << "# Channel Definitions:\n";
     
     int idx = 1;
     for (const ExportChannelInfo& info : package.channelInfos) {
-        stream << "# [" << idx++ << "] " << info.channelId 
-               << " | " << info.displayName 
-               << " | " << info.unit 
+        stream << "# [" << idx++ << "] " << field(info.channelId, true)
+               << " | " << field(info.displayName, true)
+               << " | " << field(info.unit, true)
                << " | Period: " << info.samplePeriodMs << "ms\n";
     }
     stream << "#\n";
@@ -1551,6 +1631,9 @@ ExportResult MonitorExportHelper::exportPagedPackageToFile(
 
     const QString sep = format == QStringLiteral("TSV")
         ? QStringLiteral("\t") : m_config.csvSeparator;
+    const auto field = [&sep](const QString& value, bool protectFormula) {
+        return encodeDelimitedField(value, sep, protectFormula);
+    };
     const bool isJson = format == QStringLiteral("JSON");
 
     if (isJson) {
@@ -1644,16 +1727,23 @@ ExportResult MonitorExportHelper::exportPagedPackageToFile(
             QTextStream commentStream(&comments);
             commentStream << "# ServoValvePlatform Monitor Data Export\n"
                           << "# Export Time: " << metadata.exportTime.toString(Qt::ISODate) << "\n"
-                          << "# Time Window: " << metadata.timeWindowMs << " ms\n"
+                          << "# Project: " << field(metadata.projectName, true) << "\n";
+            for (auto it = metadata.customFields.constBegin();
+                 it != metadata.customFields.constEnd(); ++it) {
+                commentStream << "# Custom: " << field(it.key(), true) << "="
+                              << field(it.value().toString(), true) << "\n";
+            }
+            commentStream << "# Time Window: " << metadata.timeWindowMs << " ms\n"
                           << "# Total Channels: " << channelInfos.size() << "\n"
                           << "# Total Samples: " << metadata.totalSamples << "\n"
-                          << "# Software Version: " << metadata.softwareVersion << "\n"
+                          << "# Software Version: " << field(metadata.softwareVersion, true) << "\n"
                           << "#\n# Channel Definitions:\n";
             int definitionIndex = 1;
             for (const ExportChannelInfo& info : channelInfos) {
                 commentStream << "# [" << definitionIndex++ << "] "
-                              << info.channelId << " | " << info.displayName
-                              << " | " << info.unit << " | Period: "
+                              << field(info.channelId, true) << " | "
+                              << field(info.displayName, true) << " | "
+                              << field(info.unit, true) << " | Period: "
                               << info.samplePeriodMs << "ms\n";
             }
             commentStream << "#\n";
@@ -1663,18 +1753,21 @@ ExportResult MonitorExportHelper::exportPagedPackageToFile(
         }
 
         if (m_config.csvIncludeHeader) {
-            QString header = QStringLiteral("timestamp") + sep + QStringLiteral("timestamp_ms");
+            QString header = field(QStringLiteral("timestamp"), false) + sep
+                           + field(QStringLiteral("timestamp_ms"), false);
             if (m_config.alignMultiChannelByTime) {
                 for (const ExportChannelInfo& info : channelInfos) {
-                    header += sep + info.channelId + sep + info.channelId
-                           + QStringLiteral("_quality") + sep + info.channelId
-                           + QStringLiteral("_value_valid");
+                    header += sep + field(info.channelId, true)
+                           + sep + field(info.channelId + QStringLiteral("_quality"), true)
+                           + sep + field(info.channelId + QStringLiteral("_value_valid"), true);
                 }
             } else {
-                header += sep + QStringLiteral("channel_id") + sep
-                       + QStringLiteral("channel_name") + sep + QStringLiteral("value")
-                       + sep + QStringLiteral("unit") + sep + QStringLiteral("quality")
-                       + sep + QStringLiteral("value_valid");
+                header += sep + field(QStringLiteral("channel_id"), false) + sep
+                       + field(QStringLiteral("channel_name"), false) + sep
+                       + field(QStringLiteral("value"), false) + sep
+                       + field(QStringLiteral("unit"), false) + sep
+                       + field(QStringLiteral("quality"), false) + sep
+                       + field(QStringLiteral("value_valid"), false);
             }
             header += QLatin1Char('\n');
             if (!writeText(header)) {
@@ -1703,9 +1796,9 @@ ExportResult MonitorExportHelper::exportPagedPackageToFile(
                     break;
                 }
 
-                QString row = QDateTime::fromMSecsSinceEpoch(minimumTimestamp)
-                                  .toString(m_config.timestampFormat)
-                              + sep + QString::number(minimumTimestamp);
+                QString row = field(QDateTime::fromMSecsSinceEpoch(minimumTimestamp)
+                                        .toString(m_config.timestampFormat), false)
+                            + sep + field(QString::number(minimumTimestamp), false);
                 for (ChannelState& state : states) {
                     Monitor::Sample latest;
                     bool found = false;
@@ -1719,16 +1812,17 @@ ExportResult MonitorExportHelper::exportPagedPackageToFile(
                         return fail(state.error);
                     }
                     if (!found) {
-                        row += sep + sep + sep;
+                        row += sep + field(QString(), false)
+                             + sep + field(QString(), false)
+                             + sep + field(QString(), false);
                         continue;
                     }
-                    row += sep;
-                    if (latest.valueValid && std::isfinite(latest.value)) {
-                        row += QString::number(latest.value, 'g', m_config.csvPrecision);
-                    }
-                    row += sep + runtimePointQualityToString(latest.quality)
-                         + sep + (latest.valueValid ? QStringLiteral("1")
-                                                     : QStringLiteral("0"));
+                    row += sep + field(latest.valueValid && std::isfinite(latest.value)
+                                           ? QString::number(latest.value, 'g', m_config.csvPrecision)
+                                           : QString(), false)
+                         + sep + field(runtimePointQualityToString(latest.quality), false)
+                         + sep + field(latest.valueValid ? QStringLiteral("1")
+                                                          : QStringLiteral("0"), false);
                 }
                 row += QLatin1Char('\n');
                 if (!writeText(row)) {
@@ -1741,16 +1835,18 @@ ExportResult MonitorExportHelper::exportPagedPackageToFile(
                 const ExportChannelInfo& info = channelInfos.at(infoIndex);
                 while (ensureCurrent(state)) {
                     const Monitor::Sample sample = state.samples.at(state.index++);
-                    QString row = sample.timestamp.toString(m_config.timestampFormat)
-                               + sep + QString::number(sample.timestampMs())
-                               + sep + info.channelId + sep + info.displayName + sep;
-                    if (sample.valueValid && std::isfinite(sample.value)) {
-                        row += QString::number(sample.value, 'g', m_config.csvPrecision);
-                    }
-                    row += sep + info.unit + sep
-                         + runtimePointQualityToString(sample.quality) + sep
-                         + (sample.valueValid ? QStringLiteral("1") : QStringLiteral("0"))
-                         + QLatin1Char('\n');
+                    QString row = field(sample.timestamp.toString(m_config.timestampFormat), false)
+                               + sep + field(QString::number(sample.timestampMs()), false)
+                               + sep + field(info.channelId, true)
+                               + sep + field(info.displayName, true)
+                               + sep + field(sample.valueValid && std::isfinite(sample.value)
+                                                 ? QString::number(sample.value, 'g', m_config.csvPrecision)
+                                                 : QString(), false)
+                               + sep + field(info.unit, true)
+                               + sep + field(runtimePointQualityToString(sample.quality), false)
+                               + sep + field(sample.valueValid ? QStringLiteral("1")
+                                                               : QStringLiteral("0"), false)
+                               + QLatin1Char('\n');
                     if (!writeText(row)) {
                         return result;
                     }

@@ -16,6 +16,41 @@
 
 #include <utility>
 
+namespace {
+
+bool hasOpcPayload(const QVariant& value)
+{
+    return value.isValid() && !value.isNull();
+}
+
+QString opcSubscriptionMode(const OpcServerConfig& config)
+{
+    const QString mode = config.metadata.value(QStringLiteral("subscriptionMode"))
+                                 .toString().trimmed().toLower();
+    if (mode == QStringLiteral("disabled")
+            || mode == QStringLiteral("off")
+            || mode == QStringLiteral("none")) {
+        return QStringLiteral("disabled");
+    }
+    if (mode == QStringLiteral("required")
+            || mode == QStringLiteral("mandatory")) {
+        return QStringLiteral("required");
+    }
+    if (config.metadata.contains(QStringLiteral("subscriptionRequired"))) {
+        return config.metadata.value(QStringLiteral("subscriptionRequired")).toBool()
+                ? QStringLiteral("required")
+                : QStringLiteral("optional");
+    }
+    return QStringLiteral("optional");
+}
+
+bool subscriptionIsEnabled(const OpcServerConfig& config)
+{
+    return opcSubscriptionMode(config) != QStringLiteral("disabled");
+}
+
+} // namespace
+
 #ifdef Q_OS_WIN
 using OPCHANDLE = DWORD;
 
@@ -359,41 +394,131 @@ bool MatrikonOpcServer::start(QString* errorMessage)
     }
 
     if (m_running) {
+        if (errorMessage) {
+            errorMessage->clear();
+        }
         return true;
     }
 
-    if (!ensureComInitialized(errorMessage)
-            || !createServerInstance(errorMessage)
-            || !createOpcGroup(errorMessage)) {
+    if (m_server || m_opcServer || m_groupUnknown || m_itemMgt || m_syncIO || m_subscriptionActive) {
+        stop();
+    }
+
+    if (errorMessage) {
+        errorMessage->clear();
+    }
+    m_lastErrorCode = CommErrorCode::NoError;
+    m_lastErrorMessage.clear();
+    m_startupIssues.clear();
+    m_browseAttempted = false;
+    m_browseSucceeded = false;
+    m_browsedItemIds.clear();
+    m_lastBrowseMessage.clear();
+    m_addItemsAttempted = false;
+    m_refreshAttempted = false;
+    m_refreshOk = false;
+    m_lastRefreshMessage.clear();
+    m_subscriptionAttempted = false;
+    m_lastSubscriptionMessage.clear();
+    m_expectedChannelVisible = false;
+    m_primaryDeviceVisible = false;
+    m_secondaryDeviceVisible = false;
+    m_standardItemsVisible = false;
+    m_configurationProbeMessage.clear();
+
+    auto noteIssue = [&](CommErrorCode code, const QString& message) {
+        if (message.trimmed().isEmpty()) {
+            return;
+        }
+        m_startupIssues.append(message);
+        if (m_lastErrorMessage.isEmpty()) {
+            m_lastErrorCode = code;
+            m_lastErrorMessage = message;
+        }
+    };
+
+    auto failCoreStage = [&](const QString& message, const QString& fallback) {
+        const QString finalMessage = message.trimmed().isEmpty() ? fallback : message;
         m_lastErrorCode = CommErrorCode::ConnectionFailed;
-        m_lastErrorMessage = errorMessage ? *errorMessage : QStringLiteral("Failed to create Matrikon OPC server");
+        m_lastErrorMessage = finalMessage;
+        m_startupIssues.append(finalMessage);
+        if (errorMessage) {
+            *errorMessage = finalMessage;
+        }
         emit errorOccurred(m_lastErrorMessage);
+        stop();
         return false;
+    };
+
+    QString phaseError;
+    if (!ensureComInitialized(&phaseError)) {
+        return failCoreStage(phaseError, QStringLiteral("Failed to initialize COM"));
+    }
+    phaseError.clear();
+    if (!createServerInstance(&phaseError)) {
+        return failCoreStage(phaseError, QStringLiteral("Failed to create Matrikon OPC server"));
+    }
+    phaseError.clear();
+    if (!createOpcGroup(&phaseError)) {
+        return failCoreStage(phaseError, QStringLiteral("Failed to create Matrikon OPC group"));
     }
 
     QString browseError;
-    browseServerAddressSpace(&browseError);
+    m_browseAttempted = true;
+    if (!browseServerAddressSpace(&browseError)) {
+        noteIssue(CommErrorCode::ConnectionFailed,
+                  QStringLiteral("OPC browse failed: %1")
+                          .arg(browseError.isEmpty() ? m_lastBrowseMessage : browseError));
+    }
     remapItemsFromBrowseResults();
 
     QString itemError;
-    if (!addPendingItems(&itemError) && !itemError.isEmpty()) {
-        m_lastErrorCode = CommErrorCode::InvalidAddress;
-        m_lastErrorMessage = itemError;
-        emit errorOccurred(m_lastErrorMessage);
+    if (!addPendingItems(&itemError)) {
+        noteIssue(CommErrorCode::InvalidAddress,
+                  QStringLiteral("OPC item setup failed: %1")
+                          .arg(itemError.isEmpty() ? QStringLiteral("configured item is unavailable")
+                                                   : itemError));
     }
+
     QString readError;
-    refreshItems(&readError);
+    if (!refreshItems(&readError)) {
+        noteIssue(CommErrorCode::ConnectionFailed,
+                  QStringLiteral("OPC initial read failed: %1")
+                          .arg(readError.isEmpty() ? m_lastRefreshMessage : readError));
+    }
+
     QString probeError;
-    runReadProbe(&probeError);
-    QString subscriptionError;
-    subscribeDataChanges(&subscriptionError);
+    if (!runReadProbe(&probeError)) {
+        noteIssue(CommErrorCode::ConnectionFailed,
+                  QStringLiteral("OPC read probe failed: %1")
+                          .arg(probeError.isEmpty() ? m_readProbeMessage : probeError));
+    }
+
+    if (subscriptionIsEnabled(m_config)) {
+        m_subscriptionAttempted = true;
+        QString subscriptionError;
+        if (!subscribeDataChanges(&subscriptionError)) {
+            noteIssue(CommErrorCode::ConnectionFailed,
+                      QStringLiteral("OPC subscription failed: %1")
+                              .arg(subscriptionError.isEmpty() ? m_lastSubscriptionMessage
+                                                               : subscriptionError));
+        }
+    } else {
+        m_lastSubscriptionMessage = QStringLiteral("subscription disabled by configuration");
+    }
 
     m_running = true;
-    if (m_lastErrorCode != CommErrorCode::InvalidAddress) {
-        m_lastErrorCode = CommErrorCode::NoError;
-        m_lastErrorMessage.clear();
-    }
     m_lastStatusChangeTime = QDateTime::currentDateTimeUtc();
+
+    if (!m_startupIssues.isEmpty()) {
+        if (errorMessage) {
+            *errorMessage = m_startupIssues.join(QStringLiteral("; "));
+        }
+        emit errorOccurred(m_lastErrorMessage);
+    } else if (errorMessage) {
+        errorMessage->clear();
+    }
+
     emit runningStateChanged(true);
     return true;
 }
@@ -417,10 +542,23 @@ void MatrikonOpcServer::setRuntimePoints(const QList<RuntimePointDefinition>& po
     m_points = points;
     rebuildPendingItems();
     if (m_running) {
-        QString errorMessage;
-        if (addPendingItems(&errorMessage)) {
-            refreshItems();
-            runReadProbe();
+        QString itemError;
+        if (!addPendingItems(&itemError) && !itemError.isEmpty()) {
+            m_lastErrorCode = CommErrorCode::InvalidAddress;
+            m_lastErrorMessage = itemError;
+            emit errorOccurred(m_lastErrorMessage);
+        }
+        QString readError;
+        if (!refreshItems(&readError) && !readError.isEmpty()) {
+            m_lastErrorCode = CommErrorCode::ConnectionFailed;
+            m_lastErrorMessage = readError;
+            emit errorOccurred(m_lastErrorMessage);
+        }
+        QString probeError;
+        if (!runReadProbe(&probeError) && !probeError.isEmpty()) {
+            m_lastErrorCode = CommErrorCode::ConnectionFailed;
+            m_lastErrorMessage = probeError;
+            emit errorOccurred(m_lastErrorMessage);
         }
     }
 }
@@ -430,10 +568,23 @@ void MatrikonOpcServer::setOpcTags(const QList<OpcTagDefinition>& tags)
     m_tags = tags;
     rebuildPendingItems();
     if (m_running) {
-        QString errorMessage;
-        if (addPendingItems(&errorMessage)) {
-            refreshItems();
-            runReadProbe();
+        QString itemError;
+        if (!addPendingItems(&itemError) && !itemError.isEmpty()) {
+            m_lastErrorCode = CommErrorCode::InvalidAddress;
+            m_lastErrorMessage = itemError;
+            emit errorOccurred(m_lastErrorMessage);
+        }
+        QString readError;
+        if (!refreshItems(&readError) && !readError.isEmpty()) {
+            m_lastErrorCode = CommErrorCode::ConnectionFailed;
+            m_lastErrorMessage = readError;
+            emit errorOccurred(m_lastErrorMessage);
+        }
+        QString probeError;
+        if (!runReadProbe(&probeError) && !probeError.isEmpty()) {
+            m_lastErrorCode = CommErrorCode::ConnectionFailed;
+            m_lastErrorMessage = probeError;
+            emit errorOccurred(m_lastErrorMessage);
         }
     }
 }
@@ -471,14 +622,44 @@ void MatrikonOpcServer::recordWriteResult(const QString& pointId, bool success, 
 
 BackendStatusSnapshot MatrikonOpcServer::statusSnapshot() const
 {
+    const int configuredItemCount = m_itemsByPointId.size();
+    const int currentActiveItemCount = activeItemCount();
+    const bool serverConnected = m_server != nullptr && m_opcServer != nullptr;
+    const bool groupReady = m_groupUnknown != nullptr
+            && m_itemMgt != nullptr
+            && m_syncIO != nullptr;
+    const bool configuredItemsAvailable = configuredItemCount == 0
+            || currentActiveItemCount == configuredItemCount;
+    const bool readProbeAvailable = m_readProbeAttempted && m_readProbeOk;
+    const QString subscriptionMode = opcSubscriptionMode(m_config);
+    const bool subscriptionEnabled = subscriptionMode != QStringLiteral("disabled");
+    const bool subscriptionRequired = subscriptionMode == QStringLiteral("required");
+    const bool subscriptionAvailable = !subscriptionRequired
+            || (m_subscriptionAttempted && m_subscriptionActive);
+    const bool probeQualityDegraded = m_readProbeOk
+            && qualityToRuntimeQuality(m_readProbeQuality) != RuntimePointQuality::Good;
+    const bool capabilityDegraded = (m_browseAttempted && !m_browseSucceeded)
+            || (m_refreshAttempted && !m_refreshOk)
+            || (subscriptionEnabled && m_subscriptionAttempted && !m_subscriptionActive)
+            || probeQualityDegraded;
+    const bool online = m_running
+            && serverConnected
+            && groupReady
+            && configuredItemsAvailable
+            && readProbeAvailable
+            && subscriptionAvailable;
+    const bool operational = online && !capabilityDegraded && m_startupIssues.isEmpty();
+    const bool degraded = m_running && !operational;
+
     BackendStatusSnapshot snapshot;
-    snapshot.online = m_running;
+    snapshot.online = online;
     snapshot.backendType = QStringLiteral("matrikon-opc-da");
     snapshot.downloading = false;
     snapshot.downloadPercent = 0;
     snapshot.lastErrorCode = m_lastErrorCode;
     snapshot.lastErrorMessage = m_lastErrorMessage;
-    snapshot.partialSuccess = false;
+    snapshot.lastErrorDetails = m_startupIssues.join(QStringLiteral("; "));
+    snapshot.partialSuccess = m_running && serverConnected && degraded;
     snapshot.timestamp = QDateTime::currentDateTimeUtc();
     snapshot.extras.insert(QStringLiteral("opcProgId"), m_config.opcProgId);
     snapshot.extras.insert(QStringLiteral("classicServerName"), m_config.classicServerName);
@@ -487,13 +668,26 @@ BackendStatusSnapshot MatrikonOpcServer::statusSnapshot() const
     snapshot.extras.insert(QStringLiteral("valueCount"), m_values.size());
     snapshot.extras.insert(QStringLiteral("comInitialized"), m_comInitialized);
     snapshot.extras.insert(QStringLiteral("serverCreated"), m_server != nullptr);
+    snapshot.extras.insert(QStringLiteral("serverConnected"), serverConnected);
     snapshot.extras.insert(QStringLiteral("groupCreated"), m_groupUnknown != nullptr);
+    snapshot.extras.insert(QStringLiteral("groupReady"), groupReady);
     snapshot.extras.insert(QStringLiteral("itemMgtReady"), m_itemMgt != nullptr);
     snapshot.extras.insert(QStringLiteral("syncIoReady"), m_syncIO != nullptr);
-    snapshot.extras.insert(QStringLiteral("itemCount"), m_itemsByPointId.size());
+    snapshot.extras.insert(QStringLiteral("itemCount"), configuredItemCount);
+    snapshot.extras.insert(QStringLiteral("configuredItemCount"), configuredItemCount);
+    snapshot.extras.insert(QStringLiteral("activeItemCount"), currentActiveItemCount);
+    snapshot.extras.insert(QStringLiteral("configuredItemsAvailable"), configuredItemsAvailable);
+    snapshot.extras.insert(QStringLiteral("addItemsAttempted"), m_addItemsAttempted);
     snapshot.extras.insert(QStringLiteral("browseSucceeded"), m_browseSucceeded);
+    snapshot.extras.insert(QStringLiteral("browseAttempted"), m_browseAttempted);
     snapshot.extras.insert(QStringLiteral("browsedItemCount"), m_browsedItemIds.size());
     snapshot.extras.insert(QStringLiteral("lastBrowseMessage"), m_lastBrowseMessage);
+    snapshot.extras.insert(QStringLiteral("refreshAttempted"), m_refreshAttempted);
+    snapshot.extras.insert(QStringLiteral("refreshOk"), m_refreshOk);
+    snapshot.extras.insert(QStringLiteral("lastRefreshMessage"), m_lastRefreshMessage);
+    snapshot.extras.insert(QStringLiteral("subscriptionMode"), subscriptionMode);
+    snapshot.extras.insert(QStringLiteral("subscriptionRequired"), subscriptionRequired);
+    snapshot.extras.insert(QStringLiteral("subscriptionAttempted"), m_subscriptionAttempted);
     snapshot.extras.insert(QStringLiteral("subscriptionActive"), m_subscriptionActive);
     snapshot.extras.insert(QStringLiteral("subscriptionCookie"), static_cast<qulonglong>(m_subscriptionCookie));
     snapshot.extras.insert(QStringLiteral("lastSubscriptionMessage"), m_lastSubscriptionMessage);
@@ -529,6 +723,7 @@ BackendStatusSnapshot MatrikonOpcServer::statusSnapshot() const
                            m_lastFailedReadTime.isValid() ? m_lastFailedReadTime.toString(Qt::ISODate) : QString());
     snapshot.extras.insert(QStringLiteral("readProbeAttempted"), m_readProbeAttempted);
     snapshot.extras.insert(QStringLiteral("readProbeOk"), m_readProbeOk);
+    snapshot.extras.insert(QStringLiteral("readProbeAvailable"), readProbeAvailable);
     snapshot.extras.insert(QStringLiteral("readProbePointId"), m_readProbePointId);
     snapshot.extras.insert(QStringLiteral("readProbeItemId"), m_readProbeItemId);
     snapshot.extras.insert(QStringLiteral("readProbeValue"), m_readProbeValue);
@@ -556,8 +751,27 @@ BackendStatusSnapshot MatrikonOpcServer::statusSnapshot() const
     snapshot.extras.insert(QStringLiteral("lastFailedWriteMessage"), m_lastFailedWriteMessage);
     snapshot.extras.insert(QStringLiteral("successfulWriteCount"), m_successfulWriteCount);
     snapshot.extras.insert(QStringLiteral("failedWriteCount"), m_failedWriteCount);
+    snapshot.extras.insert(QStringLiteral("online"), snapshot.online);
+    snapshot.extras.insert(QStringLiteral("operational"), operational);
+    snapshot.extras.insert(QStringLiteral("degraded"), degraded);
+    snapshot.extras.insert(QStringLiteral("lifecycleStatus"),
+                           !m_running ? QStringLiteral("offline")
+                                      : operational ? QStringLiteral("operational")
+                                                    : QStringLiteral("degraded"));
+    snapshot.extras.insert(QStringLiteral("startupIssues"), m_startupIssues);
     snapshot.extras.insert(QStringLiteral("impl"), QStringLiteral("matrikon-opc-da"));
     return snapshot;
+}
+
+int MatrikonOpcServer::activeItemCount() const
+{
+    int count = 0;
+    for (auto it = m_itemsByPointId.constBegin(); it != m_itemsByPointId.constEnd(); ++it) {
+        if (it->active && it->serverHandle != 0) {
+            ++count;
+        }
+    }
+    return count;
 }
 
 bool MatrikonOpcServer::ensureComInitialized(QString* errorMessage)
@@ -703,13 +917,16 @@ bool MatrikonOpcServer::createOpcGroup(QString* errorMessage)
 
 bool MatrikonOpcServer::browseServerAddressSpace(QString* errorMessage)
 {
-#ifndef Q_OS_WIN
-    Q_UNUSED(errorMessage)
-    return false;
-#else
+    m_browseAttempted = true;
     m_browsedItemIds.clear();
     m_browseSucceeded = false;
-
+#ifndef Q_OS_WIN
+    m_lastBrowseMessage = QStringLiteral("OPC DA browse is only available on Windows COM");
+    if (errorMessage) {
+        *errorMessage = m_lastBrowseMessage;
+    }
+    return false;
+#else
     if (!m_browser) {
         m_lastBrowseMessage = QStringLiteral("IOPCBrowseServerAddressSpace is not available");
         if (errorMessage) {
@@ -818,8 +1035,12 @@ void MatrikonOpcServer::updateConfigurationProbe()
 
 bool MatrikonOpcServer::subscribeDataChanges(QString* errorMessage)
 {
+    m_subscriptionAttempted = true;
 #ifndef Q_OS_WIN
-    Q_UNUSED(errorMessage)
+    m_lastSubscriptionMessage = QStringLiteral("OPC DA subscription is only available on Windows COM");
+    if (errorMessage) {
+        *errorMessage = m_lastSubscriptionMessage;
+    }
     return false;
 #else
     if (m_subscriptionActive) {
@@ -948,6 +1169,7 @@ void MatrikonOpcServer::rebuildPendingItems()
 {
     QHash<QString, ItemBinding> rebuilt;
     m_pointIdByItemId.clear();
+    m_pointIdByClientHandle.clear();
 
     for (const RuntimePointDefinition& point : std::as_const(m_points)) {
         if (point.id.trimmed().isEmpty()) {
@@ -955,14 +1177,16 @@ void MatrikonOpcServer::rebuildPendingItems()
         }
         const OpcTagDefinition tag = RuntimePointConverter::runtimePointToOpcTag(point);
         const QStringList candidates = itemIdCandidatesForTag(tag);
-        if (candidates.isEmpty()) {
-            continue;
-        }
 
         ItemBinding binding = m_itemsByPointId.value(point.id);
+        const QString itemId = candidates.isEmpty() ? QString() : candidates.first();
+        if (binding.itemId != itemId) {
+            binding.serverHandle = 0;
+            binding.active = false;
+        }
         binding.pointId = point.id;
         binding.candidateItemIds = candidates;
-        binding.itemId = candidates.first();
+        binding.itemId = itemId;
         if (binding.clientHandle == 0) {
             binding.clientHandle = m_nextClientHandle++;
         }
@@ -977,11 +1201,15 @@ void MatrikonOpcServer::rebuildPendingItems()
         const QStringList candidates = itemIdCandidatesForTag(tag);
         const QString itemId = candidates.isEmpty() ? QString() : candidates.first();
         const QString pointId = tag.tagName.trimmed().isEmpty() ? itemId : tag.tagName.trimmed();
-        if (itemId.isEmpty() || rebuilt.contains(pointId)) {
+        if (pointId.isEmpty() || rebuilt.contains(pointId)) {
             continue;
         }
 
         ItemBinding binding = m_itemsByPointId.value(pointId);
+        if (binding.itemId != itemId) {
+            binding.serverHandle = 0;
+            binding.active = false;
+        }
         binding.pointId = pointId;
         binding.candidateItemIds = candidates;
         binding.itemId = itemId;
@@ -1000,8 +1228,14 @@ void MatrikonOpcServer::rebuildPendingItems()
 
 bool MatrikonOpcServer::addPendingItems(QString* errorMessage)
 {
+    m_addItemsAttempted = true;
+    if (errorMessage) {
+        errorMessage->clear();
+    }
 #ifndef Q_OS_WIN
-    Q_UNUSED(errorMessage)
+    if (errorMessage) {
+        *errorMessage = QStringLiteral("OPC DA item setup is only available on Windows COM");
+    }
     return false;
 #else
     if (!m_itemMgt) {
@@ -1014,8 +1248,17 @@ bool MatrikonOpcServer::addPendingItems(QString* errorMessage)
     QList<QString> pointIds;
     QList<QString> itemIds;
     QList<unsigned long> clientHandles;
+    QStringList failures;
+    int unresolvedCount = 0;
     for (auto it = m_itemsByPointId.begin(); it != m_itemsByPointId.end(); ++it) {
-        if (it->active || it->itemId.trimmed().isEmpty()) {
+        if (it->active) {
+            continue;
+        }
+        if (it->itemId.trimmed().isEmpty()) {
+            ++unresolvedCount;
+            failures << QStringLiteral("%1=no item ID").arg(it.key());
+            it->serverHandle = 0;
+            it->active = false;
             continue;
         }
         pointIds.append(it.key());
@@ -1024,6 +1267,14 @@ bool MatrikonOpcServer::addPendingItems(QString* errorMessage)
     }
 
     if (pointIds.isEmpty()) {
+        if (unresolvedCount > 0) {
+            m_failedItemCount += unresolvedCount;
+            if (errorMessage) {
+                *errorMessage = QStringLiteral("OPC DA item setup failed: %1")
+                        .arg(failures.join(QStringLiteral("; ")));
+            }
+            return false;
+        }
         return true;
     }
 
@@ -1046,61 +1297,90 @@ bool MatrikonOpcServer::addPendingItems(QString* errorMessage)
                                            itemDefs.data(),
                                            &results,
                                            &errors);
+
+    auto freeResults = [&]() {
+        if (results) {
+            for (int i = 0; i < pointIds.size(); ++i) {
+                if (results[i].pBlob) {
+                    CoTaskMemFree(results[i].pBlob);
+                }
+            }
+            CoTaskMemFree(results);
+            results = nullptr;
+        }
+        if (errors) {
+            CoTaskMemFree(errors);
+            errors = nullptr;
+        }
+    };
+
     if (FAILED(hr)) {
+        for (const QString& pointId : std::as_const(pointIds)) {
+            ItemBinding binding = m_itemsByPointId.value(pointId);
+            binding.lastResult = hr;
+            binding.serverHandle = 0;
+            binding.active = false;
+            m_itemsByPointId.insert(pointId, binding);
+            failures << QStringLiteral("%1=%2").arg(binding.itemId, hresultToString(hr));
+        }
+        freeResults();
+        m_failedItemCount += pointIds.size() + unresolvedCount;
         if (errorMessage) {
-            *errorMessage = QStringLiteral("IOPCItemMgt::AddItems failed: %1").arg(hresultToString(hr));
+            *errorMessage = QStringLiteral("IOPCItemMgt::AddItems failed: %1 (%2)")
+                    .arg(hresultToString(hr), failures.join(QStringLiteral("; ")));
         }
         return false;
     }
 
     int successCount = 0;
-    int failedCount = 0;
-    QStringList failures;
+    int failedCount = unresolvedCount;
     for (int i = 0; i < pointIds.size(); ++i) {
         ItemBinding binding = m_itemsByPointId.value(pointIds.at(i));
         const HRESULT itemHr = errors ? errors[i] : S_OK;
         binding.lastResult = itemHr;
-        if (SUCCEEDED(itemHr) && results) {
+        if (SUCCEEDED(itemHr) && results && results[i].hServer != 0) {
             binding.serverHandle = results[i].hServer;
             binding.active = true;
             ++successCount;
         } else {
+            binding.serverHandle = 0;
+            binding.active = false;
             ++failedCount;
             failures << QStringLiteral("%1=%2").arg(binding.itemId, hresultToString(itemHr));
         }
         m_itemsByPointId.insert(pointIds.at(i), binding);
     }
 
-    if (results) {
-        for (int i = 0; i < pointIds.size(); ++i) {
-            if (results[i].pBlob) {
-                CoTaskMemFree(results[i].pBlob);
-            }
-        }
-        CoTaskMemFree(results);
-    }
-    if (errors) {
-        CoTaskMemFree(errors);
-    }
+    freeResults();
 
     m_successfulItemCount += successCount;
     m_failedItemCount += failedCount;
     if (failedCount > 0 && errorMessage) {
         *errorMessage = QStringLiteral("OPC DA item add partial failure: %1").arg(failures.join(QStringLiteral("; ")));
     }
-    return successCount > 0 || failedCount == 0;
+    return failedCount == 0;
 #endif
 }
 
 bool MatrikonOpcServer::refreshItems(QString* errorMessage)
 {
+    m_refreshAttempted = true;
+    m_refreshOk = false;
+    m_lastRefreshMessage.clear();
+    if (errorMessage) {
+        errorMessage->clear();
+    }
 #ifndef Q_OS_WIN
-    Q_UNUSED(errorMessage)
+    m_lastRefreshMessage = QStringLiteral("OPC DA initial read is only available on Windows COM");
+    if (errorMessage) {
+        *errorMessage = m_lastRefreshMessage;
+    }
     return false;
 #else
     if (!m_syncIO) {
+        m_lastRefreshMessage = QStringLiteral("IOPCSyncIO is not available");
         if (errorMessage) {
-            *errorMessage = QStringLiteral("IOPCSyncIO is not available");
+            *errorMessage = m_lastRefreshMessage;
         }
         return false;
     }
@@ -1114,6 +1394,8 @@ bool MatrikonOpcServer::refreshItems(QString* errorMessage)
         }
     }
     if (handles.isEmpty()) {
+        m_refreshOk = true;
+        m_lastRefreshMessage = QStringLiteral("OPC DA initial read skipped: no active configured items");
         return true;
     }
 
@@ -1125,31 +1407,53 @@ bool MatrikonOpcServer::refreshItems(QString* errorMessage)
                                       &states,
                                       &errors);
     m_lastReadTime = QDateTime::currentDateTimeUtc();
+
+    auto freeReadResults = [&]() {
+        if (states) {
+            for (int i = 0; i < pointIds.size(); ++i) {
+                VariantClear(&states[i].vDataValue);
+            }
+            CoTaskMemFree(states);
+            states = nullptr;
+        }
+        if (errors) {
+            CoTaskMemFree(errors);
+            errors = nullptr;
+        }
+    };
+
     if (FAILED(hr)) {
+        freeReadResults();
         ++m_failedReadCount;
         m_lastFailedReadTime = m_lastReadTime;
         m_lastReadMessage = QStringLiteral("IOPCSyncIO::Read failed: %1").arg(hresultToString(hr));
+        m_lastRefreshMessage = m_lastReadMessage;
         if (errorMessage) {
             *errorMessage = m_lastReadMessage;
         }
         return false;
     }
 
-    bool anySuccess = false;
+    bool allSuccess = true;
+    QStringList failures;
     for (int i = 0; i < pointIds.size(); ++i) {
         ItemBinding binding = m_itemsByPointId.value(pointIds.at(i));
         const HRESULT itemHr = errors ? errors[i] : S_OK;
         binding.lastResult = itemHr;
         m_lastReadPointId = pointIds.at(i);
         m_lastReadItemId = binding.itemId;
-        if (SUCCEEDED(itemHr) && states) {
-            anySuccess = true;
-            binding.lastValue = variantToQVariant(&states[i].vDataValue);
+        const QVariant value = states ? variantToQVariant(&states[i].vDataValue) : QVariant();
+        if (states) {
             binding.lastQuality = states[i].wQuality;
             binding.lastTimestamp = fileTimeToDateTime(&states[i].ftTimeStamp);
             m_lastQuality = binding.lastQuality;
             m_lastQualityText = qualityToString(binding.lastQuality);
-            m_lastTimestampSource = binding.lastTimestamp.isValid() ? QStringLiteral("opc-da") : QStringLiteral("local");
+            m_lastTimestampSource = binding.lastTimestamp.isValid()
+                    ? QStringLiteral("opc-da")
+                    : QStringLiteral("local");
+        }
+        if (SUCCEEDED(itemHr) && states && hasOpcPayload(value)) {
+            binding.lastValue = value;
             RuntimePointValue current;
             current.pointId = pointIds.at(i);
             current.value = binding.lastValue;
@@ -1160,29 +1464,39 @@ bool MatrikonOpcServer::refreshItems(QString* errorMessage)
             ++m_successfulReadCount;
             m_lastSuccessfulReadTime = m_lastReadTime;
         } else {
+            allSuccess = false;
+            binding.lastValue.clear();
+            m_values.remove(pointIds.at(i));
             ++m_failedReadCount;
             m_lastFailedReadTime = m_lastReadTime;
             m_lastReadMessage = QStringLiteral("OPC DA read failed for %1: %2")
-                    .arg(binding.itemId, hresultToString(itemHr));
+                    .arg(binding.itemId,
+                         SUCCEEDED(itemHr)
+                                 ? QStringLiteral("null or unsupported value")
+                                 : hresultToString(itemHr));
+            failures << m_lastReadMessage;
         }
         m_itemsByPointId.insert(pointIds.at(i), binding);
     }
 
-    if (states) {
-        for (int i = 0; i < pointIds.size(); ++i) {
-            VariantClear(&states[i].vDataValue);
-        }
-        CoTaskMemFree(states);
+    freeReadResults();
+    m_refreshOk = allSuccess;
+    m_lastRefreshMessage = allSuccess
+            ? QStringLiteral("OPC DA initial read ok")
+            : QStringLiteral("OPC DA initial read partial failure: %1")
+                      .arg(failures.join(QStringLiteral("; ")));
+    if (!allSuccess && errorMessage) {
+        *errorMessage = m_lastRefreshMessage;
     }
-    if (errors) {
-        CoTaskMemFree(errors);
-    }
-    return anySuccess;
+    return allSuccess;
 #endif
 }
 
 bool MatrikonOpcServer::runReadProbe(QString* errorMessage)
 {
+    if (errorMessage) {
+        errorMessage->clear();
+    }
     m_readProbeAttempted = true;
     m_readProbeOk = false;
     m_readProbePointId.clear();
@@ -1209,9 +1523,16 @@ bool MatrikonOpcServer::runReadProbe(QString* errorMessage)
         return false;
     }
 
+    QString lastProbeError;
     for (auto it = m_itemsByPointId.constBegin(); it != m_itemsByPointId.constEnd(); ++it) {
         if (it->active && it->serverHandle != 0) {
-            return readProbeHandle(it.key(), it->itemId, it->serverHandle, true, errorMessage);
+            QString probeError;
+            if (readProbeHandle(it.key(), it->itemId, it->serverHandle, true, &probeError)) {
+                return true;
+            }
+            if (!probeError.isEmpty()) {
+                lastProbeError = probeError;
+            }
         }
     }
 
@@ -1225,13 +1546,13 @@ bool MatrikonOpcServer::runReadProbe(QString* errorMessage)
             return true;
         }
         if (!probeError.isEmpty()) {
-            m_readProbeMessage = probeError;
+            lastProbeError = probeError;
         }
     }
 
-    if (m_readProbeMessage.isEmpty()) {
-        m_readProbeMessage = QStringLiteral("No readable OPC DA probe item was found");
-    }
+    m_readProbeMessage = lastProbeError.isEmpty()
+            ? QStringLiteral("No readable OPC DA probe item was found")
+            : lastProbeError;
     if (errorMessage) {
         *errorMessage = m_readProbeMessage;
     }
@@ -1250,9 +1571,14 @@ bool MatrikonOpcServer::readProbeHandle(const QString& pointId,
     Q_UNUSED(itemId)
     Q_UNUSED(serverHandle)
     Q_UNUSED(updateRuntimeValue)
-    Q_UNUSED(errorMessage)
+    if (errorMessage) {
+        *errorMessage = QStringLiteral("OPC DA read probe is only available on Windows COM");
+    }
     return false;
 #else
+    if (errorMessage) {
+        errorMessage->clear();
+    }
     m_readProbeAttempted = true;
     m_readProbeOk = false;
     m_readProbePointId = pointId;
@@ -1262,6 +1588,7 @@ bool MatrikonOpcServer::readProbeHandle(const QString& pointId,
     m_readProbeQualityText.clear();
     m_readProbeTimestamp = QDateTime();
     m_readProbeTime = QDateTime::currentDateTimeUtc();
+    m_readProbeMessage.clear();
 
     if (!m_syncIO || serverHandle == 0) {
         m_readProbeMessage = QStringLiteral("OPC DA read probe target is not active: %1").arg(itemId);
@@ -1278,12 +1605,15 @@ bool MatrikonOpcServer::readProbeHandle(const QString& pointId,
     m_lastReadTime = m_readProbeTime;
 
     const HRESULT itemHr = errors ? errors[0] : hr;
-    const bool ok = SUCCEEDED(hr) && SUCCEEDED(itemHr) && state;
-    if (ok) {
-        m_readProbeOk = true;
-        m_readProbeValue = variantToQVariant(&state[0].vDataValue);
+    const QVariant value = state ? variantToQVariant(&state[0].vDataValue) : QVariant();
+    const bool ok = SUCCEEDED(hr) && SUCCEEDED(itemHr) && state && hasOpcPayload(value);
+    if (state) {
         m_readProbeQuality = state[0].wQuality;
         m_readProbeQualityText = qualityToString(m_readProbeQuality);
+    }
+    if (ok) {
+        m_readProbeOk = true;
+        m_readProbeValue = value;
         m_readProbeTimestamp = fileTimeToDateTime(&state[0].ftTimeStamp);
         m_readProbeMessage = QStringLiteral("OPC DA read probe ok: %1").arg(itemId);
 
@@ -1313,12 +1643,23 @@ bool MatrikonOpcServer::readProbeHandle(const QString& pointId,
             m_values.insert(pointId, current);
         }
     } else {
-        m_readProbeMessage = QStringLiteral("OPC DA read probe failed for %1: %2 / %3")
-                .arg(itemId, hresultToString(hr), hresultToString(itemHr));
+        m_readProbeMessage = QStringLiteral("OPC DA read probe failed for %1: %2")
+                .arg(itemId,
+                     SUCCEEDED(hr) && SUCCEEDED(itemHr)
+                             ? QStringLiteral("null or unsupported value")
+                             : QStringLiteral("%1 / %2")
+                                       .arg(hresultToString(hr), hresultToString(itemHr)));
         m_lastReadPointId = pointId;
         m_lastReadItemId = itemId;
         m_lastReadMessage = m_readProbeMessage;
         m_lastFailedReadTime = m_readProbeTime;
+        if (state) {
+            m_lastQuality = m_readProbeQuality;
+            m_lastQualityText = m_readProbeQualityText;
+        }
+        if (!pointId.isEmpty()) {
+            m_values.remove(pointId);
+        }
         ++m_failedReadCount;
         if (errorMessage) {
             *errorMessage = m_readProbeMessage;
@@ -1685,6 +2026,14 @@ void MatrikonOpcServer::applyDataChange(const DataChangePayload& payload)
 {
     ++m_callbackCount;
     m_lastCallbackTime = QDateTime::currentDateTimeUtc();
+    const bool masterOk = payload.masterQuality >= 0 && payload.masterError >= 0;
+    if (!masterOk) {
+        m_lastReadMessage = QStringLiteral("OPC DA callback master failed: quality=%1 error=%2")
+                .arg(hresultToString(payload.masterQuality), hresultToString(payload.masterError));
+        m_lastErrorCode = CommErrorCode::ConnectionFailed;
+        m_lastErrorMessage = m_lastReadMessage;
+        m_lastFailedReadTime = m_lastCallbackTime;
+    }
 
     for (int i = 0; i < payload.clientHandles.size(); ++i) {
         const QString pointId = pointIdForClientHandle(payload.clientHandles.at(i));
@@ -1693,21 +2042,24 @@ void MatrikonOpcServer::applyDataChange(const DataChangePayload& payload)
         }
 
         const long itemError = i < payload.errors.size() ? payload.errors.at(i) : 0;
+        const QVariant value = i < payload.values.size() ? payload.values.at(i) : QVariant();
         ItemBinding binding = m_itemsByPointId.value(pointId);
-        binding.lastResult = itemError;
+        binding.lastResult = masterOk
+                ? itemError
+                : (payload.masterError < 0 ? payload.masterError : payload.masterQuality);
         m_lastReadPointId = pointId;
         m_lastReadItemId = binding.itemId;
-        if (itemError >= 0) {
-            binding.lastValue = i < payload.values.size() ? payload.values.at(i) : QVariant();
-            binding.lastQuality = i < payload.qualities.size() ? payload.qualities.at(i) : 0;
-            binding.lastTimestamp = i < payload.timestamps.size()
-                    ? payload.timestamps.at(i)
-                    : QDateTime();
-            m_lastQuality = binding.lastQuality;
-            m_lastQualityText = qualityToString(binding.lastQuality);
-            m_lastTimestampSource = binding.lastTimestamp.isValid()
-                    ? QStringLiteral("opc-da")
-                    : QStringLiteral("local");
+        binding.lastQuality = i < payload.qualities.size() ? payload.qualities.at(i) : 0;
+        binding.lastTimestamp = i < payload.timestamps.size()
+                ? payload.timestamps.at(i)
+                : QDateTime();
+        m_lastQuality = binding.lastQuality;
+        m_lastQualityText = qualityToString(binding.lastQuality);
+        m_lastTimestampSource = binding.lastTimestamp.isValid()
+                ? QStringLiteral("opc-da")
+                : QStringLiteral("local");
+        if (masterOk && itemError >= 0 && hasOpcPayload(value)) {
+            binding.lastValue = value;
 
             RuntimePointValue current;
             current.pointId = pointId;
@@ -1718,11 +2070,25 @@ void MatrikonOpcServer::applyDataChange(const DataChangePayload& payload)
                     : m_lastCallbackTime;
             current.origin = QStringLiteral("opc-da-callback");
             m_values.insert(pointId, current);
+            ++m_successfulReadCount;
             m_lastSuccessfulReadTime = m_lastCallbackTime;
         } else {
-            m_lastReadMessage = QStringLiteral("OPC DA callback item failed: %1")
-                    .arg(hresultToString(itemError));
+            binding.lastValue.clear();
+            m_values.remove(pointId);
+            if (!masterOk) {
+                m_lastReadMessage = QStringLiteral("OPC DA callback item rejected by master status: %1 / %2")
+                        .arg(hresultToString(payload.masterQuality),
+                             hresultToString(payload.masterError));
+            } else if (itemError < 0) {
+                m_lastReadMessage = QStringLiteral("OPC DA callback item failed: %1")
+                        .arg(hresultToString(itemError));
+            } else {
+                m_lastReadMessage = QStringLiteral("OPC DA callback item has null or unsupported value");
+            }
             m_lastFailedReadTime = m_lastCallbackTime;
+            m_lastErrorCode = CommErrorCode::ConnectionFailed;
+            m_lastErrorMessage = m_lastReadMessage;
+            ++m_failedReadCount;
         }
         m_itemsByPointId.insert(pointId, binding);
     }
@@ -2036,6 +2402,10 @@ QVariant MatrikonOpcServer::variantToQVariant(const void* variant)
         return {};
     }
     switch (v->vt) {
+    case VT_EMPTY:
+    case VT_NULL:
+    case VT_ERROR:
+        return {};
     case VT_BOOL:
         return v->boolVal == VARIANT_TRUE;
     case VT_I1:
@@ -2047,17 +2417,27 @@ QVariant MatrikonOpcServer::variantToQVariant(const void* variant)
     case VT_UI2:
         return static_cast<uint>(v->uiVal);
     case VT_I4:
-    case VT_INT:
         return static_cast<int>(v->lVal);
     case VT_UI4:
-    case VT_UINT:
         return static_cast<uint>(v->ulVal);
+    case VT_INT:
+        return static_cast<int>(v->intVal);
+    case VT_UINT:
+        return static_cast<uint>(v->uintVal);
+    case VT_I8:
+        return static_cast<qlonglong>(v->llVal);
+    case VT_UI8:
+        return static_cast<qulonglong>(v->ullVal);
     case VT_R4:
-        return static_cast<double>(v->fltVal);
+        return static_cast<float>(v->fltVal);
     case VT_R8:
         return v->dblVal;
     case VT_BSTR:
-        return v->bstrVal ? QString::fromWCharArray(v->bstrVal) : QString();
+        return v->bstrVal ? QString::fromWCharArray(v->bstrVal) : QVariant();
+    case VT_LPSTR:
+        return v->pszVal ? QString::fromLocal8Bit(v->pszVal) : QVariant();
+    case VT_LPWSTR:
+        return v->pwszVal ? QString::fromWCharArray(v->pwszVal) : QVariant();
     default:
         return {};
     }
@@ -2079,6 +2459,12 @@ bool MatrikonOpcServer::setVariantValue(const QVariant& value, void* variant, QS
         }
         return false;
     }
+    if (!value.isValid() || value.isNull()) {
+        if (errorMessage) {
+            *errorMessage = QStringLiteral("OPC DA cannot write a null value");
+        }
+        return false;
+    }
 
     switch (value.type()) {
     case QVariant::Bool:
@@ -2094,12 +2480,12 @@ bool MatrikonOpcServer::setVariantValue(const QVariant& value, void* variant, QS
         v->ulVal = value.toUInt();
         return true;
     case QVariant::LongLong:
-        v->vt = VT_I4;
-        v->lVal = static_cast<LONG>(value.toLongLong());
+        v->vt = VT_I8;
+        v->llVal = static_cast<LONGLONG>(value.toLongLong());
         return true;
     case QVariant::ULongLong:
-        v->vt = VT_UI4;
-        v->ulVal = static_cast<ULONG>(value.toULongLong());
+        v->vt = VT_UI8;
+        v->ullVal = static_cast<ULONGLONG>(value.toULongLong());
         return true;
     case QVariant::Double:
         v->vt = VT_R8;
@@ -2118,9 +2504,11 @@ bool MatrikonOpcServer::setVariantValue(const QVariant& value, void* variant, QS
         return true;
     }
     default:
-        v->vt = VT_R8;
-        v->dblVal = value.toDouble();
-        return true;
+        if (errorMessage) {
+            *errorMessage = QStringLiteral("Unsupported OPC DA write value type: %1")
+                    .arg(value.typeName() ? QString::fromLatin1(value.typeName()) : QStringLiteral("unknown"));
+        }
+        return false;
     }
 #endif
 }

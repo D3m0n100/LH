@@ -111,19 +111,99 @@ struct ResolvedCommConfig
 {
     CommProtocolType type = CommProtocolType::Unknown;
     QVariantMap parameters;
+    bool valid = false;
 
-    bool isValid() const { return type != CommProtocolType::Unknown; }
+    bool isValid() const { return valid && type != CommProtocolType::Unknown; }
 };
 
 namespace Detail {
 
 inline QString normalizedToken(QString value)
 {
-    value = value.trimmed().toUpper();
-    value.remove(QLatin1Char('-'));
-    value.remove(QLatin1Char('_'));
-    value.remove(QLatin1Char(' '));
-    return value;
+    return commNormalizeToken(value);
+}
+
+inline bool modeIsAllowed(CommProtocolType type, const QString& mode)
+{
+    switch (type) {
+    case CommProtocolType::ModbusRTU:
+    case CommProtocolType::ModbusTCP:
+        return mode == QStringLiteral("RTU")
+                || mode == QStringLiteral("TCP")
+                || mode == QStringLiteral("MODBUS");
+    case CommProtocolType::Serial:
+        return mode == QStringLiteral("RAW")
+                || mode == QStringLiteral("MODBUS")
+                || mode == QStringLiteral("MODBUSRTU")
+                || mode == QStringLiteral("RTU")
+                || mode == QStringLiteral("CUSTOM");
+    case CommProtocolType::EthernetTCP:
+    case CommProtocolType::EthernetUDP:
+        return mode == QStringLiteral("TCP") || mode == QStringLiteral("UDP");
+    default:
+        return true;
+    }
+}
+
+inline bool protocolModeIsConsistent(const QString& protocol, const QString& mode)
+{
+    if (protocol == QStringLiteral("MODBUSRTU") || protocol == QStringLiteral("RTU")) {
+        return mode == QStringLiteral("RTU");
+    }
+    if (protocol == QStringLiteral("TCP")) {
+        return mode == QStringLiteral("TCP");
+    }
+    if (protocol == QStringLiteral("MODBUSTCP")) {
+        return mode == QStringLiteral("TCP");
+    }
+    if (protocol == QStringLiteral("MODBUS")) {
+        return mode == QStringLiteral("RTU") || mode == QStringLiteral("TCP")
+                || mode == QStringLiteral("MODBUS");
+    }
+    if (protocol == QStringLiteral("ETHERNET")) {
+        return mode == QStringLiteral("TCP") || mode == QStringLiteral("UDP");
+    }
+    if (protocol == QStringLiteral("UDP")) {
+        return mode == QStringLiteral("UDP");
+    }
+    if (protocol == QStringLiteral("RAW")) {
+        return mode == QStringLiteral("RAW");
+    }
+    if (protocol == QStringLiteral("CUSTOM")) {
+        return mode == QStringLiteral("CUSTOM");
+    }
+    if (protocol == QStringLiteral("AUTO")) {
+        return mode == QStringLiteral("RAW");
+    }
+    if (protocol == QStringLiteral("SERIAL") || protocol == QStringLiteral("RS232")
+            || protocol == QStringLiteral("RS485")) {
+        return mode == QStringLiteral("RAW") || mode == QStringLiteral("MODBUS")
+                || mode == QStringLiteral("MODBUSRTU") || mode == QStringLiteral("RTU")
+                || mode == QStringLiteral("CUSTOM");
+    }
+    return true;
+}
+
+inline bool validateTargetConfig(CommProtocolType type, const QVariantMap& parameters)
+{
+    switch (type) {
+    case CommProtocolType::Serial: {
+        SerialConfig cfg;
+        return cfg.fromVariantMap(parameters) && cfg.isValid();
+    }
+    case CommProtocolType::ModbusRTU:
+    case CommProtocolType::ModbusTCP: {
+        ModbusConfig cfg;
+        return cfg.fromVariantMap(parameters) && cfg.isValid();
+    }
+    case CommProtocolType::EthernetTCP:
+    case CommProtocolType::EthernetUDP: {
+        EthernetConfig cfg;
+        return cfg.fromVariantMap(parameters) && cfg.isValid();
+    }
+    default:
+        return type != CommProtocolType::Unknown;
+    }
 }
 
 inline void mergeMissing(QVariantMap& target, const QVariantMap& source)
@@ -182,6 +262,11 @@ inline ResolvedCommConfig resolveConfig(const QVariantMap& config)
             resolved.parameters.value(QStringLiteral("protocol")).toString());
     QString mode = Detail::normalizedToken(
             resolved.parameters.value(QStringLiteral("mode")).toString());
+
+    if (resolved.parameters.contains(QStringLiteral("mode"))
+            && !Detail::protocolModeIsConsistent(protocol, mode)) {
+        return resolved;
+    }
 
     if (protocol == QStringLiteral("MODBUSRTU") || protocol == QStringLiteral("RTU")) {
         resolved.type = CommProtocolType::ModbusRTU;
@@ -251,6 +336,18 @@ inline ResolvedCommConfig resolveConfig(const QVariantMap& config)
         }
     }
 
+    if (resolved.type == CommProtocolType::Unknown) {
+        return resolved;
+    }
+
+    if (resolved.parameters.contains(QStringLiteral("mode"))
+            && !Detail::modeIsAllowed(
+                    resolved.type,
+                    Detail::normalizedToken(
+                            resolved.parameters.value(QStringLiteral("mode")).toString()))) {
+        return resolved;
+    }
+
     switch (resolved.type) {
     case CommProtocolType::ModbusRTU:
         resolved.parameters.insert(QStringLiteral("protocol"), QStringLiteral("MODBUS"));
@@ -274,6 +371,8 @@ inline ResolvedCommConfig resolveConfig(const QVariantMap& config)
     default:
         break;
     }
+
+    resolved.valid = Detail::validateTargetConfig(resolved.type, resolved.parameters);
 
     return resolved;
 }

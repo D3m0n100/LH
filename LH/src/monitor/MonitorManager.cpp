@@ -621,14 +621,33 @@ void MonitorManager::onCleanupTimeout()
         return;
     }
 
-    QDateTime cutoff = QDateTime::currentDateTimeUtc().addDays(-m_dataRetentionDays);
+    const QDateTime cutoff = QDateTime::currentDateTimeUtc().addDays(-m_dataRetentionDays);
 
-    QReadLocker locker(&m_channelLock);
-    for (auto& ch : m_channels) {
-        ch->purgeOlderThan(cutoff);
+    {
+        QReadLocker locker(&m_channelLock);
+        for (auto& ch : m_channels) {
+            ch->purgeOlderThan(cutoff);
+        }
     }
 
-    qDebug() << "[MonitorManager] 数据清理完成，截止时间:" << cutoff;
+    qDebug() << "[MonitorManager] 内存数据清理完成，截止时间:" << cutoff;
+
+    if (!isDatabaseLoggingEnabled()) {
+        return;
+    }
+
+    DataManager& dataManager = DataManager::instance();
+    if (!dataManager.isInitialized()) {
+        return;
+    }
+
+    const int deleted = dataManager.cleanupOldData(m_dataRetentionDays);
+    if (deleted < 0) {
+        qWarning() << "[MonitorManager] 持久化数据清理失败";
+        return;
+    }
+
+    qDebug() << "[MonitorManager] 持久化数据清理完成，删除记录:" << deleted;
 }
 
 
@@ -677,375 +696,506 @@ bool MonitorManager::applyConfiguration(const ProjectRuntimeConfig& config)
              << "providers=" << config.providers.size()
              << "mappings=" << config.dslMappings.size();
 
-    const bool wasMonitoring = m_isMonitoring;
+    constexpr int kMinPeriodMs = 1;
+    constexpr int kMaxPeriodMs = 10000;
+
+    struct Candidate {
+        QMap<QString, ChannelConfig> channelConfigs;
+        QMap<QString, ProviderConfig> providers;
+        QStringList backendPointIds;
+        QHash<QString, QString> pointIdToChannel;
+        QHash<QString, int> backendPointPeriodsMs;
+        int backendPollIntervalMs = 0;
+    } candidate;
+
+    QHash<QString, DslMappingEntry> mappingById;
+    QHash<QString, DslMappingEntry> mappingByChannel;
+    QSet<QString> mappingIds;
+    QSet<QString> mappingChannels;
+    mappingById.reserve(config.dslMappings.size());
+    mappingByChannel.reserve(config.dslMappings.size());
+
+    auto addChannelConfig = [&](const ChannelConfig& channelConfig) {
+        const QString name = channelConfig.name.trimmed();
+        if (name.isEmpty()) {
+            qWarning() << "[MonitorManager] 候选通道名称为空";
+            return false;
+        }
+        if (candidate.channelConfigs.contains(name)) {
+            qWarning() << "[MonitorManager] 候选通道名称重复:" << name;
+            return false;
+        }
+        ChannelConfig normalized = channelConfig;
+        normalized.name = name;
+        candidate.channelConfigs.insert(name, normalized);
+        return true;
+    };
+
+    for (const auto& rawEntry : config.dslMappings) {
+        const QString mappingId = rawEntry.id.trimmed();
+        const QString channelName = rawEntry.channelName.trimmed();
+        if (channelName.isEmpty()) {
+            qWarning() << "[MonitorManager] dslMappings 候选缺少 channelName，id="
+                       << rawEntry.id << "channel=" << rawEntry.channelName;
+            return false;
+        }
+        if (rawEntry.periodMs < kMinPeriodMs || rawEntry.periodMs > kMaxPeriodMs) {
+            qWarning() << "[MonitorManager] dslMappings 周期非法:" << rawEntry.periodMs
+                       << "channel=" << channelName;
+            return false;
+        }
+        if (rawEntry.lineNumber < -1) {
+            qWarning() << "[MonitorManager] dslMappings 行号非法:" << rawEntry.lineNumber
+                       << "id=" << mappingId;
+            return false;
+        }
+        if ((!mappingId.isEmpty() && mappingIds.contains(mappingId))
+                || mappingChannels.contains(channelName)) {
+            qWarning() << "[MonitorManager] dslMappings 存在重复 id/channel:" << mappingId
+                       << channelName;
+            return false;
+        }
+
+        DslMappingEntry entry = rawEntry;
+        entry.id = mappingId;
+        entry.channelName = channelName;
+        if (!mappingId.isEmpty()) {
+            mappingIds.insert(mappingId);
+        }
+        mappingChannels.insert(channelName);
+        if (!mappingId.isEmpty()) {
+            mappingById.insert(mappingId, entry);
+        }
+        mappingByChannel.insert(channelName, entry);
+
+        ChannelConfig channelConfig;
+        channelConfig.name = channelName;
+        channelConfig.unit = entry.unit;
+        channelConfig.displayName = !entry.snippetName.trimmed().isEmpty()
+                                        ? entry.snippetName.trimmed()
+                                        : channelName;
+        channelConfig.maxSamples = Limits::DEFAULT_RING_BUFFER_CAPACITY;
+        channelConfig.metadata["mappingId"] = entry.id;
+        channelConfig.metadata["snippetId"] = entry.snippetId;
+        channelConfig.metadata["snippetName"] = entry.snippetName;
+        channelConfig.metadata["signalPath"] = entry.signalPath;
+        channelConfig.metadata["lineNumber"] = entry.lineNumber;
+        channelConfig.metadata["periodMs"] = entry.periodMs;
+        channelConfig.metadata["projectName"] = config.projectName;
+        channelConfig.metadata[kRuntimeManagedKey] = true;
+        if (!addChannelConfig(channelConfig)) {
+            return false;
+        }
+    }
+
+    QList<MonitorProviderRuntimeConfig> providers = config.providers;
+    if (providers.isEmpty() && !config.dslMappings.isEmpty()) {
+        providers.reserve(config.dslMappings.size());
+        for (const auto& rawEntry : config.dslMappings) {
+            const auto mappingIt = mappingByChannel.constFind(rawEntry.channelName.trimmed());
+            if (mappingIt == mappingByChannel.constEnd()) {
+                return false;
+            }
+            const DslMappingEntry& entry = mappingIt.value();
+            MonitorProviderRuntimeConfig provider;
+            provider.id = entry.id.isEmpty() ? entry.channelName : entry.id;
+            provider.channelName = entry.channelName;
+            provider.unit = entry.unit;
+            provider.periodMs = entry.periodMs;
+            provider.priority = 128;
+            provider.metadata = entry.metadata;
+            provider.metadata["snippetId"] = entry.snippetId;
+            provider.metadata["snippetName"] = entry.snippetName;
+            provider.metadata["mappingId"] = entry.id;
+            provider.metadata["signalPath"] = entry.signalPath;
+            providers.push_back(provider);
+        }
+    }
+
+    QSet<QString> providerChannels;
+    for (const auto& rawProvider : providers) {
+        const QString providerId = rawProvider.id.trimmed();
+        const QString channelName = rawProvider.channelName.trimmed();
+        if (providerId.isEmpty() || channelName.isEmpty()) {
+            qWarning() << "[MonitorManager] provider 候选缺少 id/channelName，id="
+                       << rawProvider.id << "channel=" << rawProvider.channelName;
+            return false;
+        }
+        if (rawProvider.periodMs < kMinPeriodMs || rawProvider.periodMs > kMaxPeriodMs) {
+            qWarning() << "[MonitorManager] provider 周期非法:" << rawProvider.periodMs
+                       << "id=" << providerId;
+            return false;
+        }
+        if (rawProvider.priority < 0 || rawProvider.priority > 255) {
+            qWarning() << "[MonitorManager] provider priority 非法:" << rawProvider.priority
+                       << "id=" << providerId;
+            return false;
+        }
+        if (providerChannels.contains(channelName)) {
+            qWarning() << "[MonitorManager] provider 通道重复:" << channelName;
+            return false;
+        }
+        providerChannels.insert(channelName);
+
+        const auto mappingIt = mappingById.constFind(providerId);
+        if (mappingIt != mappingById.constEnd()
+                && mappingIt->channelName.trimmed() != channelName) {
+            qWarning() << "[MonitorManager] provider/mapping 通道不匹配:" << providerId
+                       << mappingIt->channelName << channelName;
+            return false;
+        }
+
+        if (!candidate.channelConfigs.contains(channelName)) {
+            ChannelConfig channelConfig;
+            channelConfig.name = channelName;
+            channelConfig.unit = rawProvider.unit;
+            channelConfig.displayName = channelName;
+            channelConfig.maxSamples = Limits::DEFAULT_RING_BUFFER_CAPACITY;
+            channelConfig.metadata = rawProvider.metadata;
+            channelConfig.metadata["projectName"] = config.projectName;
+            channelConfig.metadata["periodMs"] = rawProvider.periodMs;
+            channelConfig.metadata[kRuntimeManagedKey] = true;
+            if (mappingIt != mappingById.constEnd()) {
+                const auto& mapping = mappingIt.value();
+                if (!mapping.snippetName.trimmed().isEmpty()) {
+                    channelConfig.displayName = mapping.snippetName.trimmed();
+                }
+                channelConfig.metadata["mappingId"] = mapping.id;
+                channelConfig.metadata["snippetId"] = mapping.snippetId;
+                channelConfig.metadata["snippetName"] = mapping.snippetName;
+                channelConfig.metadata["signalPath"] = mapping.signalPath;
+                channelConfig.metadata["lineNumber"] = mapping.lineNumber;
+            } else if (mappingByChannel.contains(channelName)) {
+                const auto& mapping = mappingByChannel.value(channelName);
+                if (!mapping.snippetName.trimmed().isEmpty()) {
+                    channelConfig.displayName = mapping.snippetName.trimmed();
+                }
+                channelConfig.metadata["mappingId"] = mapping.id;
+                channelConfig.metadata["snippetId"] = mapping.snippetId;
+                channelConfig.metadata["snippetName"] = mapping.snippetName;
+                channelConfig.metadata["signalPath"] = mapping.signalPath;
+                channelConfig.metadata["lineNumber"] = mapping.lineNumber;
+            }
+            if (!addChannelConfig(channelConfig)) {
+                return false;
+            }
+        }
+
+        ProviderConfig provider;
+        provider.id = providerId;
+        provider.channelName = channelName;
+        provider.unit = rawProvider.unit;
+        provider.periodMs = rawProvider.periodMs;
+        provider.priority = rawProvider.priority;
+        provider.metadata = rawProvider.metadata;
+        provider.metadata["projectName"] = config.projectName;
+        provider.metadata[kRuntimeManagedKey] = true;
+        if (mappingIt != mappingById.constEnd()) {
+            const auto& mapping = mappingIt.value();
+            provider.metadata["snippetId"] = mapping.snippetId;
+            provider.metadata["snippetName"] = mapping.snippetName;
+            provider.metadata["mappingId"] = mapping.id;
+            provider.metadata["signalPath"] = mapping.signalPath;
+            provider.metadata["lineNumber"] = mapping.lineNumber;
+        } else if (mappingByChannel.contains(channelName)) {
+            const auto& mapping = mappingByChannel.value(channelName);
+            provider.metadata["snippetId"] = mapping.snippetId;
+            provider.metadata["snippetName"] = mapping.snippetName;
+            provider.metadata["mappingId"] = mapping.id;
+            provider.metadata["signalPath"] = mapping.signalPath;
+            provider.metadata["lineNumber"] = mapping.lineNumber;
+        }
+
+        if (!m_backend) {
+            const QString snippetId = provider.metadata.value("snippetId").toString();
+            provider.sampler = makeDemoSampler(provider.id, provider.channelName,
+                                               provider.unit, snippetId, provider.metadata);
+            provider.errorHandler = [pid = provider.id](const QString& error) {
+                qWarning() << "[MonitorManager] provider error:" << pid << error;
+            };
+        }
+        candidate.providers.insert(provider.id, provider);
+
+        if (m_backend) {
+            const int periodMs = qMax(kMinPeriodMs, provider.periodMs);
+            if (!candidate.backendPointPeriodsMs.contains(provider.id)) {
+                candidate.backendPointIds.append(provider.id);
+                candidate.backendPointPeriodsMs.insert(provider.id, periodMs);
+            } else {
+                candidate.backendPointPeriodsMs[provider.id] =
+                    qMin(candidate.backendPointPeriodsMs.value(provider.id), periodMs);
+            }
+            candidate.pointIdToChannel.insert(provider.id, provider.channelName);
+            if (candidate.backendPollIntervalMs <= 0
+                    || periodMs < candidate.backendPollIntervalMs) {
+                candidate.backendPollIntervalMs = periodMs;
+            }
+        }
+    }
+
+    auto addObjectChannel = [&](const QString& sourceName,
+                                const QString& channelName,
+                                const QString& displayName,
+                                const QString& unit,
+                                MonitorObjectKind kind,
+                                bool editable,
+                                const QVariantMap& extraMetadata) {
+        const QString normalizedSource = sourceName.trimmed();
+        const QString normalizedChannel = channelName.trimmed();
+        if (normalizedSource.isEmpty() || normalizedChannel.isEmpty()) {
+            qWarning() << "[MonitorManager] 监控对象候选缺少名称:" << sourceName;
+            return false;
+        }
+        ChannelConfig channelConfig;
+        channelConfig.name = normalizedChannel;
+        channelConfig.displayName = displayName.trimmed().isEmpty()
+                                        ? normalizedChannel
+                                        : displayName.trimmed();
+        channelConfig.unit = unit;
+        channelConfig.maxSamples = Limits::DEFAULT_RING_BUFFER_CAPACITY;
+        channelConfig.objectKind = kind;
+        channelConfig.sourceName = normalizedSource;
+        channelConfig.editable = editable;
+        channelConfig.defaultVisible = false;
+        channelConfig.metadata = extraMetadata;
+        channelConfig.metadata["projectName"] = config.projectName;
+        channelConfig.metadata["objectKind"] = static_cast<int>(kind);
+        channelConfig.metadata["sourceName"] = normalizedSource;
+        channelConfig.metadata["editable"] = editable;
+        channelConfig.metadata[kRuntimeManagedKey] = true;
+        return addChannelConfig(channelConfig);
+    };
+
+    QSet<QString> variableIds;
+    QSet<QString> variableNames;
+    for (const auto& variable : config.variables) {
+        const QString id = variable.id.trimmed();
+        const QString name = variable.name.trimmed();
+        if (id.isEmpty() || name.isEmpty() || variable.dataType.trimmed().isEmpty()
+                || variableIds.contains(id) || variableNames.contains(name)) {
+            qWarning() << "[MonitorManager] 变量候选字段非法或重复:" << id << name;
+            return false;
+        }
+        variableIds.insert(id);
+        variableNames.insert(name);
+        QVariantMap metadata = variable.metadata;
+        metadata["variableId"] = id;
+        metadata["variableName"] = name;
+        metadata["dataType"] = variable.dataType;
+        metadata["scope"] = variable.scope;
+        metadata["binding"] = variable.binding;
+        metadata["defaultValue"] = variable.defaultValue;
+        if (!addObjectChannel(name, QStringLiteral("var::%1").arg(name), name,
+                              QStringLiteral("var"), MonitorObjectKind::Variable,
+                              !variable.readOnly, metadata)) {
+            return false;
+        }
+    }
+
+    QSet<QString> parameterIds;
+    QSet<QString> parameterNames;
+    for (const auto& parameter : config.parameters) {
+        const QString id = parameter.id.trimmed();
+        const QString name = parameter.name.trimmed();
+        if (id.isEmpty() || name.isEmpty() || parameter.dataType.trimmed().isEmpty()
+                || parameterIds.contains(id) || parameterNames.contains(name)) {
+            qWarning() << "[MonitorManager] 参数候选字段非法或重复:" << id << name;
+            return false;
+        }
+        parameterIds.insert(id);
+        parameterNames.insert(name);
+        QVariantMap metadata = parameter.metadata;
+        metadata["parameterId"] = id;
+        metadata["parameterName"] = name;
+        metadata["dataType"] = parameter.dataType;
+        metadata["defaultValue"] = parameter.defaultValue;
+        metadata["minValue"] = parameter.minValue;
+        metadata["maxValue"] = parameter.maxValue;
+        metadata["unit"] = parameter.unit;
+        metadata["onlineEditable"] = parameter.onlineEditable;
+        if (!addObjectChannel(name, QStringLiteral("param::%1").arg(name), name,
+                              parameter.unit, MonitorObjectKind::Parameter,
+                              parameter.onlineEditable, metadata)) {
+            return false;
+        }
+    }
+
+    QSet<QString> resourceIds;
+    QSet<QString> resourceKeys;
+    for (const auto& resource : config.resources) {
+        const QString id = resource.id.trimmed();
+        const QString resourceChannel = resource.channel.trimmed();
+        const QString resourceName = resource.resourceName.trimmed();
+        const QString resourceType = resource.resourceType.trimmed();
+        const QString resourceKey = resourceType + QStringLiteral(":") + resourceChannel;
+        if (id.isEmpty() || resourceType.isEmpty() || resourceChannel.isEmpty()
+                || resourceIds.contains(id) || resourceKeys.contains(resourceKey)) {
+            qWarning() << "[MonitorManager] 资源候选字段非法或重复:" << id << resourceKey;
+            return false;
+        }
+        resourceIds.insert(id);
+        resourceKeys.insert(resourceKey);
+        const QString sourceName = resourceName.isEmpty() ? resourceChannel : resourceName;
+        const QString channelKey = resourceChannel;
+        QVariantMap metadata = resource.metadata;
+        metadata["resourceId"] = id;
+        metadata["resourceType"] = resourceType;
+        metadata["resourceName"] = resourceName;
+        metadata["channel"] = resourceChannel;
+        metadata["owner"] = resource.owner;
+        metadata["exclusive"] = resource.exclusive;
+        if (!addObjectChannel(sourceName, QStringLiteral("res::%1").arg(channelKey),
+                              sourceName, resourceType, MonitorObjectKind::Resource,
+                              false, metadata)) {
+            return false;
+        }
+    }
+
+    QSet<QString> preservedChannelNames;
+    {
+        QReadLocker locker(&m_channelLock);
+        for (auto it = m_channels.constBegin(); it != m_channels.constEnd(); ++it) {
+            if (it.value()
+                    && !it.value()->config().metadata.value(kRuntimeManagedKey).toBool()) {
+                preservedChannelNames.insert(it.key());
+            }
+        }
+    }
+    for (auto it = candidate.channelConfigs.constBegin();
+         it != candidate.channelConfigs.constEnd(); ++it) {
+        if (preservedChannelNames.contains(it.key())) {
+            qWarning() << "[MonitorManager] 候选通道覆盖非 runtime-managed 通道:" << it.key();
+            return false;
+        }
+    }
+
+    QSet<QString> preservedProviderIds;
+    {
+        QReadLocker locker(&m_providerLock);
+        for (auto it = m_providers.constBegin(); it != m_providers.constEnd(); ++it) {
+            if (!it.value().metadata.value(kRuntimeManagedKey).toBool()) {
+                preservedProviderIds.insert(it.key());
+            }
+        }
+    }
+    for (auto it = candidate.providers.constBegin(); it != candidate.providers.constEnd(); ++it) {
+        if (preservedProviderIds.contains(it.key())) {
+            qWarning() << "[MonitorManager] 候选 provider 覆盖非 runtime-managed provider:" << it.key();
+            return false;
+        }
+    }
+
+    QMap<QString, std::shared_ptr<MonitorChannel>> candidateChannels;
+    for (auto it = candidate.channelConfigs.constBegin();
+         it != candidate.channelConfigs.constEnd(); ++it) {
+        auto channel = std::make_shared<MonitorChannel>(it.value());
+        connectChannelSignals(channel);
+        candidateChannels.insert(it.key(), channel);
+    }
+
+    QMap<QString, QTimer*> candidateTimers;
+    for (auto it = candidate.providers.constBegin(); it != candidate.providers.constEnd(); ++it) {
+        if (!it.value().sampler || it.value().periodMs <= 0) {
+            continue;
+        }
+        auto* timer = new QTimer(this);
+        timer->setProperty("providerId", it.key());
+        connect(timer, &QTimer::timeout, this, &MonitorManager::onProviderTimeout);
+        timer->setInterval(it.value().periodMs);
+        candidateTimers.insert(it.key(), timer);
+    }
+
+    QStringList oldRuntimeChannelNames;
+    QMap<QString, std::shared_ptr<MonitorChannel>> nextChannels;
+    {
+        QReadLocker locker(&m_channelLock);
+        nextChannels = m_channels;
+        for (auto it = m_channels.constBegin(); it != m_channels.constEnd(); ++it) {
+            if (it.value()
+                    && it.value()->config().metadata.value(kRuntimeManagedKey).toBool()) {
+                oldRuntimeChannelNames.append(it.key());
+                nextChannels.remove(it.key());
+            }
+        }
+    }
+    for (auto it = candidateChannels.constBegin(); it != candidateChannels.constEnd(); ++it) {
+        nextChannels.insert(it.key(), it.value());
+    }
+
+    QStringList oldRuntimeProviderIds;
+    QMap<QString, ProviderConfig> nextProviders;
+    QMap<QString, QTimer*> nextTimers;
+    {
+        QReadLocker providerLocker(&m_providerLock);
+        nextProviders = m_providers;
+        nextTimers = m_providerTimers;
+        for (auto it = m_providers.constBegin(); it != m_providers.constEnd(); ++it) {
+            if (it.value().metadata.value(kRuntimeManagedKey).toBool()) {
+                oldRuntimeProviderIds.append(it.key());
+                nextProviders.remove(it.key());
+                nextTimers.remove(it.key());
+            }
+        }
+    }
+    for (auto it = candidate.providers.constBegin(); it != candidate.providers.constEnd(); ++it) {
+        nextProviders.insert(it.key(), it.value());
+    }
+    for (auto it = candidateTimers.constBegin(); it != candidateTimers.constEnd(); ++it) {
+        nextTimers.insert(it.key(), it.value());
+    }
+
+    const bool wasMonitoring = m_isMonitoring.load(std::memory_order_acquire);
     if (wasMonitoring) {
         stopMonitoring();
     }
 
-    bool success = true;
-    bool channelsTouched = false;
-
-    // ---------------------------------------------------------------------
-    // 1) 清理旧的 runtime-managed provider/channel（幂等）
-    // ---------------------------------------------------------------------
-
-    QStringList providersToRemove;
+    QMap<QString, std::shared_ptr<MonitorChannel>> previousChannels;
+    QMap<QString, ProviderConfig> previousProviders;
+    QMap<QString, QTimer*> previousTimers;
     {
-        QReadLocker locker(&m_providerLock);
-        for (auto it = m_providers.constBegin(); it != m_providers.constEnd(); ++it) {
-            if (it.value().metadata.value(kRuntimeManagedKey).toBool()) {
-                providersToRemove.push_back(it.key());
-            }
-        }
+        QWriteLocker channelLocker(&m_channelLock);
+        m_channels.swap(nextChannels);
     }
-    for (const QString& id : providersToRemove) {
-        if (!unregisterProvider(id)) {
-            qWarning() << "[MonitorManager] 清理旧采集器失败:" << id;
-            success = false;
-        }
-    }
-
-    QStringList channelsToRemove;
     {
-        QReadLocker locker(&m_channelLock);
-        for (auto it = m_channels.constBegin(); it != m_channels.constEnd(); ++it) {
-            const auto& ch = it.value();
-            if (!ch) {
-                continue;
-            }
-            if (ch->config().metadata.value(kRuntimeManagedKey).toBool()) {
-                channelsToRemove.push_back(it.key());
-            }
-        }
+        QWriteLocker providerLocker(&m_providerLock);
+        m_providers.swap(nextProviders);
+        m_providerTimers.swap(nextTimers);
     }
-    for (const QString& name : channelsToRemove) {
-        if (!removeChannel(name)) {
-            qWarning() << "[MonitorManager] 清理旧通道失败:" << name;
-            success = false;
-        } else {
-            channelsTouched = true;
+    previousChannels.swap(nextChannels);
+    previousProviders.swap(nextProviders);
+    previousTimers.swap(nextTimers);
+
+    for (const QString& providerId : oldRuntimeProviderIds) {
+        if (QTimer* timer = previousTimers.take(providerId)) {
+            timer->stop();
+            timer->deleteLater();
         }
     }
 
-    // 2) 基于 dslMappings/providers 注册通道
-    // ---------------------------------------------------------------------
-    // ---------------------------------------------------------------------
-
-    QSet<QString> registeredChannelNames;
-    QHash<QString, DslMappingEntry> mappingById;
-    QHash<QString, DslMappingEntry> mappingByChannel;
-    mappingById.reserve(config.dslMappings.size());
-    mappingByChannel.reserve(config.dslMappings.size());
-
-    for (const auto& entry : config.dslMappings) {
-        mappingById.insert(entry.id, entry);
-        if (!entry.channelName.isEmpty() && !mappingByChannel.contains(entry.channelName)) {
-            mappingByChannel.insert(entry.channelName, entry);
-        }
-
-        if (entry.channelName.trimmed().isEmpty()) {
-            qWarning() << "[MonitorManager] dslMappings 条目缺少 channelName，id=" << entry.id
-                       << "snippetId=" << entry.snippetId << "line=" << entry.lineNumber;
-            success = false;
-            continue;
-        }
-
-        ChannelConfig chCfg;
-        chCfg.name = entry.channelName.trimmed();
-        chCfg.unit = entry.unit;
-        chCfg.displayName = !entry.snippetName.trimmed().isEmpty()
-                                ? entry.snippetName.trimmed()
-                                : chCfg.name;
-        chCfg.maxSamples = Limits::DEFAULT_RING_BUFFER_CAPACITY;
-
-        // 填充可追溯元数据，便于 UI/导出/调试
-        chCfg.metadata["mappingId"] = entry.id;
-        chCfg.metadata["snippetId"] = entry.snippetId;
-        chCfg.metadata["snippetName"] = entry.snippetName;
-        chCfg.metadata["signalPath"] = entry.signalPath;
-        chCfg.metadata["lineNumber"] = entry.lineNumber;
-        chCfg.metadata["periodMs"] = entry.periodMs;
-        chCfg.metadata["projectName"] = config.projectName;
-        chCfg.metadata[kRuntimeManagedKey] = true;
-
-        if (!registerChannel(chCfg)) {
-            qWarning() << "[MonitorManager] 注册通道失败:" << chCfg.name;
-            success = false;
-            continue;
-        }
-        registeredChannelNames.insert(chCfg.name);
-        channelsTouched = true;
-    }
-
-    QList<MonitorProviderRuntimeConfig> providers = config.providers;
-    // providers 为空、mappings 非空时，从 mappings 派生 providers
-    for (const auto& p : providers) {
-        const QString chName = p.channelName.trimmed();
-        if (chName.isEmpty()) {
-            qWarning() << "[MonitorManager] providers 条目缺少 channelName，id=" << p.id;
-            success = false;
-            continue;
-        }
-        if (registeredChannelNames.contains(chName)) {
-            continue;
-        }
-
-        ChannelConfig chCfg;
-        chCfg.name = chName;
-        chCfg.unit = p.unit;
-        chCfg.displayName = chName;
-        chCfg.maxSamples = Limits::DEFAULT_RING_BUFFER_CAPACITY;
-        chCfg.metadata = p.metadata;
-        chCfg.metadata["projectName"] = config.projectName;
-        chCfg.metadata["periodMs"] = p.periodMs;
-        chCfg.metadata[kRuntimeManagedKey] = true;
-
-        // 如果能匹配到 mapping，则补齐显示名和额外元数据
-        if (mappingById.contains(p.id)) {
-            const auto& m = mappingById[p.id];
-            if (!m.snippetName.trimmed().isEmpty()) {
-                chCfg.displayName = m.snippetName.trimmed();
-            }
-            chCfg.metadata["mappingId"] = m.id;
-            chCfg.metadata["snippetId"] = m.snippetId;
-            chCfg.metadata["snippetName"] = m.snippetName;
-            chCfg.metadata["signalPath"] = m.signalPath;
-            chCfg.metadata["lineNumber"] = m.lineNumber;
-        } else if (mappingByChannel.contains(chName)) {
-            const auto& m = mappingByChannel[chName];
-            if (!m.snippetName.trimmed().isEmpty()) {
-                chCfg.displayName = m.snippetName.trimmed();
-            }
-            chCfg.metadata["mappingId"] = m.id;
-            chCfg.metadata["snippetId"] = m.snippetId;
-            chCfg.metadata["snippetName"] = m.snippetName;
-            chCfg.metadata["signalPath"] = m.signalPath;
-            chCfg.metadata["lineNumber"] = m.lineNumber;
-        }
-
-        if (!registerChannel(chCfg)) {
-            qWarning() << "[MonitorManager] 注册通道失败:" << chCfg.name;
-            success = false;
-            continue;
-        }
-        registeredChannelNames.insert(chCfg.name);
-        channelsTouched = true;
-    }
-
-    // ---------------------------------------------------------------------
-    // 3) 基于 providers 注册采集器：有 backend 时走 polling，无 backend 时保留 demo sampler
-    // ---------------------------------------------------------------------
-    // ---------------------------------------------------------------------
-
-    // providers 为空时，允许由 mappings 派生 providers
-    if (providers.isEmpty() && !config.dslMappings.isEmpty()) {
-        providers.reserve(config.dslMappings.size());
-        for (const auto& entry : config.dslMappings) {
-            if (entry.channelName.trimmed().isEmpty()) {
-                continue;
-            }
-            MonitorProviderRuntimeConfig p;
-            p.id = entry.id.trimmed().isEmpty() ? entry.channelName.trimmed() : entry.id.trimmed();
-            p.channelName = entry.channelName.trimmed();
-            p.unit = entry.unit;
-            p.periodMs = entry.periodMs > 0 ? entry.periodMs : 20;
-            p.priority = 128;
-            p.metadata = entry.metadata;
-            p.metadata["snippetId"] = entry.snippetId;
-            p.metadata["snippetName"] = entry.snippetName;
-            p.metadata["mappingId"] = entry.id;
-            p.metadata["signalPath"] = entry.signalPath;
-            providers.push_back(p);
-        }
-    }
-
-    // 清理旧的 backend 轮询映射
-    m_backendPointIds.clear();
-    m_pointIdToChannel.clear();
-    m_backendPointPeriodsMs.clear();
+    m_backendPointIds = candidate.backendPointIds;
+    m_pointIdToChannel = candidate.pointIdToChannel;
+    m_backendPointPeriodsMs = candidate.backendPointPeriodsMs;
     m_backendPointNextDueMs.clear();
-
-    int minPeriodMs = 0;
-
-    for (const auto& p : providers) {
-        if (p.id.trimmed().isEmpty()) {
-            qWarning() << "[MonitorManager] provider 条目缺少 id，channel=" << p.channelName;
-            success = false;
-            continue;
-        }
-        if (p.channelName.trimmed().isEmpty()) {
-            qWarning() << "[MonitorManager] provider 条目缺少 channelName，id=" << p.id;
-            success = false;
-            continue;
-        }
-
-        ProviderConfig pc;
-        pc.id = p.id.trimmed();
-        pc.channelName = p.channelName.trimmed();
-        pc.unit = p.unit;
-        pc.periodMs = (p.periodMs > 0) ? p.periodMs : 20;
-        pc.priority = p.priority;
-        pc.metadata = p.metadata;
-        pc.metadata["projectName"] = config.projectName;
-        pc.metadata[kRuntimeManagedKey] = true;
-        // 关联 mapping 元数据
-        if (mappingById.contains(pc.id)) {
-            const auto& m = mappingById[pc.id];
-            pc.metadata["snippetId"] = m.snippetId;
-            pc.metadata["snippetName"] = m.snippetName;
-            pc.metadata["mappingId"] = m.id;
-            pc.metadata["signalPath"] = m.signalPath;
-            pc.metadata["lineNumber"] = m.lineNumber;
-        } else if (mappingByChannel.contains(pc.channelName)) {
-            const auto& m = mappingByChannel[pc.channelName];
-            pc.metadata["snippetId"] = m.snippetId;
-            pc.metadata["snippetName"] = m.snippetName;
-            pc.metadata["mappingId"] = m.id;
-            pc.metadata["signalPath"] = m.signalPath;
-            pc.metadata["lineNumber"] = m.lineNumber;
-        }
-
-        if (!m_backend) {
-            QString snippetId = pc.metadata.value("snippetId").toString();
-            pc.sampler = makeDemoSampler(pc.id, pc.channelName, pc.unit, snippetId, pc.metadata);
-            pc.errorHandler = [pid = pc.id](const QString& err) {
-                qWarning() << "[MonitorManager] provider error:" << pid << err;
-            };
-        }
-
-        if (!registerProvider(pc)) {
-            qWarning() << "[MonitorManager] 注册采集器失败:" << pc.id
-                       << "->" << pc.channelName;
-            success = false;
-            continue;
-        }
-
-        if (m_backend) {
-            // backend 模式：收集去重后的 point ID，并保留最后一个有效 provider 的通道映射。
-            if (!m_backendPointPeriodsMs.contains(pc.id)) {
-                m_backendPointIds.append(pc.id);
-                m_backendPointPeriodsMs.insert(pc.id, qMax(1, pc.periodMs));
-                m_backendPointNextDueMs.insert(pc.id, 0);
-            } else {
-                // 同一点被多个 provider 使用时按最快需求轮询，但每次 readPoints 只传一次。
-                m_backendPointPeriodsMs[pc.id] = qMin(m_backendPointPeriodsMs.value(pc.id),
-                                                      qMax(1, pc.periodMs));
-            }
-            m_pointIdToChannel.insert(pc.id, pc.channelName);
-            if (minPeriodMs <= 0 || pc.periodMs < minPeriodMs)
-                minPeriodMs = pc.periodMs;
-        }
-    }
-
-    // ---------------------------------------------------------------------
-    if (m_backend && !m_backendPointIds.isEmpty() && minPeriodMs > 0) {
-        m_backendPollTimer->setInterval(minPeriodMs);
+    if (m_backend && !m_backendPointIds.isEmpty() && candidate.backendPollIntervalMs > 0) {
+        m_backendPollTimer->setInterval(candidate.backendPollIntervalMs);
         qDebug() << "[MonitorManager] backend polling configured:"
-                 << m_backendPointIds.size() << "points, interval=" << minPeriodMs << "ms";
+                 << m_backendPointIds.size() << "points, interval="
+                 << candidate.backendPollIntervalMs << "ms";
     } else {
         m_backendPollTimer->stop();
     }
-    // ---------------------------------------------------------------------
-    // 3.5) 将变量 / 参数 / 资源作为可监控对象挂到监控系统
-    // ---------------------------------------------------------------------
-    auto registerObjectChannel = [&](const QString& channelName,
-                                     const QString& displayName,
-                                     const QString& unit,
-                                     MonitorObjectKind kind,
-                                     const QString& sourceName,
-                                     bool editable,
-                                     const QVariantMap& extraMeta) {
-        if (channelName.trimmed().isEmpty()) {
-            return false;
+
+    QPointer<MonitorDataProcessor> proc = m_dataProcessor;
+    if (proc) {
+        for (const QString& channelName : oldRuntimeChannelNames) {
+            proc->clearChannelCache(channelName);
         }
-
-        ChannelConfig chCfg;
-        chCfg.name = channelName.trimmed();
-        chCfg.displayName = displayName.trimmed().isEmpty() ? chCfg.name : displayName.trimmed();
-        chCfg.unit = unit;
-        chCfg.maxSamples = Limits::DEFAULT_RING_BUFFER_CAPACITY;
-        chCfg.objectKind = kind;
-        chCfg.sourceName = sourceName;
-        chCfg.editable = editable;
-        chCfg.defaultVisible = false;
-        chCfg.metadata = extraMeta;
-        chCfg.metadata["projectName"] = config.projectName;
-        chCfg.metadata["objectKind"] = static_cast<int>(kind);
-        chCfg.metadata["sourceName"] = sourceName;
-        chCfg.metadata["editable"] = editable;
-        chCfg.metadata[kRuntimeManagedKey] = true;
-        return registerChannel(chCfg);
-    };
-
-    for (const auto& v : config.variables) {
-        QVariantMap meta = v.metadata;
-        meta["variableId"] = v.id;
-        meta["variableName"] = v.name;
-        meta["dataType"] = v.dataType;
-        meta["scope"] = v.scope;
-        meta["binding"] = v.binding;
-        meta["defaultValue"] = v.defaultValue;
-        if (!registerObjectChannel(QStringLiteral("var::%1").arg(v.name),
-                                   v.name,
-                                   QStringLiteral("var"),
-                                   MonitorObjectKind::Variable,
-                                   v.name,
-                                   !v.readOnly,
-                                   meta)) {
-            success = false;
-        } else {
-            channelsTouched = true;
+        for (auto it = candidateChannels.constBegin(); it != candidateChannels.constEnd(); ++it) {
+            proc->ensureChannel(it.key());
         }
     }
 
-    for (const auto& p : config.parameters) {
-        QVariantMap meta = p.metadata;
-        meta["parameterId"] = p.id;
-        meta["parameterName"] = p.name;
-        meta["dataType"] = p.dataType;
-        meta["defaultValue"] = p.defaultValue;
-        meta["minValue"] = p.minValue;
-        meta["maxValue"] = p.maxValue;
-        meta["unit"] = p.unit;
-        meta["onlineEditable"] = p.onlineEditable;
-        if (!registerObjectChannel(QStringLiteral("param::%1").arg(p.name),
-                                   p.name,
-                                   p.unit,
-                                   MonitorObjectKind::Parameter,
-                                   p.name,
-                                   p.onlineEditable,
-                                   meta)) {
-            success = false;
-        } else {
-            channelsTouched = true;
-        }
-    }
-
-    for (const auto& r : config.resources) {
-        QVariantMap meta = r.metadata;
-        meta["resourceId"] = r.id;
-        meta["resourceType"] = r.resourceType;
-        meta["resourceName"] = r.resourceName;
-        meta["channel"] = r.channel;
-        meta["owner"] = r.owner;
-        meta["exclusive"] = r.exclusive;
-        if (!registerObjectChannel(QStringLiteral("res::%1").arg(r.channel.isEmpty() ? r.resourceName : r.channel),
-                                   r.resourceName.isEmpty() ? r.channel : r.resourceName,
-                                   r.resourceType,
-                                   MonitorObjectKind::Resource,
-                                   r.resourceName.isEmpty() ? r.channel : r.resourceName,
-                                   false,
-                                   meta)) {
-            success = false;
-        } else {
-            channelsTouched = true;
-        }
-    }
-
-    // ---------------------------------------------------------------------
-    // 4) 通知 UI 刷新并恢复监控状态
-    // ---------------------------------------------------------------------
-    if (channelsTouched) {
+    if (!oldRuntimeChannelNames.isEmpty() || !candidateChannels.isEmpty()) {
         emit channelsChanged();
     }
 
@@ -1054,11 +1204,11 @@ bool MonitorManager::applyConfiguration(const ProjectRuntimeConfig& config)
     }
 
     qDebug() << "[MonitorManager] applyConfiguration 结束"
-             << "success=" << success
+             << "success=true"
              << "channels=" << channelNames().size()
              << "providers=" << providerIds().size();
 
-    return success;
+    return true;
 }
 
 } // namespace Monitor

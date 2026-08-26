@@ -242,6 +242,17 @@ target_link_libraries(dsl_compiler_semantics_test
 )
 configure_lh_test(dsl_compiler_semantics_test)
 
+# Async compiler cancellation and generation guard test
+add_executable(dsl_compiler_cancellation_test dsl_compiler_cancellation_test.cpp)
+target_link_libraries(dsl_compiler_cancellation_test
+    Qt5::Core
+    Qt5::Test
+    compiler_module
+)
+configure_lh_test(dsl_compiler_cancellation_test
+    ${CMAKE_SOURCE_DIR}/src/compiler
+)
+
 # Monitor export tests
 add_executable(monitor_export_test monitor_export_test.cpp)
 target_link_libraries(monitor_export_test
@@ -412,6 +423,7 @@ register_lh_test(ProjectSaveCloseTest project_save_close_test)
 register_lh_test(LegacyDslCompileProbe dsl_legacy_compile_probe)
 register_lh_test(DslCompilerSemanticsTest dsl_compiler_semantics_test)
 set_tests_properties(DslCompilerSemanticsTest PROPERTIES SKIP_RETURN_CODE 77)
+register_lh_test(DslCompilerCancellationTest dsl_compiler_cancellation_test)
 register_lh_test(MonitorExportTest monitor_export_test)
 register_lh_test(MonitorHistoryExportIntegrationTest monitor_history_export_integration_test)
 register_lh_test(ProtocolDetectorTest protocol_detector_test)

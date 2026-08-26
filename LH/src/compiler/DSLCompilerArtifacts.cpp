@@ -186,6 +186,8 @@ bool hasParentTraversal(const QString& path)
     });
 }
 
+} // namespace
+
 QString projectRelativePath(const QString& projectPath, const QString& absolutePath)
 {
     return QDir(projectPath).relativeFilePath(QFileInfo(absolutePath).absoluteFilePath());
@@ -220,6 +222,8 @@ QString profileSourcePath(const QString& projectPath, const ProjectRuntimeConfig
         return QDir(projectPath).absoluteFilePath(configured);
     return QFileInfo(configured).absoluteFilePath();
 }
+
+namespace {
 
 bool validateProfileJson(const QByteArray& bytes, QString* errorMessage)
 {
@@ -338,8 +342,13 @@ bool validateProjectScriptPath(const QString& projectPath,
         }
     } else {
         QDir parent = candidate.dir();
-        while (!parent.exists() && parent.absolutePath() != parent.dir().absolutePath())
-            parent = parent.dir();
+        while (!parent.exists()) {
+            const QString currentPath = parent.absolutePath();
+            const QDir nextParent = QFileInfo(currentPath).dir();
+            if (nextParent.absolutePath() == currentPath)
+                break;
+            parent = nextParent;
+        }
         const QString canonicalParent = parent.canonicalPath();
         if (canonicalParent.isEmpty() || !pathWithinRoot(root, canonicalParent)) {
             if (errorMessage)
@@ -433,9 +442,10 @@ namespace {
 
 QString generationIdForDirectory(const QString& outputDir)
 {
-    const QDir generationParent = QDir(outputDir).dir();
+    const QFileInfo outputInfo(outputDir);
+    const QDir generationParent = outputInfo.dir();
     return generationParent.dirName() == QStringLiteral("generations")
-            ? QDir(outputDir).dirName()
+            ? outputInfo.fileName()
             : QString();
 }
 
@@ -466,11 +476,13 @@ void sanitizeProjectArtifactMetadata(CompileArtifact& artifact,
     metadata.insert(QStringLiteral("artifactScope"), QStringLiteral("project"));
     metadata.insert(QStringLiteral("generationId"), generationId);
     metadata.insert(QStringLiteral("artifactPath"), manifestRelativePath(outputDir, artifact.path));
-    metadata.insert(QStringLiteral("sourceFile"), projectRelativePath(projectPath, mainScriptFile));
-    metadata.insert(QStringLiteral("mainScriptFile"), projectRelativePath(projectPath, mainScriptFile));
+    metadata.insert(QStringLiteral("sourceFile"),
+                    DSLCompilerInternal::projectRelativePath(projectPath, mainScriptFile));
+    metadata.insert(QStringLiteral("mainScriptFile"),
+                    DSLCompilerInternal::projectRelativePath(projectPath, mainScriptFile));
     QStringList relativeScripts;
     for (const QString& script : scriptFiles)
-        relativeScripts.append(projectRelativePath(projectPath, script));
+        relativeScripts.append(DSLCompilerInternal::projectRelativePath(projectPath, script));
     metadata.insert(QStringLiteral("scriptFiles"), relativeScripts);
     artifact.metadata = metadata;
 }
@@ -591,10 +603,11 @@ CompileResult DSLCompilerInterface::buildCompileResult(const QString& sourceFile
     result.generationId = generationId;
     result.metadata.insert(QStringLiteral("generationId"), generationId);
     result.metadata.insert(QStringLiteral("generationDirectory"),
-                           projectRelativePath(projectPath, outputDir));
+                           DSLCompilerInternal::projectRelativePath(projectPath, outputDir));
 
     const QString profileSource = DSLCompilerInternal::profileSourcePath(projectPath, config);
-    const QString profileSourceRelative = projectRelativePath(projectPath, profileSource);
+    const QString profileSourceRelative =
+            DSLCompilerInternal::projectRelativePath(projectPath, profileSource);
     if (!profileSourceRelative.isEmpty() && isSafeManifestRelativePath(profileSourceRelative)) {
         result.metadata.insert(QStringLiteral("downloadProfileSourcePath"), profileSourceRelative);
     }
@@ -697,13 +710,15 @@ CompileResult DSLCompilerInterface::buildCompileResult(const QString& sourceFile
                                     generationId);
     result.artifacts.append(manifestArtifact);
     result.metadata.insert(QStringLiteral("runtimeManifestPath"),
-                           projectRelativePath(projectPath, manifestArtifact.path));
+                           DSLCompilerInternal::projectRelativePath(projectPath, manifestArtifact.path));
     result.metadata.insert(QStringLiteral("downloadProfilePath"),
-                           projectRelativePath(projectPath,
-                                               QDir(outputDir).filePath(QStringLiteral("download_profile.json"))));
+                           DSLCompilerInternal::projectRelativePath(
+                               projectPath,
+                               QDir(outputDir).filePath(QStringLiteral("download_profile.json"))));
     result.metadata.insert(QStringLiteral("runtimePointsPath"),
-                           projectRelativePath(projectPath,
-                                               QDir(outputDir).filePath(QStringLiteral("runtime_points.json"))));
+                           DSLCompilerInternal::projectRelativePath(
+                               projectPath,
+                               QDir(outputDir).filePath(QStringLiteral("runtime_points.json"))));
     return result;
 }
 
@@ -788,17 +803,21 @@ CompileArtifact DSLCompilerInterface::generateRuntimeManifestJson(
     manifest[QStringLiteral("generationId")] = generationId;
     manifest[QStringLiteral("complete")] = false;
     manifest[QStringLiteral("projectName")] = projectName;
-    manifest[QStringLiteral("mainScriptPath")] = projectRelativePath(projectPath, mainScriptFile);
-    manifest[QStringLiteral("dslScriptPath")] = projectRelativePath(projectPath, mainScriptFile);
+    manifest[QStringLiteral("mainScriptPath")] =
+            DSLCompilerInternal::projectRelativePath(projectPath, mainScriptFile);
+    manifest[QStringLiteral("dslScriptPath")] =
+            DSLCompilerInternal::projectRelativePath(projectPath, mainScriptFile);
 
     QJsonArray scriptsArr;
     for (const auto& s : scriptFiles)
-        scriptsArr.append(projectRelativePath(projectPath, s));
+        scriptsArr.append(DSLCompilerInternal::projectRelativePath(projectPath, s));
     manifest[QStringLiteral("scriptFiles")] = scriptsArr;
 
     QJsonObject sourcePaths;
-    sourcePaths[QStringLiteral("mainScriptPath")] = projectRelativePath(projectPath, mainScriptFile);
-    sourcePaths[QStringLiteral("dslScriptPath")] = projectRelativePath(projectPath, mainScriptFile);
+    sourcePaths[QStringLiteral("mainScriptPath")] =
+            DSLCompilerInternal::projectRelativePath(projectPath, mainScriptFile);
+    sourcePaths[QStringLiteral("dslScriptPath")] =
+            DSLCompilerInternal::projectRelativePath(projectPath, mainScriptFile);
     manifest[QStringLiteral("sourcePaths")] = sourcePaths;
     manifest[QStringLiteral("sourceFileCount")] = scriptFiles.size();
     manifest[QStringLiteral("scriptFileCount")] = scriptFiles.size();

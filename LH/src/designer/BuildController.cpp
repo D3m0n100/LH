@@ -530,9 +530,9 @@ BuildController::BuildController(QObject* parent)
     : QObject(parent)
     , m_dslCompiler(new DSLCompilerInterface(this))
 {
-    connect(m_dslCompiler, &DSLCompilerInterface::compileFinished,
+    connect(m_dslCompiler, &DSLCompilerInterface::compileFinishedForGeneration,
             this, &BuildController::onDslCompilerFinished);
-    connect(m_dslCompiler, &DSLCompilerInterface::compileFailedToStart,
+    connect(m_dslCompiler, &DSLCompilerInterface::compileFailedToStartForGeneration,
             this, &BuildController::onDslCompilerFailedToStart);
 
     LOG_DEBUG("BuildController created.");
@@ -565,7 +565,7 @@ void BuildController::compileCommon(BuildType type,
                                     const QString& projectPath,
                                     const ProjectRuntimeConfig& config)
 {
-    if (m_busy) {
+    if (isBusy()) {
         emit logMessage(timestampedMessage("编译器正在忙碌，请稍候。"));
         return;
     }
@@ -601,56 +601,114 @@ void BuildController::compileCommon(BuildType type,
         return;
     }
 
-    setBusy(true);
+    const quint64 operationGeneration = ++m_nextOperationGeneration;
+    m_activeOperationGeneration = operationGeneration;
+    setCompileState(CompileState::Compiling);
+    if (m_compileState != CompileState::Compiling
+            || m_activeOperationGeneration != operationGeneration) {
+        return;
+    }
     emit compileStarted(type);
+    if (m_compileState != CompileState::Compiling
+            || m_activeOperationGeneration != operationGeneration) {
+        return;
+    }
     emit logMessage(timestampedMessage(
             QStringLiteral("开始编译%1: %2").arg(buildTypeName(type), QFileInfo(sourceFile).fileName())));
+    if (m_compileState != CompileState::Compiling
+            || m_activeOperationGeneration != operationGeneration) {
+        return;
+    }
     emit logMessage(timestampedMessage(
             QStringLiteral("输出目录: %1").arg(buildOutputDirectory(type))));
+    if (m_compileState != CompileState::Compiling
+            || m_activeOperationGeneration != operationGeneration) {
+        return;
+    }
     emit compileProgress(10);
+    if (m_compileState != CompileState::Compiling
+            || m_activeOperationGeneration != operationGeneration) {
+        return;
+    }
 
     m_dslCompiler->compileProjectAsync(projectPath,
                                        config,
                                        buildOutputDirectory(type),
-                                       QFileInfo(projectPath).fileName());
+                                       QFileInfo(projectPath).fileName(),
+                                       operationGeneration);
 }
 
 void BuildController::cancelCompile()
 {
-    if (!m_busy) {
+    if (m_compileState != CompileState::Compiling || m_activeOperationGeneration == 0) {
         return;
     }
 
+    const BuildType buildType = m_currentBuildType;
+    const quint64 operationGeneration = m_activeOperationGeneration;
+    setCompileState(CompileState::Cancelling);
     if (m_dslCompiler) {
         m_dslCompiler->cancelCurrentCompile();
     }
 
-    setBusy(false);
+    if (m_compileState != CompileState::Cancelling
+            || m_activeOperationGeneration != operationGeneration) {
+        return;
+    }
+
+    m_activeOperationGeneration = 0;
+    emit compileCancelled(buildType);
     emit logMessage(timestampedMessage("编译已取消。"));
+    setCompileState(CompileState::Idle);
 }
 
-void BuildController::onDslCompilerFinished(int exitCode,
+void BuildController::onDslCompilerFinished(quint64 operationGeneration,
+                                            int exitCode,
                                             bool normalExit,
                                             const QString& stdOut,
                                             const QString& stdErr)
 {
-    setBusy(false);
+    if (m_compileState != CompileState::Compiling
+            || operationGeneration == 0
+            || operationGeneration != m_activeOperationGeneration) {
+        return;
+    }
+
+    const BuildType buildType = m_currentBuildType;
+    const QString outputDir = buildOutputDirectory(buildType);
     m_lastCompileResult = m_dslCompiler->lastCompileResult();
+    m_activeOperationGeneration = 0;
+    setCompileState(CompileState::Idle);
+    if (m_compileState != CompileState::Idle || m_activeOperationGeneration != 0) {
+        return;
+    }
 
     if (!stdOut.trimmed().isEmpty()) {
         emit compileProgress(80);
+        if (m_compileState != CompileState::Idle || m_activeOperationGeneration != 0) {
+            return;
+        }
         emit logMessage(stdOut.trimmed());
+        if (m_compileState != CompileState::Idle || m_activeOperationGeneration != 0) {
+            return;
+        }
     }
     if (!stdErr.trimmed().isEmpty()) {
         emit logMessage(stdErr.trimmed());
+        if (m_compileState != CompileState::Idle || m_activeOperationGeneration != 0) {
+            return;
+        }
     }
 
     if (exitCode == 0 && normalExit) {
         emit compileProgress(100);
+        if (m_compileState != CompileState::Idle || m_activeOperationGeneration != 0) {
+            return;
+        }
         emit logMessage(timestampedMessage(
                 QStringLiteral("编译完成，输出目录: %1")
-                        .arg(buildOutputDirectory(m_currentBuildType))));
-        emit compileSucceeded(m_currentBuildType);
+                        .arg(outputDir)));
+        emit compileSucceeded(buildType);
         return;
     }
 
@@ -658,22 +716,44 @@ void BuildController::onDslCompilerFinished(int exitCode,
             ? QStringLiteral("编译失败，退出码: %1").arg(exitCode)
             : stdErr.trimmed();
     emit compileProgress(100);
+    if (m_compileState != CompileState::Idle || m_activeOperationGeneration != 0) {
+        return;
+    }
     emit logMessage(timestampedMessage(QStringLiteral("错误: %1").arg(errorMessage)));
-    emit compileFailed(m_currentBuildType, errorMessage);
+    if (m_compileState != CompileState::Idle || m_activeOperationGeneration != 0) {
+        return;
+    }
+    emit compileFailed(buildType, errorMessage);
 }
 
-void BuildController::onDslCompilerFailedToStart(const QString& errorString)
+void BuildController::onDslCompilerFailedToStart(quint64 operationGeneration,
+                                                 const QString& errorString)
 {
-    setBusy(false);
+    if (m_compileState != CompileState::Compiling
+            || operationGeneration == 0
+            || operationGeneration != m_activeOperationGeneration) {
+        return;
+    }
+
+    const BuildType buildType = m_currentBuildType;
+    m_activeOperationGeneration = 0;
+    setCompileState(CompileState::Idle);
+    if (m_compileState != CompileState::Idle || m_activeOperationGeneration != 0) {
+        return;
+    }
     emit logMessage(timestampedMessage(QStringLiteral("编译进程启动失败: %1").arg(errorString)));
-    emit compileFailed(m_currentBuildType, errorString);
+    if (m_compileState != CompileState::Idle || m_activeOperationGeneration != 0) {
+        return;
+    }
+    emit compileFailed(buildType, errorString);
 }
 
-void BuildController::setBusy(bool busy)
+void BuildController::setCompileState(CompileState state)
 {
-    if (m_busy != busy) {
-        m_busy = busy;
-        emit busyChanged(busy);
+    const bool wasBusy = isBusy();
+    m_compileState = state;
+    if (wasBusy != isBusy()) {
+        emit busyChanged(isBusy());
     }
 }
 
@@ -718,13 +798,18 @@ QString BuildController::currentDslScriptPath(const ProjectRuntimeConfig& config
 void BuildController::onCompileProcessFinished(int exitCode, QProcess::ExitStatus exitStatus)
 {
     const bool normalExit = (exitStatus == QProcess::NormalExit);
-    onDslCompilerFinished(exitCode, normalExit, QString(), QString());
+    onDslCompilerFinished(m_activeOperationGeneration,
+                          exitCode,
+                          normalExit,
+                          QString(),
+                          QString());
 }
 
 void BuildController::onCompileProcessError(QProcess::ProcessError error)
 {
     Q_UNUSED(error);
-    onDslCompilerFailedToStart(QStringLiteral("编译进程启动失败或异常退出。"));
+    onDslCompilerFailedToStart(m_activeOperationGeneration,
+                               QStringLiteral("编译进程启动失败或异常退出。"));
 }
 
 QString BuildController::buildOutputDirectory(BuildType type) const
@@ -754,7 +839,7 @@ void BuildController::compileGeneratedArtifacts(BuildType type,
                                                 const QString& projectPath,
                                                 const ProjectRuntimeConfig& config)
 {
-    if (m_busy) {
+    if (isBusy()) {
         emit logMessage(timestampedMessage("编译器正在忙碌，请稍候。"));
         return;
     }
@@ -783,13 +868,35 @@ void BuildController::compileGeneratedArtifacts(BuildType type,
     m_currentProjectPath = projectPath;
     const QString outputDir = buildOutputDirectory(type);
 
-    setBusy(true);
+    const quint64 operationGeneration = ++m_nextOperationGeneration;
+    m_activeOperationGeneration = operationGeneration;
+    setCompileState(CompileState::Compiling);
+    if (m_compileState != CompileState::Compiling
+            || m_activeOperationGeneration != operationGeneration) {
+        return;
+    }
     emit compileStarted(type);
+    if (m_compileState != CompileState::Compiling
+            || m_activeOperationGeneration != operationGeneration) {
+        return;
+    }
     emit compileProgress(10);
+    if (m_compileState != CompileState::Compiling
+            || m_activeOperationGeneration != operationGeneration) {
+        return;
+    }
     emit logMessage(timestampedMessage(
             QStringLiteral("开始生成%1产物: %2")
                     .arg(buildTypeName(type), artifactBaseName(projectPath, config))));
+    if (m_compileState != CompileState::Compiling
+            || m_activeOperationGeneration != operationGeneration) {
+        return;
+    }
     emit logMessage(timestampedMessage(QStringLiteral("输出目录: %1").arg(outputDir)));
+    if (m_compileState != CompileState::Compiling
+            || m_activeOperationGeneration != operationGeneration) {
+        return;
+    }
 
     if (type == BuildType::Parameters) {
         m_lastCompileResult = generateParameterArtifacts(projectPath, config, outputDir);
@@ -798,18 +905,33 @@ void BuildController::compileGeneratedArtifacts(BuildType type,
     }
 
     emit compileProgress(100);
-    setBusy(false);
+    if (m_compileState != CompileState::Compiling
+            || m_activeOperationGeneration != operationGeneration) {
+        return;
+    }
+
+    m_activeOperationGeneration = 0;
+    setCompileState(CompileState::Idle);
+    if (m_compileState != CompileState::Idle || m_activeOperationGeneration != 0) {
+        return;
+    }
 
     if (m_lastCompileResult.success) {
         emit logMessage(timestampedMessage(
                 QStringLiteral("%1产物生成完成，输出目录: %2")
                         .arg(buildTypeName(type), outputDir)));
+        if (m_compileState != CompileState::Idle || m_activeOperationGeneration != 0) {
+            return;
+        }
         emit compileSucceeded(type);
     } else {
         const QString errorMessage = m_lastCompileResult.errors.isEmpty()
                 ? QStringLiteral("%1产物生成失败").arg(buildTypeName(type))
                 : m_lastCompileResult.errors.join('\n');
         emit logMessage(timestampedMessage(QStringLiteral("错误: %1").arg(errorMessage)));
+        if (m_compileState != CompileState::Idle || m_activeOperationGeneration != 0) {
+            return;
+        }
         emit compileFailed(type, errorMessage);
     }
 }

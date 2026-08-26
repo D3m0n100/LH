@@ -62,18 +62,18 @@ ModbusInterface::~ModbusInterface()
 
 bool ModbusInterface::open(const QVariantMap& config)
 {
-    m_config = ModbusConfig::fromMap(config);
-    return open(m_config);
+    const ModbusConfig parsed = ModbusConfig::fromMap(config);
+    return open(parsed);
 }
 
 bool ModbusInterface::open(const ModbusConfig& config)
 {
-    m_config = config;
-
-    if (!m_config.isValid()) {
+    if (!config.isValid()) {
         reportError(CommErrorCode::InvalidConfig, "Modbus 配置无效");
         return false;
     }
+
+    m_config = config;
 
     m_protocolType = (m_config.mode == ModbusConfig::Mode::TCP)
         ? CommProtocolType::ModbusTCP

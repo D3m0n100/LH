@@ -4,7 +4,6 @@
 #include "SerialInterface.h"
 #include <QDebug>
 #include <QMutexLocker>
-#include <QtSerialPort/QSerialPortInfo>
 #include <QEventLoop>
 #include <QRegularExpression>
 #include "Common.h"
@@ -65,28 +64,27 @@ SerialInterface::~SerialInterface()
 
 bool SerialInterface::open(const QVariantMap& config)
 {
-    m_serialConfig = SerialConfig::fromMap(config);
-    return open(m_serialConfig);
+    const SerialConfig parsed = SerialConfig::fromMap(config);
+    return open(parsed);
 }
 
 bool SerialInterface::open(const SerialConfig& config)
 {
+    if (!config.isValid()) {
+        if (config.portName.trimmed().isEmpty()) {
+            reportError(CommErrorCode::InvalidConfig, "串口端口名不能为空（port）");
+        } else {
+            reportError(CommErrorCode::InvalidConfig, "串口配置无效");
+        }
+        return false;
+    }
+
     close();
     
     m_serialConfig = config;
     m_parameters = config.toVariantMap();
     
-    QString portName = config.portName;
-    if (portName.isEmpty()) {
-        QList<QSerialPortInfo> ports = QSerialPortInfo::availablePorts();
-        if (!ports.isEmpty()) {
-            portName = ports.first().portName();
-            LOG_INFO(QString("自动检测到串口: %1").arg(portName));
-        } else {
-            reportError(CommErrorCode::DeviceNotFound, "未找到可用串口");
-            return false;
-        }
-    }
+    const QString portName = config.portName;
     
     m_serialPort->setPortName(portName);
     

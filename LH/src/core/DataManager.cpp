@@ -113,7 +113,7 @@ QString runtimeOriginFromRecord(const QVariantMap& record)
     if (origin.isEmpty()) {
         origin = metadata.value(QStringLiteral("source")).toString();
     }
-    return origin;
+    return origin.isNull() ? QStringLiteral("") : origin;
 }
 
 QString runtimeErrorCodeFromRecord(const QVariantMap& record)
@@ -129,7 +129,7 @@ QString runtimeErrorCodeFromRecord(const QVariantMap& record)
     if (errorCode.isEmpty()) {
         errorCode = record.value(QStringLiteral("errorCode")).toString();
     }
-    return errorCode;
+    return errorCode.isNull() ? QStringLiteral("") : errorCode;
 }
 
 QString runtimeErrorTextFromRecord(const QVariantMap& record)
@@ -155,7 +155,7 @@ QString runtimeErrorTextFromRecord(const QVariantMap& record)
                        + QLatin1Char(')');
         }
     }
-    return errorText;
+    return errorText.isNull() ? QStringLiteral("") : errorText;
 }
 
 } // namespace
@@ -536,32 +536,35 @@ QueryResult DataManager::executeSql(const QString& sql, const QString& descripti
 
 void DataManager::logSqlError(const QSqlQuery& query, const QString& description)
 {
-    QSqlError error = query.lastError();
-    QString sql = query.executedQuery();
-    if (sql.isEmpty()) {
-        sql = query.lastQuery();
-    }
-    
-    // 获取绑定参数
-    QMap<QString, QVariant> boundValues = query.boundValues();
+    const QSqlError error = query.lastError();
+    const QString sqlTemplate = query.lastQuery().simplified();
+
+    // 仅记录参数元数据，不记录绑定值。
+    const QMap<QString, QVariant> boundValues = query.boundValues();
     QString params;
     for (auto it = boundValues.begin(); it != boundValues.end(); ++it) {
         if (!params.isEmpty()) params += ", ";
-        params += QString("%1=%2").arg(it.key(), it.value().toString());
+        const QVariant& value = it.value();
+        const QString typeName = value.typeName()
+            ? QString::fromLatin1(value.typeName())
+            : QStringLiteral("unknown");
+        const int length = value.isNull() ? 0 : value.toString().size();
+        params += QStringLiteral("%1<type=%2,len=%3>")
+                      .arg(it.key(), typeName)
+                      .arg(length);
     }
-    
-    // 构建详细错误日志
-    QString logMsg = QString("SQL 执行失败 [%1]\n"
-                             "  SQL: %2\n"
+
+    const QString logMsg = QStringLiteral("SQL 执行失败 [%1]\n"
+                             "  SQL 模板: %2\n"
                              "  参数: %3\n"
                              "  错误码: %4\n"
                              "  错误信息: %5")
                      .arg(description)
-                     .arg(sql)
-                     .arg(params.isEmpty() ? "(无)" : params)
+                     .arg(sqlTemplate.isEmpty() ? QStringLiteral("(未知)") : sqlTemplate)
+                     .arg(params.isEmpty() ? QStringLiteral("(无)") : params)
                      .arg(error.nativeErrorCode())
                      .arg(error.text());
-    
+
     LOG_ERROR(logMsg);
 }
 
@@ -688,7 +691,7 @@ QueryResult DataManager::logRuntimeDataBatch(const QList<QVariantMap>& records)
                 updatedValues[varName] = value;
             }
         } else {
-            logSqlError(query, QString("批量记录运行数据[%1]").arg(varName));
+            logSqlError(query, QStringLiteral("批量记录运行数据"));
             result.errorCode = query.lastError().nativeErrorCode();
             result.errorText = query.lastError().text();
             m_db.rollback();
@@ -1393,40 +1396,51 @@ QList<LogRecord> DataManager::queryLogs(const QDateTime& start,
 
 int DataManager::cleanupOldData(int retentionDays)
 {
-    if (!m_initialized || retentionDays <= 0) {
-        return 0;
+    if (!m_initialized || !m_db.isOpen() || retentionDays <= 0) {
+        LOG_WARN("DataManager 未初始化或保留天数无效，无法清理数据");
+        return -1;
     }
     
     QMutexLocker dbLocker(&m_dbMutex);
-    
-    QDateTime cutoff = QDateTime::currentDateTime().addDays(-retentionDays);
-    
-    int totalDeleted = 0;
-    
-    // 清理运行时数据
-    QSqlQuery query(m_db);
-    query.prepare("DELETE FROM runtime_data WHERE timestamp < :cutoff");
-    query.bindValue(":cutoff", cutoff);
-    
-    if (query.exec()) {
-        totalDeleted += query.numRowsAffected();
-    } else {
-        logSqlError(query, "清理运行时数据");
+
+    const QDateTime cutoff = QDateTime::currentDateTimeUtc().addDays(-retentionDays);
+    if (!m_db.transaction()) {
+        LOG_ERROR("无法开启数据清理事务: " + m_db.lastError().text());
+        return -1;
     }
-    
-    // 清理系统日志
-    query.prepare("DELETE FROM system_logs WHERE timestamp < :cutoff");
-    query.bindValue(":cutoff", cutoff);
-    
-    if (query.exec()) {
-        totalDeleted += query.numRowsAffected();
-    } else {
-        logSqlError(query, "清理系统日志");
+
+    QSqlQuery runtimeQuery(m_db);
+    runtimeQuery.prepare("DELETE FROM runtime_data WHERE julianday(timestamp) < julianday(:cutoff)");
+    runtimeQuery.bindValue(":cutoff", cutoff);
+    if (!runtimeQuery.exec()) {
+        logSqlError(runtimeQuery, "清理运行时数据");
+        m_db.rollback();
+        return -1;
     }
-    
+
+    const int runtimeDeleted = runtimeQuery.numRowsAffected();
+
+    QSqlQuery logsQuery(m_db);
+    logsQuery.prepare("DELETE FROM system_logs WHERE julianday(timestamp) < julianday(:cutoff)");
+    logsQuery.bindValue(":cutoff", cutoff);
+    if (!logsQuery.exec()) {
+        logSqlError(logsQuery, "清理系统日志");
+        m_db.rollback();
+        return -1;
+    }
+
+    const int logsDeleted = logsQuery.numRowsAffected();
+    if (!m_db.commit()) {
+        const QString error = m_db.lastError().text();
+        m_db.rollback();
+        LOG_ERROR("提交数据清理事务失败: " + error);
+        return -1;
+    }
+
+    const int totalDeleted = runtimeDeleted + logsDeleted;
     LOG_INFO(QString("数据清理完成，删除 %1 条记录（保留 %2 天）")
              .arg(totalDeleted).arg(retentionDays));
-    
+
     return totalDeleted;
 }
 

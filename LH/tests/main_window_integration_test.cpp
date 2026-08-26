@@ -513,6 +513,37 @@ private slots:
 #endif
     }
 
+    void cancelBeforeCompilerStartEmitsSingleTerminal()
+    {
+        QTemporaryDir tempDir;
+        QVERIFY(tempDir.isValid());
+
+        const QString mainScriptPath = QDir(tempDir.path()).absoluteFilePath(QStringLiteral("main.lh"));
+        QFile mainScript(mainScriptPath);
+        QVERIFY(mainScript.open(QIODevice::WriteOnly | QIODevice::Text));
+        mainScript.write("PROGRAM CancelBeforeStart\nEND_PROGRAM\n");
+        mainScript.close();
+
+        ProjectRuntimeConfig cfg;
+        cfg.projectName = QStringLiteral("cancel_before_start");
+
+        BuildController buildController;
+        QSignalSpy cancelledSpy(&buildController, &BuildController::compileCancelled);
+        QSignalSpy successSpy(&buildController, &BuildController::compileSucceeded);
+        QSignalSpy failureSpy(&buildController, &BuildController::compileFailed);
+        connect(&buildController, &BuildController::compileStarted,
+                &buildController, [&buildController] { buildController.cancelCompile(); });
+
+        buildController.compileConfiguration(tempDir.path(), cfg);
+
+        QCOMPARE(cancelledSpy.count(), 1);
+        QCOMPARE(successSpy.count(), 0);
+        QCOMPARE(failureSpy.count(), 0);
+        QVERIFY(!buildController.isBusy());
+        buildController.cancelCompile();
+        QCOMPARE(cancelledSpy.count(), 1);
+    }
+
     void parameterArtifactFailureLeavesNoNewFormalFiles()
     {
 #if !LH_BUILD_CONTROLLER_TESTING

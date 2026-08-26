@@ -20,6 +20,7 @@
  * ============== 编译状态机 ==============
  *
  * Idle --> [startCompile] --> Compiling --> [compileFinished] --> Idle
+ *                         \--> Cancelling --> [cancelled] --> Idle
  *                                      \--> [compileFailed]   --> Idle
  *
  * 在 Compiling 状态下，重复调用 startCompile 会被忽略。
@@ -53,6 +54,8 @@ class BuildController : public QObject
 {
     Q_OBJECT
 
+    enum class CompileState { Idle, Compiling, Cancelling };
+
 public:
     explicit BuildController(QObject* parent = nullptr);
     ~BuildController() override;
@@ -60,7 +63,7 @@ public:
     // ===== 状态查询 =====
     
     /// 是否正在编译
-    bool isBusy() const { return m_busy; }
+    bool isBusy() const { return m_compileState != CompileState::Idle; }
     
     /// 获取当前编译类型
     BuildType currentBuildType() const { return m_currentBuildType; }
@@ -101,6 +104,9 @@ signals:
     
     /// 编译失败
     void compileFailed(BuildType type, const QString& errorMessage);
+
+    /// 编译取消
+    void compileCancelled(BuildType type);
     
     /// 编译状态变化（busy/idle）
     void busyChanged(bool busy);
@@ -114,8 +120,12 @@ signals:
     /// 设置编译前校验回调（替代旧的 validationRequired 信号，避免引用参数）
 private slots:
     // ===== 编译过程回调 =====
-    void onDslCompilerFinished(int exitCode, bool normalExit, const QString& stdOut, const QString& stdErr);
-    void onDslCompilerFailedToStart(const QString& errorString);
+    void onDslCompilerFinished(quint64 operationGeneration,
+                               int exitCode,
+                               bool normalExit,
+                               const QString& stdOut,
+                               const QString& stdErr);
+    void onDslCompilerFailedToStart(quint64 operationGeneration, const QString& errorString);
 
     // 兼容旧版 moc/增量构建生成的槽签名
     void onCompileProcessFinished(int exitCode, QProcess::ExitStatus exitStatus);
@@ -123,9 +133,9 @@ private slots:
 
 private:
     // ===== 内部方法 =====
-    
-    /// 设置忙碌状态
-    void setBusy(bool busy);
+
+    /// 设置编译状态
+    void setCompileState(CompileState state);
     
     /// 生成时间戳日志消息
     QString timestampedMessage(const QString& msg) const;
@@ -158,7 +168,9 @@ private:
     ValidationCallback m_validationCallback;
 
     // ===== 状态 =====
-    bool m_busy = false;
+    CompileState m_compileState = CompileState::Idle;
+    quint64 m_nextOperationGeneration = 0;
+    quint64 m_activeOperationGeneration = 0;
     BuildType m_currentBuildType = BuildType::Configuration;
     QString m_currentProjectPath;
     CompileResult m_lastCompileResult;

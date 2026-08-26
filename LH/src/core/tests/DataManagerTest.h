@@ -34,6 +34,7 @@ private slots:
     // ===== 运行时数据测试 =====
     void testLogRuntimeData();
     void testLogRuntimeDataBatch();
+    void testSqlErrorLogRedactsBoundValues();
     void testRuntimeCache();
     
     // ===== 历史数据查询测试 =====
@@ -48,6 +49,7 @@ private slots:
     
     // ===== 数据维护测试 =====
     void testCleanupOldData();
+    void testCleanupOldDataIsTransactionalAndUsesUtc();
     void testOptimizeDatabase();
     
 private:

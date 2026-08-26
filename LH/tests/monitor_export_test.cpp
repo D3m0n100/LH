@@ -360,6 +360,121 @@ private slots:
         qInfo() << "多通道 TSV 导出测试通过";
     }
 
+    void testDelimitedFieldEncodingAndFormulaProtection()
+    {
+        MonitorExportHelper helper;
+        QTemporaryDir tempDir;
+        QVERIFY(tempDir.isValid());
+
+        const QString channelId = QStringLiteral("=通道, \"A\"\n第二行");
+        const QString displayName = QStringLiteral("@显示, \"名称\"\n第二行");
+        const QString unit = QStringLiteral("+单位\t\"B\"\r\n");
+        const QString projectName = QStringLiteral("-项目, \"项目\"\n下一行");
+        const QString customKey = QStringLiteral("@key");
+        const QString customValue = QStringLiteral("=value, \"值\"\r\n");
+
+        Monitor::Sample sample;
+        sample.channelName = channelId;
+        sample.unit = unit;
+        sample.timestamp = QDateTime::fromMSecsSinceEpoch(1000, Qt::UTC);
+        sample.value = -12.5;
+        sample.valueValid = true;
+
+        Monitor::Sample emptySample = sample;
+        emptySample.channelName = QStringLiteral("plain");
+        emptySample.unit.clear();
+        emptySample.valueValid = false;
+        emptySample.timestamp = sample.timestamp.addMSecs(1);
+        const QList<Monitor::Sample> samples{sample, emptySample};
+
+        const auto readText = [](const QString& path) {
+            QFile file(path);
+            if (!file.open(QIODevice::ReadOnly)) {
+                return QString();
+            }
+            return QString::fromUtf8(file.readAll());
+        };
+        const QString csvField = QStringLiteral("\"'=通道, \"\"A\"\"\n第二行\"");
+        const QString tsvUnitField = QStringLiteral("\"'+单位\t\"\"B\"\"\r\n\"");
+
+        const QString singleCsvPath = tempDir.path() + QStringLiteral("/special_single.csv");
+        const ExportResult singleCsv = helper.exportDataAsCsvToFile(
+            channelId, samples, singleCsvPath);
+        QVERIFY2(singleCsv.success, qPrintable(singleCsv.errorMessage));
+        const QString singleCsvContent = readText(singleCsvPath);
+        QVERIFY(singleCsvContent.contains(csvField));
+        QVERIFY(singleCsvContent.contains(tsvUnitField));
+        QVERIFY(singleCsvContent.contains(QStringLiteral(",-12.5,\"'+单位")));
+        QVERIFY(!singleCsvContent.contains(QStringLiteral(",'-12.5")));
+        QVERIFY(singleCsvContent.contains(QStringLiteral(",plain,,Good,0")));
+
+        const QString singleTsvPath = tempDir.path() + QStringLiteral("/special_single.tsv");
+        const ExportResult singleTsv = helper.exportDataAsTsvToFile(
+            channelId, samples, singleTsvPath);
+        QVERIFY2(singleTsv.success, qPrintable(singleTsv.errorMessage));
+        const QString singleTsvContent = readText(singleTsvPath);
+        QVERIFY(singleTsvContent.contains(csvField));
+        QVERIFY(singleTsvContent.contains(tsvUnitField));
+        QVERIFY(singleTsvContent.contains(QStringLiteral("\t\t\tGood\t0")));
+
+        ExportDataPackage package;
+        package.metadata.projectName = projectName;
+        package.metadata.customFields.insert(customKey, customValue);
+        package.metadata.totalChannels = 1;
+        package.metadata.totalSamples = samples.size();
+        package.channelInfos.append(ExportChannelInfo(channelId, displayName, unit));
+        package.channelSamples.insert(channelId, samples);
+
+        const QString packageCsvPath = tempDir.path() + QStringLiteral("/special_package.csv");
+        const ExportResult packageCsv = helper.exportPackageAsCsv(package, packageCsvPath);
+        QVERIFY2(packageCsv.success, qPrintable(packageCsv.errorMessage));
+        const QString packageCsvContent = readText(packageCsvPath);
+        QVERIFY(packageCsvContent.contains(csvField));
+        QVERIFY(packageCsvContent.contains(QStringLiteral("# Project: \"'-项目, \"\"项目\"\"\n下一行\"")));
+        QVERIFY(packageCsvContent.contains(QStringLiteral("'@key")));
+        QVERIFY(packageCsvContent.contains(QStringLiteral("\"'=value, \"\"值\"\"\r\n\"")));
+
+        ExportConfig nonAlignedConfig = helper.config();
+        nonAlignedConfig.alignMultiChannelByTime = false;
+        helper.setConfig(nonAlignedConfig);
+        const QString nonAlignedPath = tempDir.path() + QStringLiteral("/special_non_aligned.csv");
+        const ExportResult nonAligned = helper.exportPackageAsCsv(package, nonAlignedPath);
+        QVERIFY2(nonAligned.success, qPrintable(nonAligned.errorMessage));
+        const QString nonAlignedContent = readText(nonAlignedPath);
+        QVERIFY(nonAlignedContent.contains(csvField));
+        QVERIFY(nonAlignedContent.contains(QStringLiteral("\"'+单位\t\"\"B\"\"\r\n\"")));
+
+        nonAlignedConfig.alignMultiChannelByTime = true;
+        helper.setConfig(nonAlignedConfig);
+        const QString packageTsvPath = tempDir.path() + QStringLiteral("/special_package.tsv");
+        const ExportResult packageTsv = helper.exportPackageAsTsv(package, packageTsvPath);
+        QVERIFY2(packageTsv.success, qPrintable(packageTsv.errorMessage));
+        const QString packageTsvContent = readText(packageTsvPath);
+        QVERIFY(packageTsvContent.contains(csvField));
+        QVERIFY(packageTsvContent.contains(tsvUnitField));
+
+        const ExportPageProvider provider = [samples](const QString&, const ExportCursor&, int) {
+            ExportPage page;
+            page.samples = samples;
+            return page;
+        };
+        const QString pagedCsvPath = tempDir.path() + QStringLiteral("/special_paged.csv");
+        const ExportResult pagedCsv = helper.exportPackagePaged(
+            package.channelInfos, package.metadata, provider, pagedCsvPath, 2);
+        QVERIFY2(pagedCsv.success, qPrintable(pagedCsv.errorMessage));
+        const QString pagedCsvContent = readText(pagedCsvPath);
+        QVERIFY(pagedCsvContent.contains(csvField));
+        QVERIFY(pagedCsvContent.contains(QStringLiteral(",-12.5,Good,1")));
+
+        const QString pagedTsvPath = tempDir.path() + QStringLiteral("/special_paged.tsv");
+        const ExportResult pagedTsv = helper.exportPackagePaged(
+            package.channelInfos, package.metadata, provider, pagedTsvPath, 2);
+        QVERIFY2(pagedTsv.success, qPrintable(pagedTsv.errorMessage));
+        const QString pagedTsvContent = readText(pagedTsvPath);
+        QVERIFY(pagedTsvContent.contains(csvField));
+        QVERIFY(pagedTsvContent.contains(tsvUnitField));
+    }
+
     void testCommitFailurePreservesExistingTargets()
     {
         QTemporaryDir tempDir;

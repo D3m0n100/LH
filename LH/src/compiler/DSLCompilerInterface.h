@@ -91,11 +91,13 @@ public:
     // 结果通过 compileFinished / compileFailedToStart 信号返回。
     void compileDslFileAsync(const QString& sourceFile,
                              const QString& outputDir,
-                             const QString& projectName);
+                             const QString& projectName,
+                             quint64 operationGeneration = 0);
     void compileProjectAsync(const QString& projectPath,
                              const ProjectRuntimeConfig& config,
                              const QString& outputDir,
-                             const QString& projectName);
+                             const QString& projectName,
+                             quint64 operationGeneration = 0);
 
     // 只列出组件信息（可选，用于以后扩展函数列表自动生成）
     bool listComponents(QString* compilerStdout,
@@ -122,6 +124,14 @@ signals:
     // 进程无法启动等致命错误（在真正编译开始前触发）
     void compileFailedToStart(const QString& errorString);
 
+    void compileFinishedForGeneration(quint64 operationGeneration,
+                                      int exitCode,
+                                      bool normalExit,
+                                      const QString& stdOut,
+                                      const QString& stdErr);
+    void compileFailedToStartForGeneration(quint64 operationGeneration,
+                                            const QString& errorString);
+
 private slots:
     // QProcess 信号中转槽（仅在异步模式下使用）
     void onProcessFinished(int exitCode, QProcess::ExitStatus exitStatus);
@@ -131,6 +141,8 @@ private slots:
     void onCompileTimeout();
 
 private:
+    quint64 allocateOperationGeneration(quint64 requestedGeneration);
+    void emitCompileFailedToStart(quint64 operationGeneration, const QString& errorString);
     QString resolvePythonInterpreter() const;          // 找到 python 可执行文件
     QString compilerWorkingDir() const;                // third_party/.../compile 目录
     QString compilerEntryScript() const;               // lmc.py 路径
@@ -151,7 +163,8 @@ private:
                                    const QString& outputFile,
                                    const QString& compilerInputFile,
                                    const QString& projectPath = QString(),
-                                   const QString& generationId = QString());
+                                   const QString& generationId = QString(),
+                                   quint64 operationGeneration = 0);
     CompileResult buildCompileResult(const QString& sourceFile,
                                      const QString& outputDir,
                                      const QString& projectName,
@@ -203,6 +216,8 @@ private:
     QTimer*   m_compileTimeoutTimer = nullptr;
     CompileResult m_lastCompileResult;
     ProjectRuntimeConfig m_asyncProjectConfig;  // 异步项目编译时暂存配置
+    quint64 m_nextOperationGeneration = 0;
+    quint64 m_asyncOperationGeneration = 0;
 
     // Python 解释器路径缓存（避免每次编译都重新探测）
     static QString s_cachedPythonInterpreter;

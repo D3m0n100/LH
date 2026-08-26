@@ -8,7 +8,9 @@
 #include <QVariantMap>
 #include <QMetaType>
 #include <QDateTime>
+#include <QStringList>
 #include <QtGlobal>
+#include <limits>
 
 // ============================================================================
 // 错误码枚举
@@ -211,6 +213,105 @@ struct CommConfigBase
     virtual bool isValid() const = 0;
 };
 
+inline bool commParseStrictInt(const QVariant& value, int* result)
+{
+    if (!result || !value.isValid() || value.isNull() || value.type() == QVariant::Bool) {
+        return false;
+    }
+
+    const QString text = value.toString();
+    if (text.isEmpty() || text != text.trimmed()) {
+        return false;
+    }
+
+    bool ok = false;
+    const qlonglong parsed = text.toLongLong(&ok, 10);
+    if (!ok || parsed < std::numeric_limits<int>::min()
+            || parsed > std::numeric_limits<int>::max()) {
+        return false;
+    }
+
+    *result = static_cast<int>(parsed);
+    return true;
+}
+
+inline QString commNormalizeToken(QString value)
+{
+    value = value.trimmed().toUpper();
+    value.remove(QLatin1Char('-'));
+    value.remove(QLatin1Char('_'));
+    value.remove(QLatin1Char(' '));
+    return value;
+}
+
+inline bool commReadStrictInt(const QVariantMap& map,
+                              const QString& key,
+                              int defaultValue,
+                              int minimum,
+                              int maximum,
+                              int* result)
+{
+    if (!result) {
+        return false;
+    }
+    if (!map.contains(key)) {
+        *result = defaultValue;
+        return true;
+    }
+    if (!commParseStrictInt(map.value(key), result)) {
+        return false;
+    }
+    return *result >= minimum && *result <= maximum;
+}
+
+inline bool commReadEnum(const QVariantMap& map,
+                         const QString& key,
+                         const QString& defaultValue,
+                         const QStringList& allowed,
+                         QString* result)
+{
+    if (!result) {
+        return false;
+    }
+    if (!map.contains(key)) {
+        *result = defaultValue;
+        return true;
+    }
+
+    const QVariant value = map.value(key);
+    if (!value.isValid() || value.isNull()) {
+        return false;
+    }
+    const QString text = value.toString().trimmed();
+    const QString normalized = commNormalizeToken(text);
+    for (const QString& option : allowed) {
+        if (normalized == commNormalizeToken(option)) {
+            *result = text;
+            return true;
+        }
+    }
+    return false;
+}
+
+inline bool commEnumIsAllowed(const QString& value, const QStringList& allowed)
+{
+    const QString text = commNormalizeToken(value);
+    if (text.isEmpty()) {
+        return false;
+    }
+    for (const QString& option : allowed) {
+        if (text == commNormalizeToken(option)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+inline bool commPortIsValid(int port)
+{
+    return port >= 1 && port <= 65535;
+}
+
 // ============================================================================
 // 串口配置
 // ============================================================================
@@ -226,6 +327,7 @@ struct SerialConfig : public CommConfigBase
     bool rs485Mode = false;
     bool rs485DirectionControl = false;
     int frameTimeout = 50;      // ms, 用于帧分割
+    bool mapValid = true;
     
     QVariantMap toVariantMap() const override {
         return {
@@ -242,20 +344,60 @@ struct SerialConfig : public CommConfigBase
     }
     
     bool fromVariantMap(const QVariantMap& map) override {
-        portName = map.value("port").toString();
-        baudRate = map.value("baudRate", 9600).toInt();
-        dataBits = map.value("dataBits", 8).toInt();
-        stopBits = map.value("stopBits", 1).toInt();
-        parity = map.value("parity", "None").toString();
-        flowControl = map.value("flowControl", "None").toString();
+        *this = SerialConfig();
+        bool ok = true;
+
+        portName = map.contains("port") ? map.value("port").toString()
+                                         : map.value("portName").toString();
+        ok = commReadStrictInt(map, "baudRate", 9600, 0,
+                               std::numeric_limits<int>::max(), &baudRate) && ok;
+        ok = commReadStrictInt(map, "dataBits", 8, 5, 8, &dataBits) && ok;
+        ok = commReadStrictInt(map, "stopBits", 1, 1, 2, &stopBits) && ok;
+        ok = commReadEnum(map, "parity", "None",
+                          {QStringLiteral("None"), QStringLiteral("Even"),
+                           QStringLiteral("Odd"), QStringLiteral("Mark"),
+                           QStringLiteral("Space")}, &parity) && ok;
+        ok = commReadEnum(map, "flowControl", "None",
+                          {QStringLiteral("None"), QStringLiteral("Hardware"),
+                           QStringLiteral("Software"), QStringLiteral("RTS/CTS"),
+                           QStringLiteral("XON/XOFF")},
+                          &flowControl) && ok;
         rs485Mode = map.value("rs485Mode", false).toBool();
         rs485DirectionControl = map.value("rs485DirectionControl", false).toBool();
-        frameTimeout = map.value("frameTimeout", 50).toInt();
-        return true;
+        ok = commReadStrictInt(map, "frameTimeout", 50, 1,
+                               std::numeric_limits<int>::max(), &frameTimeout) && ok;
+
+        QString ignored;
+        ok = commReadEnum(map, "protocol", "SERIAL",
+                          {QStringLiteral("SERIAL"), QStringLiteral("RS232"),
+                           QStringLiteral("RS485"), QStringLiteral("AUTO"),
+                           QStringLiteral("RAW"), QStringLiteral("CUSTOM")},
+                          &ignored) && ok;
+        ok = commReadEnum(map, "mode", "RAW",
+                          {QStringLiteral("RAW"), QStringLiteral("MODBUS"),
+                           QStringLiteral("MODBUSRTU"), QStringLiteral("RTU"),
+                           QStringLiteral("CUSTOM")},
+                          &ignored) && ok;
+
+        mapValid = ok;
+        return ok;
     }
     
     bool isValid() const override {
-        return !portName.isEmpty() && baudRate > 0 && dataBits >= 5 && dataBits <= 8;
+        return mapValid
+                && !portName.trimmed().isEmpty()
+                && baudRate >= 0
+                && dataBits >= 5 && dataBits <= 8
+                && stopBits >= 1 && stopBits <= 2
+                && commEnumIsAllowed(parity,
+                                     {QStringLiteral("None"), QStringLiteral("Even"),
+                                      QStringLiteral("Odd"), QStringLiteral("Mark"),
+                                      QStringLiteral("Space")})
+                && commEnumIsAllowed(flowControl,
+                                      {QStringLiteral("None"), QStringLiteral("Hardware"),
+                                       QStringLiteral("Software"), QStringLiteral("RTS/CTS"),
+                                       QStringLiteral("XON/XOFF")})
+                && frameTimeout >= 1;
     }
     
     static SerialConfig fromMap(const QVariantMap& map) {
@@ -291,6 +433,7 @@ struct ModbusConfig : public CommConfigBase
     // TCP 特有配置
     QString host = "127.0.0.1";
     int port = 502;
+    bool mapValid = true;
     
     QVariantMap toVariantMap() const override {
         QVariantMap map = {
@@ -315,35 +458,89 @@ struct ModbusConfig : public CommConfigBase
     }
     
     bool fromVariantMap(const QVariantMap& map) override {
-        QString modeStr = map.value("mode", "RTU").toString().toUpper();
-        mode = (modeStr == "TCP") ? Mode::TCP : Mode::RTU;
-        
-        QString typeStr = map.value("type", "Master").toString().toUpper();
-        stationType = (typeStr == "SLAVE") ? StationType::Slave : StationType::Master;
-        
-        stationAddress = map.value("address", 1).toInt();
-        pollInterval = map.value("pollInterval", 1000).toInt();
-        responseTimeout = map.value("responseTimeout", 1000).toInt();
-        retryCount = map.value("retryCount", 3).toInt();
-        
+        *this = ModbusConfig();
+        bool ok = true;
+
+        QString protocolStr;
+        ok = commReadEnum(map, "protocol", "MODBUS",
+                          {QStringLiteral("MODBUS"), QStringLiteral("MODBUSRTU"),
+                           QStringLiteral("MODBUSTCP"), QStringLiteral("RTU")},
+                          &protocolStr) && ok;
+
+        QString modeStr;
+        if (map.contains("mode")) {
+            ok = commReadEnum(map, "mode", "RTU",
+                              {QStringLiteral("RTU"), QStringLiteral("TCP"),
+                               QStringLiteral("MODBUS")}, &modeStr) && ok;
+        } else if (commNormalizeToken(protocolStr) == QStringLiteral("MODBUSTCP")) {
+            modeStr = "TCP";
+        }
+        const QString protocolToken = commNormalizeToken(protocolStr);
+        const QString modeToken = commNormalizeToken(modeStr);
+        if (map.contains("protocol") && map.contains("mode")
+                && ((protocolToken == QStringLiteral("MODBUSRTU")
+                     || protocolToken == QStringLiteral("RTU"))
+                    ? modeToken != QStringLiteral("RTU")
+                    : protocolToken == QStringLiteral("MODBUSTCP")
+                        && modeToken != QStringLiteral("TCP"))) {
+            ok = false;
+        }
+        mode = modeToken == QStringLiteral("TCP") ? Mode::TCP : Mode::RTU;
+
+        QString typeStr;
+        ok = commReadEnum(map, "type", "Master",
+                          {QStringLiteral("Master"), QStringLiteral("Slave")}, &typeStr) && ok;
+        stationType = commNormalizeToken(typeStr) == QStringLiteral("SLAVE")
+                ? StationType::Slave : StationType::Master;
+
+        ok = commReadStrictInt(map, "address", 1, 1, 247, &stationAddress) && ok;
+        ok = commReadStrictInt(map, "pollInterval", 1000, 1,
+                               std::numeric_limits<int>::max(), &pollInterval) && ok;
+        ok = commReadStrictInt(map, "responseTimeout", 1000, 1,
+                               std::numeric_limits<int>::max(), &responseTimeout) && ok;
+        ok = commReadStrictInt(map, "retryCount", 3, 0,
+                               std::numeric_limits<int>::max(), &retryCount) && ok;
+
         if (mode == Mode::RTU) {
-            portName = map.value("port").toString();
-            baudRate = map.value("baudRate", 9600).toInt();
-            dataBits = map.value("dataBits", 8).toInt();
-            stopBits = map.value("stopBits", 1).toInt();
-            parity = map.value("parity", "None").toString();
+            portName = map.contains("port") ? map.value("port").toString()
+                                             : map.value("portName").toString();
+            ok = commReadStrictInt(map, "baudRate", 9600, 1,
+                                   std::numeric_limits<int>::max(), &baudRate) && ok;
+            ok = commReadStrictInt(map, "dataBits", 8, 5, 8, &dataBits) && ok;
+            ok = commReadStrictInt(map, "stopBits", 1, 1, 2, &stopBits) && ok;
+            ok = commReadEnum(map, "parity", "None",
+                              {QStringLiteral("None"), QStringLiteral("Even"),
+                               QStringLiteral("Odd"), QStringLiteral("Mark"),
+                               QStringLiteral("Space")}, &parity) && ok;
         } else {
             host = map.value("host", "127.0.0.1").toString();
-            port = map.value("tcpPort", map.value("port", 502)).toInt();
+            int parsedPort = 502;
+            const QString portKey = map.contains("tcpPort") ? QStringLiteral("tcpPort")
+                                                               : QStringLiteral("port");
+            ok = commReadStrictInt(map, portKey, 502, 1, 65535, &parsedPort) && ok;
+            port = parsedPort;
         }
-        return true;
+
+        mapValid = ok;
+        return ok;
     }
     
     bool isValid() const override {
+        if (!mapValid || stationAddress < 1 || stationAddress > 247
+                || pollInterval < 1 || responseTimeout < 1 || retryCount < 0) {
+            return false;
+        }
         if (mode == Mode::RTU) {
-            return !portName.isEmpty() && baudRate > 0;
+            return !portName.trimmed().isEmpty()
+                    && baudRate >= 1
+                    && dataBits >= 5 && dataBits <= 8
+                    && stopBits >= 1 && stopBits <= 2
+                    && commEnumIsAllowed(parity,
+                                         {QStringLiteral("None"), QStringLiteral("Even"),
+                                          QStringLiteral("Odd"), QStringLiteral("Mark"),
+                                          QStringLiteral("Space")});
         } else {
-            return !host.isEmpty() && port > 0 && port < 65536;
+            return !host.trimmed().isEmpty() && commPortIsValid(port);
         }
     }
     
@@ -494,6 +691,7 @@ struct EthernetConfig : public CommConfigBase
     int connectTimeout = 3000;      // ms
     int keepAliveInterval = 30000;  // ms, 0 = disabled
     int receiveBufferSize = 65536;
+    bool mapValid = true;
     
     QVariantMap toVariantMap() const override {
         return {
@@ -508,22 +706,59 @@ struct EthernetConfig : public CommConfigBase
     }
     
     bool fromVariantMap(const QVariantMap& map) override {
-        QString protoStr = map.value("protocol", "TCP").toString().toUpper();
-        protocol = (protoStr == "UDP") ? Protocol::UDP : Protocol::TCP;
-        
-        QString roleStr = map.value("role", "Client").toString().toUpper();
-        role = (roleStr == "SERVER") ? Role::Server : Role::Client;
-        
+        *this = EthernetConfig();
+        bool ok = true;
+
+        QString protoStr;
+        ok = commReadEnum(map, "protocol", "TCP",
+                          {QStringLiteral("TCP"), QStringLiteral("UDP"),
+                           QStringLiteral("ETHERNET")}, &protoStr) && ok;
+        QString modeStr;
+        if (map.contains("mode")) {
+            ok = commReadEnum(map, "mode", "TCP",
+                              {QStringLiteral("TCP"), QStringLiteral("UDP")}, &modeStr) && ok;
+        } else {
+            modeStr = "TCP";
+        }
+        const QString protocolToken = commNormalizeToken(protoStr);
+        const QString modeToken = commNormalizeToken(modeStr);
+        if (protocolToken == QStringLiteral("ETHERNET") || !map.contains("protocol")) {
+            protoStr = modeStr;
+        } else if (map.contains("mode")
+                   && protocolToken != modeToken) {
+            ok = false;
+        }
+        protocol = commNormalizeToken(protoStr) == QStringLiteral("UDP")
+                ? Protocol::UDP : Protocol::TCP;
+
+        QString roleStr;
+        ok = commReadEnum(map, "role", "Client",
+                          {QStringLiteral("Client"), QStringLiteral("Server")}, &roleStr) && ok;
+        role = commNormalizeToken(roleStr) == QStringLiteral("SERVER")
+                ? Role::Server : Role::Client;
+
         host = map.value("host", "127.0.0.1").toString();
-        port = static_cast<quint16>(map.value("port", 8080).toUInt());
-        connectTimeout = map.value("connectTimeout", 3000).toInt();
-        keepAliveInterval = map.value("keepAliveInterval", 30000).toInt();
-        receiveBufferSize = map.value("receiveBufferSize", 65536).toInt();
-        return true;
+        int parsedPort = 8080;
+        ok = commReadStrictInt(map, "port", 8080, 1, 65535, &parsedPort) && ok;
+        port = static_cast<quint16>(parsedPort);
+        ok = commReadStrictInt(map, "connectTimeout", 3000, 1,
+                               std::numeric_limits<int>::max(), &connectTimeout) && ok;
+        ok = commReadStrictInt(map, "keepAliveInterval", 30000, 0,
+                               std::numeric_limits<int>::max(), &keepAliveInterval) && ok;
+        ok = commReadStrictInt(map, "receiveBufferSize", 65536, 1,
+                               std::numeric_limits<int>::max(), &receiveBufferSize) && ok;
+
+        mapValid = ok;
+        return ok;
     }
     
     bool isValid() const override {
-        return !host.isEmpty() && port > 0;
+        return mapValid
+                && !host.trimmed().isEmpty()
+                && commPortIsValid(static_cast<int>(port))
+                && connectTimeout >= 1
+                && keepAliveInterval >= 0
+                && receiveBufferSize >= 1;
     }
     
     static EthernetConfig fromMap(const QVariantMap& map) {

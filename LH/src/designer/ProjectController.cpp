@@ -819,8 +819,13 @@ bool isContainedProjectPath(const QString& projectPath, const QString& configure
     }
 
     QDir parent = info.dir();
-    while (!parent.exists() && parent.absolutePath() != parent.dir().absolutePath())
-        parent = parent.dir();
+    while (!parent.exists()) {
+        const QString currentPath = parent.absolutePath();
+        const QDir nextParent = QFileInfo(currentPath).dir();
+        if (nextParent.absolutePath() == currentPath)
+            break;
+        parent = nextParent;
+    }
     const QString canonicalParent = parent.canonicalPath();
     const QString parentRelative = QDir(root).relativeFilePath(canonicalParent);
     return !canonicalParent.isEmpty()

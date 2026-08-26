@@ -28,12 +28,17 @@ EthernetInterface::~EthernetInterface()
 
 bool EthernetInterface::open(const QVariantMap& config)
 {
-    m_config = EthernetConfig::fromMap(config);
-    return open(m_config);
+    const EthernetConfig parsed = EthernetConfig::fromMap(config);
+    return open(parsed);
 }
 
 bool EthernetInterface::open(const EthernetConfig& config)
 {
+    if (!config.isValid()) {
+        reportError(CommErrorCode::InvalidConfig, "以太网配置无效");
+        return false;
+    }
+
     close(); // 先关闭之前的连接
     
     m_config = config;
@@ -72,6 +77,8 @@ void EthernetInterface::close()
     {
         QMutexLocker locker(&m_bufferMutex);
         m_receiveBuffer.clear();
+        m_udpReceiveQueue.clear();
+        m_udpQueuedBytes = 0;
         m_receiveWaitCondition.wakeAll();
     }
     
@@ -120,8 +127,15 @@ bool EthernetInterface::openTcpServer()
     connect(m_tcpServer, &QTcpServer::newConnection, 
             this, &EthernetInterface::onNewConnection);
     
-    QHostAddress address = m_config.host.isEmpty() ? 
-                           QHostAddress::Any : QHostAddress(m_config.host);
+    QHostAddress address;
+    if (!address.setAddress(m_config.host.trimmed())) {
+        reportError(CommErrorCode::InvalidConfig,
+                    "TCP 服务器监听地址无效",
+                    m_config.host);
+        delete m_tcpServer;
+        m_tcpServer = nullptr;
+        return false;
+    }
     
     if (!m_tcpServer->listen(address, m_config.port)) {
         reportError(CommErrorCode::ConnectionFailed, 
@@ -144,8 +158,15 @@ bool EthernetInterface::openUdp()
     connect(m_udpSocket, &QUdpSocket::readyRead, 
             this, &EthernetInterface::onUdpReadyRead);
     
-    QHostAddress bindAddress = m_config.host.isEmpty() ? 
-                               QHostAddress::Any : QHostAddress(m_config.host);
+    QHostAddress bindAddress;
+    if (!bindAddress.setAddress(m_config.host.trimmed())) {
+        reportError(CommErrorCode::InvalidConfig,
+                    "UDP 绑定地址无效",
+                    m_config.host);
+        delete m_udpSocket;
+        m_udpSocket = nullptr;
+        return false;
+    }
     
     if (!m_udpSocket->bind(bindAddress, m_config.port)) {
         reportError(CommErrorCode::ConnectionFailed, 
@@ -236,8 +257,14 @@ int EthernetInterface::sendTo(const QByteArray& data, const QString& host, quint
         reportError(CommErrorCode::SendFailed, "发送失败：UDP 套接字未初始化");
         return -1;
     }
-    
-    qint64 written = m_udpSocket->writeDatagram(data, QHostAddress(host), port);
+
+    QHostAddress address;
+    if (port == 0 || !address.setAddress(host.trimmed())) {
+        reportError(CommErrorCode::InvalidConfig, "UDP 目标地址无效", host);
+        return -1;
+    }
+
+    qint64 written = m_udpSocket->writeDatagram(data, address, port);
     
     if (written < 0) {
         reportError(CommErrorCode::SendFailed, 
@@ -253,6 +280,21 @@ int EthernetInterface::sendTo(const QByteArray& data, const QString& host, quint
 QByteArray EthernetInterface::receive(int timeout_ms)
 {
     QMutexLocker locker(&m_bufferMutex);
+
+    if (m_config.protocol == EthernetConfig::Protocol::UDP) {
+        if (m_udpReceiveQueue.isEmpty() && timeout_ms > 0) {
+            m_receiveWaitCondition.wait(&m_bufferMutex,
+                                        static_cast<unsigned long>(timeout_ms));
+        }
+
+        if (m_udpReceiveQueue.isEmpty()) {
+            return QByteArray();
+        }
+
+        const QByteArray data = m_udpReceiveQueue.dequeue();
+        m_udpQueuedBytes -= data.size();
+        return data;
+    }
     
     if (m_receiveBuffer.isEmpty() && timeout_ms > 0) {
         m_receiveWaitCondition.wait(&m_bufferMutex, static_cast<unsigned long>(timeout_ms));
@@ -400,21 +442,21 @@ void EthernetInterface::onUdpReadyRead()
         QNetworkDatagram datagram = m_udpSocket->receiveDatagram();
         QByteArray data = datagram.data();
         
-        if (data.isEmpty()) {
-            continue;
-        }
-        
         m_bytesReceived += data.size();
         
         {
             QMutexLocker locker(&m_bufferMutex);
-            
-            if (m_receiveBuffer.size() + data.size() > MAX_BUFFER_SIZE) {
-                int overflow = m_receiveBuffer.size() + data.size() - MAX_BUFFER_SIZE;
-                m_receiveBuffer.remove(0, overflow);
+            if (data.size() > MAX_BUFFER_SIZE) {
+                LOG_WARN("UDP 报文超过接收缓冲区，已丢弃");
+                continue;
             }
-            
-            m_receiveBuffer.append(data);
+
+            while (!m_udpReceiveQueue.isEmpty() &&
+                   m_udpQueuedBytes + data.size() > MAX_BUFFER_SIZE) {
+                m_udpQueuedBytes -= m_udpReceiveQueue.dequeue().size();
+            }
+            m_udpReceiveQueue.enqueue(data);
+            m_udpQueuedBytes += data.size();
             m_receiveWaitCondition.wakeAll();
         }
         

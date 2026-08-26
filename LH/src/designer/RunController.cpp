@@ -107,8 +107,13 @@ bool resolveContainedPath(const QString& root,
         }
     } else {
         QDir parent = info.dir();
-        while (!parent.exists() && parent.absolutePath() != parent.dir().absolutePath())
-            parent = parent.dir();
+        while (!parent.exists()) {
+            const QString currentPath = parent.absolutePath();
+            const QDir nextParent = QFileInfo(currentPath).dir();
+            if (nextParent.absolutePath() == currentPath)
+                break;
+            parent = nextParent;
+        }
         const QString canonicalParent = parent.canonicalPath();
         if (canonicalParent.isEmpty() || !pathWithinRoot(root, canonicalParent)) {
             if (errorMessage)
@@ -295,7 +300,9 @@ bool loadPublishedBundle(const QString& projectPath,
 
     const QString generationDir = codeInfo.absolutePath();
     const QDir generation(generationDir);
-    if (generation.dirName().isEmpty() || generation.dir().dirName() != QStringLiteral("generations")) {
+    if (generation.dirName().isEmpty()
+            || QFileInfo(generation.absolutePath()).dir().dirName()
+                   != QStringLiteral("generations")) {
         if (errors)
             errors->append(QStringLiteral("下载产物不在 generation 目录中。"));
         return false;

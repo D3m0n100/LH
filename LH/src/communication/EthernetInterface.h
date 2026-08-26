@@ -11,6 +11,7 @@
 #include <QTcpServer>
 #include <QTimer>
 #include <QMutex>
+#include <QQueue>
 #include <QWaitCondition>
 
 /**
@@ -91,6 +92,8 @@ private:
     QUdpSocket* m_udpSocket;
     
     QByteArray m_receiveBuffer;
+    QQueue<QByteArray> m_udpReceiveQueue;
+    qint64 m_udpQueuedBytes = 0;
     mutable QMutex m_bufferMutex;
     QWaitCondition m_receiveWaitCondition;
     

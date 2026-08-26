@@ -365,7 +365,7 @@ public:
     /**
      * @brief 清理过期数据
      * @param retentionDays 保留天数
-     * @return 删除的记录数
+     * @return 删除的记录数；未初始化、参数无效或 SQL/事务失败时返回 -1
      */
     int cleanupOldData(int retentionDays);
     

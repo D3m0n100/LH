@@ -249,6 +249,41 @@ private slots:
         QCOMPARE(records.first().value, 8.0);
     }
 
+    void cleanupTimerPurgesPersistentDataWhenLoggingEnabled()
+    {
+        auto& dataManager = DataManager::instance();
+        auto& manager = MonitorManager::instance();
+        const QString databasePath = m_tempDir.path() + QStringLiteral("/cleanup_timer.db");
+        QVERIFY(dataManager.initialize(databasePath));
+
+        QVERIFY(executeSql(databasePath, {
+            QStringLiteral(
+                "INSERT INTO runtime_data (timestamp, variable_name, value, unit) "
+                "VALUES (datetime('now', '-2 day'), 'cleanup.runtime', 1.0, 'bar')"),
+            QStringLiteral(
+                "INSERT INTO system_logs (timestamp, level, module, message) "
+                "VALUES (datetime('now', '-2 day'), 'INFO', 'cleanup.module', 'old log')")
+        }));
+
+        manager.setDataRetentionDays(1);
+        manager.setDatabaseLoggingEnabled(false);
+        manager.startMonitoring();
+        QVERIFY(QMetaObject::invokeMethod(&manager, "onCleanupTimeout", Qt::DirectConnection));
+
+        const QDateTime start = QDateTime::currentDateTimeUtc().addDays(-3);
+        const QDateTime end = QDateTime::currentDateTimeUtc().addDays(1);
+        QCOMPARE(dataManager.queryHistory(QStringLiteral("cleanup.runtime"), start, end).size(), 1);
+        QCOMPARE(dataManager.queryLogs(start, end).size(), 1);
+
+        manager.setDatabaseLoggingEnabled(true);
+        QVERIFY(QMetaObject::invokeMethod(&manager, "onCleanupTimeout", Qt::DirectConnection));
+        QCOMPARE(dataManager.queryHistory(QStringLiteral("cleanup.runtime"), start, end).size(), 0);
+        QCOMPARE(dataManager.queryLogs(start, end).size(), 0);
+
+        manager.stopMonitoring();
+        manager.setDataRetentionDays(7);
+    }
+
     void failedBatchIsAtomicAndLoggerRetriesIt()
     {
         auto& dataManager = DataManager::instance();

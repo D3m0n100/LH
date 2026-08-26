@@ -168,7 +168,8 @@ bool validatePublishedProfileBinding(const QString& artifactPath,
     const QFileInfo codeInfo(artifactPath);
     const QDir generationDir(codeInfo.absolutePath());
     if (generationDir.dirName().isEmpty()
-            || generationDir.dir().dirName() != QStringLiteral("generations")) {
+            || QFileInfo(generationDir.absolutePath()).dir().dirName()
+                   != QStringLiteral("generations")) {
         if (errorMessage)
             *errorMessage = QStringLiteral("下载产物不在已发布 generation 目录中。");
         return false;

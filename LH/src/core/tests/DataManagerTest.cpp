@@ -4,6 +4,7 @@
  */
 
 #include "DataManagerTest.h"
+#include <QDebug>
 #include <QFile>
 #include <QSqlDatabase>
 #include <QSqlQuery>
@@ -12,6 +13,17 @@
 #include <QUuid>
 
 namespace {
+
+QStringList* capturedCriticalMessages = nullptr;
+
+void captureCriticalMessage(QtMsgType type,
+                            const QMessageLogContext&,
+                            const QString& message)
+{
+    if (type == QtCriticalMsg && capturedCriticalMessages) {
+        capturedCriticalMessages->append(message);
+    }
+}
 
 bool executeTestSql(const QString& dbPath, const QStringList& statements)
 {
@@ -305,6 +317,46 @@ void DataManagerTest::testLogRuntimeDataBatch()
     QCOMPARE(result.affectedRows, 100);
 }
 
+void DataManagerTest::testSqlErrorLogRedactsBoundValues()
+{
+    const QString secretName = QStringLiteral("business-secret-token");
+    const QString secretUnit = QStringLiteral("password-cookie-value");
+    const QString secretValue = QStringLiteral("12.5");
+
+    QVERIFY(executeTestSql(m_dbPath, {
+        QStringLiteral(
+            "CREATE TRIGGER reject_runtime_insert "
+            "BEFORE INSERT ON runtime_data "
+            "BEGIN SELECT RAISE(ABORT, 'forced insert failure'); END")
+    }));
+
+    QVariantMap record;
+    record.insert(QStringLiteral("varName"), secretName);
+    record.insert(QStringLiteral("value"), 12.5);
+    record.insert(QStringLiteral("unit"), secretUnit);
+
+    QStringList messages;
+    capturedCriticalMessages = &messages;
+    const QtMessageHandler previousHandler = qInstallMessageHandler(captureCriticalMessage);
+    const QueryResult result = DataManager::instance().logRuntimeDataBatch({record});
+    qInstallMessageHandler(previousHandler);
+    capturedCriticalMessages = nullptr;
+
+    QVERIFY(!result.success);
+    QVERIFY(!messages.isEmpty());
+    const QString message = messages.constLast();
+    QVERIFY(message.contains(QStringLiteral("SQL 执行失败")));
+    QVERIFY(message.contains(QStringLiteral("批量记录运行数据")));
+    QVERIFY(message.contains(QStringLiteral("SQL 模板")));
+    QVERIFY(message.contains(QStringLiteral("INSERT INTO runtime_data")));
+    QVERIFY(message.contains(QStringLiteral(":name")));
+    QVERIFY(message.contains(QStringLiteral("type=QString")));
+    QVERIFY(message.contains(QStringLiteral("len=")));
+    QVERIFY(!message.contains(secretName));
+    QVERIFY(!message.contains(secretUnit));
+    QVERIFY(!message.contains(secretValue));
+}
+
 void DataManagerTest::testRuntimeCache()
 {
     DataManager::instance().logRuntimeData("var1", 1.0);
@@ -449,6 +501,75 @@ void DataManagerTest::testCleanupOldData()
     // 验证数据没有被删除（因为数据是今天的）
     auto records = DataManager::instance().getLatestRecords("cleanupVar", 100);
     QCOMPARE(records.size(), 10);
+    QVERIFY(deleted >= 0);
+}
+
+void DataManagerTest::testCleanupOldDataIsTransactionalAndUsesUtc()
+{
+    const QDateTime nowUtc = QDateTime::currentDateTimeUtc();
+    const QString oldTimestamp = nowUtc.addDays(-1).addSecs(-1).toString(Qt::ISODateWithMs);
+    const QString retainedTimestamp = nowUtc.addDays(-1).addSecs(1).toString(Qt::ISODateWithMs);
+
+    QVERIFY(executeTestSql(m_dbPath, {
+        QStringLiteral(
+            "INSERT INTO runtime_data "
+            "(timestamp, variable_name, value, unit, quality, value_valid, origin, error_code, error_text) "
+            "VALUES ('%1', 'old.runtime', 1.0, 'bar', 'Good', 1, '', '', '')")
+            .arg(oldTimestamp),
+        QStringLiteral(
+            "INSERT INTO runtime_data "
+            "(timestamp, variable_name, value, unit, quality, value_valid, origin, error_code, error_text) "
+            "VALUES ('%1', 'retained.runtime', 2.0, 'bar', 'Good', 1, '', '', '')")
+            .arg(retainedTimestamp),
+        QStringLiteral(
+            "INSERT INTO system_logs (timestamp, level, module, message) "
+            "VALUES ('%1', 'INFO', 'old.module', 'old log')")
+            .arg(oldTimestamp),
+        QStringLiteral(
+            "INSERT INTO system_logs (timestamp, level, module, message) "
+            "VALUES ('%1', 'INFO', 'retained.module', 'retained log')")
+            .arg(retainedTimestamp),
+        QStringLiteral(
+            "CREATE TRIGGER reject_cleanup_log_delete "
+            "BEFORE DELETE ON system_logs "
+            "BEGIN SELECT RAISE(ABORT, 'reject cleanup'); END")
+    }));
+
+    QCOMPARE(DataManager::instance().cleanupOldData(1), -1);
+
+    QVariant value;
+    QVERIFY(queryTestScalar(m_dbPath,
+                            QStringLiteral("SELECT COUNT(*) FROM runtime_data"),
+                            value));
+    QCOMPARE(value.toInt(), 2);
+    QVERIFY(queryTestScalar(m_dbPath,
+                            QStringLiteral("SELECT COUNT(*) FROM system_logs"),
+                            value));
+    QCOMPARE(value.toInt(), 2);
+
+    QVERIFY(executeTestSql(m_dbPath, {
+        QStringLiteral("DROP TRIGGER reject_cleanup_log_delete")
+    }));
+
+    QCOMPARE(DataManager::instance().cleanupOldData(1), 2);
+    QVERIFY(queryTestScalar(m_dbPath,
+                            QStringLiteral("SELECT COUNT(*) FROM runtime_data WHERE variable_name = 'old.runtime'"),
+                            value));
+    QCOMPARE(value.toInt(), 0);
+    QVERIFY(queryTestScalar(m_dbPath,
+                            QStringLiteral("SELECT COUNT(*) FROM runtime_data WHERE variable_name = 'retained.runtime'"),
+                            value));
+    QCOMPARE(value.toInt(), 1);
+    QVERIFY(queryTestScalar(m_dbPath,
+                            QStringLiteral("SELECT COUNT(*) FROM system_logs WHERE module = 'old.module'"),
+                            value));
+    QCOMPARE(value.toInt(), 0);
+    QVERIFY(queryTestScalar(m_dbPath,
+                            QStringLiteral("SELECT COUNT(*) FROM system_logs WHERE module = 'retained.module'"),
+                            value));
+    QCOMPARE(value.toInt(), 1);
+
+    QCOMPARE(DataManager::instance().cleanupOldData(0), -1);
 }
 
 void DataManagerTest::testOptimizeDatabase()

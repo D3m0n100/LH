@@ -34,6 +34,11 @@ private:
     }
 
 private slots:
+    void initTestCase()
+    {
+        qRegisterMetaType<CommError>("CommError");
+    }
+
     void frameBufferIsConsumedBetweenEmissions()
     {
         SerialInterface interface;
@@ -110,6 +115,26 @@ private slots:
         interface.setProtocol(SerialInterface::SerialProtocol::Raw);
         interface.processReceivedData();
         QVERIFY(interface.m_frameBuffer.size() <= SerialInterface::MAX_BUFFER_SIZE);
+    }
+
+    void emptyPortFailsBeforeOpening()
+    {
+        SerialInterface interface;
+        QSignalSpy spy(&interface, SIGNAL(errorOccurred(CommError)));
+
+        QVERIFY(!interface.open(QVariantMap{{QStringLiteral("port"), QString()}}));
+        QVERIFY(!interface.isConnected());
+        QVERIFY(spy.count() >= 1);
+        const CommError error = qvariant_cast<CommError>(spy.first().at(0));
+        QCOMPARE(error.code, CommErrorCode::InvalidConfig);
+    }
+
+    void zeroBaudRateKeepsAutoDetectionConfigValid()
+    {
+        const SerialConfig config = SerialConfig::fromMap(
+                QVariantMap{{QStringLiteral("port"), QStringLiteral("COM3")},
+                            {QStringLiteral("baudRate"), 0}});
+        QVERIFY(config.isValid());
     }
 };
 

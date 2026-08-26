@@ -6,6 +6,7 @@
 #include <QDateTime>
 #include <QHash>
 #include <QMutex>
+#include <QStringList>
 #include <QVariant>
 #include <QVector>
 
@@ -147,6 +148,7 @@ private:
     QStringList itemIdCandidatesForTag(const OpcTagDefinition& tag) const;
     QString itemIdForTag(const OpcTagDefinition& tag) const;
     QString pointIdForClientHandle(unsigned long clientHandle) const;
+    int activeItemCount() const;
     static bool validateConfig(const OpcServerConfig& config, QString* errorMessage);
     static QString hresultToString(long hr);
     static RuntimePointQuality qualityToRuntimeQuality(unsigned short quality);
@@ -185,8 +187,15 @@ private:
     QDateTime m_lastFailedWriteTime;
     CommErrorCode m_lastErrorCode = CommErrorCode::NoError;
     QString m_lastErrorMessage;
+    QStringList m_startupIssues;
+    bool m_browseAttempted = false;
     bool m_browseSucceeded = false;
     QString m_lastBrowseMessage;
+    bool m_addItemsAttempted = false;
+    bool m_refreshAttempted = false;
+    bool m_refreshOk = false;
+    QString m_lastRefreshMessage;
+    bool m_subscriptionAttempted = false;
     bool m_subscriptionActive = false;
     QString m_lastSubscriptionMessage;
     bool m_expectedChannelVisible = false;
