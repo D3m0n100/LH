@@ -829,7 +829,8 @@ CompileArtifact DSLCompilerInterface::generateRuntimeManifestJson(
             return;
         const QString relative = manifestRelativePath(outputDir, path);
         const QString checksum = DSLCompilerInternal::sha256ForFile(path);
-        if (relative.isEmpty() || QDir::isAbsolutePath(relative) || hasParentTraversal(relative)
+        if (relative.isEmpty() || QDir::isAbsolutePath(relative)
+                || DSLCompilerInternal::hasParentTraversal(relative)
                 || checksum.isEmpty()) {
             return;
         }

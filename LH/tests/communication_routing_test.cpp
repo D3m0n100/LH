@@ -316,7 +316,7 @@ private slots:
     void udpReceiveKeepsDatagramsSeparate()
     {
         QUdpSocket portProbe;
-        QVERIFY(portProbe.bind(QHostAddress::LocalHost, 0));
+        QVERIFY(portProbe.bind(QHostAddress::LocalHost, static_cast<quint16>(0)));
         const quint16 port = portProbe.localPort();
         portProbe.close();
 

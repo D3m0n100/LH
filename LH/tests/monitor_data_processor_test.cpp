@@ -1154,7 +1154,7 @@ private slots:
         sample.channelName = QStringLiteral("ordered");
         sample.value = 3.0;
         sample.timestamp = QDateTime::currentDateTimeUtc();
-        sample.quality = RuntimePointQuality::Uncertain;
+        sample.quality = RuntimePointQuality::Good;
         sample.valueValid = true;
         processor.appendSample(sample.channelName, sample);
 
