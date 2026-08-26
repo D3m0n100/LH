@@ -596,7 +596,7 @@ QueryResult DataManager::logRuntimeData(const QString& varName, double value, co
                 COALESCE(:timestamp, CURRENT_TIMESTAMP), :name, :value, :unit,
                 :quality, 1, '', '', '')
         )");
-        query.bindValue(":timestamp", QDateTime::currentDateTimeUtc());
+        query.bindValue(":timestamp", QDateTime::currentDateTimeUtc().toString(Qt::ISODateWithMs));
         query.bindValue(":name", varName);
         query.bindValue(":value", value);
         query.bindValue(":unit", unit);
@@ -676,7 +676,9 @@ QueryResult DataManager::logRuntimeDataBatch(const QList<QVariantMap>& records)
             ts = tsVar.toDateTime();
         }
 
-        query.bindValue(":timestamp", ts.isValid() ? QVariant(ts) : QVariant());
+        query.bindValue(":timestamp", ts.isValid()
+                      ? QVariant(ts.toUTC().toString(Qt::ISODateWithMs))
+                      : QVariant());
         query.bindValue(":name", varName);
         query.bindValue(":value", valueValid ? QVariant(value) : QVariant());
         query.bindValue(":unit", unit);
@@ -783,8 +785,8 @@ QList<RuntimeRecord> DataManager::queryHistory(const QString& varName,
         ORDER BY timestamp ASC, id ASC
     )");
     query.bindValue(":name", varName);
-    query.bindValue(":start", startUtc);
-    query.bindValue(":end", endUtc);
+    query.bindValue(":start", startUtc.toString(Qt::ISODateWithMs));
+    query.bindValue(":end", endUtc.toString(Qt::ISODateWithMs));
     
     if (query.exec()) {
         while (query.next()) {
@@ -851,10 +853,10 @@ RuntimeHistoryPage DataManager::queryHistoryPage(const QString& varName,
         LIMIT :limit
     )");
     query.bindValue(":name", varName);
-    query.bindValue(":start", startUtc);
-    query.bindValue(":end", endUtc);
+    query.bindValue(":start", startUtc.toString(Qt::ISODateWithMs));
+    query.bindValue(":end", endUtc.toString(Qt::ISODateWithMs));
     query.bindValue(":hasCursor", cursor.isValid() ? 1 : 0);
-    query.bindValue(":cursorTimestamp", cursor.timestamp.toUTC());
+    query.bindValue(":cursorTimestamp", cursor.timestamp.toUTC().toString(Qt::ISODateWithMs));
     query.bindValue(":cursorId", cursor.id);
     query.bindValue(":limit", pageSize);
 
@@ -907,10 +909,10 @@ RuntimeHistoryPage DataManager::queryHistoryPage(const QString& varName,
             LIMIT 1
         )");
         moreQuery.bindValue(":name", varName);
-        moreQuery.bindValue(":start", startUtc);
-        moreQuery.bindValue(":end", endUtc);
+        moreQuery.bindValue(":start", startUtc.toString(Qt::ISODateWithMs));
+        moreQuery.bindValue(":end", endUtc.toString(Qt::ISODateWithMs));
         moreQuery.bindValue(":hasCursor", page.nextCursor.isValid() ? 1 : 0);
-        moreQuery.bindValue(":cursorTimestamp", page.nextCursor.timestamp);
+        moreQuery.bindValue(":cursorTimestamp", page.nextCursor.timestamp.toUTC().toString(Qt::ISODateWithMs));
         moreQuery.bindValue(":cursorId", page.nextCursor.id);
         if (!moreQuery.exec()) {
             page.status = RuntimeHistoryPageStatus::SqlError;
@@ -976,10 +978,10 @@ RuntimeHistoryPage DataManager::queryLatestHistoryPage(const QString& varName,
         "ORDER BY timestamp ASC, id ASC LIMIT :limit"));
     query.bindValue(":latestName", varName);
     query.bindValue(":hasEnd", hasEnd ? 1 : 0);
-    query.bindValue(":end", endUtc);
+    query.bindValue(":end", endUtc.toString(Qt::ISODateWithMs));
     query.bindValue(":maxCount", maxCount);
     query.bindValue(":hasCursor", cursor.isValid() ? 1 : 0);
-    query.bindValue(":cursorTimestamp", cursor.timestamp.toUTC());
+    query.bindValue(":cursorTimestamp", cursor.timestamp.toUTC().toString(Qt::ISODateWithMs));
     query.bindValue(":cursorId", cursor.id);
     query.bindValue(":limit", pageSize);
 
@@ -1026,10 +1028,10 @@ RuntimeHistoryPage DataManager::queryLatestHistoryPage(const QString& varName,
             "OR (timestamp = :cursorTimestamp AND id > :cursorId)) LIMIT 1"));
         moreQuery.bindValue(":latestName", varName);
         moreQuery.bindValue(":hasEnd", hasEnd ? 1 : 0);
-        moreQuery.bindValue(":end", endUtc);
+        moreQuery.bindValue(":end", endUtc.toString(Qt::ISODateWithMs));
         moreQuery.bindValue(":maxCount", maxCount);
         moreQuery.bindValue(":hasCursor", page.nextCursor.isValid() ? 1 : 0);
-        moreQuery.bindValue(":cursorTimestamp", page.nextCursor.timestamp);
+        moreQuery.bindValue(":cursorTimestamp", page.nextCursor.timestamp.toUTC().toString(Qt::ISODateWithMs));
         moreQuery.bindValue(":cursorId", page.nextCursor.id);
         if (!moreQuery.exec()) {
             page.status = RuntimeHistoryPageStatus::SqlError;
@@ -1072,8 +1074,8 @@ RuntimeHistoryCount DataManager::countHistory(const QString& varName,
           AND timestamp <= :end
     )");
     query.bindValue(":name", varName);
-    query.bindValue(":start", startUtc);
-    query.bindValue(":end", endUtc);
+    query.bindValue(":start", startUtc.toString(Qt::ISODateWithMs));
+    query.bindValue(":end", endUtc.toString(Qt::ISODateWithMs));
 
     if (!query.exec() || !query.next()) {
         result.status = RuntimeHistoryPageStatus::SqlError;
@@ -1125,7 +1127,7 @@ RuntimeHistoryCount DataManager::countLatestHistory(const QString& varName,
     )");
     query.bindValue(":name", varName);
     query.bindValue(":hasEnd", hasEnd ? 1 : 0);
-    query.bindValue(":end", endUtc);
+    query.bindValue(":end", endUtc.toString(Qt::ISODateWithMs));
     query.bindValue(":limit", maxCount);
 
     if (!query.exec() || !query.next()) {
@@ -1209,7 +1211,7 @@ QList<RuntimeRecord> DataManager::getRecordsSince(const QString& varName, const 
         ORDER BY timestamp ASC, id ASC
     )");
     query.bindValue(":name", varName);
-    query.bindValue(":since", since);
+    query.bindValue(":since", since.toUTC().toString(Qt::ISODateWithMs));
     
     if (query.exec()) {
         while (query.next()) {
@@ -1258,8 +1260,8 @@ DataStatistics DataManager::getStatistics(const QString& varName,
           AND value IS NOT NULL
     )");
     query.bindValue(":name", varName);
-    query.bindValue(":start", start);
-    query.bindValue(":end", end);
+    query.bindValue(":start", start.toUTC().toString(Qt::ISODateWithMs));
+    query.bindValue(":end", end.toUTC().toString(Qt::ISODateWithMs));
     
     if (query.exec() && query.next()) {
         stats.count = query.value(4).toInt();

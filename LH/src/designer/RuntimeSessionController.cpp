@@ -282,7 +282,7 @@ void RuntimeSessionController::requestStop()
 
     // 先发布 Idle，再断开后端，避免断开信号把停止过程短暂推入 Fault。
     setState(RuntimeSessionState::Idle);
-    if (m_backend == m_ownedControllerBackend) {
+    if (m_backend && m_backend == m_ownedControllerBackend) {
         m_backend->disconnectBackend();
     }
     if (wasDownloading) {

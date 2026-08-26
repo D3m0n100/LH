@@ -326,6 +326,7 @@ private:
 DownloadManager::DownloadManager(QObject* parent)
     : QObject(parent)
 {
+    qRegisterMetaType<DownloadManager::ErrorCode>("DownloadManager::ErrorCode");
 }
 
 DownloadManager::~DownloadManager()

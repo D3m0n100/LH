@@ -74,7 +74,7 @@ public slots:
 signals:
     void statusChanged(State st, const QString& msg);
     void progressChanged(int percent, int sentBytes, int totalBytes, int pktIndex, int pktCount);
-    void errorOccurred(ErrorCode code, const QString& msg, const QString& details);
+    void errorOccurred(DownloadManager::ErrorCode code, const QString& msg, const QString& details);
     void logLine(const QString& line);
 
 private:
@@ -83,5 +83,7 @@ private:
     QPointer<QObject> m_activeWorker;
     std::shared_ptr<DownloadCancellationHandle> m_activeCancelState;
 };
+
+Q_DECLARE_METATYPE(DownloadManager::ErrorCode)
 
 #endif // DOWNLOADMANAGER_H

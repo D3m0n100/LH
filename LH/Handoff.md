@@ -14,6 +14,8 @@
 
 除 COMP-F1 的独立 Python package 验证外，本轮没有把旧构建目录或旧二进制当作运行证据。
 
+冻结边界仅适用于源码写入：`src/compiler/**` 和 `third_party/custom_dsp_language/compile/**` 未获狭窄授权不得修改，但完整项目 clean configure/build/CTest 仍必须包含并编译这些目录；整改代码不能因冻结区而跳过编译、链接或测试。构建产物只能由构建流程写入 build 目录，不能手动修改或作为旧证据。
+
 ## 2. 当前任务与历史完成状态
 
 | 任务 | 当前状态 | 等级 | 说明 / 后续验证 |

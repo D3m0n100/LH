@@ -20,8 +20,6 @@
 #undef private
 #include "communication/Communication.h"
 
-Q_DECLARE_METATYPE(DownloadManager::ErrorCode)
-
 class DownloadManagerLifecycleTest : public QObject
 {
     Q_OBJECT

@@ -371,6 +371,8 @@ src/compiler/**
 third_party/custom_dsp_language/compile/**
 ```
 
+这里冻结的是源码写入，不是构建冻结：未获授权不得修改上述目录源码，但云端或本地的完整项目 clean configure/build/CTest 必须允许读取并编译这些目录。整改代码的完整编译、链接和测试不得因冻结区而跳过；构建生成物应写入独立 build 目录，旧产物不能作为验证证据。
+
 任何新写入必须先列最终最小文件清单并获得用户明确授权。过去的狭窄授权不自动延续。
 
 本轮 BUILD-CANCEL-1 一次性最小授权（2026-08-26）：用户明确授权修改 `src/designer/BuildController.h`、`src/designer/BuildController.cpp`、`src/compiler/DSLCompilerInterface.h`、`src/compiler/DSLCompilerAsync.cpp` 及对应最小测试/CTest 注册文件；不解除 `src/compiler/**` 其他文件和 `third_party/custom_dsp_language/compile/**` 的冻结。

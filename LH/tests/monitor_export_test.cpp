@@ -406,7 +406,7 @@ private slots:
         QVERIFY(singleCsvContent.contains(tsvUnitField));
         QVERIFY(singleCsvContent.contains(QStringLiteral(",-12.5,\"'+单位")));
         QVERIFY(!singleCsvContent.contains(QStringLiteral(",'-12.5")));
-        QVERIFY(singleCsvContent.contains(QStringLiteral(",plain,,Good,0")));
+        QVERIFY(singleCsvContent.contains(QStringLiteral(",plain,,,Good,0")));
 
         const QString singleTsvPath = tempDir.path() + QStringLiteral("/special_single.tsv");
         const ExportResult singleTsv = helper.exportDataAsTsvToFile(

@@ -66,7 +66,7 @@ private:
         config.projectName = name;
         config.dslScriptPath = scriptPath;
         config.mainScriptPath = scriptPath;
-        config.scriptFiles = {scriptPath};
+        config.scriptFiles = QStringList() << scriptPath;
 
         const QString configPath = QDir(projectPath).absoluteFilePath(QStringLiteral("project_config.json"));
         const QJsonDocument document(config.toJson());
@@ -402,7 +402,7 @@ private slots:
         config.projectName = QStringLiteral("relative_project");
         config.mainScriptPath = QStringLiteral("scripts/entry.lh");
         config.dslScriptPath = config.mainScriptPath;
-        config.scriptFiles = {config.mainScriptPath};
+        config.scriptFiles = QStringList() << config.mainScriptPath;
         QVERIFY(writeFile(QDir(projectPath).absoluteFilePath(QStringLiteral("project_config.json")),
                           QJsonDocument(config.toJson()).toJson()));
 
@@ -444,7 +444,7 @@ private slots:
         config.projectName = QStringLiteral("legacy_absolute_project");
         config.mainScriptPath = mainPath;
         config.dslScriptPath = mainPath;
-        config.scriptFiles = {mainPath};
+        config.scriptFiles = QStringList() << mainPath;
         QVERIFY(writeProjectConfig(projectPath, config));
 
         DslScriptEditor editor;
@@ -458,7 +458,8 @@ private slots:
         const QJsonObject saved = QJsonDocument::fromJson(configFile.readAll()).object();
         QCOMPARE(saved.value(QStringLiteral("mainScriptPath")).toString(), QStringLiteral("main.lh"));
         QCOMPARE(saved.value(QStringLiteral("dslScriptPath")).toString(), QStringLiteral("main.lh"));
-        QCOMPARE(saved.value(QStringLiteral("scriptFiles")).toArray().value(0).toString(),
+        const QJsonArray savedScripts = saved.value(QStringLiteral("scriptFiles")).toArray();
+        QCOMPARE(savedScripts.at(0).toString(),
                  QStringLiteral("main.lh"));
     }
 
@@ -491,7 +492,7 @@ private slots:
                 .canonicalFilePath();
         config.mainScriptPath = mainPath;
         config.dslScriptPath = mainPath;
-        config.scriptFiles = {mainPath};
+        config.scriptFiles = QStringList() << mainPath;
         config.downloadArtifact.filePath = codePath;
         config.downloadArtifact.metadata.insert(QStringLiteral("downloadProfilePath"), profilePath);
         config.downloadArtifact.metadata.insert(QStringLiteral("downloadProfileSourcePath"), sourceProfilePath);
@@ -559,7 +560,7 @@ private slots:
         config.projectName = QStringLiteral("missing_auxiliary_project");
         config.mainScriptPath = QStringLiteral("main.lh");
         config.dslScriptPath = config.mainScriptPath;
-        config.scriptFiles = {config.mainScriptPath, QStringLiteral("scripts/missing.lh")};
+        config.scriptFiles = QStringList() << config.mainScriptPath << QStringLiteral("scripts/missing.lh");
         QVERIFY(writeProjectConfig(projectPath, config));
 
         DslScriptEditor editor;
@@ -588,7 +589,7 @@ private slots:
         config.projectName = QStringLiteral("candidate_project");
         config.mainScriptPath = QStringLiteral("../outside.lh");
         config.dslScriptPath = config.mainScriptPath;
-        config.scriptFiles = {config.mainScriptPath};
+        config.scriptFiles = QStringList() << config.mainScriptPath;
         QVERIFY(writeProjectConfig(candidateProject, config));
 
         DslScriptEditor editor;
@@ -626,7 +627,7 @@ private slots:
         config.projectName = QStringLiteral("candidate_project");
         config.mainScriptPath = externalScript;
         config.dslScriptPath = externalScript;
-        config.scriptFiles = {externalScript};
+        config.scriptFiles = QStringList() << externalScript;
         QVERIFY(writeProjectConfig(candidateProject, config));
 
         DslScriptEditor editor;
@@ -661,7 +662,7 @@ private slots:
         config.projectName = QStringLiteral("candidate_project");
         config.mainScriptPath = QStringLiteral("main.txt");
         config.dslScriptPath = config.mainScriptPath;
-        config.scriptFiles = {config.mainScriptPath};
+        config.scriptFiles = QStringList() << config.mainScriptPath;
         QVERIFY(writeProjectConfig(candidateProject, config));
 
         DslScriptEditor editor;
@@ -698,7 +699,7 @@ private slots:
         config.projectName = QStringLiteral("candidate_project");
         config.mainScriptPath = QStringLiteral("main.lh");
         config.dslScriptPath = config.mainScriptPath;
-        config.scriptFiles = {config.mainScriptPath, QStringLiteral("../outside.lh")};
+        config.scriptFiles = QStringList() << config.mainScriptPath << QStringLiteral("../outside.lh");
         QVERIFY(writeProjectConfig(candidateProject, config));
 
         DslScriptEditor editor;
@@ -736,7 +737,7 @@ private slots:
         config.projectName = QStringLiteral("project");
         config.mainScriptPath = QStringLiteral("../project-sibling/main.lh");
         config.dslScriptPath = config.mainScriptPath;
-        config.scriptFiles = {config.mainScriptPath};
+        config.scriptFiles = QStringList() << config.mainScriptPath;
         QVERIFY(writeProjectConfig(candidateProject, config));
 
         DslScriptEditor editor;
@@ -779,7 +780,7 @@ private slots:
         config.projectName = QStringLiteral("candidate_project");
         config.mainScriptPath = linkPath;
         config.dslScriptPath = linkPath;
-        config.scriptFiles = {linkPath};
+        config.scriptFiles = QStringList() << linkPath;
         QVERIFY(writeProjectConfig(candidateProject, config));
 
         DslScriptEditor editor;
@@ -820,7 +821,7 @@ private slots:
         config.projectName = QStringLiteral("candidate_project");
         config.mainScriptPath = QStringLiteral("main.lh");
         config.dslScriptPath = config.mainScriptPath;
-        config.scriptFiles = {config.mainScriptPath, QStringLiteral("links/missing.lh")};
+        config.scriptFiles = QStringList() << config.mainScriptPath << QStringLiteral("links/missing.lh");
         QVERIFY(writeProjectConfig(candidateProject, config));
 
         DslScriptEditor editor;

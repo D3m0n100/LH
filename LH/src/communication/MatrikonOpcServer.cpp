@@ -1786,9 +1786,19 @@ QStringList MatrikonOpcServer::readProbeItemCandidates() const
 bool MatrikonOpcServer::writeItemValue(const QString& pointId, const QVariant& value, QString* errorMessage)
 {
 #ifndef Q_OS_WIN
-    Q_UNUSED(pointId)
-    Q_UNUSED(value)
-    Q_UNUSED(errorMessage)
+    const QString message = QStringLiteral("OPC DA write is unsupported on this platform");
+    m_lastWritePointId = pointId;
+    m_lastWriteValue = value;
+    m_lastWriteSuccess = false;
+    m_lastWriteMessage = message;
+    m_lastWriteTime = QDateTime::currentDateTimeUtc();
+    m_lastStatusChangeTime = m_lastWriteTime;
+    m_lastFailedWriteTime = m_lastWriteTime;
+    m_lastFailedWriteMessage = message;
+    ++m_failedWriteCount;
+    if (errorMessage) {
+        *errorMessage = message;
+    }
     return false;
 #else
     auto recordFailure = [&](const QString& message) {
