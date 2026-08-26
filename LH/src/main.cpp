@@ -12,6 +12,7 @@
 #include <QTimer>
 #include <QTextCodec>
 #include <QIcon>
+#include <QDir>
 #include "designer/MainWindow.h"
 #include "core/DataManager.h"
 #include "core/TaskScheduler.h"
@@ -39,9 +40,15 @@ int main(int argc, char *argv[])
 
     LOG_INFO("平台启动中...");
 
-    // 初始化数据管理器
-    QString dbPath = QCoreApplication::applicationDirPath() + "/../data/platform.db";
-    if (!DataManager::instance().initialize(dbPath)) {
+    // 初始化数据管理器：运行期数据只写入平台用户数据目录。
+    const QString dbPath = DataManager::defaultDatabasePath();
+    if (dbPath.isEmpty()) {
+        LOG_ERROR("无法确定用户可写的应用数据目录");
+        return -1;
+    }
+    const QString legacyDbPath = QDir::cleanPath(
+        QDir(QCoreApplication::applicationDirPath()).filePath("../data/platform.db"));
+    if (!DataManager::instance().initialize(dbPath, legacyDbPath)) {
         LOG_ERROR("数据库初始化失败！");
         return -1;
     }

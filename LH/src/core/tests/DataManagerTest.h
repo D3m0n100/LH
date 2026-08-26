@@ -25,6 +25,10 @@ private slots:
     void testInitializeAndShutdown();
     void testSchemaVersion();
     void testReinitialize();
+    void testDefaultDatabasePath();
+    void testDatabaseDirectoryFailure();
+    void testLegacyDatabaseMigration();
+    void testLegacyMigrationFailureLeavesTargetAbsent();
     void testInvalidSchemaVersionsRejected();
     void testInitializationFailureRecovery();
     void testInitialRequiredIndexFailureRollsBack();
@@ -34,6 +38,7 @@ private slots:
     // ===== 运行时数据测试 =====
     void testLogRuntimeData();
     void testLogRuntimeDataBatch();
+    void testRuntimeDataTimestampsUseCanonicalUtc();
     void testSqlErrorLogRedactsBoundValues();
     void testRuntimeCache();
     

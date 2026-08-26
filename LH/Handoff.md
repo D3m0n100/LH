@@ -14,7 +14,7 @@
 
 除 COMP-F1 的独立 Python package 验证外，本轮没有把旧构建目录或旧二进制当作运行证据。
 
-冻结边界仅适用于源码写入：`src/compiler/**` 和 `third_party/custom_dsp_language/compile/**` 未获狭窄授权不得修改，但完整项目 clean configure/build/CTest 仍必须包含并编译这些目录；整改代码不能因冻结区而跳过编译、链接或测试。构建产物只能由构建流程写入 build 目录，不能手动修改或作为旧证据。
+冻结边界仅适用于源码写入：本轮用户已明确授权可修改 `src/compiler/**`；`third_party/custom_dsp_language/compile/**` 未获单独授权不得修改。完整项目 clean configure/build/CTest 仍必须包含并编译这些目录；整改代码不能因冻结区而跳过编译、链接或测试。构建产物只能由构建流程写入 build 目录，不能手动修改或作为旧证据。
 
 ## 2. 当前任务与历史完成状态
 
@@ -23,14 +23,17 @@
 | CFG-1 | 已完成，总控验收通过 | L1 | 统一/直接通信入口严格校验；空串口不再枚举或自动选择设备；待 Windows CTest 与真机 VAL-3 |
 | MON-CFG-1 | 已完成，总控验收通过 | L1 | `applyConfiguration()` 已改为候选校验后集中交换 runtime channel/provider/backend 映射；非法候选保留旧状态，待 Windows CTest/真机 VAL-1、VAL-3 |
 | OPC-1 | 代码实施完成，Windows/Matrikon 阻断 | L1 | start 分阶段失败传播、online/degraded/offline 快照、quality/null/master/per-item HRESULT 和回调矩阵已补；待 VAL-1/VAL-2 |
-| MON-IO-1 | 真机阻断 | L0 | 先测量同步 backend I/O 与 UI 阻塞；无证据不改生产代码 |
-| NET-1 | 进行中（决策门仍阻断） | L1 | UDP 完整报文与地址输入边界已收口；待确认监听范围、多客户端、消息边界与 keep-alive 合同 |
-| DB-RET-1 | 进行中 / L1 | L1 | UTC cutoff、runtime_data/system_logs 同事务清理与失败回滚已实施；待 CTest/目标规模验证 |
-| EXP-CSV-1 | 进行中 | L1 | CSV/TSV 普通/分页、单/多通道统一字段编码与公式注入防护已实施；待 Qt/CTest 与目标规模验证 |
-| SQL-LOG-1 | 进行中 | L1 | DataManager SQL 错误日志改为模板+参数类型/长度摘要，不记录绑定原值；待 Qt/CTest 验证 |
-| BUILD-CANCEL-1 | 进行中 / L1 | L1 | `DSLCompilerInterface` 非阻塞取消、sender/generation 过滤与 `BuildController` Cancelling 单终态已实施；待 Qt/CTest、Windows UI 时序验证 |
-| DB-QUERY-1 | 未开始 | L0 | 生产历史查询区分成功空结果、未初始化与 SQL error |
-| COMM-LIFE-1 | 未开始，先验证 | L0 | 不预设旧响应污染；核实 timeout reply 生命周期、重入和并发合同 |
+| DEPLOY-DATA-1 | 代码实施完成，安装包/目标平台验证待补 | L1 | 生产数据库改用 Qt `AppDataLocation`；旧 `<prefix>/data/platform.db` 仅在目标不存在时 staging 后原子提交，目标优先且失败不回退；待 VAL-1/安装包验证 |
+| DB-TIME-1 | 静态实施完成，待目标验证 | L1 | DataManager 单条与 batch 写入统一绑定 UTC ISO 8601 毫秒时间；缺失/无效 timestamp 不再依赖 SQLite `CURRENT_TIMESTAMP`；回归测试已补，待 Qt/CTest/VAL-4 |
+| MON-IO-1 | 静态调查完成，真机阻断 | L0 | 已确认 `QTimer → MonitorManager::onBackendPollTimeout() → readPoints()` 为同步调用；Controller/Modbus 路径为 5 + N 请求模型，待 VAL-3 实测；无证据不改生产代码 |
+| NET-1 | 静态复核完成，决策门仍阻断 | L1 | UDP datagram 与 bind 地址边界已收口；已确认 TCP 多客户端接收归属、广播发送统计和 keep-alive 仍缺合同；待确认监听范围、发送/隔离、消息边界与 keep-alive 语义 |
+| DB-RET-1 | 静态复核完成，待目标验证 | L1 | `onCleanupTimeout()` 的生产调用、UTC cutoff、runtime_data/system_logs 同事务清理与失败回滚已确认；回归测试覆盖 UTC 边界与第二个 DELETE 失败回滚；待 VAL-1/VAL-4 |
+| EXP-CSV-1 | 静态复核完成，待目标验证 | L1 | 普通/分页、单/多通道 CSV/TSV 均使用 `encodeDelimitedField()`；数值列不做公式保护，QSaveFile 写入/提交失败保留旧目标；回归测试已覆盖特殊字段与分页；待 VAL-1/VAL-4 |
+| SQL-LOG-1 | 静态复核完成，待目标验证 | L1 | DataManager 的 query.exec() 失败分支统一记录 prepared SQL 模板、参数类型/长度、native code 和必要错误文本；回归测试确认业务值与敏感文本不落日志；待 Qt/CTest 验证 |
+| BUILD-CANCEL-1 | 静态复核完成，待目标验证 | L1 | `DSLCompilerInterface` 非阻塞取消、sender/generation 过滤与 `BuildController` Cancelling 单终态已确认；取消前回调测试已注册，待 Qt/CTest、Windows UI 时序验证 |
+| MON-SNAP-1 | 静态实施完成，待目标验证 | L1 | 高频 `statusSnapshot()` 不再执行完整 preflight、串口枚举或 OPC 注册检查；点位摘要仅保留计数，显式 `preflight()` 仍保留完整明细；待 Qt/CTest/真机验证 |
+| DB-QUERY-1 | 进行中 / L1 | L1 | MonitorWidget 导出与 ParameterTuningWindow 已迁移到 page/count 状态 API；成功空页、未初始化和 SQL error 不再共用空列表语义；待 VAL-1/VAL-4 |
+| COMM-LIFE-1 | 静态调查完成，真机阻断 | L0 | `waitForReply()` 使用嵌套事件循环，reply 在 `finished` 后 `deleteLater()`；超时不写缓存且映射 `ReceiveTimeout`，但缺少 in-flight/重入/跨线程/关闭中的 reply 保护与运行证据；保留 VAL-3 |
 | COR-B1 | 已完成，总控验收通过 | L1 | typed codec、严格数值转换、access/error、deviceId alias/default/conflict 已闭合；待 Windows CTest 与真机寄存器验证 |
 | PAR-B1 | 已完成，总控验收通过 | L1 | partial success、typed readback、backend 销毁安全、OPC 单点 scope/Confirmed 发布已闭合；待 Windows CTest/Matrikon |
 | MON-1 | 已完成，总控复验通过 | L1 | MonitorChannel 配置与 threshold snapshot 锁策略已统一；待 Windows CTest |
@@ -58,7 +61,7 @@
 | VAL-3 | 阻断 | L0 | 需要真实控制器、串口和正式/诊断下载链 |
 | VAL-4 | 阻断 | L0 | 需要目标规模数据库和长时间导出环境 |
 
-当前 v4.2 合同下仍有可在 macOS 静态闭环的 P1/P2 任务。后续派发顺序以需求合同第 7 节为准；本表中的历史 L1/N/A 行只保存完成证据，不是待实施任务。
+当前 v4.2 合同下可在 macOS 静态闭环的 P1/P2 实施项已按需求合同第 7.1 节顺序完成；剩余事项均为 Windows/真机/目标规模验证或 NET-1 决策门。历史 L1/N/A 行只保存完成证据，不是待实施任务。
 
 ## 3. 已完成工作的关键合同
 
@@ -69,8 +72,10 @@
 - 显式 `slaveId/stationAddress/serverAddress` 优先于默认 `unitId=1`；冲突或非法 alias 在 I/O 前 hard-fail。
 - mapped access violation 返回 `PermissionDenied`，transport error 保留原错误，不得覆盖为地址或参数错误。
 - Modbus 外层等待超时固定为 `ReceiveTimeout`；所有失败路径禁止留下 `CommErrorCode::NoError`。
+- COMM-LIFE-1 静态复核确认 `QModbusReply` 由 Qt client 持有并在 `finished` 后延迟释放；超时路径只报告失败并返回，不发布缓存/数据成功信号。现有同步 API 通过嵌套 `QEventLoop`，未建立同线程重入、跨线程误用、close/迟到 reply 的保护或测试，保留到 VAL-3。
 - Serial/Modbus/Ethernet 配置统一使用严格整数解析与枚举白名单；端口在窄化前校验 `1..65535`，非法 timeout/buffer 和未知显式 mode/role 在 I/O 前返回 `InvalidConfig`。
 - 空串口名不再调用设备枚举或自动选择第一台设备；Serial 原有 `baudRate=0` 自动波特率检测仍保留。
+- NET-1 静态复核确认 TCP/UDP server bind 使用非空 IP 地址，默认监听范围为 loopback，UDP 接收队列按 datagram 保持独立；当前 TCP server 多客户端仍共用 `m_receiveBuffer` 且 `dataReceived` 不携带 sender，广播 `send()` 只保留最后一个客户端的写入结果，keep-alive 定时器没有实际动作。未在决策门关闭前选择 per-client API、广播统计、framing 或心跳语义。
 - 参数批量提交允许成功点继续回读，最终结果以本次目标集合计算；BOOL/整数/REAL 按目标类型比较，REAL 使用 float32 representation-aware 语义。
 - 借用 backend 用 QPointer/destroyed guard 隔离异步回读；销毁或替换后 pending 必须一次失败收口，不发布 Good。
 - OPC 单点写只作用于该 pointId；只有 readback `Confirmed` 后才能记录成功并发布新 Good 值。
@@ -80,11 +85,14 @@
 - 历史查询使用 `(timestamp, id)` keyset 分页，并固定查询结束时间。
 - 历史记录持久化 `quality`、`origin`、`error_code`、`error_text`；通信失败不能作为正常数值 0 传播。
 - DataManager batch insert 保持事务语义；初始化必要 SQL、版本读取、required index、schema version 更新与 connection cleanup 均按 hard failure 处理。
-- DB-RET-1 清理使用 UTC cutoff；`runtime_data` 与 `system_logs` 在同一事务中删除，任一 DELETE/提交失败回滚并返回 `-1`，失败不记录持久化清理完成；Monitor 清理定时器仅在 DataManager 已初始化且数据库记录启用时触发。
+- DB-TIME-1 的 runtime_data 写入统一通过 DataManager 生成/规范化 UTC ISO 8601 毫秒文本；schema 既有 default 保留，但生产单条/batch 路径不再依赖 `CURRENT_TIMESTAMP`。
+- DB-RET-1 清理使用同一 UTC 日界；`runtime_data` 与 `system_logs` 在同一事务中删除，任一 DELETE/提交失败回滚并返回 `-1`，失败不记录持久化清理完成；`MonitorManager::onCleanupTimeout()` 仅在 DataManager 已初始化且数据库记录启用时触发持久化清理，定时路径不执行 VACUUM。
+- DB-QUERY-1 的生产历史读取统一使用 `RuntimeHistoryPage`/`RuntimeHistoryCount` 状态 API；`ParameterTuningWindow` 不再把未初始化或 SQL error 显示成“历史样本 0”，成功空页仍明确表示无数据。旧 list-returning 查询入口保留给兼容/测试调用，未再被仓内生产 UI/导出路径调用。
 - 非整数、负数或未来 schema version 被拒绝，不新增 schema v5。
 - CSV/JSON/TSV 大批量导出采用有界分页流式写入和 QSaveFile；provider、写入或 commit 失败保留旧文件。
-- EXP-CSV-1 的 CSV/TSV 普通与分页导出共用字段编码：分隔符、双引号、CR/LF、空字段和 Unicode 可安全落盘；用户文本首字符为 `= + - @` 时加单引号，数值列不受影响；JSON 路径保持原语义。
+- EXP-CSV-1 的 CSV/TSV 普通与分页导出共用 `encodeDelimitedField()`：分隔符、双引号、CR/LF、空字段和 Unicode 可安全落盘；用户文本首字符为 `= + - @` 时加单引号，数值列不受影响；普通/分页写入均使用 QSaveFile，provider/写入/commit 失败保留旧目标；JSON 路径保持原语义。
 - SQL-LOG-1 的统一 SQL 错误日志仅保留操作描述、prepared SQL 模板、参数名/类型/长度、native code 和必要错误文本；不记录 `executedQuery()` 扩展值、绑定原值或批量业务变量名。
+- DEPLOY-DATA-1 的生产数据库使用 Qt `QStandardPaths::AppDataLocation`；旧安装前缀库只读复制到 staging 文件后原子提交到目标，目标已存在时不覆盖，迁移/建目录/打开失败均终止初始化，不回退到安装或临时目录。
 - aligned CSV/TSV 是按时间戳对齐视图，不承诺同一 channel/timestamp 多条 Sample 逐条无损；行式导出承担逐 Sample 无损语义。
 
 ### 3.3 Monitor、输出保存与结构拆分
@@ -92,6 +100,8 @@
 - MonitorChannel 的公开 config getter、threshold 读取和 samples 修改统一受 mutex 保护。
 - threshold evaluation 使用锁内复制的配置快照，解锁后判断并 emit，不在持锁状态触发外部可重入 signal。
 - `MonitorManager::applyConfiguration()` 先构建和校验无副作用候选，成功后一次交换 runtime channel/provider/backend 映射；失败不停止旧监控、不发集合变更信号，成功只发一次 `channelsChanged`，并保留旧 point id 的最后通道映射语义。
+- MON-IO-1 静态审计确认 backend 轮询在 MonitorManager 线程同步调用 `readPoints()`；Controller backend 每轮先读取 5 个状态寄存器，再对每个到期映射点单独发起一次寄存器读取。当前无真实设备与 Qt 运行证据，未新增生产测量代码或 I/O 重构，仍待 VAL-3 的时延、实际 transaction、有效采样周期和 UI 事件循环响应实测。
+- MON-SNAP-1 的 Controller backend 高频 `statusSnapshot()` 只返回缓存状态和点位计数，不再调用 `buildPreflightReport()`；串口枚举、OPC ProgID 检查和完整点位明细仅保留在显式诊断/配置验证路径。
 - MainWindow 与 OutputPaneController 的日志保存均使用 `QSaveFile + QTextStream::status() + commit()`；打开、写入或提交失败不会提示成功，也不会破坏旧目标文件。
 - P3-1 只移动 implementation，没有改 API：`MainWindowOutput.cpp`、`MainWindowMonitor.cpp`、`MonitorManagerHistory.cpp`、`MonitorManagerPolling.cpp` 已进入 CMake。
 - CLEAN-1 只删除两个确认死文件；`src/compiler/dummy.cpp` 位于冻结区，仍保留。
@@ -126,7 +136,7 @@ OPC-1 的源码实施已完成 macOS 可静态验收：阶段失败会进入状�
 
 - VAL-1：Windows clean configure/build、targeted CTest、full CTest；
 - VAL-2：Matrikon activation、browse、group/item、同步读写、订阅、断线重连和 late callback；
-- VAL-3：真实寄存器编码、设备号 alias、端口互斥、retry/reconnect、取消和 artifact generation 消费；
+- VAL-3：真实寄存器编码、设备号 alias、端口互斥、retry/reconnect、Modbus reply 生命周期/重入、取消和 artifact generation 消费；
 - CFG-1：Windows 运行 communication routing/serial interface tests，并用真实串口确认合法配置、自动波特率与失败前无误开设备；
 - VAL-4：大数据库分页稳定性、内存上界、吞吐和导出失败保留旧文件；
 - BUILD-CANCEL-1：Qt/CTest 或 Windows UI 验证取消前、进程启动后、临近完成、立即重启及迟到 finished/error 回调隔离；
@@ -135,16 +145,15 @@ OPC-1 的源码实施已完成 macOS 可静态验收：阶段失败会进入状�
 
 ### 4.3 当前工作树口径
 
-当前工作树包含 CFG-1 的 5 个通信源码、2 个既有通信测试、MON-CFG-1 的 MonitorManager 与 backend 回归测试、DB-RET-1 的 DataManager/MonitorManager 与数据库回归测试、EXP-CSV-1 的 MonitorExportHelper 与导出回归测试、SQL-LOG-1 的 DataManager 与错误日志回归测试、BUILD-CANCEL-1 的 BuildController/DSLCompiler 异步取消实现与最小回归测试，以及本需求合同和 Handoff 更新。后续仍不得为“清理”执行全局回退、恢复或格式化。
+当前工作树包含 CFG-1 的 5 个通信源码、2 个既有通信测试、MON-CFG-1 的 MonitorManager 与 backend 回归测试、NET-1 的 EthernetInterface 静态复核、DEPLOY-DATA-1 的 main/DataManager 用户数据路径、旧库迁移和回归测试、DB-TIME-1 的 DataManager UTC 时间绑定与回归测试、DB-RET-1 的 DataManager/MonitorManager 与数据库回归测试、DB-QUERY-1 的 ParameterTuningWindow 历史状态迁移、EXP-CSV-1 的 MonitorExportHelper 与导出回归测试、SQL-LOG-1 的 DataManager 与错误日志回归测试、BUILD-CANCEL-1 的 BuildController/DSLCompiler 异步取消实现与最小回归测试、MON-SNAP-1 的 Controller backend 快照瘦身与回归测试，以及本需求合同和 Handoff 更新。后续仍不得为“清理”执行全局回退、恢复或格式化。
 
 ## 5. 下一步计划
 
-1. DB-RET-1、EXP-CSV-1、SQL-LOG-1 与 BUILD-CANCEL-1 已完成 macOS 静态实施；继续处理共享 DataManager 的 DB-QUERY-1。
-2. COMM-LIFE-1 先做生命周期/重入验证；没有证据不得重写 ModbusInterface。
-3. NET-1 已完成不依赖部署决策的 UDP 报文/地址边界收口；仍需先确认服务端部署与外部 API 边界，再决定 TCP 多客户端、广播/定向发送、分帧与 keep-alive。
-4. 准备 Windows 新环境执行 VAL-1，并在 Windows/Matrikon 环境完成 OPC-1 的 L2/L3 验证与 VAL-2。
-5. 使用真实控制器完成 MON-IO-1、VAL-3；使用目标规模数据完成 VAL-4。
-6. 每项完成后从需求合同任务表删除，在本文件和 Git 历史保留证据。
+1. DEPLOY-DATA-1、DB-TIME-1、DB-RET-1、DB-QUERY-1、EXP-CSV-1、SQL-LOG-1、BUILD-CANCEL-1、MON-SNAP-1 已完成 macOS 静态实施；COMM-LIFE-1 已完成静态审计并保留到 VAL-3。
+2. NET-1 已完成不依赖部署决策的 UDP 报文/地址边界收口；仍需先确认服务端部署与外部 API 边界，再决定 TCP 多客户端、广播/定向发送、分帧与 keep-alive。
+3. 准备 Windows 新环境执行 VAL-1，并在 Windows/Matrikon 环境完成 OPC-1 的 L2/L3 验证与 VAL-2。
+4. 使用真实控制器完成 MON-IO-1、COMM-LIFE-1 与 VAL-3；使用目标规模数据完成 VAL-4。
+5. 每项完成后从需求合同任务表删除，在本文件和 Git 历史保留证据。
 
 ## 6. 绝对不要再踩的坑
 

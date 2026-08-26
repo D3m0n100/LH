@@ -524,15 +524,17 @@ bool ControllerDeviceBackend::writePoints(const QHash<QString, QVariant>& writes
     return true;
 }
 
-QVariantMap ControllerDeviceBackend::pointMappingSummary() const
+QVariantMap ControllerDeviceBackend::pointMappingSummary(bool includeDetails) const
 {
     int readable = 0;
     int writable = 0;
     int targetMapped = 0;
     QVariantList mappedPoints;
-    mappedPoints.reserve(m_pointMappings.size());
     QVariantList unmappedPoints;
-    unmappedPoints.reserve(m_unmappedPointReasons.size());
+    if (includeDetails) {
+        mappedPoints.reserve(m_pointMappings.size());
+        unmappedPoints.reserve(m_unmappedPointReasons.size());
+    }
 
     for (const PointMapping& mapping : m_pointMappings) {
         if (mapping.readable) {
@@ -545,23 +547,28 @@ QVariantMap ControllerDeviceBackend::pointMappingSummary() const
             ++targetMapped;
         }
 
-        QVariantMap item;
-        item.insert(QStringLiteral("pointId"), mapping.pointId);
-        item.insert(QStringLiteral("deviceId"), mapping.deviceId);
-        item.insert(QStringLiteral("address"), mapping.address);
-        item.insert(QStringLiteral("count"), mapping.count);
-        item.insert(QStringLiteral("readable"), mapping.readable);
-        item.insert(QStringLiteral("writable"), mapping.writable);
-        mappedPoints.append(item);
+        if (includeDetails) {
+            QVariantMap item;
+            item.insert(QStringLiteral("pointId"), mapping.pointId);
+            item.insert(QStringLiteral("deviceId"), mapping.deviceId);
+            item.insert(QStringLiteral("address"), mapping.address);
+            item.insert(QStringLiteral("count"), mapping.count);
+            item.insert(QStringLiteral("readable"), mapping.readable);
+            item.insert(QStringLiteral("writable"), mapping.writable);
+            mappedPoints.append(item);
+        }
     }
 
-    for (auto it = m_unmappedPointReasons.constBegin(); it != m_unmappedPointReasons.constEnd(); ++it) {
-        const RuntimePointDefinition point = m_pointDefinitions.value(it.key());
-        QVariantMap item;
-        item.insert(QStringLiteral("pointId"), it.key());
-        item.insert(QStringLiteral("name"), point.name);
-        item.insert(QStringLiteral("reason"), it.value());
-        unmappedPoints.append(item);
+    if (includeDetails) {
+        for (auto it = m_unmappedPointReasons.constBegin();
+             it != m_unmappedPointReasons.constEnd(); ++it) {
+            const RuntimePointDefinition point = m_pointDefinitions.value(it.key());
+            QVariantMap item;
+            item.insert(QStringLiteral("pointId"), it.key());
+            item.insert(QStringLiteral("name"), point.name);
+            item.insert(QStringLiteral("reason"), it.value());
+            unmappedPoints.append(item);
+        }
     }
 
     QVariantMap summary;
@@ -571,8 +578,10 @@ QVariantMap ControllerDeviceBackend::pointMappingSummary() const
     summary.insert(QStringLiteral("writableMappedPoints"), writable);
     summary.insert(QStringLiteral("targetMappedPoints"), targetMapped);
     summary.insert(QStringLiteral("unmappedPoints"), qMax(0, m_pointDefinitions.size() - m_pointMappings.size()));
-    summary.insert(QStringLiteral("points"), mappedPoints);
-    summary.insert(QStringLiteral("unmappedPointDetails"), unmappedPoints);
+    if (includeDetails) {
+        summary.insert(QStringLiteral("points"), mappedPoints);
+        summary.insert(QStringLiteral("unmappedPointDetails"), unmappedPoints);
+    }
     return summary;
 }
 

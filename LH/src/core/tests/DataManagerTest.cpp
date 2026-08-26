@@ -5,9 +5,12 @@
 
 #include "DataManagerTest.h"
 #include <QDebug>
+#include <QDir>
 #include <QFile>
+#include <QFileInfo>
 #include <QSqlDatabase>
 #include <QSqlQuery>
+#include <QStandardPaths>
 #include <QThread>
 #include <QSignalSpy>
 #include <QUuid>
@@ -132,6 +135,82 @@ void DataManagerTest::testReinitialize()
     auto records = DataManager::instance().getLatestRecords("testVar", 1);
     QCOMPARE(records.size(), 1);
     QCOMPARE(records[0].value, 123.456);
+}
+
+void DataManagerTest::testDefaultDatabasePath()
+{
+    const QString expected = QDir(QStandardPaths::writableLocation(
+        QStandardPaths::AppDataLocation)).filePath(QStringLiteral("platform.db"));
+    QCOMPARE(DataManager::defaultDatabasePath(), expected);
+}
+
+void DataManagerTest::testDatabaseDirectoryFailure()
+{
+    DataManager::instance().shutdown();
+
+    const QString blockerPath = m_tempDir.path() + QStringLiteral("/directory-blocker");
+    QFile blocker(blockerPath);
+    QVERIFY(blocker.open(QIODevice::WriteOnly));
+    blocker.close();
+
+    QSignalSpy errorSpy(&DataManager::instance(), &DataManager::databaseError);
+    const QString dbPath = blockerPath + QStringLiteral("/platform.db");
+    QVERIFY(!DataManager::instance().initialize(dbPath));
+    QVERIFY(!DataManager::instance().isInitialized());
+    QVERIFY(!errorSpy.isEmpty());
+    QVERIFY(errorSpy.constLast().at(1).toString().contains(QStringLiteral("无法创建数据库目录")));
+}
+
+void DataManagerTest::testLegacyDatabaseMigration()
+{
+    DataManager::instance().shutdown();
+
+    const QString legacyPath = m_tempDir.path() + QStringLiteral("/prefix/data/platform.db");
+    const QString existingTargetPath = m_tempDir.path()
+                                     + QStringLiteral("/user-data/existing/platform.db");
+    const QString migratedTargetPath = m_tempDir.path()
+                                     + QStringLiteral("/user-data/migrated/platform.db");
+    QVERIFY(QDir().mkpath(QFileInfo(legacyPath).absolutePath()));
+
+    QVERIFY(DataManager::instance().initialize(legacyPath));
+    QVERIFY(DataManager::instance().logRuntimeData(QStringLiteral("legacy.value"), 7.0).success);
+    DataManager::instance().shutdown();
+
+    QVERIFY(DataManager::instance().initialize(existingTargetPath));
+    QVERIFY(DataManager::instance().logRuntimeData(QStringLiteral("target.value"), 9.0).success);
+    DataManager::instance().shutdown();
+
+    QVERIFY(DataManager::instance().initialize(existingTargetPath, legacyPath));
+    QCOMPARE(DataManager::instance().getLatestRecords(QStringLiteral("target.value"), 1).size(), 1);
+    QCOMPARE(DataManager::instance().getLatestRecords(QStringLiteral("legacy.value"), 1).size(), 0);
+    DataManager::instance().shutdown();
+
+    QVERIFY(DataManager::instance().initialize(migratedTargetPath, legacyPath));
+    const QList<RuntimeRecord> migratedRecords = DataManager::instance().getLatestRecords(
+        QStringLiteral("legacy.value"), 1);
+    QCOMPARE(migratedRecords.size(), 1);
+    QCOMPARE(migratedRecords.first().value, 7.0);
+    QVERIFY(QFile::exists(legacyPath));
+}
+
+void DataManagerTest::testLegacyMigrationFailureLeavesTargetAbsent()
+{
+    DataManager::instance().shutdown();
+
+    const QString legacyPath = m_tempDir.path() + QStringLiteral("/broken-legacy.db");
+    const QString targetPath = m_tempDir.path() + QStringLiteral("/migration-target/platform.db");
+    QFile legacyFile(legacyPath);
+    QVERIFY(legacyFile.open(QIODevice::WriteOnly));
+    QVERIFY(legacyFile.write("not a SQLite database") > 0);
+    legacyFile.close();
+
+    QSignalSpy errorSpy(&DataManager::instance(), &DataManager::databaseError);
+    QVERIFY(!DataManager::instance().initialize(targetPath, legacyPath));
+    QVERIFY(!DataManager::instance().isInitialized());
+    QVERIFY(!QFile::exists(targetPath));
+    QVERIFY(QFile::exists(legacyPath));
+    QVERIFY(!errorSpy.isEmpty());
+    QVERIFY(errorSpy.constLast().at(1).toString().contains(QStringLiteral("数据库")));
 }
 
 void DataManagerTest::testInvalidSchemaVersionsRejected()
@@ -315,6 +394,52 @@ void DataManagerTest::testLogRuntimeDataBatch()
     
     QVERIFY(result.success);
     QCOMPARE(result.affectedRows, 100);
+}
+
+void DataManagerTest::testRuntimeDataTimestampsUseCanonicalUtc()
+{
+    const auto isCanonicalUtc = [](const QString& text) {
+        const QDateTime parsed = QDateTime::fromString(text, Qt::ISODateWithMs);
+        return parsed.isValid()
+                && parsed.toUTC().toString(Qt::ISODateWithMs) == text;
+    };
+
+    QVERIFY(DataManager::instance().logRuntimeData(QStringLiteral("time.single"), 1.0).success);
+
+    QVariant singleTimestamp;
+    QVERIFY(queryTestScalar(m_dbPath,
+                            QStringLiteral(
+                                "SELECT timestamp FROM runtime_data "
+                                "WHERE variable_name = 'time.single'"),
+                            singleTimestamp));
+    QVERIFY(isCanonicalUtc(singleTimestamp.toString()));
+
+    QVariantMap missingTimestamp;
+    missingTimestamp.insert(QStringLiteral("varName"), QStringLiteral("time.batch.missing"));
+    missingTimestamp.insert(QStringLiteral("value"), 2.0);
+
+    QVariantMap invalidTimestamp;
+    invalidTimestamp.insert(QStringLiteral("varName"), QStringLiteral("time.batch.invalid"));
+    invalidTimestamp.insert(QStringLiteral("value"), 3.0);
+    invalidTimestamp.insert(QStringLiteral("timestamp"), QStringLiteral("not-a-timestamp"));
+
+    QVERIFY(DataManager::instance().logRuntimeDataBatch(
+            {missingTimestamp, invalidTimestamp}).success);
+
+    QVariant batchTimestamp;
+    QVERIFY(queryTestScalar(m_dbPath,
+                            QStringLiteral(
+                                "SELECT timestamp FROM runtime_data "
+                                "WHERE variable_name = 'time.batch.missing'"),
+                            batchTimestamp));
+    QVERIFY(isCanonicalUtc(batchTimestamp.toString()));
+
+    QVERIFY(queryTestScalar(m_dbPath,
+                            QStringLiteral(
+                                "SELECT timestamp FROM runtime_data "
+                                "WHERE variable_name = 'time.batch.invalid'"),
+                            batchTimestamp));
+    QVERIFY(isCanonicalUtc(batchTimestamp.toString()));
 }
 
 void DataManagerTest::testSqlErrorLogRedactsBoundValues()

@@ -306,6 +306,30 @@ private slots:
                 || joinedReasons.contains(QStringLiteral("数量")));
     }
 
+    void statusSnapshotKeepsPreflightDetailsOutOfHotPath()
+    {
+        ControllerDeviceBackend backend;
+        ProjectRuntimeConfig cfg;
+        cfg.transport.parameters.insert(QStringLiteral("port"), QStringLiteral("COM7"));
+        cfg.opcServer.enabled = true;
+        cfg.opcServer.opcProgId = QStringLiteral("Matrikon.OPC.Modbus");
+        cfg.opcServer.serialMode = QStringLiteral("19200,N,8,1");
+        QVERIFY(backend.configure(cfg));
+
+        const BackendStatusSnapshot snapshot = backend.statusSnapshot();
+        QVERIFY(!snapshot.extras.contains(QStringLiteral("preflight")));
+        const QVariantMap pointSummary = snapshot.extras.value(
+                QStringLiteral("pointMappings")).toMap();
+        QVERIFY(pointSummary.contains(QStringLiteral("mappedHoldingPoints")));
+        QVERIFY(!pointSummary.contains(QStringLiteral("points")));
+        QVERIFY(!pointSummary.contains(QStringLiteral("unmappedPointDetails")));
+
+        QVariantMap report;
+        QVERIFY(backend.preflight(nullptr, &report));
+        QVERIFY(report.value(QStringLiteral("pointMappings")).toMap().contains(
+                QStringLiteral("unmappedPointDetails")));
+    }
+
     void connectReadsControllerStatus()
     {
         FakeControllerTransport transport;

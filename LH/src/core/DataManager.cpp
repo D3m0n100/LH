@@ -8,6 +8,9 @@
 #include <QSqlError>
 #include <QSqlRecord>
 #include <QDir>
+#include <QFile>
+#include <QFileInfo>
+#include <QStandardPaths>
 #include <QUuid>
 #include <QDebug>
 
@@ -158,11 +161,29 @@ QString runtimeErrorTextFromRecord(const QVariantMap& record)
     return errorText.isNull() ? QStringLiteral("") : errorText;
 }
 
+QString runtimeTimestampText(const QVariant& value = QVariant())
+{
+    QDateTime timestamp = value.isValid() ? value.toDateTime() : QDateTime();
+    if (!timestamp.isValid()) {
+        timestamp = QDateTime::currentDateTimeUtc();
+    }
+    return timestamp.toUTC().toString(Qt::ISODateWithMs);
+}
+
 } // namespace
 
 // ============================================================================
 // 构造 / 析构
 // ============================================================================
+
+QString DataManager::defaultDatabasePath()
+{
+    const QString dataDir = QStandardPaths::writableLocation(
+        QStandardPaths::AppDataLocation);
+    return dataDir.isEmpty()
+        ? QString()
+        : QDir(dataDir).filePath(QStringLiteral("platform.db"));
+}
 
 DataManager::DataManager()
     : QObject(nullptr)
@@ -186,9 +207,10 @@ DataManager::~DataManager()
 // 生命周期管理
 // ============================================================================
 
-bool DataManager::initialize(const QString& dbPath)
+bool DataManager::initialize(const QString& dbPath, const QString& legacyDbPath)
 {
     QString initError; // 在锁外 emit 的错误信息
+    bool migratedLegacy = false;
 
     // --- 持锁阶段：准备数据库连接 ---
     {
@@ -200,14 +222,24 @@ bool DataManager::initialize(const QString& dbPath)
             cleanupDatabaseConnection();
         }
 
-        // 确保目录存在
-        QFileInfo fileInfo(dbPath);
-        QDir dir = fileInfo.absoluteDir();
-        if (!dir.exists()) {
-            if (!dir.mkpath(".")) {
+        if (dbPath.trimmed().isEmpty()) {
+            initError = "数据库路径为空，无法初始化";
+            LOG_ERROR(initError);
+        }
+
+        if (initError.isEmpty()) {
+            // 确保目录存在
+            QFileInfo fileInfo(dbPath);
+            QDir dir = fileInfo.absoluteDir();
+            if (!dir.exists() && !dir.mkpath(".")) {
                 initError = "无法创建数据库目录: " + dir.absolutePath();
                 LOG_ERROR(initError);
             }
+        }
+
+        if (initError.isEmpty() && !legacyDbPath.trimmed().isEmpty()
+            && !migrateLegacyDatabase(legacyDbPath, dbPath, migratedLegacy, initError)) {
+            LOG_ERROR(initError);
         }
 
         if (initError.isEmpty()) {
@@ -259,6 +291,9 @@ bool DataManager::initialize(const QString& dbPath)
 
         if (!initError.isEmpty()) {
             cleanupDatabaseConnection();
+            if (migratedLegacy && !QFile::remove(dbPath)) {
+                LOG_WARN("无法清理本次迁移生成的目标数据库: " + dbPath);
+            }
         } else {
             m_schemaVersion = CURRENT_SCHEMA_VERSION;
             m_initialized = true;
@@ -272,6 +307,68 @@ bool DataManager::initialize(const QString& dbPath)
         emit databaseError("initialize", initError);
         return false;
     }
+    return true;
+}
+
+bool DataManager::migrateLegacyDatabase(const QString& legacyDbPath,
+                                        const QString& dbPath,
+                                        bool& migrated,
+                                        QString& errorText)
+{
+    migrated = false;
+    const QString targetPath = QDir::cleanPath(QFileInfo(dbPath).absoluteFilePath());
+    const QString sourcePath = QDir::cleanPath(QFileInfo(legacyDbPath).absoluteFilePath());
+
+    if (targetPath == sourcePath || QFileInfo::exists(targetPath)) {
+        if (targetPath == sourcePath) {
+            LOG_INFO("旧数据库路径与目标路径相同，跳过迁移");
+        } else {
+            LOG_INFO("目标数据库已存在，跳过旧数据库迁移: " + targetPath);
+        }
+        return true;
+    }
+
+    const QFileInfo sourceInfo(sourcePath);
+    if (!sourceInfo.exists()) {
+        return true;
+    }
+    if (!sourceInfo.isFile()) {
+        errorText = "旧数据库路径不是文件: " + sourcePath;
+        return false;
+    }
+
+    const QFileInfo targetInfo(targetPath);
+    const QDir targetDir = targetInfo.absoluteDir();
+    if (!targetDir.exists() && !targetDir.mkpath(".")) {
+        errorText = "无法创建数据库目录: " + targetDir.absolutePath();
+        return false;
+    }
+
+    const QString stagingPath = targetPath + QStringLiteral(".migrating.")
+                               + QUuid::createUuid().toString(QUuid::WithoutBraces);
+    if (!QFile::copy(sourcePath, stagingPath)) {
+        errorText = QStringLiteral("旧数据库迁移失败，无法复制 '%1' 到 '%2'")
+                        .arg(sourcePath, targetPath);
+        QFile::remove(stagingPath);
+        return false;
+    }
+
+    // 单进程启动场景下避免覆盖迁移过程中创建的目标；staging 文件保证失败不留下半个目标库。
+    if (QFileInfo::exists(targetPath)) {
+        QFile::remove(stagingPath);
+        LOG_INFO("迁移期间目标数据库已创建，保留现有目标库: " + targetPath);
+        return true;
+    }
+
+    if (!QFile::rename(stagingPath, targetPath)) {
+        errorText = QStringLiteral("旧数据库迁移失败，无法提交 '%1'")
+                        .arg(targetPath);
+        QFile::remove(stagingPath);
+        return false;
+    }
+
+    migrated = true;
+    LOG_INFO(QStringLiteral("旧数据库已迁移到用户数据目录: %1").arg(targetPath));
     return true;
 }
 
@@ -593,10 +690,10 @@ QueryResult DataManager::logRuntimeData(const QString& varName, double value, co
                 timestamp, variable_name, value, unit, quality, value_valid,
                 origin, error_code, error_text)
             VALUES (
-                COALESCE(:timestamp, CURRENT_TIMESTAMP), :name, :value, :unit,
+                :timestamp, :name, :value, :unit,
                 :quality, 1, '', '', '')
         )");
-        query.bindValue(":timestamp", QDateTime::currentDateTimeUtc().toString(Qt::ISODateWithMs));
+        query.bindValue(":timestamp", runtimeTimestampText());
         query.bindValue(":name", varName);
         query.bindValue(":value", value);
         query.bindValue(":unit", unit);
@@ -650,7 +747,7 @@ QueryResult DataManager::logRuntimeDataBatch(const QList<QVariantMap>& records)
             timestamp, variable_name, value, unit, quality, value_valid,
             origin, error_code, error_text)
         VALUES (
-            COALESCE(:timestamp, CURRENT_TIMESTAMP), :name, :value, :unit,
+            :timestamp, :name, :value, :unit,
             :quality, :valueValid, :origin, :errorCode, :errorText)
     )");
     
@@ -668,17 +765,8 @@ QueryResult DataManager::logRuntimeDataBatch(const QList<QVariantMap>& records)
         const QString errorCode = runtimeErrorCodeFromRecord(record);
         const QString errorText = runtimeErrorTextFromRecord(record);
 
-        // 可选：允许外部提供真实采样时间（用于历史查询/回放）
-        // 如果未提供，则由 SQL 中的 CURRENT_TIMESTAMP 自动填充
-        const QVariant tsVar = record.value("timestamp");
-        QDateTime ts;
-        if (tsVar.isValid()) {
-            ts = tsVar.toDateTime();
-        }
-
-        query.bindValue(":timestamp", ts.isValid()
-                      ? QVariant(ts.toUTC().toString(Qt::ISODateWithMs))
-                      : QVariant());
+        // 可选：允许外部提供真实采样时间（用于历史查询/回放）；缺失或无效时由 DataManager 生成 UTC 时间。
+        query.bindValue(":timestamp", runtimeTimestampText(record.value("timestamp")));
         query.bindValue(":name", varName);
         query.bindValue(":value", valueValid ? QVariant(value) : QVariant());
         query.bindValue(":unit", unit);

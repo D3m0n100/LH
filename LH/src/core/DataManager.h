@@ -175,10 +175,14 @@ public:
     // =========================================================================
     // 生命周期管理
     // =========================================================================
+
+    /// 获取平台提供的用户可写数据库路径；返回空字符串表示路径不可用。
+    static QString defaultDatabasePath();
     
     /**
      * @brief 初始化数据管理器
      * @param dbPath 数据库文件路径
+     * @param legacyDbPath 旧安装前缀数据库路径；目标已存在时不覆盖目标
      * @return 是否初始化成功
      *
      * 该方法会：
@@ -187,7 +191,7 @@ public:
      * - 检查并执行 Schema 升级
      * - 创建必要的数据表和索引
      */
-    bool initialize(const QString& dbPath);
+    bool initialize(const QString& dbPath, const QString& legacyDbPath = QString());
     
     /**
      * @brief 关闭数据管理器，释放所有资源
@@ -403,6 +407,12 @@ private:
     
     /// 获取当前数据库版本
     bool getDatabaseVersion(int& version);
+
+    /// 将旧安装前缀数据库原子迁移到目标路径；失败时写入 errorText。
+    static bool migrateLegacyDatabase(const QString& legacyDbPath,
+                                      const QString& dbPath,
+                                      bool& migrated,
+                                      QString& errorText);
 
     /// 清理数据库连接（调用方必须持有 m_dbMutex）
     void cleanupDatabaseConnection();

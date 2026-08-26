@@ -557,9 +557,19 @@ void ParameterTuningWindow::refreshPidTrend()
     }
 
     const QString channelName = QStringLiteral("param::%1").arg(parameterName);
-    QList<Monitor::Sample> samples = Monitor::MonitorManager::instance().history(channelName, 120);
-    if (samples.isEmpty() && Monitor::MonitorManager::instance().isDatabaseHistoryAvailable()) {
-        samples = Monitor::MonitorManager::instance().historyFromDatabase(channelName, 120);
+    auto& monitorManager = Monitor::MonitorManager::instance();
+    QList<Monitor::Sample> samples = monitorManager.history(channelName, 120);
+    QString historyError;
+    if (samples.isEmpty()) {
+        const Monitor::DatabaseHistoryPage page = monitorManager.historyFromDatabaseLatestPage(
+            channelName, 120, 120);
+        if (page.succeeded()) {
+            samples = page.samples;
+        } else {
+            historyError = page.errorText.isEmpty()
+                ? QStringLiteral("数据库历史查询失败")
+                : page.errorText;
+        }
     }
 
     m_pidSeries->clear();
@@ -586,7 +596,11 @@ void ParameterTuningWindow::refreshPidTrend()
     if (!it->defaultValue.isEmpty()) {
         summary += QStringLiteral(" | 默认值：%1").arg(it->defaultValue);
     }
-    summary += QStringLiteral(" | 历史样本 %1").arg(samples.size());
+    if (historyError.isEmpty()) {
+        summary += QStringLiteral(" | 历史样本 %1").arg(samples.size());
+    } else {
+        summary += QStringLiteral(" | 历史查询失败：%1").arg(historyError);
+    }
     m_pidSummaryLabel->setText(summary);
 
     double reasonableMin = 0.0;

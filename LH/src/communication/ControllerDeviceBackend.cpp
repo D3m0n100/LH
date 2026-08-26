@@ -362,7 +362,7 @@ BackendStatusSnapshot ControllerDeviceBackend::statusSnapshot() const
         lastDownloadError = m_lastDownloadError;
         configSnapshot = m_config.transport.parameters;
         configuredDeviceId = m_config.controller.modbusSlaveId;
-        pointSummary = pointMappingSummary();
+        pointSummary = pointMappingSummary(false);
         lastTargetProbe = m_lastTargetProbe;
     }
     const CommError err = lastError();
@@ -390,7 +390,6 @@ BackendStatusSnapshot ControllerDeviceBackend::statusSnapshot() const
     snapshot.extras.insert(QStringLiteral("downloading"), downloading);
     snapshot.extras.insert(QStringLiteral("downloadPercent"), downloadPercent);
     snapshot.extras.insert(QStringLiteral("pointMappings"), pointSummary);
-    snapshot.extras.insert(QStringLiteral("preflight"), buildPreflightReport(nullptr, nullptr));
     if (!lastDownloadError.isEmpty()) {
         snapshot.extras.insert(QStringLiteral("lastDownloadError"), lastDownloadError);
     }

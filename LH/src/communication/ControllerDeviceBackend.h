@@ -97,7 +97,7 @@ private:
     int deviceId() const;
     int targetDeviceId() const;
     QString portName() const;
-    QVariantMap pointMappingSummary() const;
+    QVariantMap pointMappingSummary(bool includeDetails = true) const;
     QVariantMap buildPreflightReport(QStringList* errors, QStringList* warnings) const;
     bool validateDownloadProfilePlan(const DownloadProfile& profile,
                                      const QByteArray& payload,
