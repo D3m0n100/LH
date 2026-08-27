@@ -1,87 +1,37 @@
-﻿# 伺服阀控制平台 (ServoValvePlatform)
+﻿# LH 伺服阀控制平台
 
-基于 Qt 的伺服阀控制组态系统，使用 DSL（领域特定语言）进行系统配置和逻辑定义。
+LH 是一个基于 Qt 5 的桌面组态与控制应用。它提供 DSL 组态编辑、编译、运行、控制器通信、实时监控与数据导出能力。
 
-## 功能特点
+## 功能
 
-### DSL 组态
-- 拖拽式组态
-- DSL 脚本编辑
-- 语法高亮、代码补全、实时错误检查
-- 组态校验
-- Snippet 管理
-
-### 实时监控
-- 多通道数据实时显示
-- 可配置采样周期和时间窗
-- 数据导出（CSV / JSON / TSV）
-- 图表导出为 PNG / JPG / SVG
-
-### 多协议通信
-- CAN 总线通信
-- RS-485 串口通信
-- Modbus 协议支持
-- 以太网 TCP / UDP
-
-### 控制功能
-- PID 控制器
-- 数据滤波
-- 逻辑门组态
-- 数学运算组件
-
-## 项目结构
-
-```
-ServoValvePlatform/
-├── include/
-│   └── Common.h
-├── src/
-│   ├── common/
-│   ├── core/
-│   ├── designer/
-│   ├── communication/
-│   ├── compiler/
-│   └── monitor/
-├── third_party/
-│   └── custom_dsp_language/
-│       └── compile/
-├── tests/
-├── docs/
-└── CMakeLists.txt
-```
+- DSL 脚本编辑：语法高亮、补全、片段与拖拽组态。
+- 工程工作流：新建、打开、保存、校验、编译和运行工程。
+- 控制器工作流：参数调试、构建产物下载、连接诊断，以及可选的 OPC DA 服务。
+- 通信：串口、Modbus RTU/TCP、CAN/CANopen 和以太网 TCP/UDP。
+- 实时监控：多通道数据显示与数据库记录；数据可导出为 CSV、JSON、TSV，图表可导出为 PNG、JPG、SVG。
 
 ## 构建要求
 
-- Qt 5.15+
-- CMake 3.16+
-- C++17 兼容编译器
-- Python 3.8+
+- CMake 3.15 或更高版本
+- 支持 C++17 的编译器
+- Qt 5.15（Core、Widgets、Network、Sql、SerialBus、SerialPort、Charts、Svg、Test）
+- Python 3：仅在使用 DSL 编译功能时需要
 
-## 构建步骤
+## 构建与测试
 
-```bash
-git clone https://github.com/your-repo/ServoValvePlatform.git
-cd ServoValvePlatform
-mkdir build_current_mingw && cd build_current_mingw
-cmake .. -DCMAKE_PREFIX_PATH=/path/to/Qt
-cmake --build . --config Release
-ctest --output-on-failure
-```
-
-## Python 依赖配置
-
-DSL 编译器使用 Python 实现，请不要提交虚拟环境目录，依赖通过 `requirements.txt` 安装。
-
-Windows：
+从仓库根目录执行：
 
 ```bash
-cd third_party/custom_dsp_language/compile
-python -m venv venv
-venv\Scripts\activate
-python -m pip install -r requirements.txt
+cmake -S . -B build -DCMAKE_PREFIX_PATH=/path/to/Qt
+cmake --build build --config Release
+ctest --test-dir build --output-on-failure
 ```
 
-Linux/macOS 使用对应的本地虚拟环境激活方式：
+生成的主程序目标为 `LH`。单配置生成器通常输出到 `build/bin/LH`；多配置生成器会在对应配置子目录下输出。
+
+## DSL 编译环境
+
+应用会优先使用 `third_party/custom_dsp_language/compile/venv` 中的 Python；若不存在，则查找 `PYTHON`、`python3` 或 `python`。在使用 DSL 编译前，请在该目录准备依赖：
 
 ```bash
 cd third_party/custom_dsp_language/compile
@@ -90,77 +40,45 @@ python3 -m venv venv
 python -m pip install -r requirements.txt
 ```
 
-安装包不会复制仓库中的 `venv`，也不会在 CMake 安装阶段联网安装 Python 或第三方包。安装后的程序会在可执行文件所在目录的上级查找
-`third_party/custom_dsp_language/compile`；运行 DSL 编译前，请在该目录准备 Python 3.8+ 的本地 `venv` 并按上面的方式安装
-`requirements.txt`。若找不到 Python 3、虚拟环境依赖或 `antlr4-python3-runtime`，编译会失败并在错误输出中说明缺失项，不会静默报告成功。
+Windows 请使用 `venv\Scripts\activate` 激活虚拟环境。不要提交 `venv`、缓存或字节码文件。
 
-### 安装与 Qt 运行库
-
-安装规则只包含 DSL 编译所需的 `lmc.py`、`requirements.txt`、ANTLR 生成 Python 文件，以及 `src/lh_compiler` 的前端、后端和功能块定义；
-不会安装虚拟环境、缓存、字节码、测试/示例/文档或编译输出目录。
-
-Windows 安装默认启用 Qt 部署：配置时会定位与当前 Qt 匹配的 `windeployqt`，安装时复制 Qt 运行库并检查 `platforms/qwindows.dll`
-和 `sqldrivers/qsqlite.dll`。工具缺失、执行失败或关键插件缺失都会使安装失败。特殊打包环境若由外部流程提供 Qt，可显式使用
-`-DLH_ENABLE_QT_DEPLOYMENT=OFF`，此时必须由该外部流程补齐 Qt 运行库和插件。非 Windows 平台不调用 `windeployqt`，请由操作系统包管理器或平台打包流程提供 Qt 动态库。
-
-### 运行期数据库
-
-运行期数据库 `platform.db` 使用 Qt `QStandardPaths::AppDataLocation` 提供的平台用户应用数据目录，首次启动会创建所需父目录；创建或打开失败时程序会明确报错并退出，不会写入安装目录或临时目录。
-
-从旧版本升级时，若可执行文件上级安装前缀下的 `data/platform.db` 存在且用户数据目录尚无目标库，程序会先复制到目标目录的 staging 文件并原子提交，再按现有 Schema 迁移。目标库已存在时以目标库为准，旧路径不再被应用写入；迁移失败不会覆盖已有目标库，也不会回退到旧路径继续运行。
-
-## 使用说明
-
-1. 新建项目
-2. 编辑 DSL 脚本
-3. 编译验证
-4. 运行项目
-5. 实时监控
-6. 导出数据
-
-## 快捷键
-
-| 快捷键 | 功能 |
-|--------|------|
-| Ctrl+N | 新建项目 |
-| Ctrl+O | 打开项目 |
-| Ctrl+S | 保存项目 |
-| Ctrl+D | 显示/隐藏 DSL 编辑器 |
-| F7 | 编译 DSL 组态 |
-| F9 | 运行项目 |
-| Shift+F9 | 停止运行 |
-| Ctrl+M | 打开监控窗口 |
-| F5 | 开始监控 |
-| Shift+F5 | 停止监控 |
-| Ctrl+Space | 代码补全 |
-| Ctrl+F | 查找 |
-| Ctrl+H | 查找替换 |
-
-## 测试
+## 安装与运行时数据
 
 ```bash
-ctest --output-on-failure
-./tests/monitor_test
-./tests/task_scheduler_test
-./tests/data_manager_test
-./tests/snippet_repository_test
-./tests/dsl_completion_engine_test
-./tests/monitor_export_test
+cmake --install build --prefix /path/to/install
 ```
 
-## 开发指引
+安装包会包含 DSL 编译运行时所需的 Python 源文件和 `requirements.txt`，但不会包含虚拟环境或在安装时下载 Python 依赖。安装后，需在可执行文件上级的 `third_party/custom_dsp_language/compile` 中准备上述虚拟环境。
 
-- 使用 C++17 标准
-- 遵循 Qt 编码规范
-- 单例类必须提供 `shutdown()` 方法释放资源
-- 不依赖静态析构顺序进行资源回收
+运行期 SQLite 数据库 `platform.db` 位于 Qt 的用户应用数据目录。旧安装目录 `data/platform.db` 仅会在用户数据目录尚无数据库时被迁移；应用不会继续写入旧路径。
+
+在 Windows 上，安装默认调用与当前 Qt 匹配的 `windeployqt` 部署 Qt 运行库和关键插件。若外部打包流程已提供 Qt，可在配置时使用 `-DLH_ENABLE_QT_DEPLOYMENT=OFF`；非 Windows 平台由系统包管理器或平台打包流程提供 Qt 动态库。
+
+## 项目结构
+
+```
+include/                 公共头文件
+src/core/                数据管理与任务调度
+src/compiler/            DSL 编译接口
+src/communication/       工业通信与下载支持
+src/designer/            主界面、工程与运行控制
+src/monitor/             实时监控与导出
+tests/                   CTest 测试套件
+third_party/custom_dsp_language/compile/
+                         Python DSL 编译运行时
+```
+
+## 常用快捷键
+
+| 快捷键 | 功能 |
+| --- | --- |
+| Ctrl+N / Ctrl+O / Ctrl+S | 新建 / 打开 / 保存工程 |
+| F7 / F8 | 编译 LH / 编译并运行 |
+| F9 / Shift+F9 | 运行 / 停止工程 |
+| Ctrl+M | 打开监控 |
+| F5 / Shift+F5 | 开始 / 停止监控 |
+| Ctrl+Shift+M | 打开调参窗口 |
 
 ## 许可
 
 MIT License
-
-## 贡献
-
-欢迎提交 Issue 和 Pull Request。
-
-© 2024-2025 伺服阀控制平台开发团队
