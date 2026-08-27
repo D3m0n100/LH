@@ -12,7 +12,7 @@ LH 是一个基于 Qt 5 的桌面组态与控制应用。它提供 DSL 组态编
 
 ## 构建要求
 
-- CMake 3.15 或更高版本
+- `CMakeLists.txt` 声明的最低 CMake 版本为 3.15
 - 支持 C++17 的编译器
 - Qt 5.15（Core、Widgets、Network、Sql、SerialBus、SerialPort、Charts、Svg、Test）
 - Python 3：仅在使用 DSL 编译功能时需要
@@ -24,7 +24,8 @@ LH 是一个基于 Qt 5 的桌面组态与控制应用。它提供 DSL 组态编
 ```bash
 cmake -S . -B build -DCMAKE_PREFIX_PATH=/path/to/Qt
 cmake --build build --config Release
-ctest --test-dir build --output-on-failure
+cd build
+ctest --output-on-failure
 ```
 
 生成的主程序目标为 `LH`。单配置生成器通常输出到 `build/bin/LH`；多配置生成器会在对应配置子目录下输出。
@@ -73,8 +74,7 @@ third_party/custom_dsp_language/compile/
 | 快捷键 | 功能 |
 | --- | --- |
 | Ctrl+N / Ctrl+O / Ctrl+S | 新建 / 打开 / 保存工程 |
-| F7 / F8 | 编译 LH / 编译并运行 |
-| F9 / Shift+F9 | 运行 / 停止工程 |
+| F7 / F9 / Shift+F9 | 编译 LH / 运行 / 停止工程 |
 | Ctrl+M | 打开监控 |
 | F5 / Shift+F5 | 开始 / 停止监控 |
 | Ctrl+Shift+M | 打开调参窗口 |
