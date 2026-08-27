@@ -170,7 +170,7 @@ class DataManager : public QObject
     
 public:
     /// 当前 Schema 版本
-    static constexpr int CURRENT_SCHEMA_VERSION = 4;
+    static constexpr int CURRENT_SCHEMA_VERSION = 5;
     
     // =========================================================================
     // 生命周期管理
@@ -434,6 +434,9 @@ private:
 
     /// 升级到版本 4：添加稳定的来源和错误上下文字段
     bool upgradeToVersion4();
+
+    /// 升级到版本 5：为旧时间格式的时间谓词添加表达式索引
+    bool upgradeToVersion5();
     
     /// 记录 SQL 错误详情
     void logSqlError(const QSqlQuery& query, const QString& description);

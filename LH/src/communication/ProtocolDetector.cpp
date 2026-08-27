@@ -34,9 +34,64 @@ ProtocolDetector::ProtocolDetector(QObject* parent)
 
 ProtocolDetector::~ProtocolDetector()
 {
-    if (m_detectionActive) {
-        m_detectionTimer->stop();
+    stopDetection();
+}
+
+void ProtocolDetector::startDetection(int timeoutMs)
+{
+    m_timeout = qMax(0, timeoutMs);
+    m_detectionActive = true;
+    m_elapsedTimer.start();
+    m_detectionTimer->start(m_timeout);
+    if (m_timeout == 0) {
+        onDetectionTimeout();
     }
+}
+
+void ProtocolDetector::stopDetection()
+{
+    m_detectionTimer->stop();
+    m_detectionActive = false;
+}
+
+bool ProtocolDetector::detectionTimedOut()
+{
+    if (!m_detectionActive) {
+        return true;
+    }
+    if (m_elapsedTimer.elapsed() >= m_timeout) {
+        onDetectionTimeout();
+        return true;
+    }
+    return false;
+}
+
+int ProtocolDetector::remainingTimeoutMs()
+{
+    if (detectionTimedOut()) {
+        return 0;
+    }
+    return qMax(0, m_timeout - static_cast<int>(m_elapsedTimer.elapsed()));
+}
+
+bool ProtocolDetector::waitForResponse(int delayMs)
+{
+    const int remaining = remainingTimeoutMs();
+    if (remaining <= 0) {
+        return false;
+    }
+    waitWithEventLoop(qMin(delayMs, remaining));
+    return !detectionTimedOut();
+}
+
+QByteArray ProtocolDetector::receiveResponse(ICommInterface* interface, int timeoutMs)
+{
+    const int remaining = remainingTimeoutMs();
+    if (remaining <= 0) {
+        return QByteArray();
+    }
+    const QByteArray response = interface->receive(qMin(timeoutMs, remaining));
+    return detectionTimedOut() ? QByteArray() : response;
 }
 
 ProtocolDetector::ProtocolInfo ProtocolDetector::detectProtocol(ICommInterface* interface, int timeout_ms)
@@ -47,9 +102,10 @@ ProtocolDetector::ProtocolInfo ProtocolDetector::detectProtocol(ICommInterface* 
     }
     
     m_currentInterface = interface;
-    m_timeout = timeout_ms;
-    m_detectionActive = true;
-    m_elapsedTimer.start();
+    startDetection(timeout_ms);
+    if (detectionTimedOut()) {
+        return ProtocolInfo{ProtocolType::Unknown, "Unknown", "Protocol detection timeout", QVariantMap(), 0};
+    }
     
     // 尝试检测各种协议
     QList<ProtocolInfo> results = detectAllProtocols(interface, timeout_ms);
@@ -63,15 +119,20 @@ ProtocolDetector::ProtocolInfo ProtocolDetector::detectProtocol(ICommInterface* 
         }
     }
     
-    m_detectionActive = false;
-    
+    const bool timedOut = detectionTimedOut();
+    stopDetection();
+
+    if (timedOut) {
+        return ProtocolInfo{ProtocolType::Unknown, "Unknown", "Protocol detection timeout", QVariantMap(), 0};
+    }
+
     if (bestMatch.type != ProtocolType::Unknown) {
         emit protocolDetected(bestMatch);
         return bestMatch;
     } else {
         emit detectionFailed("No protocol detected");
-        return bestMatch;
     }
+    return bestMatch;
 }
 
 QList<ProtocolDetector::ProtocolInfo> ProtocolDetector::detectAllProtocols(ICommInterface* interface, int timeout_ms)
@@ -82,23 +143,34 @@ QList<ProtocolDetector::ProtocolInfo> ProtocolDetector::detectAllProtocols(IComm
         return results;
     }
     
+    const bool ownsDetection = !m_detectionActive;
     m_currentInterface = interface;
-    m_timeout = timeout_ms;
+    if (ownsDetection) {
+        startDetection(timeout_ms);
+    }
     m_totalTests = 0;
     m_successfulTests = 0;
-    
+
     // 检测各种协议
-    results.append(detectModbusRTU(interface));
-    results.append(detectModbusTCP(interface));
-    results.append(detectCANOpen(interface));
-    results.append(detectJ1939(interface));
-    results.append(detectRawCAN(interface));
+    const auto appendResult = [&](ProtocolInfo (ProtocolDetector::*detect)(ICommInterface*)) {
+        if (!detectionTimedOut()) {
+            results.append((this->*detect)(interface));
+        }
+    };
+    appendResult(&ProtocolDetector::detectModbusRTU);
+    appendResult(&ProtocolDetector::detectModbusTCP);
+    appendResult(&ProtocolDetector::detectCANOpen);
+    appendResult(&ProtocolDetector::detectJ1939);
+    appendResult(&ProtocolDetector::detectRawCAN);
     
     // 按置信度排序
     std::sort(results.begin(), results.end(), [](const ProtocolInfo& a, const ProtocolInfo& b) {
         return a.confidence > b.confidence;
     });
     
+    if (ownsDetection) {
+        stopDetection();
+    }
     return results;
 }
 
@@ -109,8 +181,10 @@ bool ProtocolDetector::verifyProtocol(ICommInterface* interface, ProtocolType ty
     }
     
     m_currentInterface = interface;
-    m_timeout = timeout_ms;
-    m_elapsedTimer.start();
+    startDetection(timeout_ms);
+    if (detectionTimedOut()) {
+        return false;
+    }
     
     ProtocolInfo info;
     
@@ -131,10 +205,13 @@ bool ProtocolDetector::verifyProtocol(ICommInterface* interface, ProtocolType ty
         info = detectRawCAN(interface);
         break;
     default:
+        stopDetection();
         return false;
     }
     
-    return info.confidence > 50; // 置信度大于50%认为验证通过
+    const bool verified = !detectionTimedOut() && info.confidence > 50;
+    stopDetection();
+    return verified; // 置信度大于50%认为验证通过
 }
 
 QList<ProtocolDetector::ProtocolType> ProtocolDetector::getSupportedProtocols()
@@ -195,10 +272,11 @@ ProtocolDetector::ProtocolInfo ProtocolDetector::detectModbusRTU(ICommInterface*
         return info;
     }
     
-    // 等待响应
-    waitWithEventLoop(100);
-    
-    QByteArray response = interface->receive(500);
+    // 等待响应，但不超过本次整体检测预算。
+    if (!waitForResponse(100)) {
+        return info;
+    }
+    QByteArray response = receiveResponse(interface, 500);
     if (response.size() >= 5 && analyzeModbusRTUFrame(response)) {
         info.confidence = 90;
         info.description = "Modbus RTU protocol detected";
@@ -241,10 +319,11 @@ ProtocolDetector::ProtocolInfo ProtocolDetector::detectModbusTCP(ICommInterface*
         return info;
     }
     
-    // 等待响应
-    waitWithEventLoop(100);
-    
-    QByteArray response = interface->receive(500);
+    // 等待响应，但不超过本次整体检测预算。
+    if (!waitForResponse(100)) {
+        return info;
+    }
+    QByteArray response = receiveResponse(interface, 500);
     if (response.size() >= 12 && analyzeModbusTCPFrame(response)) {
         info.confidence = 90;
         info.description = "Modbus TCP protocol detected";
@@ -283,9 +362,10 @@ ProtocolDetector::ProtocolInfo ProtocolDetector::detectCANOpen(ICommInterface* i
         return info;
     }
     
-    waitWithEventLoop(100);
-    
-    QByteArray response = interface->receive(500);
+    if (!waitForResponse(100)) {
+        return info;
+    }
+    QByteArray response = receiveResponse(interface, 500);
     if (response.size() >= 9 && analyzeCANOpenFrame(response)) {
         info.confidence = 85;
         info.description = "CANopen protocol detected";
@@ -323,9 +403,10 @@ ProtocolDetector::ProtocolInfo ProtocolDetector::detectJ1939(ICommInterface* int
         return info;
     }
     
-    waitWithEventLoop(100);
-    
-    QByteArray response = interface->receive(500);
+    if (!waitForResponse(100)) {
+        return info;
+    }
+    QByteArray response = receiveResponse(interface, 500);
     if (response.size() >= 9 && analyzeJ1939Frame(response)) {
         info.confidence = 80;
         info.description = "J1939 protocol detected";
@@ -361,9 +442,10 @@ ProtocolDetector::ProtocolInfo ProtocolDetector::detectRawCAN(ICommInterface* in
         return info;
     }
     
-    waitWithEventLoop(100);
-    
-    QByteArray response = interface->receive(500);
+    if (!waitForResponse(100)) {
+        return info;
+    }
+    QByteArray response = receiveResponse(interface, 500);
     if (response.size() >= 8 && validateCANChecksum(response)) {
         info.confidence = 70;
         info.description = "Raw CAN protocol detected";
@@ -518,6 +600,7 @@ bool ProtocolDetector::validateCANChecksum(const QByteArray& data)
 void ProtocolDetector::onDetectionTimeout()
 {
     if (m_detectionActive) {
+        m_detectionTimer->stop();
         m_detectionActive = false;
         emit detectionFailed("Protocol detection timeout");
     }

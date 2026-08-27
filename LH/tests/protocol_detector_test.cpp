@@ -1,4 +1,6 @@
 #include <QtTest/QtTest>
+#include <QElapsedTimer>
+#include <QSignalSpy>
 
 #include <functional>
 
@@ -28,6 +30,7 @@ public:
 
     int send(const QByteArray& data) override
     {
+        ++m_sendCount;
         m_lastSent = data;
         if (m_responseProvider) {
             m_pendingResponse = m_responseProvider(data);
@@ -58,8 +61,14 @@ public:
         return m_lastSent;
     }
 
+    int sendCount() const
+    {
+        return m_sendCount;
+    }
+
 private:
     bool m_connected = true;
+    int m_sendCount = 0;
     QByteArray m_lastSent;
     QByteArray m_pendingResponse;
     std::function<QByteArray(const QByteArray&)> m_responseProvider;
@@ -144,7 +153,7 @@ private slots:
         });
 
         ProtocolDetector detector;
-        const auto info = detector.detectProtocol(&fake, 100);
+        const auto info = detector.detectProtocol(&fake, 600);
 
         QCOMPARE(info.type, ProtocolDetector::ProtocolType::ModbusTCP);
         QCOMPARE(info.confidence, 90);
@@ -152,6 +161,23 @@ private slots:
         QCOMPARE(info.detectedParams.value(QStringLiteral("protocolId")).toInt(), 0);
         QCOMPARE(info.detectedParams.value(QStringLiteral("length")).toInt(), 6);
         QCOMPARE(info.detectedParams.value(QStringLiteral("unitId")).toInt(), 1);
+    }
+
+    void testOverallTimeoutStopsSerialDetection()
+    {
+        FakeCommInterface fake;
+        ProtocolDetector detector;
+        QSignalSpy failureSpy(&detector, &ProtocolDetector::detectionFailed);
+        QElapsedTimer elapsed;
+        elapsed.start();
+
+        const auto results = detector.detectAllProtocols(&fake, 20);
+
+        QVERIFY2(elapsed.elapsed() < 300, "short overall timeout ran every protocol probe");
+        QCOMPARE(fake.sendCount(), 1);
+        QCOMPARE(results.size(), 1);
+        QCOMPARE(failureSpy.count(), 1);
+        QCOMPARE(failureSpy.first().first().toString(), QStringLiteral("Protocol detection timeout"));
     }
 };
 

@@ -350,7 +350,7 @@ private slots:
         }));
 
         QVERIFY(dataManager.initialize(databasePath));
-        QCOMPARE(dataManager.schemaVersion(), 4);
+        QCOMPARE(dataManager.schemaVersion(), DataManager::CURRENT_SCHEMA_VERSION);
 
         const QList<RuntimeRecord> records = allRecords(QStringLiteral("legacy.point"));
         QCOMPARE(records.size(), 1);
@@ -361,12 +361,12 @@ private slots:
         QVERIFY(records.first().errorText.isEmpty());
     }
 
-    void freshDatabaseUsesSchemaV4AndLegacyWriteDefaults()
+    void freshDatabaseUsesCurrentSchemaAndLegacyWriteDefaults()
     {
         auto& dataManager = DataManager::instance();
         const QString databasePath = m_tempDir.path() + QStringLiteral("/fresh_v4.db");
         QVERIFY(dataManager.initialize(databasePath));
-        QCOMPARE(dataManager.schemaVersion(), 4);
+        QCOMPARE(dataManager.schemaVersion(), DataManager::CURRENT_SCHEMA_VERSION);
 
         QVERIFY(dataManager.logRuntimeData(QStringLiteral("fresh.point"), 1.5,
                                             QStringLiteral("bar")).success);

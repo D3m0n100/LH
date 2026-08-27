@@ -71,6 +71,13 @@ private:
     bool analyzeModbusTCPFrame(const QByteArray& data);
     bool analyzeCANOpenFrame(const QByteArray& data);
     bool analyzeJ1939Frame(const QByteArray& data);
+
+    void startDetection(int timeoutMs);
+    void stopDetection();
+    bool detectionTimedOut();
+    int remainingTimeoutMs();
+    bool waitForResponse(int delayMs);
+    QByteArray receiveResponse(ICommInterface* interface, int timeoutMs);
     
     // 辅助函数
     quint16 calculateCRC16(const QByteArray& data);

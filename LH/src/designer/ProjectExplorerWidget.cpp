@@ -437,7 +437,16 @@ void ProjectExplorerWidget::createFileInDirectory(const QString& directoryPath)
                 + QString::fromUtf8(u8"drv_ai_1(NumChannels := 1, InputNum := 0, DivisionNum := 4096);\n")
                 + QString::fromUtf8(u8"add_1();\n\n")
                 + QString::fromUtf8(u8"END_PROGRAM\n");
-        file.write(text.toUtf8());
+        const QByteArray contents = text.toUtf8();
+        if (file.write(contents) != contents.size()) {
+            const QString error = file.errorString();
+            file.close();
+            QFile::remove(absoluteFilePath);
+            QMessageBox::warning(this, tr("创建失败"),
+                                 tr("无法写入文件:\n%1\n%2")
+                                     .arg(absoluteFilePath, error));
+            return;
+        }
     }
     file.close();
 
