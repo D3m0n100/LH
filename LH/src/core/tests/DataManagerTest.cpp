@@ -590,13 +590,13 @@ void DataManagerTest::testWriteLog()
 
 void DataManagerTest::testQueryLogs()
 {
-    QDateTime start = QDateTime::currentDateTime();
+    QDateTime start = QDateTime::currentDateTimeUtc();
     
     DataManager::instance().writeLog("INFO", "Module1", "Info message");
     DataManager::instance().writeLog("WARN", "Module2", "Warning message");
     DataManager::instance().writeLog("ERROR", "Module3", "Error message");
     
-    QDateTime end = QDateTime::currentDateTime();
+    QDateTime end = QDateTime::currentDateTimeUtc();
     
     // 查询所有日志
     auto logs = DataManager::instance().queryLogs(start, end);
@@ -606,6 +606,68 @@ void DataManagerTest::testQueryLogs()
     logs = DataManager::instance().queryLogs(start, end, "ERROR");
     QCOMPARE(logs.size(), 1);
     QCOMPARE(logs[0].level, QString("ERROR"));
+}
+
+void DataManagerTest::testSystemLogTimestampsUseCanonicalUtcAndEquivalentRanges()
+{
+    const QString module = QStringLiteral("time.module");
+    const QString errorMessage = QStringLiteral("canonical.error");
+    QVERIFY(DataManager::instance().writeLog(QStringLiteral("ERROR"),
+                                              module,
+                                              errorMessage).success);
+    QVERIFY(DataManager::instance().writeLog(QStringLiteral("INFO"),
+                                              module,
+                                              QStringLiteral("canonical.info")).success);
+
+    QVariant rawTimestamp;
+    QVERIFY(queryTestScalar(
+        m_dbPath,
+        QStringLiteral("SELECT timestamp FROM system_logs "
+                       "WHERE module = 'time.module' AND message = 'canonical.error'"),
+        rawTimestamp));
+
+    const QString timestampText = rawTimestamp.toString();
+    const QDateTime logged = QDateTime::fromString(timestampText, Qt::ISODateWithMs);
+    QVERIFY(logged.isValid());
+    QCOMPARE(timestampText, logged.toUTC().toString(Qt::ISODateWithMs));
+
+    const QDateTime startUtc = logged.addSecs(-2);
+    const QDateTime endUtc = logged.addSecs(2);
+    const QDateTime startLocal = startUtc.toLocalTime();
+    const QDateTime endLocal = endUtc.toLocalTime();
+    const QDateTime startOffset = startUtc.toOffsetFromUtc(8 * 60 * 60);
+    const QDateTime endOffset = endUtc.toOffsetFromUtc(8 * 60 * 60);
+
+    const auto queryErrors = [](const QDateTime& start, const QDateTime& end) {
+        return DataManager::instance().queryLogs(start, end, QStringLiteral("ERROR"), 20);
+    };
+    const QList<LogRecord> utcLogs = queryErrors(startUtc, endUtc);
+    const QList<LogRecord> localLogs = queryErrors(startLocal, endLocal);
+    const QList<LogRecord> offsetLogs = queryErrors(startOffset, endOffset);
+
+    QCOMPARE(utcLogs.size(), 1);
+    QCOMPARE(localLogs.size(), utcLogs.size());
+    QCOMPARE(offsetLogs.size(), utcLogs.size());
+    QCOMPARE(utcLogs.first().id, localLogs.first().id);
+    QCOMPARE(utcLogs.first().id, offsetLogs.first().id);
+    QCOMPARE(utcLogs.first().level, QStringLiteral("ERROR"));
+    QCOMPARE(utcLogs.first().message, errorMessage);
+
+    const QDateTime legacyInstant(QDate(2020, 1, 2), QTime(3, 4, 5), Qt::UTC);
+    QVERIFY(executeTestSql(m_dbPath, {
+        QStringLiteral(
+            "INSERT INTO system_logs (timestamp, level, module, message) "
+            "VALUES ('2020-01-02 03:04:05', 'ERROR', 'legacy.time', 'legacy log')")
+    }));
+
+    const QList<LogRecord> legacyUtcLogs = queryErrors(
+        legacyInstant.addMSecs(-500), legacyInstant.addMSecs(500));
+    const QList<LogRecord> legacyLocalLogs = queryErrors(
+        legacyInstant.addMSecs(-500).toLocalTime(),
+        legacyInstant.addMSecs(500).toLocalTime());
+    QCOMPARE(legacyUtcLogs.size(), 1);
+    QCOMPARE(legacyLocalLogs.size(), legacyUtcLogs.size());
+    QCOMPARE(legacyUtcLogs.first().message, QStringLiteral("legacy log"));
 }
 
 // ============================================================================

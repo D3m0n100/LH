@@ -26,6 +26,7 @@
 #include "designer/ui/ProblemsPanel.h"
 #include "communication/VirtualDeviceBackend.h"
 #include "monitor/MonitorManager.h"
+#include "monitor/MonitorWidget.h"
 
 Q_DECLARE_METATYPE(BuildType)
 
@@ -187,7 +188,9 @@ private slots:
     {
         QScopedPointer<MainWindow> window(new MainWindow());
         auto* sessionController = window->findChild<RuntimeSessionController*>();
+        auto* monitorWidget = window->findChild<MonitorWidget*>();
         QVERIFY(sessionController != nullptr);
+        QVERIFY(monitorWidget != nullptr);
 
         QLabel* statusLabel = nullptr;
         for (QLabel* label : window->findChildren<QLabel*>()) {
@@ -212,13 +215,37 @@ private slots:
 
         sessionController->startMonitoring();
         QCOMPARE(statusLabel->text(), QStringLiteral("监控中"));
+        QVERIFY(monitorWidget->isMonitoring());
         sessionController->stopMonitoring();
         QCOMPARE(statusLabel->text(), QStringLiteral("运行中"));
+        QVERIFY(!monitorWidget->isMonitoring());
 
         sessionController->requestStop();
         QCOMPARE(statusLabel->text(), QStringLiteral("已停止"));
         QVERIFY(!sessionController->isRunning());
         QVERIFY(!sessionController->isMonitoring());
+        QVERIFY(!monitorWidget->isMonitoring());
+    }
+
+    void monitoringWithoutDataSourceStaysRunningAndReportsError()
+    {
+        auto& manager = Monitor::MonitorManager::instance();
+        manager.stopMonitoring();
+        manager.setDeviceBackend(nullptr);
+        manager.applyConfiguration(ProjectRuntimeConfig());
+
+        ProjectController projectController;
+        RuntimeSessionController controller;
+        controller.setProjectController(&projectController);
+        QSignalSpy errorSpy(&controller, &RuntimeSessionController::runtimeError);
+
+        controller.executeRun();
+        controller.startMonitoring();
+
+        QCOMPARE(controller.state(), RuntimeSessionState::Running);
+        QVERIFY(!controller.isMonitoring());
+        QCOMPARE(errorSpy.count(), 1);
+        QVERIFY(errorSpy.first().first().toString().contains(QStringLiteral("数据源")));
     }
 
     void projectClosedStopsRuntimeSession()

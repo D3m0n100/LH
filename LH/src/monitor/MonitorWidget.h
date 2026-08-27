@@ -83,6 +83,8 @@ public:
     // ===== 监控控制 =====
     void startMonitoring();
     void stopMonitoring();
+    /// 同步会话状态到界面，不重复操作 MonitorManager。
+    void syncMonitoringState(bool monitoring);
     bool isMonitoring() const { return m_isMonitoring; }
 
     // ===== 配置 =====

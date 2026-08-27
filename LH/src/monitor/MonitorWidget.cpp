@@ -495,12 +495,7 @@ void MonitorWidget::startMonitoring()
 
     manager.startMonitoring();
 
-    // 保持现有 statsTimer 与 UI 行为不变
-    m_isMonitoring = true;
-    m_startStopButton->setText(tr("停止监控"));
-    m_statsTimer->start();
-
-    emit monitoringStarted();
+    syncMonitoringState(true);
     qDebug() << "[MonitorWidget] 监控已启动，providers=" << providers.size();
 }
 
@@ -519,12 +514,25 @@ void MonitorWidget::stopMonitoring()
         m_demoModeActive = false;
     }
 
-    m_isMonitoring = false;
-    m_startStopButton->setText(tr("开始监控"));
-    m_statsTimer->stop();
-
-    emit monitoringStopped();
+    syncMonitoringState(false);
     qDebug() << "[MonitorWidget] Monitoring stopped.";
+}
+
+void MonitorWidget::syncMonitoringState(bool monitoring)
+{
+    if (m_isMonitoring == monitoring) {
+        return;
+    }
+
+    m_isMonitoring = monitoring;
+    m_startStopButton->setText(monitoring ? tr("停止监控") : tr("开始监控"));
+    if (monitoring) {
+        m_statsTimer->start();
+        emit monitoringStarted();
+    } else {
+        m_statsTimer->stop();
+        emit monitoringStopped();
+    }
 }
 
 void MonitorWidget::setTimeWindow(qint64 windowMs)

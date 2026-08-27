@@ -166,6 +166,9 @@ MainWindow::MainWindow(QWidget* parent)
     if (m_sessionController) {
         m_sessionController->setSampleDataProvider(m_sampleDataProvider);
     }
+    if (m_monitorWidget) {
+        m_monitorWidget->setSampleDataProvider(m_sampleDataProvider);
+    }
     // SampleDataProvider 直接向 MonitorManager 写样本，不依赖 MonitorWidget
     // 应用初始设置
     applyFontSize(m_settingsController->currentFontPointSize());
@@ -451,13 +454,10 @@ void MainWindow::connectControllerSignals()
                                          || state == RuntimeSessionState::Fault);
         }
         updateStatusBar(statusText);
-        if (state == RuntimeSessionState::Monitoring
-                && m_monitorWidget && !m_monitorWidget->isMonitoring()) {
-            m_monitorWidget->startMonitoring();
-        } else if (state != RuntimeSessionState::Monitoring
-                   && m_monitorWidget && m_monitorWidget->isMonitoring()
-                   && !m_sessionController->isDemoMode()) {
-            m_monitorWidget->stopMonitoring();
+        if (m_monitorWidget) {
+            const bool monitoring = state == RuntimeSessionState::Monitoring
+                    && Monitor::MonitorManager::instance().isMonitoring();
+            m_monitorWidget->syncMonitoringState(monitoring);
         }
     };
 

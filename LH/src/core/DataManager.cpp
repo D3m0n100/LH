@@ -1409,9 +1409,10 @@ QueryResult DataManager::writeLog(const QString& level,
     
     QSqlQuery query(m_db);
     query.prepare(R"(
-        INSERT INTO system_logs (level, module, message)
-        VALUES (:level, :module, :message)
+        INSERT INTO system_logs (timestamp, level, module, message)
+        VALUES (:timestamp, :level, :module, :message)
     )");
+    query.bindValue(":timestamp", runtimeTimestampText());
     query.bindValue(":level", level);
     query.bindValue(":module", module);
     query.bindValue(":message", message);
@@ -1444,19 +1445,25 @@ QList<LogRecord> DataManager::queryLogs(const QDateTime& start,
     QString sql = R"(
         SELECT id, timestamp, level, module, message
         FROM system_logs
-        WHERE timestamp BETWEEN :start AND :end
+        WHERE julianday(timestamp) BETWEEN julianday(:start) AND julianday(:end)
     )";
     
     if (!level.isEmpty()) {
         sql += " AND level = :level";
     }
     
-    sql += " ORDER BY timestamp DESC LIMIT :limit";
-    
+    sql += " ORDER BY julianday(timestamp) DESC, id DESC LIMIT :limit";
+
     QSqlQuery query(m_db);
     query.prepare(sql);
-    query.bindValue(":start", start);
-    query.bindValue(":end", end);
+    const QString startUtc = start.isValid()
+            ? start.toUTC().toString(Qt::ISODateWithMs)
+            : QString();
+    const QString endUtc = end.isValid()
+            ? end.toUTC().toString(Qt::ISODateWithMs)
+            : QString();
+    query.bindValue(":start", startUtc);
+    query.bindValue(":end", endUtc);
     query.bindValue(":limit", limit);
     
     if (!level.isEmpty()) {

@@ -382,7 +382,30 @@ void RuntimeSessionController::startMonitoring()
         return;
     }
 
-    Monitor::MonitorManager::instance().startMonitoring();
+    auto& manager = Monitor::MonitorManager::instance();
+    if (m_projectController || m_sampleDataProvider) {
+        if (manager.providerIds().isEmpty()
+                && !m_demoModeActive
+                && (!m_projectController || !m_projectController->hasOpenProject())) {
+            startDemoMode(QStringLiteral("开始监控"));
+        }
+
+        const bool hasDemoSource = (!m_projectController || !m_projectController->hasOpenProject())
+                && m_demoModeActive
+                && m_sampleDataProvider
+                && m_sampleDataProvider->isRunning();
+        if (manager.providerIds().isEmpty() && !hasDemoSource) {
+            emit runtimeError(QStringLiteral(
+                "当前没有可用监控数据源，请先应用运行时配置或启用演示数据模式。"));
+            return;
+        }
+    }
+
+    manager.startMonitoring();
+    if (!manager.isMonitoring()) {
+        emit runtimeError(QStringLiteral("监控启动失败，数据采集器未进入运行状态。"));
+        return;
+    }
     setState(RuntimeSessionState::Monitoring);
 }
 

@@ -51,6 +51,7 @@ private slots:
     // ===== 系统日志测试 =====
     void testWriteLog();
     void testQueryLogs();
+    void testSystemLogTimestampsUseCanonicalUtcAndEquivalentRanges();
     
     // ===== 数据维护测试 =====
     void testCleanupOldData();
