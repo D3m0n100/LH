@@ -60,11 +60,11 @@ private slots:
 
 private:
     // 各种协议的检测函数
-    ProtocolInfo detectModbusRTU(ICommInterface* interface);
-    ProtocolInfo detectModbusTCP(ICommInterface* interface);
-    ProtocolInfo detectCANOpen(ICommInterface* interface);
-    ProtocolInfo detectJ1939(ICommInterface* interface);
-    ProtocolInfo detectRawCAN(ICommInterface* interface);
+    ProtocolInfo detectModbusRTU(ICommInterface* interface, quint64 operation);
+    ProtocolInfo detectModbusTCP(ICommInterface* interface, quint64 operation);
+    ProtocolInfo detectCANOpen(ICommInterface* interface, quint64 operation);
+    ProtocolInfo detectJ1939(ICommInterface* interface, quint64 operation);
+    ProtocolInfo detectRawCAN(ICommInterface* interface, quint64 operation);
     
     // 协议特征分析
     bool analyzeModbusRTUFrame(const QByteArray& data);
@@ -72,12 +72,12 @@ private:
     bool analyzeCANOpenFrame(const QByteArray& data);
     bool analyzeJ1939Frame(const QByteArray& data);
 
-    void startDetection(int timeoutMs);
-    void stopDetection();
-    bool detectionTimedOut();
-    int remainingTimeoutMs();
-    bool waitForResponse(int delayMs);
-    QByteArray receiveResponse(ICommInterface* interface, int timeoutMs);
+    quint64 startDetection(int timeoutMs);
+    void stopDetection(quint64 operation);
+    bool detectionTimedOut(quint64 operation);
+    int remainingTimeoutMs(quint64 operation);
+    bool waitForResponse(int delayMs, quint64 operation);
+    QByteArray receiveResponse(ICommInterface* interface, int timeoutMs, quint64 operation);
     
     // 辅助函数
     quint16 calculateCRC16(const QByteArray& data);
@@ -91,6 +91,7 @@ private:
     // 检测参数
     int m_timeout;
     bool m_detectionActive;
+    quint64 m_operation = 0;
     
     // 统计信息
     int m_totalTests;

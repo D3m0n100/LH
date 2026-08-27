@@ -179,6 +179,37 @@ private slots:
         QCOMPARE(failureSpy.count(), 1);
         QCOMPARE(failureSpy.first().first().toString(), QStringLiteral("Protocol detection timeout"));
     }
+
+    void testTimeoutSignalCanReenterDetection()
+    {
+        FakeCommInterface timedOutInterface;
+        FakeCommInterface reentrantInterface;
+        reentrantInterface.setResponseProvider([](const QByteArray& request) {
+            if (request.size() < 12 || request.left(4) != QByteArray::fromHex("00010000")) {
+                return QByteArray();
+            }
+            return QByteArray::fromHex("0001000000060103020001");
+        });
+
+        ProtocolDetector detector;
+        ProtocolDetector::ProtocolInfo reentrantResult{
+            ProtocolDetector::ProtocolType::Unknown, QString(), QString(), QVariantMap(), 0};
+        bool reentered = false;
+        connect(&detector, &ProtocolDetector::detectionFailed, &detector, [&] {
+            if (reentered) {
+                return;
+            }
+            reentered = true;
+            reentrantResult = detector.detectProtocol(&reentrantInterface, 600);
+        });
+
+        const auto timedOutResult = detector.detectProtocol(&timedOutInterface, 20);
+
+        QVERIFY(reentered);
+        QCOMPARE(timedOutResult.type, ProtocolDetector::ProtocolType::Unknown);
+        QCOMPARE(reentrantResult.type, ProtocolDetector::ProtocolType::ModbusTCP);
+        QCOMPARE(reentrantResult.confidence, 90);
+    }
 };
 
 QTEST_MAIN(ProtocolDetectorTest)

@@ -439,12 +439,19 @@ void ProjectExplorerWidget::createFileInDirectory(const QString& directoryPath)
                 + QString::fromUtf8(u8"END_PROGRAM\n");
         const QByteArray contents = text.toUtf8();
         if (file.write(contents) != contents.size()) {
-            const QString error = file.errorString();
+            const QString writeError = file.errorString();
             file.close();
-            QFile::remove(absoluteFilePath);
+            if (!file.remove()) {
+                const QString removeError = file.errorString();
+                QMessageBox::warning(this, tr("创建失败"),
+                                     tr("无法写入文件，且无法删除残留文件:\n%1\n"
+                                        "写入错误: %2\n删除错误: %3")
+                                         .arg(absoluteFilePath, writeError, removeError));
+                return;
+            }
             QMessageBox::warning(this, tr("创建失败"),
                                  tr("无法写入文件:\n%1\n%2")
-                                     .arg(absoluteFilePath, error));
+                                     .arg(absoluteFilePath, writeError));
             return;
         }
     }
