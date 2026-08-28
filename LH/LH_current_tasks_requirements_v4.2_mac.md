@@ -410,7 +410,7 @@ VAL-4
 | DB-QUERY-1 | `DataManager.*`、`MonitorManagerHistory.cpp`、生产调用方与相关测试 |
 | COMM-LIFE-1 | 默认只读；有证据后才列 `ModbusInterface.*` 与最小测试 |
 
-`BUILD-CANCEL-1` 若需要修改 `src/compiler/**`，必须先按第 9 节取得新的最小文件授权；不得把 Designer 状态修复扩展成 Compiler 重写。
+`BUILD-CANCEL-1` 的实际修改仍须按当前调用链列出最小文件清单；不得把 Designer 状态修复扩展成 Compiler 重写。
 
 ---
 
@@ -430,26 +430,25 @@ VAL-4
 | BUILD-HYG-1 | `mkpath()` 结果、静态/共享重复 target、Qt Test 无条件依赖和测试 target 偏重 | 构建卫生/维护成本，非当前发布 blocker | Windows clean build 暴露失败、生产构建不应依赖 Qt Test 或构建时间成为问题 | 最小条件化测试依赖、删除重复 target/检查返回值；不重写测试架构 |
 | DB-HYG-1 | `data_summary`、部分索引、同步 VACUUM 与 legacy 查询 API | schema 兼容与维护性风险；无生产 VACUUM 调用 | VAL-4 证明空间/锁/查询问题，或计划 schema 升级 | 不直接删表；随 schema/性能证据处理 |
 | ARCH-1 | 新旧通信配置重复解释、mutable runtime config、宽 Controller/Singleton、引用输出 signal、Download 前置流程重复、include/log 边界较弱 | 架构气味，不是已确认 correctness 缺陷 | 修改冲突、配置解释分歧、行为漂移或测量指标持续恶化 | 只做有证据的定向收口/删除，不启动总体架构改造或新建万能 Manager |
-| COMP-RUNTIME-1 | Python 环境探测同步等待、runtime 多来源搜索、stdout/stderr 无上限 | 风险真实但主流程通常可用，且位于 Compiler 冻结区 | 编译入口卡顿/内存增长可复现，或正式安装来源不确定 | 先固定/缓存现有来源并限制输出；任何写入先取得冻结区授权 |
-| COMP-META-1 | standalone Python package 仍有占位发布元数据，REPL 未实现 | 主程序不依赖；compile/check 已诚实失败 | 再次对外发布 standalone package | 发布前修元数据/命令合同；Compiler 冻结区需重新授权 |
+| COMP-RUNTIME-1 | Python 环境探测同步等待、runtime 多来源搜索、stdout/stderr 无上限 | 风险真实但主流程通常可用，且涉及 Compiler 相关路径 | 编译入口卡顿/内存增长可复现，或正式安装来源不确定 | 先固定/缓存现有来源并限制输出；若涉及第三方 Compiler 目录，写入前取得冻结区授权 |
+| COMP-META-1 | standalone Python package 仍有占位发布元数据，REPL 未实现 | 主程序不依赖；compile/check 已诚实失败 | 再次对外发布 standalone package | 发布前修元数据/命令合同；若涉及第三方 Compiler 目录，写入前取得冻结区授权 |
 | LEGACY-1 | 旧错误信号、重复版本字符串、TODO/占位实现 | 兼容与清理债务 | 外部兼容范围确认、正式版本发布或对应功能进入产品路径 | 精确删除/统一，不按 TODO 数量批量立项 |
 
 ---
 
 # 9. 冻结区、安全边界与回归不变量
 
-## 9.1 Compiler 冻结区
+## 9.1 第三方 Compiler 冻结区
 
 ```text
-src/compiler/**
 third_party/custom_dsp_language/compile/**
 ```
 
-这里冻结的是源码写入，不是构建冻结：未获授权不得修改上述目录源码，但云端或本地的完整项目 clean configure/build/CTest 必须允许读取并编译这些目录。整改代码的完整编译、链接和测试不得因冻结区而跳过；构建生成物应写入独立 build 目录，旧产物不能作为验证证据。
+这里冻结的是第三方目录的源码写入，不是构建冻结：未获授权不得修改该目录源码，但云端或本地的完整项目 clean configure/build/CTest 必须允许读取并编译该目录。整改代码的完整编译、链接和测试不得因冻结区而跳过；构建生成物应写入独立 build 目录，旧产物不能作为验证证据。
 
-任何新写入必须先列最终最小文件清单并获得用户明确授权。过去的狭窄授权不自动延续。
+对该冻结目录的任何新写入必须先列最终最小文件清单并获得用户明确授权。过去的狭窄授权不自动延续。
 
-本轮 BUILD-CANCEL-1 一次性最小授权（2026-08-26）：用户明确授权修改 `src/designer/BuildController.h`、`src/designer/BuildController.cpp`、`src/compiler/DSLCompilerInterface.h`、`src/compiler/DSLCompilerAsync.cpp` 及对应最小测试/CTest 注册文件。随后用户明确授权本轮可修改 `src/compiler/**`；`third_party/custom_dsp_language/compile/**` 仍需单独授权。
+本轮 BUILD-CANCEL-1 一次性最小授权（2026-08-26）：用户明确授权修改 `src/designer/BuildController.h`、`src/designer/BuildController.cpp`、`src/compiler/DSLCompilerInterface.h`、`src/compiler/DSLCompilerAsync.cpp` 及对应最小测试/CTest 注册文件。`third_party/custom_dsp_language/compile/**` 仍需单独授权。
 
 ## 9.2 高风险任务
 

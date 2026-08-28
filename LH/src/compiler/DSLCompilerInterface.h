@@ -11,6 +11,7 @@ struct CompileResult;
 #include <QProcess>
 #include <QTimer>
 #include <QVariantMap>
+#include <functional>
 #include "common/ConfigTypes.h"
 #include "common/RuntimePointTypes.h"
 #include "Common.h"
@@ -139,11 +140,20 @@ private slots:
     void onProcessReadyReadStandardOutput();
     void onProcessReadyReadStandardError();
     void onCompileTimeout();
+    void onPythonProbeFinished(int exitCode, QProcess::ExitStatus exitStatus);
+    void onPythonProbeErrorOccurred(QProcess::ProcessError error);
+    void onPythonProbeTimeout();
 
 private:
     quint64 allocateOperationGeneration(quint64 requestedGeneration);
     void emitCompileFailedToStart(quint64 operationGeneration, const QString& errorString);
     QString resolvePythonInterpreter() const;          // 找到 python 可执行文件
+    void resolvePythonInterpreterAsync(quint64 operationGeneration,
+                                       std::function<void(const QString&)> onResolved);
+    void startNextPythonProbe();
+    void finishPythonProbe(const QString& python = QString());
+    void clearPythonProbe();
+    void ensurePythonProbeTimeoutTimer();
     QString compilerWorkingDir() const;                // third_party/.../compile 目录
     QString compilerEntryScript() const;               // lmc.py 路径
     QString prepareCompilerInput(const QString& sourceFile,
@@ -218,6 +228,17 @@ private:
     ProjectRuntimeConfig m_asyncProjectConfig;  // 异步项目编译时暂存配置
     quint64 m_nextOperationGeneration = 0;
     quint64 m_asyncOperationGeneration = 0;
+
+    // 异步 Python/ANTLR 探测与待启动的编译请求均在本对象线程运行。
+    QProcess* m_pythonProbeProcess = nullptr;
+    QTimer* m_pythonProbeTimeoutTimer = nullptr;
+    QStringList m_pythonProbeCandidates;
+    QString m_pythonProbeWorkDir;
+    QString m_pythonProbeCandidate;
+    int m_pythonProbeCandidateIndex = 0;
+    bool m_pythonProbeChecksRuntime = false;
+    quint64 m_pythonProbeGeneration = 0;
+    std::function<void(const QString&)> m_pendingAsyncCompilerStart;
 
     // Python 解释器路径缓存（避免每次编译都重新探测）
     static QString s_cachedPythonInterpreter;

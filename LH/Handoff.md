@@ -14,7 +14,7 @@
 
 除 COMP-F1 的独立 Python package 验证外，本轮没有把旧构建目录或旧二进制当作运行证据。
 
-冻结边界仅适用于源码写入：本轮用户已明确授权可修改 `src/compiler/**`；`third_party/custom_dsp_language/compile/**` 未获单独授权不得修改。完整项目 clean configure/build/CTest 仍必须包含并编译这些目录；整改代码不能因冻结区而跳过编译、链接或测试。构建产物只能由构建流程写入 build 目录，不能手动修改或作为旧证据。
+冻结边界仅适用于源码写入：`third_party/custom_dsp_language/compile/**` 未获单独授权不得修改。完整项目 clean configure/build/CTest 仍必须包含并编译该目录；整改代码不能因冻结区而跳过编译、链接或测试。构建产物只能由构建流程写入 build 目录，不能手动修改或作为旧证据。
 
 ## 2. 当前任务与历史完成状态
 
@@ -104,7 +104,7 @@
 - MON-SNAP-1 的 Controller backend 高频 `statusSnapshot()` 只返回缓存状态和点位计数，不再调用 `buildPreflightReport()`；串口枚举、OPC ProgID 检查和完整点位明细仅保留在显式诊断/配置验证路径。
 - MainWindow 与 OutputPaneController 的日志保存均使用 `QSaveFile + QTextStream::status() + commit()`；打开、写入或提交失败不会提示成功，也不会破坏旧目标文件。
 - P3-1 只移动 implementation，没有改 API：`MainWindowOutput.cpp`、`MainWindowMonitor.cpp`、`MonitorManagerHistory.cpp`、`MonitorManagerPolling.cpp` 已进入 CMake。
-- CLEAN-1 只删除两个确认死文件；`src/compiler/dummy.cpp` 位于冻结区，仍保留。
+- CLEAN-1 只删除两个确认死文件；`src/compiler/dummy.cpp` 仍保留。
 
 ### 3.4 Artifact、Compiler package 与下载链
 
@@ -113,7 +113,7 @@
 - 新路径使用 manifest-relative/project-relative；absolute path、`..` 和越出允许 root 的输入不得成为正式下载依赖。
 - standalone Python package 使用 setuptools 子包发现并复用现有 `COMPILER_GUIDE.md`；wheel 中已包含 CLI/后端/功能块子包，console entry 可导入。
 - package 的 `compile`/`check` 仍未实现，但现在明确以退出码 1 失败，不再输出成功结论。本任务不等于实现 Python compiler semantics。
-- COMP-F1 获得过用户对三个精确文件的狭窄授权；该授权不延伸到后续 `src/compiler/**` 或第三方 Compiler 修改。
+- COMP-F1 获得过用户对三个精确文件的狭窄授权；`third_party/custom_dsp_language/compile/**` 仍需单独授权。
 - BUILD-CANCEL-1 已在一次性最小授权范围内完成 macOS 静态实施：异步 QProcess 取消不再同步等待，旧 sender 与迟到 generation 回调不能改变新编译状态；最小取消/新 generation 测试已注册，待目标环境运行。
 - DL-1A 的正式下载仍为同步调用。诊断链可取消不等于正式链可即时取消；只有 VAL-3 提供真实 UI/设备失败证据后才允许定义 DL-1B。
 
