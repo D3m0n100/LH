@@ -56,7 +56,6 @@ const char* const CREATE_RUNTIME_INDEXES = R"(
     CREATE INDEX IF NOT EXISTS idx_runtime_timestamp ON runtime_data(timestamp);
     CREATE INDEX IF NOT EXISTS idx_runtime_variable ON runtime_data(variable_name);
     CREATE INDEX IF NOT EXISTS idx_runtime_var_time ON runtime_data(variable_name, timestamp);
-    CREATE INDEX IF NOT EXISTS idx_runtime_julianday_timestamp ON runtime_data(julianday(timestamp));
 )";
 
 /// 系统日志索引
@@ -64,7 +63,6 @@ const char* const CREATE_LOG_INDEXES = R"(
     CREATE INDEX IF NOT EXISTS idx_logs_timestamp ON system_logs(timestamp);
     CREATE INDEX IF NOT EXISTS idx_logs_level ON system_logs(level);
     CREATE INDEX IF NOT EXISTS idx_logs_level_time ON system_logs(level, timestamp);
-    CREATE INDEX IF NOT EXISTS idx_logs_julianday_timestamp ON system_logs(julianday(timestamp));
 )";
 
 /// 版本 2 新增：数据摘要表（用于快速统计）
@@ -502,9 +500,6 @@ bool DataManager::migrateSchema(int fromVersion, int toVersion)
             case 4:
                 success = upgradeToVersion4();
                 break;
-            case 5:
-                success = upgradeToVersion5();
-                break;
             default:
                 LOG_ERROR(QString("未知的迁移版本: %1").arg(ver));
                 success = false;
@@ -601,21 +596,6 @@ bool DataManager::upgradeToVersion4()
 
     result = executeSql(SchemaDefinitions::ADD_RUNTIME_ERROR_TEXT_V4,
                         "为 runtime_data 添加错误文本字段");
-    return result.success;
-}
-
-bool DataManager::upgradeToVersion5()
-{
-    auto result = executeSql(
-        "CREATE INDEX IF NOT EXISTS idx_runtime_julianday_timestamp "
-        "ON runtime_data(julianday(timestamp))",
-        "创建运行时数据时间表达式索引");
-    if (!result) return false;
-
-    result = executeSql(
-        "CREATE INDEX IF NOT EXISTS idx_logs_julianday_timestamp "
-        "ON system_logs(julianday(timestamp))",
-        "创建日志时间表达式索引");
     return result.success;
 }
 

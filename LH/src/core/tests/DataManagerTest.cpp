@@ -73,30 +73,6 @@ bool queryTestScalar(const QString& dbPath, const QString& statement, QVariant& 
     return success;
 }
 
-bool queryPlanUsesIndex(const QString& dbPath,
-                        const QString& statement,
-                        const QString& indexName)
-{
-    const QString connectionName = QStringLiteral("DataManagerTest_%1")
-                                       .arg(QUuid::createUuid().toString(QUuid::WithoutBraces));
-    bool usesIndex = false;
-    {
-        QSqlDatabase database = QSqlDatabase::addDatabase(QStringLiteral("QSQLITE"), connectionName);
-        database.setDatabaseName(dbPath);
-        if (database.open()) {
-            QSqlQuery query(database);
-            if (query.exec(statement)) {
-                while (query.next()) {
-                    usesIndex = usesIndex || query.value(3).toString().contains(indexName);
-                }
-            }
-            database.close();
-        }
-    }
-    QSqlDatabase::removeDatabase(connectionName);
-    return usesIndex;
-}
-
 } // namespace
 
 void DataManagerTest::initTestCase()
@@ -368,11 +344,9 @@ void DataManagerTest::testRequiredIndexesExist()
         QStringLiteral("idx_runtime_timestamp"),
         QStringLiteral("idx_runtime_variable"),
         QStringLiteral("idx_runtime_var_time"),
-        QStringLiteral("idx_runtime_julianday_timestamp"),
         QStringLiteral("idx_logs_timestamp"),
         QStringLiteral("idx_logs_level"),
-        QStringLiteral("idx_logs_level_time"),
-        QStringLiteral("idx_logs_julianday_timestamp")
+        QStringLiteral("idx_logs_level_time")
     };
 
     for (const QString& indexName : requiredIndexes) {
@@ -384,42 +358,6 @@ void DataManagerTest::testRequiredIndexesExist()
             value));
         QCOMPARE(value.toInt(), 1);
     }
-}
-
-void DataManagerTest::testVersion5TimeIndexesMigrateAndAreUsable()
-{
-    DataManager::instance().shutdown();
-    QFile::remove(m_dbPath);
-    QVERIFY(executeTestSql(m_dbPath, {
-        QStringLiteral("CREATE TABLE schema_version (id INTEGER PRIMARY KEY, version INTEGER NOT NULL, "
-                       "updated_at DATETIME)"),
-        QStringLiteral("INSERT INTO schema_version (id, version) VALUES (1, 4)"),
-        QStringLiteral("CREATE TABLE runtime_data (id INTEGER PRIMARY KEY, timestamp DATETIME, "
-                       "variable_name TEXT NOT NULL, value REAL, unit TEXT, quality TEXT NOT NULL, "
-                       "value_valid INTEGER NOT NULL, origin TEXT NOT NULL, error_code TEXT NOT NULL, "
-                       "error_text TEXT NOT NULL)"),
-        QStringLiteral("CREATE TABLE system_logs (id INTEGER PRIMARY KEY, timestamp DATETIME, "
-                       "level TEXT NOT NULL, module TEXT, message TEXT)")
-    }));
-
-    QVERIFY(DataManager::instance().initialize(m_dbPath));
-    QCOMPARE(DataManager::instance().schemaVersion(), DataManager::CURRENT_SCHEMA_VERSION);
-    QVERIFY(queryPlanUsesIndex(
-        m_dbPath,
-        QStringLiteral("EXPLAIN QUERY PLAN SELECT id FROM system_logs "
-                       "WHERE julianday(timestamp) BETWEEN julianday('2020-01-01') "
-                       "AND julianday('2030-01-01')"),
-        QStringLiteral("idx_logs_julianday_timestamp")));
-    QVERIFY(queryPlanUsesIndex(
-        m_dbPath,
-        QStringLiteral("EXPLAIN QUERY PLAN DELETE FROM runtime_data "
-                       "WHERE julianday(timestamp) < julianday('2030-01-01')"),
-        QStringLiteral("idx_runtime_julianday_timestamp")));
-    QVERIFY(queryPlanUsesIndex(
-        m_dbPath,
-        QStringLiteral("EXPLAIN QUERY PLAN DELETE FROM system_logs "
-                       "WHERE julianday(timestamp) < julianday('2030-01-01')"),
-        QStringLiteral("idx_logs_julianday_timestamp")));
 }
 
 // ============================================================================

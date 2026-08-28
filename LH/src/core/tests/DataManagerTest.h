@@ -34,7 +34,6 @@ private slots:
     void testInitialRequiredIndexFailureRollsBack();
     void testVersion2CompositeIndexFailureRollsBack();
     void testRequiredIndexesExist();
-    void testVersion5TimeIndexesMigrateAndAreUsable();
     
     // ===== 运行时数据测试 =====
     void testLogRuntimeData();
