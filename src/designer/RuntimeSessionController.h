@@ -1,0 +1,174 @@
+// File: src/designer/RuntimeSessionController.h
+
+#ifndef RUNTIMESESSIONCONTROLLER_H
+#define RUNTIMESESSIONCONTROLLER_H
+
+#include <QObject>
+#include <QMetaType>
+#include <QPointer>
+#include <QString>
+#include <QStringList>
+#include <QVariantMap>
+#include <QtGlobal>
+
+#include "common/ConfigTypes.h"
+
+class IDeviceBackend;
+class IOpcServer;
+class ControllerDeviceBackend;
+class SampleDataProvider;
+class BuildController;
+class ProjectController;
+class ParameterController;
+struct CompileResult;
+struct CommError;
+
+enum class RuntimeSessionState {
+    Idle,
+    Compiled,
+    Connecting,
+    Connected,
+    Running,
+    Monitoring,
+    Downloading,
+    Fault
+};
+
+enum class DownloadState {
+    Idle,
+    Precheck,
+    PrecheckFailed,
+    Downloading,
+    Retrying,
+    Verifying,
+    Succeeded,
+    TransportFailed,
+    DeviceRejected,
+    VerifyFailed,
+    Failed
+};
+
+Q_DECLARE_METATYPE(DownloadState)
+
+class RuntimeSessionController : public QObject
+{
+    Q_OBJECT
+public:
+    explicit RuntimeSessionController(QObject* parent = nullptr);
+
+    void setDeviceBackend(IDeviceBackend* backend);
+    IDeviceBackend* deviceBackend() const;
+    void setOpcServer(IOpcServer* opcServer);
+    IOpcServer* opcServer() const { return m_opcServer; }
+
+    void setSampleDataProvider(SampleDataProvider* provider);
+    void setProjectController(ProjectController* controller);
+    void setBuildController(BuildController* controller);
+    void setParameterController(ParameterController* controller);
+
+    RuntimeSessionState state() const { return m_state; }
+    DownloadState downloadState() const { return m_downloadState; }
+    bool isRunning() const { return m_state == RuntimeSessionState::Running
+                                    || m_state == RuntimeSessionState::Monitoring; }
+    bool isMonitoring() const { return m_state == RuntimeSessionState::Monitoring; }
+    bool isDemoMode() const { return m_demoModeActive; }
+    bool hasPendingRunAfterCompile() const { return m_pendingRunAfterCompile; }
+    QString artifactPath() const { return m_artifactPath; }
+    QString currentDownloadOperationId() const { return m_currentDownloadOperationId; }
+
+    bool prepareRun();
+    bool applyRuntimeConfig();
+    void executeRun();
+    void requestStop();
+
+    void setPendingRunAfterCompile(bool pending) { m_pendingRunAfterCompile = pending; }
+    void setSkipNextBuildSave(bool skip) { m_skipNextBuildSave = skip; }
+    bool skipNextBuildSave() const { return m_skipNextBuildSave; }
+
+    bool onCompileSucceeded(const CompileResult& result);
+
+    void startDemoMode(const QString& reason);
+    void stopDemoMode(const QString& reason);
+
+    void startMonitoring();
+    void stopMonitoring();
+
+    bool requestDownload(const QString& artifactPath, const QVariantMap& options = {});
+    bool pauseController();
+    bool resumeController();
+    bool stepController();
+    bool runControllerToCursor(int lineNumber);
+    bool setControllerBreakpoints(int firstLine, int secondLine);
+    bool testControllerConnection();
+
+signals:
+    void stateChanged(RuntimeSessionState oldState, RuntimeSessionState newState);
+    void runtimeError(const QString& message);
+    void logMessage(const QString& message);
+    void demoModeChanged(bool active);
+    void monitoringChanged(bool active);
+    void downloadStateChanged(DownloadState oldState, DownloadState newState);
+    void downloadProgressChanged(int percent);
+    void downloadFinished(bool success, const QString& message);
+    void downloadDiagnosticChanged(const QVariantMap& diagnostic);
+    void opcRunningChanged(bool running);
+    void opcErrorOccurred(const QString& message);
+
+private:
+    void finishRunStart();
+    void requestControllerDownloadAttempt(ControllerDeviceBackend* controller, const QString& path,
+        const QVariantMap& options, RuntimeSessionState previousState, int attempt, int maxAttempts,
+        const QString& operationId);
+
+private:
+    void setState(RuntimeSessionState newState);
+    void setDownloadState(DownloadState newState);
+    void handleBackendConnectionStateChanged(bool connected);
+    DownloadState classifyDownloadFailure(const CommError* operationError,
+                                          const QString& errorMessage) const;
+    void emitDownloadDiagnostic(const QString& severity,
+                                const QString& stage,
+                                const QString& message,
+                                const QVariantMap& details = QVariantMap());
+    bool runDownloadPrecheck(const QString& artifactPath,
+                             const QVariantMap& options,
+                             QString* errorMessage);
+    bool shouldAutoDownload() const;
+    void connectOpcServerSignals();
+    void handleOpcRunningStateChanged(bool running);
+    void handleOpcWriteRequest(const QString& pointId, const QVariant& value);
+    void handleParameterReadbackFinished(bool success, const QString& message);
+    void cancelPendingOpcWrite(const QString& message);
+    void syncOpcRuntimePoints();
+    void startOpcServerIfEnabled();
+    void stopOpcServer();
+    bool ensureControllerBackend();
+    ControllerDeviceBackend* controllerBackend() const;
+
+    QPointer<IDeviceBackend> m_backend;
+    ControllerDeviceBackend* m_ownedControllerBackend = nullptr;
+    IOpcServer* m_opcServer = nullptr;
+    SampleDataProvider* m_sampleDataProvider = nullptr;
+    ProjectController* m_projectController = nullptr;
+    BuildController* m_buildController = nullptr;
+    ParameterController* m_parameterController = nullptr;
+
+    RuntimeSessionState m_state = RuntimeSessionState::Idle;
+    DownloadState m_downloadState = DownloadState::Idle;
+    bool m_demoModeActive = false;
+    bool m_pendingRunAfterCompile = false;
+    bool m_pendingRunAfterDownload = false;
+    bool m_skipNextBuildSave = false;
+    bool m_downloadCancelled = false;
+    bool m_backendDownloadInProgress = false;
+    bool m_internalReconnect = false;
+    QString m_artifactPath;
+    QString m_currentDownloadOperationId;
+    bool m_pendingOpcWriteActive = false;
+    QString m_pendingOpcPointId;
+    QString m_pendingOpcParameterName;
+    QString m_pendingOpcOperationId;
+    quint64 m_backendGeneration = 0;
+};
+
+#endif // RUNTIMESESSIONCONTROLLER_H

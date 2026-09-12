@@ -7,13 +7,14 @@ cmake-build-*/
 out/
 bin/
 lib/
-LH/build_current_mingw/
-LH/build_codex_verify_mingw/
+build_current_mingw/
+build_codex_verify_mingw/
 
 # Local OCR and assistant-generated workspace data
-LH/.ocr/
-LH/.claude/
-LH/.claude/settings.local.json
+.ocr/
+.claude/
+.claude/settings.local.json
+.md/
 
 # IDE and editor files
 .vscode/
@@ -60,6 +61,8 @@ venv/
 */venv/
 .venv/
 */.venv/
+third_party/custom_dsp_language/compile/venv/
+logs/
 __pycache__/
 */__pycache__/
 *.py[cod]

@@ -1,0 +1,109 @@
+name: Windows CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build-and-test:
+    name: Windows MSVC Qt 5.15.2
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.9'
+
+      - name: Install Python compiler dependencies and run unit tests
+        shell: bash
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r third_party/custom_dsp_language/compile/requirements.txt
+          pip install pytest click rich pyyaml jsonschema
+          cd third_party/custom_dsp_language/compile
+          PYTHONPATH=src:. pytest tests
+
+      - name: Install Qt 5.15.2
+        uses: jurplel/install-qt-action@v3
+        with:
+          version: '5.15.2'
+          host: 'windows'
+          target: 'desktop'
+          arch: 'win64_msvc2019_64'
+          modules: 'qtcharts'
+
+      - name: Set up MSVC
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+
+      - name: Configure CMake
+        shell: bash
+        run: |
+          cmake -B build_current_mingw -S . \
+            -G "Ninja" \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DBUILD_TESTING=ON \
+            -DLH_ENABLE_TEST_FAILURE_INJECTION=ON \
+            -DLH_ENABLE_QT_DEPLOYMENT=ON
+
+      - name: Build Project
+        shell: bash
+        run: |
+          cmake --build build_current_mingw --config Release
+
+      - name: Run CTest
+        shell: bash
+        run: |
+          cd build_current_mingw
+          ctest --output-on-failure -C Release --timeout 300
+
+      - name: Install and Deploy Runtime
+        shell: bash
+        run: |
+          cmake --install build_current_mingw --prefix "${{ github.workspace }}/install" --config Release
+
+      - name: Verify Installed Layout & Executable Smoke Test
+        shell: bash
+        run: |
+          INSTALL_DIR="${{ github.workspace }}/install"
+          EXE="${INSTALL_DIR}/bin/LH.exe"
+          if [ ! -f "$EXE" ]; then
+            echo "::error::LH.exe not found at $EXE"
+            exit 1
+          fi
+          echo "Found LH.exe: $(ls -lh "$EXE")"
+
+          # Verify Qt runtime and plugins deployed by windeployqt
+          if [ ! -f "${INSTALL_DIR}/bin/Qt5Core.dll" ]; then
+            echo "::error::Qt5Core.dll missing in bin directory"
+            exit 1
+          fi
+          if [ ! -f "${INSTALL_DIR}/bin/platforms/qwindows.dll" ]; then
+            echo "::error::platforms/qwindows.dll missing in bin directory"
+            exit 1
+          fi
+          if [ ! -f "${INSTALL_DIR}/bin/sqldrivers/qsqlite.dll" ]; then
+            echo "::error::sqldrivers/qsqlite.dll missing in bin directory"
+            exit 1
+          fi
+          echo "All required Qt plugins and DLLs verified successfully."
+
+          echo "Running headless smoke test on installed executable..."
+          "${EXE}" --version
+          "${EXE}" --smoke-test
+          echo "Headless smoke test completed successfully."
+
+      - name: Upload Packaged Release Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: LH-windows-msvc-x64
+          path: ${{ github.workspace }}/install
+          retention-days: 14

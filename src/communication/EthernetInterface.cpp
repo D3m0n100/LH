@@ -1,0 +1,606 @@
+// 文件：src/communication/EthernetInterface.cpp
+// 以太网通信接口实现
+
+#include "EthernetInterface.h"
+#include <QThread>
+#include <QHostAddress>
+#include <QNetworkDatagram>
+#include "Common.h"
+
+EthernetInterface::EthernetInterface(QObject *parent)
+    : ICommInterface(parent)
+    , m_tcpSocket(nullptr)
+    , m_tcpServer(nullptr)
+    , m_udpSocket(nullptr)
+    , m_keepAliveTimer(new QTimer(this))
+    , m_bytesReceived(0)
+    , m_bytesSent(0)
+{
+    m_protocolType = CommProtocolType::EthernetTCP;
+
+    connect(m_keepAliveTimer, &QTimer::timeout,
+            this, &EthernetInterface::onKeepAliveTimeout);
+}
+
+EthernetInterface::~EthernetInterface()
+{
+    close();
+}
+
+bool EthernetInterface::open(const QVariantMap& config)
+{
+    const EthernetConfig parsed = EthernetConfig::fromMap(config);
+    return open(parsed);
+}
+
+bool EthernetInterface::open(const EthernetConfig& config)
+{
+    if (!config.isValid()) {
+        reportError(CommErrorCode::InvalidConfig, "以太网配置无效");
+        return false;
+    }
+
+    close(); // 先关闭之前的连接
+
+    m_config = config;
+    m_parameters = config.toVariantMap();
+
+    // 更新协议类型
+    m_protocolType = (config.protocol == Protocol::UDP) ?
+                     CommProtocolType::EthernetUDP : CommProtocolType::EthernetTCP;
+
+    bool success = false;
+
+    if (config.protocol == Protocol::TCP) {
+        if (config.role == Role::Server) {
+            success = openTcpServer();
+        } else {
+            success = openTcpClient();
+        }
+    } else {
+        success = openUdp();
+    }
+
+    if (success && config.keepAliveInterval > 0) {
+        m_keepAliveTimer->start(config.keepAliveInterval);
+    }
+
+    return success;
+}
+
+void EthernetInterface::close()
+{
+    m_keepAliveTimer->stop();
+    const bool wasConnected = isConnected();
+
+    closeTcp();
+    closeUdp();
+
+    {
+        QMutexLocker locker(&m_bufferMutex);
+        m_receiveBuffer.clear();
+        m_udpReceiveQueue.clear();
+        m_udpQueuedBytes = 0;
+        m_suppressedDropBytes = 0;
+        m_lastDropLogTimer.invalidate();
+        m_receiveWaitCondition.wakeAll();
+    }
+
+    if (wasConnected) {
+        emit connectionStateChanged(false);
+    }
+}
+
+bool EthernetInterface::openTcpClient()
+{
+    m_tcpSocket = new QTcpSocket(this);
+
+    connect(m_tcpSocket, &QTcpSocket::readyRead,
+            this, &EthernetInterface::onTcpReadyRead);
+    connect(m_tcpSocket, &QTcpSocket::errorOccurred,
+            this, &EthernetInterface::onTcpError);
+    connect(m_tcpSocket, &QTcpSocket::connected,
+            this, &EthernetInterface::onTcpConnected);
+    connect(m_tcpSocket, &QTcpSocket::disconnected,
+            this, &EthernetInterface::onTcpDisconnected);
+
+    // 设置接收缓冲区大小
+    m_tcpSocket->setReadBufferSize(m_config.receiveBufferSize);
+
+    LOG_INFO(QString("正在连接 TCP 服务器: %1:%2")
+             .arg(m_config.host)
+             .arg(m_config.port));
+
+    m_tcpSocket->connectToHost(m_config.host, m_config.port);
+
+    // 等待连接完成
+    if (!m_tcpSocket->waitForConnected(m_config.connectTimeout)) {
+        reportError(CommErrorCode::ConnectionTimeout,
+                    "TCP 连接超时",
+                    m_tcpSocket->errorString());
+        delete m_tcpSocket;
+        m_tcpSocket = nullptr;
+        return false;
+    }
+
+    if (m_config.keepAliveInterval > 0) {
+        m_tcpSocket->setSocketOption(QAbstractSocket::KeepAliveOption, 1);
+    }
+
+    return true;
+}
+
+bool EthernetInterface::openTcpServer()
+{
+    m_tcpServer = new QTcpServer(this);
+
+    connect(m_tcpServer, &QTcpServer::newConnection,
+            this, &EthernetInterface::onNewConnection);
+
+    QHostAddress address;
+    if (!address.setAddress(m_config.host.trimmed())) {
+        reportError(CommErrorCode::InvalidConfig,
+                    "TCP 服务器监听地址无效",
+                    m_config.host);
+        delete m_tcpServer;
+        m_tcpServer = nullptr;
+        return false;
+    }
+
+    if (!m_tcpServer->listen(address, m_config.port)) {
+        reportError(CommErrorCode::ConnectionFailed,
+                    "TCP 服务器启动失败",
+                    m_tcpServer->errorString());
+        delete m_tcpServer;
+        m_tcpServer = nullptr;
+        return false;
+    }
+
+    LOG_INFO(QString("TCP 服务器已启动，监听端口: %1").arg(m_config.port));
+    return true;
+}
+
+bool EthernetInterface::openUdp()
+{
+    m_udpSocket = new QUdpSocket(this);
+
+    connect(m_udpSocket, &QUdpSocket::readyRead,
+            this, &EthernetInterface::onUdpReadyRead);
+
+    QHostAddress bindAddress;
+    if (!bindAddress.setAddress(m_config.host.trimmed())) {
+        reportError(CommErrorCode::InvalidConfig,
+                    "UDP 绑定地址无效",
+                    m_config.host);
+        delete m_udpSocket;
+        m_udpSocket = nullptr;
+        return false;
+    }
+
+    if (!m_udpSocket->bind(bindAddress, m_config.port)) {
+        reportError(CommErrorCode::ConnectionFailed,
+                    "UDP 绑定失败",
+                    m_udpSocket->errorString());
+        delete m_udpSocket;
+        m_udpSocket = nullptr;
+        return false;
+    }
+
+    LOG_INFO(QString("UDP 套接字已绑定，端口: %1").arg(m_config.port));
+    emit connectionStateChanged(true);
+    return true;
+}
+
+void EthernetInterface::closeTcp()
+{
+    // 关闭客户端连接：先复制列表并清空容器，断开客户端与 this 的所有信号槽，避免重入修改与重复触发 connectionStateChanged(false)
+    const QList<QTcpSocket*> clients = m_clientSockets;
+    m_clientSockets.clear();
+
+    for (QTcpSocket* client : clients) {
+        if (client) {
+            client->disconnect(this);
+            const QString addr = client->peerAddress().toString();
+            const quint16 port = client->peerPort();
+            client->disconnectFromHost();
+            client->deleteLater();
+            emit clientDisconnected(addr, port);
+        }
+    }
+
+    // 关闭服务器
+    if (m_tcpServer) {
+        m_tcpServer->disconnect(this);
+        m_tcpServer->close();
+        delete m_tcpServer;
+        m_tcpServer = nullptr;
+    }
+
+    // 关闭客户端套接字
+    if (m_tcpSocket) {
+        m_tcpSocket->disconnect(this);
+        m_tcpSocket->disconnectFromHost();
+        delete m_tcpSocket;
+        m_tcpSocket = nullptr;
+    }
+}
+
+void EthernetInterface::closeUdp()
+{
+    if (m_udpSocket) {
+        m_udpSocket->disconnect(this);
+        m_udpSocket->close();
+        delete m_udpSocket;
+        m_udpSocket = nullptr;
+    }
+}
+
+int EthernetInterface::send(const QByteArray& data)
+{
+    if (!isConnected()) {
+        reportError(CommErrorCode::SendFailed, "发送失败：未连接");
+        return -1;
+    }
+
+    qint64 written = 0;
+
+    if (m_config.protocol == Protocol::TCP) {
+        if (m_tcpSocket && m_tcpSocket->state() == QAbstractSocket::ConnectedState) {
+            written = m_tcpSocket->write(data);
+        } else if (!m_clientSockets.isEmpty()) {
+            // 服务器模式：广播发送给所有已连接客户端
+            int successClients = 0;
+            qint64 minWritten = -1;
+            for (QTcpSocket* client : m_clientSockets) {
+                if (client && client->state() == QAbstractSocket::ConnectedState) {
+                    const qint64 w = client->write(data);
+                    if (w >= 0) {
+                        ++successClients;
+                        if (minWritten < 0 || w < minWritten) {
+                            minWritten = w;
+                        }
+                    }
+                }
+            }
+            if (successClients == 0) {
+                reportError(CommErrorCode::SendFailed, "发送失败：所有客户端发送均未成功");
+                return -1;
+            }
+            written = (minWritten >= 0) ? minWritten : 0;
+        }
+    } else if (m_udpSocket) {
+        // UDP 发送到配置的目标地址
+        written = m_udpSocket->writeDatagram(data,
+                                              QHostAddress(m_config.host),
+                                              m_config.port);
+    }
+
+    if (written < 0) {
+        reportError(CommErrorCode::SendFailed, "发送数据失败");
+        return -1;
+    }
+
+    m_bytesSent += written;
+    return static_cast<int>(written);
+}
+
+int EthernetInterface::sendTo(const QByteArray& data, const QString& host, quint16 port)
+{
+    if (!m_udpSocket) {
+        reportError(CommErrorCode::SendFailed, "发送失败：UDP 套接字未初始化");
+        return -1;
+    }
+
+    QHostAddress address;
+    if (port == 0 || !address.setAddress(host.trimmed())) {
+        reportError(CommErrorCode::InvalidConfig, "UDP 目标地址无效", host);
+        return -1;
+    }
+
+    qint64 written = m_udpSocket->writeDatagram(data, address, port);
+
+    if (written < 0) {
+        reportError(CommErrorCode::SendFailed,
+                    "UDP 发送失败",
+                    m_udpSocket->errorString());
+        return -1;
+    }
+
+    m_bytesSent += written;
+    return static_cast<int>(written);
+}
+
+QByteArray EthernetInterface::receive(int timeout_ms)
+{
+    QMutexLocker locker(&m_bufferMutex);
+    if (QThread::currentThread() == thread() && timeout_ms > 0
+            && m_receiveBuffer.isEmpty() && m_udpReceiveQueue.isEmpty()) {
+        locker.unlock();
+        QElapsedTimer deadline;
+        deadline.start();
+        do {
+            const int remaining = qMax(0, timeout_ms - static_cast<int>(deadline.elapsed()));
+            if (m_udpSocket) {
+                if (m_udpSocket->hasPendingDatagrams()) onUdpReadyRead();
+                else m_udpSocket->waitForReadyRead(remaining);
+            } else if (m_tcpSocket) {
+                m_tcpSocket->waitForReadyRead(remaining);
+            } else if (m_tcpServer) {
+                // A server can have several client sockets; bound each polling slice.
+                const auto clients = m_clientSockets;
+                if (clients.isEmpty()) m_tcpServer->waitForNewConnection(qMin(10, remaining));
+                for (auto* client : clients) client->waitForReadyRead(qMin(10, qMax(0,
+                    timeout_ms - static_cast<int>(deadline.elapsed()))));
+            } else break;
+            QMutexLocker check(&m_bufferMutex);
+            if (!m_receiveBuffer.isEmpty() || !m_udpReceiveQueue.isEmpty()) break;
+        } while (deadline.elapsed() < timeout_ms
+                 && ((m_tcpServer && m_tcpServer->isListening()) || isConnected()));
+        locker.relock();
+        timeout_ms = 0; // The owner's I/O wait already consumed this call's budget.
+    }
+
+    if (m_config.protocol == EthernetConfig::Protocol::UDP) {
+        if (m_udpReceiveQueue.isEmpty() && timeout_ms > 0) {
+            m_receiveWaitCondition.wait(&m_bufferMutex,
+                                        static_cast<unsigned long>(timeout_ms));
+        }
+
+        if (m_udpReceiveQueue.isEmpty()) {
+            return QByteArray();
+        }
+
+        const QByteArray data = m_udpReceiveQueue.dequeue();
+        m_udpQueuedBytes -= data.size();
+        return data;
+    }
+
+    if (m_receiveBuffer.isEmpty() && timeout_ms > 0) {
+        m_receiveWaitCondition.wait(&m_bufferMutex, static_cast<unsigned long>(timeout_ms));
+    }
+
+    if (m_receiveBuffer.isEmpty()) {
+        return QByteArray();
+    }
+
+    QByteArray data = m_receiveBuffer;
+    m_receiveBuffer.clear();
+    return data;
+}
+
+bool EthernetInterface::isConnected() const
+{
+    if (m_config.protocol == Protocol::TCP) {
+        if (m_tcpSocket) {
+            return m_tcpSocket->state() == QAbstractSocket::ConnectedState;
+        }
+        if (m_tcpServer) {
+            if (!m_tcpServer->isListening()) {
+                return false;
+            }
+            for (const QTcpSocket* client : m_clientSockets) {
+                if (client && client->state() == QAbstractSocket::ConnectedState) {
+                    return true;
+                }
+            }
+            return false;
+        }
+        return false;
+    } else {
+        return m_udpSocket && m_udpSocket->state() == QAbstractSocket::BoundState;
+    }
+}
+
+quint16 EthernetInterface::localPort() const
+{
+    if (m_tcpSocket) {
+        return m_tcpSocket->localPort();
+    }
+    if (m_tcpServer) {
+        return m_tcpServer->serverPort();
+    }
+    if (m_udpSocket) {
+        return m_udpSocket->localPort();
+    }
+    return 0;
+}
+
+QString EthernetInterface::peerAddress() const
+{
+    if (m_tcpSocket) {
+        return m_tcpSocket->peerAddress().toString();
+    }
+    return QString();
+}
+
+quint16 EthernetInterface::peerPort() const
+{
+    if (m_tcpSocket) {
+        return m_tcpSocket->peerPort();
+    }
+    return 0;
+}
+
+void EthernetInterface::onTcpReadyRead()
+{
+    QTcpSocket* socket = qobject_cast<QTcpSocket*>(sender());
+    if (!socket) {
+        socket = m_tcpSocket;
+    }
+
+    if (!socket) {
+        return;
+    }
+
+    QByteArray data = socket->readAll();
+    if (data.isEmpty()) {
+        return;
+    }
+
+    m_bytesReceived += data.size();
+
+    {
+        QMutexLocker locker(&m_bufferMutex);
+
+        const qint64 currentSize = m_receiveBuffer.size();
+        const qint64 incomingSize = data.size();
+        const qint64 totalSize = currentSize + incomingSize;
+
+        if (totalSize > MAX_BUFFER_SIZE) {
+            const qint64 overflow = totalSize - MAX_BUFFER_SIZE;
+            if (incomingSize >= MAX_BUFFER_SIZE) {
+                m_receiveBuffer = data.right(MAX_BUFFER_SIZE);
+            } else {
+                m_receiveBuffer.remove(0, static_cast<int>(overflow));
+                m_receiveBuffer.append(data);
+            }
+
+            if (!m_lastDropLogTimer.isValid() || m_lastDropLogTimer.hasExpired(1000)) {
+                if (m_suppressedDropBytes > 0) {
+                    LOG_WARN(QString("以太网接收缓冲区溢出，丢弃 %1 字节旧数据（此前累计抑制 %2 字节）")
+                             .arg(overflow).arg(m_suppressedDropBytes));
+                } else {
+                    LOG_WARN(QString("以太网接收缓冲区溢出，丢弃 %1 字节旧数据").arg(overflow));
+                }
+                m_lastDropLogTimer.restart();
+                m_suppressedDropBytes = 0;
+            } else {
+                m_suppressedDropBytes += overflow;
+            }
+        } else {
+            m_receiveBuffer.append(data);
+        }
+
+        Q_ASSERT(m_receiveBuffer.size() <= MAX_BUFFER_SIZE);
+        if (m_receiveBuffer.size() > MAX_BUFFER_SIZE) {
+            m_receiveBuffer = m_receiveBuffer.right(MAX_BUFFER_SIZE);
+        }
+
+        m_receiveWaitCondition.wakeAll();
+    }
+
+    emit dataReceived(data);
+}
+
+void EthernetInterface::onTcpError(QAbstractSocket::SocketError socketError)
+{
+    Q_UNUSED(socketError)
+
+    QTcpSocket* socket = qobject_cast<QTcpSocket*>(sender());
+    if (!socket) {
+        socket = m_tcpSocket;
+    }
+
+    CommErrorCode code = CommErrorCode::UnknownError;
+    switch (socketError) {
+        case QAbstractSocket::ConnectionRefusedError:
+            code = CommErrorCode::ConnectionFailed;
+            break;
+        case QAbstractSocket::RemoteHostClosedError:
+            code = CommErrorCode::ConnectionLost;
+            break;
+        case QAbstractSocket::HostNotFoundError:
+            code = CommErrorCode::DeviceNotFound;
+            break;
+        case QAbstractSocket::SocketTimeoutError:
+            code = CommErrorCode::ConnectionTimeout;
+            break;
+        case QAbstractSocket::NetworkError:
+            code = CommErrorCode::ConnectionLost;
+            break;
+        default:
+            break;
+    }
+
+    reportError(code, "TCP 错误", socket ? socket->errorString() : "");
+}
+
+void EthernetInterface::onTcpConnected()
+{
+    LOG_INFO(QString("TCP 已连接: %1:%2")
+             .arg(m_tcpSocket->peerAddress().toString())
+             .arg(m_tcpSocket->peerPort()));
+    emit connectionStateChanged(true);
+}
+
+void EthernetInterface::onTcpDisconnected()
+{
+    LOG_INFO("TCP 连接已断开");
+    emit connectionStateChanged(false);
+}
+
+void EthernetInterface::onUdpReadyRead()
+{
+    while (m_udpSocket && m_udpSocket->hasPendingDatagrams()) {
+        QNetworkDatagram datagram = m_udpSocket->receiveDatagram();
+        QByteArray data = datagram.data();
+
+        m_bytesReceived += data.size();
+
+        {
+            QMutexLocker locker(&m_bufferMutex);
+            if (data.size() > MAX_BUFFER_SIZE) {
+                LOG_WARN("UDP 报文超过接收缓冲区，已丢弃");
+                continue;
+            }
+
+            while (!m_udpReceiveQueue.isEmpty() &&
+                   m_udpQueuedBytes + data.size() > MAX_BUFFER_SIZE) {
+                m_udpQueuedBytes -= m_udpReceiveQueue.dequeue().size();
+            }
+            m_udpReceiveQueue.enqueue(data);
+            m_udpQueuedBytes += data.size();
+            m_receiveWaitCondition.wakeAll();
+        }
+
+        emit dataReceived(data);
+    }
+}
+
+void EthernetInterface::onNewConnection()
+{
+    while (m_tcpServer && m_tcpServer->hasPendingConnections()) {
+        QTcpSocket* clientSocket = m_tcpServer->nextPendingConnection();
+        clientSocket->setReadBufferSize(m_config.receiveBufferSize);
+
+        connect(clientSocket, &QTcpSocket::readyRead,
+                this, &EthernetInterface::onTcpReadyRead);
+        connect(clientSocket, &QTcpSocket::disconnected,
+                this, [this, clientSocket]() {
+            QString addr = clientSocket->peerAddress().toString();
+            quint16 port = clientSocket->peerPort();
+
+            m_clientSockets.removeOne(clientSocket);
+            clientSocket->deleteLater();
+
+            LOG_INFO(QString("客户端断开: %1:%2").arg(addr).arg(port));
+            emit clientDisconnected(addr, port);
+            if (m_clientSockets.isEmpty()) {
+                emit connectionStateChanged(false);
+            }
+        });
+
+        if (m_config.keepAliveInterval > 0) {
+            clientSocket->setSocketOption(QAbstractSocket::KeepAliveOption, 1);
+        }
+
+        m_clientSockets.append(clientSocket);
+
+        QString addr = clientSocket->peerAddress().toString();
+        quint16 port = clientSocket->peerPort();
+
+        LOG_INFO(QString("新客户端连接: %1:%2").arg(addr).arg(port));
+        emit clientConnected(addr, port);
+        if (m_clientSockets.size() == 1) {
+            emit connectionStateChanged(true);
+        }
+    }
+}
+
+void EthernetInterface::onKeepAliveTimeout()
+{
+    // TCP 底层通过 QAbstractSocket::KeepAliveOption 处理 OS 心跳
+    if (!isConnected()) {
+        LOG_WARN("KeepAlive 检测：网络当前未连接");
+    }
+}
