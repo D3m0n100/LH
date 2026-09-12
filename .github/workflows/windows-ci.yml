@@ -28,7 +28,7 @@ jobs:
           pip install -r third_party/custom_dsp_language/compile/requirements.txt
           pip install pytest click rich pyyaml jsonschema
           cd third_party/custom_dsp_language/compile
-          PYTHONPATH=src:. pytest tests
+          python -m pytest tests
 
       - name: Install Qt 5.15.2
         uses: jurplel/install-qt-action@v3
