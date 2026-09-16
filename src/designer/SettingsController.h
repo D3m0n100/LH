@@ -31,6 +31,8 @@
 #include <QObject>
 #include <QString>
 #include <QFont>
+#include <QByteArray>
+#include <QMap>
 
 // 前向声明
 class QTextEdit;
@@ -95,6 +97,28 @@ public:
     /// 应用所有设置到指定控件
     void applyAllSettings(QPlainTextEdit* editor, QTextEdit* outputViewer);
 
+    // ===== 布局与窗口状态持久化 =====
+    static const int CURRENT_LAYOUT_VERSION = 1;
+
+    int layoutVersion() const { return m_layoutVersion; }
+    void setLayoutVersion(int version) { m_layoutVersion = version; }
+
+    QByteArray windowGeometry() const { return m_windowGeometry; }
+    void setWindowGeometry(const QByteArray& geometry);
+
+    QString activeWorkspaceId() const { return m_activeWorkspaceId; }
+    void setActiveWorkspaceId(const QString& id);
+
+    QByteArray workspaceLayoutState(const QString& workspaceId) const;
+    void setWorkspaceLayoutState(const QString& workspaceId, const QByteArray& state);
+
+    void clearWorkspaceLayouts();
+
+    // 隔离存储配置（支持单元测试）
+    void setSettingsStorage(const QString& organization, const QString& application);
+    QString organization() const { return m_organization; }
+    QString application() const { return m_application; }
+
 public slots:
     /// 打开设置对话框
     void openSettingsDialog(QWidget* parent);
@@ -119,10 +143,18 @@ signals:
 
 private:
     // ===== 设置项 =====
+    QString m_organization;
+    QString m_application;
     QString m_defaultProjectDir;    ///< 默认项目目录
     bool m_autoScrollLog = true;    ///< 日志自动滚动
     int m_fontSizeIndex = 1;        ///< 字体大小索引 (0=小, 1=中, 2=大)
     
+    // ===== 布局状态项 =====
+    int m_layoutVersion = CURRENT_LAYOUT_VERSION;
+    QByteArray m_windowGeometry;
+    QString m_activeWorkspaceId;
+    QMap<QString, QByteArray> m_workspaceStates;
+
     // ===== 常量 =====
     static const int FONT_SIZE_SMALL = 9;
     static const int FONT_SIZE_MEDIUM = 11;

@@ -17,17 +17,21 @@
 #include "OpcServerSettingsDialog.h"
 #include "MonitorWidget.h"
 #include "DownloadDockWidget.h"
+#include "DeviceWorkspaceWidget.h"
 #include "ProjectExplorerWidget.h"
 #include "ProgramBlocksWidget.h"
 #include "MonitorManager.h"
 #include "../communication/IDeviceBackend.h"
 #include "../communication/IOpcServer.h"
+#include "../communication/DownloadProfile.h"
+#include "ProfileResolution.h"
 #include "SampleDataProvider.h"
 #include "ui/ThemeManager.h"
 #include "ui/GlobalStatusBar.h"
 #include "ui/InspectorPanel.h"
 #include "ui/StatusTextHelper.h"
 #include "ui/ProblemsPanel.h"
+#include "ParameterTuningPanel.h"
 #include "ParameterTuningWindow.h"
 #include "ParameterController.h"
 #include "RuntimeSessionController.h"
@@ -49,6 +53,7 @@
 #include <QLabel>
 #include <QProgressBar>
 #include <QTabWidget>
+#include <QTabBar>
 #include <QVBoxLayout>
 #include <QFileDialog>
 #include <QMessageBox>
@@ -97,8 +102,6 @@ MainWindow::MainWindow(QWidget* parent)
     , m_connectionStatusLabel(nullptr)
     , m_editorPositionLabel(nullptr)
     , m_progressBar(nullptr)
-    , m_fileToolBar(nullptr)
-    , m_runToolBar(nullptr)
     , m_recentProjectsMenu(nullptr)
     , m_actUndo(nullptr)
     , m_actRedo(nullptr)
@@ -143,11 +146,13 @@ MainWindow::MainWindow(QWidget* parent)
     createControllers();
 
     // 创建 UI
+    createActions();
     createMenus();
     createToolBars();
     createStatusBar();
     createDockWidgets();
     createInspectorDock();
+    createTuningDock();
     createParameterTuningWindow();
 
     // 建立信号连接
@@ -183,12 +188,23 @@ MainWindow::MainWindow(QWidget* parent)
         m_globalStatusBar->setOpcState(false);
     }
     refreshInspectorPanel();
+    restoreWindowGeometryAndWorkspaces();
+    // Keep the optional tuning dock out of the horizontal minimum-size
+    // calculation after restoring a previous layout. It is moved to the right
+    // on demand for wide windows by onOpenParameterTuningWindow().
+    if (m_tuningDock && m_tuningDock->isHidden()) {
+        addDockWidget(Qt::BottomDockWidgetArea, m_tuningDock);
+        m_tuningDock->hide();
+    }
 
     LOG_INFO("MainWindow 初始化完成");
 }
 
 MainWindow::~MainWindow()
 {
+    if (qApp) {
+        qApp->disconnect(this);
+    }
     if (m_mdiArea && m_editorSubWindow) {
         m_editorSubWindow->disconnect(this);
         m_mdiArea->removeSubWindow(m_dslEditor);
@@ -199,6 +215,7 @@ MainWindow::~MainWindow()
         m_dslEditor->setParent(this);
     }
     m_parameterTuningWindow = nullptr; // parent 会在 Qt 对象树中删除它
+    saveWindowGeometryAndWorkspaces();
     m_settingsController->saveSettings();
     m_projectController->saveRecentProjects();
 
@@ -233,6 +250,7 @@ void MainWindow::closeEvent(QCloseEvent* event)
     if (m_sessionController) {
         m_sessionController->requestStop();
     }
+    saveWindowGeometryAndWorkspaces();
     m_settingsController->saveSettings();
     m_projectController->saveRecentProjects();
     event->accept();
@@ -241,6 +259,34 @@ void MainWindow::closeEvent(QCloseEvent* event)
 bool MainWindow::eventFilter(QObject* watched, QEvent* event)
 {
     auto* sub = qobject_cast<QMdiSubWindow*>(watched);
+    if (sub && sub == m_editorSubWindow) {
+        if (event->type() == QEvent::Close) {
+            if (m_actToggleDslEditor) {
+                m_actToggleDslEditor->blockSignals(true);
+                m_actToggleDslEditor->setChecked(false);
+                m_actToggleDslEditor->blockSignals(false);
+            }
+            if (m_actOpenDslEditorToolBar) {
+                m_actOpenDslEditorToolBar->blockSignals(true);
+                m_actOpenDslEditorToolBar->setChecked(false);
+                m_actOpenDslEditorToolBar->blockSignals(false);
+            }
+        } else if (event->type() == QEvent::Show) {
+            if (m_dslEditor && m_dslEditor->isHidden()) {
+                m_dslEditor->show();
+            }
+            if (m_actToggleDslEditor) {
+                m_actToggleDslEditor->blockSignals(true);
+                m_actToggleDslEditor->setChecked(true);
+                m_actToggleDslEditor->blockSignals(false);
+            }
+            if (m_actOpenDslEditorToolBar) {
+                m_actOpenDslEditorToolBar->blockSignals(true);
+                m_actOpenDslEditorToolBar->setChecked(true);
+                m_actOpenDslEditorToolBar->blockSignals(false);
+            }
+        }
+    }
     if (sub && event->type() == QEvent::Close && sub != m_editorSubWindow
             && sub->property("modified").toBool()) {
         const auto choice = QMessageBox::warning(this, QStringLiteral("未保存修改"),
@@ -460,15 +506,27 @@ void MainWindow::connectControllerSignals()
                 || state == RuntimeSessionState::Monitoring
                 || state == RuntimeSessionState::Downloading
                 || downloadActive;
+        const bool paused = m_sessionController ? m_sessionController->isPaused() : false;
         if (m_actRunProject) {
             m_actRunProject->setEnabled(!sessionBusy);
         }
         if (m_actStopProject) {
             m_actStopProject->setEnabled(sessionBusy
+                                         || paused
                                          || state == RuntimeSessionState::Connected
                                          || state == RuntimeSessionState::Fault);
         }
+        if (m_actPauseController) {
+            m_actPauseController->setEnabled(m_projectRunning && !paused);
+        }
+        if (m_actResumeController) {
+            m_actResumeController->setEnabled(m_projectRunning && paused);
+        }
+        if (m_actStepController) {
+            m_actStepController->setEnabled(m_projectRunning && paused);
+        }
         updateStatusBar(statusText);
+        updateDeviceWorkspaceInfo();
         if (m_monitorWidget) {
             const bool monitoring = state == RuntimeSessionState::Monitoring
                     && Monitor::MonitorManager::instance().isMonitoring();
@@ -478,6 +536,10 @@ void MainWindow::connectControllerSignals()
 
     connect(m_sessionController, &RuntimeSessionController::stateChanged,
             this, [refreshRuntimeStatus](RuntimeSessionState, RuntimeSessionState) {
+                refreshRuntimeStatus();
+            });
+    connect(m_sessionController, &RuntimeSessionController::pausedChanged,
+            this, [refreshRuntimeStatus](bool) {
                 refreshRuntimeStatus();
             });
     connect(m_sessionController, &RuntimeSessionController::runtimeError,
@@ -546,6 +608,8 @@ void MainWindow::connectControllerSignals()
     connect(m_projectController, &ProjectController::validationFailed,
             this, &MainWindow::onValidationFailed);
 
+    refreshRuntimeStatus();
+
     // ===== BuildController 信号连接 =====
     connect(m_buildController, &BuildController::compileStarted,
             this, &MainWindow::onCompileStarted);
@@ -579,7 +643,9 @@ void MainWindow::connectControllerSignals()
 
 void MainWindow::updateStatusBar(const QString& message)
 {
-    m_statusLabel->setText(message);
+    if (m_statusLabel) {
+        m_statusLabel->setText(message);
+    }
     if (m_globalStatusBar) {
         m_globalStatusBar->setBuildState(message);
     }
@@ -588,18 +654,182 @@ void MainWindow::updateStatusBar(const QString& message)
 
 void MainWindow::updateConnectionStatus(bool connected)
 {
-    if (connected) {
-        m_connectionStatusLabel->setText("已连接");
-    } else {
-        m_connectionStatusLabel->setText("未连接");
+    if (m_connectionStatusLabel) {
+        if (connected) {
+            m_connectionStatusLabel->setText("已连接");
+        } else {
+            m_connectionStatusLabel->setText("未连接");
+        }
+        m_connectionStatusLabel->setProperty("connected", connected);
+        m_connectionStatusLabel->style()->unpolish(m_connectionStatusLabel);
+        m_connectionStatusLabel->style()->polish(m_connectionStatusLabel);
     }
-    m_connectionStatusLabel->setProperty("connected", connected);
-    m_connectionStatusLabel->style()->unpolish(m_connectionStatusLabel);
-    m_connectionStatusLabel->style()->polish(m_connectionStatusLabel);
     if (m_globalStatusBar) {
         m_globalStatusBar->setConnectionState(connected);
     }
+    updateDeviceWorkspaceInfo();
     refreshInspectorPanel();
+}
+
+void MainWindow::updateDeviceWorkspaceInfo()
+{
+    if (!m_deviceWorkspaceWidget) {
+        return;
+    }
+
+    const bool hasProject = m_projectController && m_projectController->hasOpenProject();
+    QString targetName = QStringLiteral("未配置目标");
+    QString configSource = QStringLiteral("未打开工程");
+    QString address = QStringLiteral("未连接 (离线)");
+    QString expertTarget = QStringLiteral("未配置");
+    QString downloadProfileStatus = QStringLiteral("未配置下载目标");
+    QString downloadTooltip;
+
+    if (hasProject) {
+        const ProjectRuntimeConfig config = m_projectController->runtimeConfig();
+        if (!config.target.model.isEmpty()) {
+            targetName = config.target.model;
+            configSource = config.projectName.isEmpty() ? QStringLiteral("默认配置") : QStringLiteral("工程配置: ") + config.projectName;
+        } else if (!config.target.family.isEmpty()) {
+            targetName = config.target.family;
+            configSource = config.projectName.isEmpty() ? QStringLiteral("默认配置") : QStringLiteral("工程配置: ") + config.projectName;
+        } else {
+            targetName = QStringLiteral("未配置目标型号");
+            configSource = config.projectName.isEmpty() ? QStringLiteral("默认配置") : QStringLiteral("工程配置: ") + config.projectName;
+        }
+
+        if (!config.commParameters.isEmpty()) {
+            QStringList parts;
+            if (config.commParameters.contains(QStringLiteral("port"))) {
+                const QString p = config.commParameters.value(QStringLiteral("port")).toString().trimmed();
+                if (!p.isEmpty()) {
+                    parts << QStringLiteral("串口: %1").arg(p);
+                }
+            }
+            if (config.commParameters.contains(QStringLiteral("baudRate"))) {
+                parts << QStringLiteral("波特率: %1").arg(config.commParameters.value(QStringLiteral("baudRate")).toString());
+            }
+            if (config.commParameters.contains(QStringLiteral("ip"))) {
+                const QString ip = config.commParameters.value(QStringLiteral("ip")).toString().trimmed();
+                if (!ip.isEmpty()) {
+                    parts << QStringLiteral("IP: %1").arg(ip);
+                }
+            }
+            if (!parts.isEmpty()) {
+                address = parts.join(QStringLiteral(" | "));
+            } else {
+                address = config.protocol.isEmpty() ? QStringLiteral("未配置通信参数") : config.protocol;
+            }
+        } else if (!config.protocol.isEmpty()) {
+            address = config.protocol;
+        } else if (m_sessionController && m_sessionController->isDemoMode()) {
+            address = QStringLiteral("演示虚拟通道");
+        } else {
+            address = QStringLiteral("未配置通信参数");
+        }
+
+        // 解析并校验下载 Profile
+        const QVariantMap resolvedProfile = resolveDownloadProfileOptions(
+                QVariantMap(), config, m_projectController->currentProjectPath());
+        const QString configuredProfilePath = resolvedProfile.value(
+                QStringLiteral("downloadProfilePath")).toString().trimmed();
+
+        if (!configuredProfilePath.isEmpty()) {
+            const QString projectPath = m_projectController->currentProjectPath();
+            const QString projectDir = QFileInfo(projectPath).isDir() ? projectPath : QFileInfo(projectPath).absolutePath();
+            QFileInfo fi(configuredProfilePath);
+            QString absPath = configuredProfilePath;
+            if (fi.isRelative() && !projectDir.isEmpty()) {
+                absPath = QDir(projectDir).absoluteFilePath(configuredProfilePath);
+                fi.setFile(absPath);
+            }
+            if (!fi.exists()) {
+                downloadProfileStatus = QStringLiteral("无效Profile: 文件不存在");
+                downloadTooltip = QStringLiteral("下载Profile路径不存在: %1").arg(absPath);
+            } else {
+                DownloadProfile profile;
+                QString err;
+                if (!DownloadProfile::fromJsonFile(absPath, profile, &err)) {
+                    downloadProfileStatus = QStringLiteral("无效Profile: 解析失败");
+                    downloadTooltip = QStringLiteral("下载Profile解析失败: %1").arg(err);
+                } else {
+                    int commStationId = -1;
+                    if (config.commParameters.contains(QStringLiteral("stationId"))) {
+                        commStationId = config.commParameters.value(QStringLiteral("stationId")).toInt();
+                    } else if (config.commParameters.contains(QStringLiteral("slaveId"))) {
+                        commStationId = config.commParameters.value(QStringLiteral("slaveId")).toInt();
+                    }
+                    if (commStationId > 0 && profile.slaveId != commStationId) {
+                        downloadProfileStatus = QStringLiteral("Profile与通信目标不一致: 站号(%1 vs %2)")
+                                                    .arg(profile.slaveId).arg(commStationId);
+                        downloadTooltip = QStringLiteral("下载Profile站号(%1)与项目通信参数站号(%2)不匹配").arg(profile.slaveId).arg(commStationId);
+                    } else {
+                        const QString displayName = profile.name.isEmpty() ? fi.fileName() : profile.name;
+                        downloadProfileStatus = QStringLiteral("有效Profile: %1 (站号: %2, 步骤: %3)")
+                                                    .arg(displayName)
+                                                    .arg(profile.slaveId)
+                                                    .arg(profile.steps.size());
+                        downloadTooltip = QStringLiteral("Profile路径: %1").arg(absPath);
+                    }
+                }
+            }
+        } else {
+            downloadProfileStatus = QStringLiteral("未配置下载Profile（仅离线编译）");
+            downloadTooltip = QStringLiteral("未配置下载Profile；当前项目仅支持离线编译，配置 Profile 后才能生成并发布下载包");
+        }
+    } else {
+        downloadProfileStatus = QStringLiteral("未打开工程");
+    }
+
+    auto* dlWidget = m_deviceWorkspaceWidget->downloadWidget();
+    if (dlWidget) {
+        const QString dlPort = dlWidget->selectedPort();
+        const int stationId = dlWidget->targetStationId();
+        if (m_deviceWorkspaceWidget->isExpertDiagnosticVisible()) {
+            if (dlPort.isEmpty()) {
+                expertTarget = QStringLiteral("专家手动目标: 未选择端口 (ID: %1)").arg(stationId);
+            } else {
+                expertTarget = QStringLiteral("专家手动目标: %1 (ID: %2)").arg(dlPort).arg(stationId);
+            }
+        } else {
+            if (dlPort.isEmpty()) {
+                expertTarget = QStringLiteral("未展开 / 未配置端口");
+            } else {
+                expertTarget = QStringLiteral("专家预设: %1 (ID: %2)").arg(dlPort).arg(stationId);
+            }
+        }
+    }
+
+    m_deviceWorkspaceWidget->setTargetInfo(targetName, configSource, address, expertTarget, downloadProfileStatus);
+    if (m_deviceWorkspaceWidget->downloadProfileValue()) {
+        m_deviceWorkspaceWidget->downloadProfileValue()->setToolTip(downloadTooltip);
+    }
+
+    bool connected = false;
+    QString connectionText = QStringLiteral("离线");
+    bool running = false;
+    bool paused = false;
+
+    if (m_sessionController) {
+        const RuntimeSessionState state = m_sessionController->state();
+        connected = (state == RuntimeSessionState::Connected
+                     || state == RuntimeSessionState::Running
+                     || state == RuntimeSessionState::Monitoring
+                     || (m_sessionController->isDemoMode() && state != RuntimeSessionState::Idle));
+        if (connected) {
+            connectionText = m_sessionController->isDemoMode() ? QStringLiteral("演示连接") : QStringLiteral("已连接");
+        } else if (state == RuntimeSessionState::Connecting) {
+            connectionText = QStringLiteral("连接中");
+        } else if (state == RuntimeSessionState::Fault) {
+            connectionText = QStringLiteral("通信故障");
+        }
+
+        running = (state == RuntimeSessionState::Running || state == RuntimeSessionState::Monitoring);
+        paused = m_sessionController->isPaused();
+    }
+
+    m_deviceWorkspaceWidget->setConnectionStatus(connected, connectionText);
+    m_deviceWorkspaceWidget->setControllerRunning(running, paused);
 }
 
 void MainWindow::updateWindowTitle()
@@ -619,6 +849,7 @@ void MainWindow::updateWindowTitle()
     if (m_globalStatusBar) {
         m_globalStatusBar->setProjectName(config.projectName);
     }
+    updateDeviceWorkspaceInfo();
     refreshInspectorPanel();
 }
 
@@ -848,23 +1079,14 @@ void MainWindow::onFocusChanged(QWidget* old, QWidget* now)
 
 void MainWindow::onToggleDownloadDock(bool checked)
 {
-    if (m_workspaceTabs && m_workspaceBuildPage) {
-        if (checked) {
-            m_workspaceTabs->setCurrentWidget(m_workspaceBuildPage);
-        } else if (m_workspaceDslPage) {
-            m_workspaceTabs->setCurrentWidget(m_workspaceDslPage);
-        }
-    } else if (m_downloadDock) {
-        m_downloadDock->setVisible(checked);
-    }
+    switchToWorkspace(checked ? WorkspaceId::Device : WorkspaceId::Programming);
 }
 
 void MainWindow::onOpenDownloadWindow()
 {
-    if (m_workspaceTabs && m_workspaceBuildPage) {
-        m_workspaceTabs->setCurrentWidget(m_workspaceBuildPage);
-    } else if (m_actToggleDownloadDock) {
-        m_actToggleDownloadDock->setChecked(true);
+    switchToWorkspace(WorkspaceId::Device);
+    if (m_deviceWorkspaceWidget) {
+        m_deviceWorkspaceWidget->setExpertDiagnosticVisible(true);
     }
 }
 
@@ -882,13 +1104,31 @@ void MainWindow::onToggleExplorerDock(bool checked)
     }
 }
 
+void MainWindow::onToggleInspectorDock(bool checked)
+{
+    if (m_inspectorDock) {
+        m_inspectorDock->setVisible(checked);
+    }
+}
+
 void MainWindow::onToggleDslEditor(bool checked)
 {
     if (checked) {
         if (!m_editorSubWindow) {
             createDslEditorSubWindow();
         } else {
+            if (m_dslEditor) {
+                m_dslEditor->show();
+            }
             m_editorSubWindow->show();
+            m_editorSubWindow->raise();
+            m_editorSubWindow->activateWindow();
+            if (m_mdiArea) {
+                m_mdiArea->setActiveSubWindow(m_editorSubWindow);
+            }
+            if (m_dslEditor) {
+                m_dslEditor->setFocus();
+            }
         }
     } else {
         if (m_editorSubWindow) {
@@ -911,26 +1151,7 @@ void MainWindow::onToggleDslEditor(bool checked)
 
 void MainWindow::onResetLayout()
 {
-    if (m_explorerDock) {
-        m_explorerDock->setVisible(true);
-    }
-    if (m_logDock) {
-        m_logDock->setVisible(true);
-    }
-    if (m_workspaceTabs && m_workspaceDslPage) {
-        m_workspaceTabs->setCurrentWidget(m_workspaceDslPage);
-    } else if (m_monitorDock) {
-        m_monitorDock->setVisible(false);
-    }
-
-    if (m_dslEditor) {
-        m_dslEditor->setFunctionListVisible(false);
-    }
-
-    if (m_actToggleOutputDock) m_actToggleOutputDock->setChecked(true);
-    if (m_actToggleMonitorDock) m_actToggleMonitorDock->setChecked(false);
-    if (m_actToggleExplorerDock) m_actToggleExplorerDock->setChecked(true);
-    if (m_actToggleFunctionList) m_actToggleFunctionList->setChecked(false);
+    onResetAllWorkspaceLayouts();
 }
 
 void MainWindow::onDslEditorSubWindowDestroyed()
@@ -938,6 +1159,7 @@ void MainWindow::onDslEditorSubWindowDestroyed()
     m_editorSubWindow = nullptr;
     m_dslEditor = nullptr;
     m_projectController->setDslEditor(nullptr);
+    bindFunctionLibraryDataSource();
 
     if (m_actToggleDslEditor) {
         m_actToggleDslEditor->blockSignals(true);
@@ -1175,15 +1397,64 @@ void MainWindow::onTestControllerConnection()
 
 void MainWindow::onOpenParameterTuningWindow()
 {
-    if (!m_parameterTuningWindow) {
-        createParameterTuningWindow();
+    if (!m_parameterTuningPanel) {
+        createTuningDock();
     }
-    refreshInspectorPanel(m_parameterTuningWindow);
-    if (m_parameterTuningWindow) {
+    refreshInspectorPanel(m_parameterTuningPanel);
+    if (m_parameterTuningPanel && m_parameterTuningPanel->isStandaloneMode()) {
+        if (!m_parameterTuningWindow) {
+            createParameterTuningWindow();
+            m_parameterTuningWindow->setTuningPanel(m_parameterTuningPanel);
+        }
         m_parameterTuningWindow->show();
         m_parameterTuningWindow->raise();
         m_parameterTuningWindow->activateWindow();
+    } else if (m_tuningDock) {
+        // A side-by-side tuning dock can make a narrow logical viewport
+        // impossible. Move it below the workspace so both panels remain
+        // reachable without clamping the main window width.
+        if (width() < 1200 && dockWidgetArea(m_tuningDock) != Qt::BottomDockWidgetArea) {
+            addDockWidget(Qt::BottomDockWidgetArea, m_tuningDock);
+        } else if (width() >= 1200 && dockWidgetArea(m_tuningDock) != Qt::RightDockWidgetArea) {
+            addDockWidget(Qt::RightDockWidgetArea, m_tuningDock);
+            resizeDocks({m_tuningDock}, {340}, Qt::Horizontal);
+        }
+        m_tuningDock->show();
+        m_tuningDock->raise();
+        if (dockWidgetArea(m_tuningDock) == Qt::BottomDockWidgetArea) {
+            adjustBottomTuningDockHeight();
+        }
     }
+}
+
+void MainWindow::adjustBottomTuningDockHeight()
+{
+    if (!m_tuningDock || dockWidgetArea(m_tuningDock) != Qt::BottomDockWidgetArea) {
+        return;
+    }
+    // Calculate total vertical height available between top bars and bottom status bar
+    int topBars = 0;
+    if (menuBar() && menuBar()->isVisible()) topBars += menuBar()->height();
+    if (m_mainToolBar && m_mainToolBar->isVisible()) topBars += m_mainToolBar->height();
+    int bottomBars = 0;
+    if (statusBar() && statusBar()->isVisible()) bottomBars += statusBar()->height();
+
+    int availableHeight = height() - topBars - bottomBars;
+    if (availableHeight <= 100) {
+        availableHeight = height() - 85;
+    }
+
+    int monitorMinHeight = 260;
+    if (m_monitorWidget) {
+        int tabHeaderHeight = 36;
+        if (m_workspaceTabs && m_workspaceTabs->tabBar()) {
+            tabHeaderHeight = qMax(30, m_workspaceTabs->tabBar()->sizeHint().height());
+        }
+        monitorMinHeight = m_monitorWidget->minimumReadableHeight() + tabHeaderHeight;
+    }
+
+    const int targetDockHeight = qBound(80, availableHeight - monitorMinHeight, 280);
+    resizeDocks({m_tuningDock}, {targetDockHeight}, Qt::Vertical);
 }
 
 // ================= 其他槽函数 =================
@@ -1365,8 +1636,10 @@ void MainWindow::onAbout()
 
 void MainWindow::onEditorCursorPositionChanged(int line, int column, int totalLines)
 {
-    m_editorPositionLabel->setText(QString("行 %1, 列 %2 / 共 %3 行")
-                                   .arg(line).arg(column).arg(totalLines));
+    if (m_editorPositionLabel) {
+        m_editorPositionLabel->setText(QString("行 %1, 列 %2 / 共 %3 行")
+                                       .arg(line).arg(column).arg(totalLines));
+    }
 }
 
 void MainWindow::onEditorModified(bool modified)
@@ -1428,6 +1701,7 @@ void MainWindow::onProjectOpened(const ProjectRuntimeConfig& config)
         m_projectExplorerWidget->revealPath(m_projectController->currentScriptFile());
     }
     refreshInspectorPanel();
+    updateDeviceWorkspaceInfo();
 }
 
 void MainWindow::onProjectSaved()
@@ -1645,6 +1919,21 @@ void MainWindow::onCompileFailed(BuildType type, const QString& errorMessage)
         m_globalStatusBar->setBuildState(QStringLiteral("失败"));
     }
     addProblem("error", "构建", errorMessage.isEmpty() ? "编译失败" : errorMessage);
+
+    // U04: 编译失败自动展开问题并定位首个错误；若用户主动关闭后不会被同一事件重复弹开
+    if (m_bottomPanels && m_problemsPanel) {
+        m_bottomPanels->setCurrentWidget(m_problemsPanel);
+    }
+    if (m_logDock) {
+        m_logDock->setVisible(true);
+        if (m_actToggleOutputDock) {
+            m_actToggleOutputDock->setChecked(true);
+        }
+    }
+    if (m_problemsPanel) {
+        m_problemsPanel->selectFirstError();
+    }
+
     refreshInspectorPanel();
 }
 

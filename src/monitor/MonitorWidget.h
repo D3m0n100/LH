@@ -25,6 +25,9 @@ class QPushButton;
 class QLabel;
 class QComboBox;
 class QSpinBox;
+class QLineEdit;
+class QCheckBox;
+class QToolButton;
 QT_END_NAMESPACE
 
 class MonitorChartView;
@@ -87,6 +90,21 @@ public:
     void syncMonitoringState(bool monitoring);
     bool isMonitoring() const { return m_isMonitoring; }
 
+    // ===== 告警信息 =====
+    int alarmCount() const;
+    void showAlarmTab();
+
+    // ===== 详情折叠 =====
+    bool isDetailsPanelVisible() const;
+    void setDetailsPanelVisible(bool visible);
+    QLineEdit* channelSearchEdit() const { return m_channelSearchEdit; }
+    QCheckBox* onlySelectedCheckBox() const { return m_onlySelectedCheckBox; }
+    QPushButton* toggleDetailsButton() const { return m_toggleDetailsButton; }
+    QTabWidget* rightTabWidget() const { return m_rightTabWidget; }
+
+    // ===== 紧凑与自适应排版 (R8-01) =====
+    int minimumReadableHeight() const;
+
     // ===== 配置 =====
     void setTimeWindow(qint64 windowMs);
     qint64 timeWindow() const;
@@ -125,6 +143,8 @@ signals:
     void monitoringStarted();
     void monitoringStopped();
     void visibleChannelsChanged(const QStringList& channelIds);
+    void alarmCountChanged(int count);
+    void requestOpenParameterTuning();
 
 private slots:
     void onStartStopClicked();
@@ -133,6 +153,9 @@ private slots:
     void onChannelItemDoubleClicked(QListWidgetItem* item);
     void onSelectAllClicked();
     void onDeselectAllClicked();
+    void onFilterChannelList();
+    void onToggleDetailsClicked(bool checked);
+    void updateDetailsButtonText();
     void onSampleRecorded(const QString& channelName, double value,
                           const QString& unit, const QDateTime& timestamp);
     void onThresholdExceeded(const QString& channelName, double value, double thresholdValue);
@@ -170,6 +193,8 @@ private:
     // 左侧通道面板
     QWidget* m_channelPanel;
     QVBoxLayout* m_channelPanelLayout;
+    QLineEdit* m_channelSearchEdit;
+    QCheckBox* m_onlySelectedCheckBox;
     QListWidget* m_channelListWidget;
     QPushButton* m_selectAllButton;
     QPushButton* m_deselectAllButton;
@@ -195,6 +220,10 @@ private:
     QHBoxLayout* m_controlBarLayout;
     QPushButton* m_startStopButton;
     QPushButton* m_clearButton;
+    QPushButton* m_tuneButton;
+    QToolButton* m_exportButton;
+    QToolButton* m_displaySettingsButton;
+    QPushButton* m_toggleDetailsButton;
     QComboBox* m_timeWindowCombo;
     QSpinBox* m_fpsSpinBox;
     QLabel* m_statsLabel;

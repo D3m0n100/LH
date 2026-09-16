@@ -10,6 +10,7 @@
 #include "MonitorWidget.h"
 #include "ParameterController.h"
 #include "PidParameterUtils.h"
+#include "ParameterTuningPanel.h"
 #include "ParameterTuningWindow.h"
 #include "ProjectController.h"
 #include "RuntimeSessionController.h"
@@ -17,7 +18,11 @@
 #include "ui/InspectorPanel.h"
 #include "ui/ProblemsPanel.h"
 #include "ui/StatusTextHelper.h"
+#include "DslCompletionEngine.h"
 
+#include <QDateTime>
+#include <QDir>
+#include <QFileInfo>
 #include <QMap>
 #include <QStringList>
 #include <cmath>
@@ -167,7 +172,12 @@ void MainWindow::refreshInspectorPanel()
 
     m_refreshingInspector = true;
     refreshInspectorPanel(m_inspectorPanel);
-    refreshInspectorPanel(m_parameterTuningWindow);
+    if (m_parameterTuningPanel) {
+        refreshInspectorPanel(m_parameterTuningPanel);
+    }
+    if (m_parameterTuningWindow) {
+        refreshInspectorPanel(m_parameterTuningWindow);
+    }
     m_refreshingInspector = false;
 }
 
@@ -246,6 +256,41 @@ void MainWindow::refreshInspectorPanel(InspectorPanel* panel)
     }
 }
 
+void MainWindow::refreshInspectorPanel(ParameterTuningPanel* panel)
+{
+    if (!panel || !m_projectController) {
+        return;
+    }
+
+    const auto& cfg = m_projectController->runtimeConfig();
+    const QList<ParameterDefinition> pidParameters = filterPidParameters(cfg.parameters);
+    panel->setPidParameterDetails(pidParameters);
+    QStringList readbackReady;
+    QMap<QString, double> deviationMap;
+    for (const auto& p : pidParameters) {
+        const QString channelName = QStringLiteral("param::%1").arg(p.name);
+        const auto samples = Monitor::MonitorManager::instance().history(channelName, 1);
+        const bool hasReadback = !samples.isEmpty();
+        if (hasReadback && !p.currentValue.isEmpty()) {
+            readbackReady.append(p.name);
+            bool okCurrent = false;
+            const double currentValue = p.currentValue.toDouble(&okCurrent);
+            const double sampleValue = samples.last().value;
+            if (okCurrent && std::isfinite(sampleValue)) {
+                deviationMap.insert(p.name, sampleValue - currentValue);
+                continue;
+            }
+        }
+    }
+    panel->setParameterReadbackReady(readbackReady);
+    panel->setParameterDeviationMap(deviationMap);
+
+    QMap<QString, ParameterStateInfo> stateMap;
+    for (const auto& si : m_parameterController->parameterStates())
+        stateMap.insert(si.name, si);
+    panel->setParameterStateMap(stateMap);
+}
+
 void MainWindow::refreshInspectorPanel(ParameterTuningWindow* window)
 {
     if (!window || !m_projectController) {
@@ -286,4 +331,63 @@ void MainWindow::addProblem(const QString& severity, const QString& source, cons
     if (m_problemsPanel) {
         m_problemsPanel->addProblem(severity, source, message);
     }
+}
+
+void MainWindow::onFileSelectedInExplorer(const QString& filePath)
+{
+    if (!m_inspectorPanel) {
+        return;
+    }
+
+    QFileInfo info(filePath);
+    if (filePath.trimmed().isEmpty()) {
+        m_inspectorPanel->clearSelection();
+        return;
+    }
+
+    QMap<QString, QString> props;
+    props.insert(QStringLiteral("完整路径"), QDir::toNativeSeparators(info.absoluteFilePath()));
+    props.insert(QStringLiteral("文件类型"), info.suffix().isEmpty() ? QStringLiteral("文件") : QStringLiteral("%1 格式").arg(info.suffix().toUpper()));
+    if (info.exists()) {
+        props.insert(QStringLiteral("大小"), QStringLiteral("%1 字节").arg(info.size()));
+        props.insert(QStringLiteral("修改时间"), info.lastModified().toString(QStringLiteral("yyyy-MM-dd HH:mm:ss")));
+        props.insert(QStringLiteral("可读/可写"), QStringLiteral("%1 / %2")
+                     .arg(info.isReadable() ? QStringLiteral("是") : QStringLiteral("否"))
+                     .arg(info.isWritable() ? QStringLiteral("是") : QStringLiteral("否")));
+    } else {
+        props.insert(QStringLiteral("状态"), QStringLiteral("文件未落盘"));
+    }
+
+    m_inspectorPanel->setSelectedObject(QStringLiteral("文件"), info.fileName(), props);
+}
+
+void MainWindow::onSnippetSelectedInBlocks(const FunctionSnippet& snippet)
+{
+    if (!m_inspectorPanel) {
+        return;
+    }
+
+    if (!snippet.isValid()) {
+        m_inspectorPanel->clearSelection();
+        return;
+    }
+
+    QMap<QString, QString> props;
+    props.insert(QStringLiteral("ID"), snippet.id);
+    props.insert(QStringLiteral("分类"), snippet.category.isEmpty() ? QStringLiteral("通用") : snippet.category);
+    props.insert(QStringLiteral("采样周期"), QStringLiteral("%1 ms").arg(snippet.defaultPeriodMs));
+    props.insert(QStringLiteral("单位"), snippet.unit.isEmpty() ? QStringLiteral("-") : snippet.unit);
+    if (!snippet.description.isEmpty()) {
+        props.insert(QStringLiteral("描述"), snippet.description);
+    }
+    const QString status = snippet.metadata.value(QStringLiteral("status")).toString();
+    if (!status.isEmpty()) {
+        props.insert(QStringLiteral("契约状态"), status);
+    }
+    const QString incReason = snippet.metadata.value(QStringLiteral("incompleteReason")).toString();
+    if (!incReason.isEmpty()) {
+        props.insert(QStringLiteral("待完善原因"), incReason);
+    }
+
+    m_inspectorPanel->setSelectedObject(QStringLiteral("函数块"), snippet.name, props);
 }

@@ -805,8 +805,8 @@
       "parameterCount": 0,
       "parameters": [],
       "compilerName": "KeyScan",
-      "status": "incomplete",
-      "incompleteReason": "缺少参数契约与协议定义 (TODO)"
+      "status": "supported",
+      "incompleteReason": ""
     }
   },
   {
@@ -823,8 +823,8 @@
       "parameterCount": 0,
       "parameters": [],
       "compilerName": "SCIDispTrans",
-      "status": "incomplete",
-      "incompleteReason": "缺少参数契约与协议定义 (TODO)"
+      "status": "supported",
+      "incompleteReason": ""
     }
   },
   {
@@ -841,8 +841,8 @@
       "parameterCount": 0,
       "parameters": [],
       "compilerName": "SCIDispInit",
-      "status": "incomplete",
-      "incompleteReason": "缺少参数契约与协议定义 (TODO)"
+      "status": "supported",
+      "incompleteReason": ""
     }
   },
   {
@@ -859,8 +859,8 @@
       "parameterCount": 0,
       "parameters": [],
       "compilerName": "M600TextDisp",
-      "status": "incomplete",
-      "incompleteReason": "缺少参数契约与协议定义 (TODO)"
+      "status": "supported",
+      "incompleteReason": ""
     }
   },
   {
@@ -877,8 +877,8 @@
       "parameterCount": 0,
       "parameters": [],
       "compilerName": "M600ProgressBar",
-      "status": "incomplete",
-      "incompleteReason": "缺少参数契约与协议定义 (TODO)"
+      "status": "supported",
+      "incompleteReason": ""
     }
   },
   {
@@ -895,8 +895,8 @@
       "parameterCount": 0,
       "parameters": [],
       "compilerName": "EXCACycDisp",
-      "status": "incomplete",
-      "incompleteReason": "缺少参数契约与协议定义 (TODO)"
+      "status": "supported",
+      "incompleteReason": ""
     }
   },
   {
@@ -913,8 +913,8 @@
       "parameterCount": 0,
       "parameters": [],
       "compilerName": "FilterBW",
-      "status": "incomplete",
-      "incompleteReason": "缺少参数契约与协议定义 (TODO)"
+      "status": "supported",
+      "incompleteReason": ""
     }
   },
   {
@@ -2055,8 +2055,8 @@
       "parameterCount": 0,
       "parameters": [],
       "compilerName": "Task",
-      "status": "incomplete",
-      "incompleteReason": "缺少参数契约与协议定义 (TODO)"
+      "status": "supported",
+      "incompleteReason": ""
     }
   },
   {
@@ -2073,8 +2073,8 @@
       "parameterCount": 0,
       "parameters": [],
       "compilerName": "TaskPeriodic",
-      "status": "incomplete",
-      "incompleteReason": "缺少参数契约与协议定义 (TODO)"
+      "status": "supported",
+      "incompleteReason": ""
     }
   },
   {
@@ -2091,8 +2091,8 @@
       "parameterCount": 0,
       "parameters": [],
       "compilerName": "TaskWake",
-      "status": "incomplete",
-      "incompleteReason": "缺少参数契约与协议定义 (TODO)"
+      "status": "supported",
+      "incompleteReason": ""
     }
   },
   {
@@ -2109,8 +2109,8 @@
       "parameterCount": 0,
       "parameters": [],
       "compilerName": "TaskDataWake",
-      "status": "incomplete",
-      "incompleteReason": "缺少参数契约与协议定义 (TODO)"
+      "status": "supported",
+      "incompleteReason": ""
     }
   },
   {
@@ -2127,8 +2127,8 @@
       "parameterCount": 0,
       "parameters": [],
       "compilerName": "TaskLock",
-      "status": "incomplete",
-      "incompleteReason": "缺少参数契约与协议定义 (TODO)"
+      "status": "supported",
+      "incompleteReason": ""
     }
   },
   {
@@ -2145,8 +2145,8 @@
       "parameterCount": 0,
       "parameters": [],
       "compilerName": "TaskUnlock",
-      "status": "incomplete",
-      "incompleteReason": "缺少参数契约与协议定义 (TODO)"
+      "status": "supported",
+      "incompleteReason": ""
     }
   },
   {
@@ -2163,8 +2163,8 @@
       "parameterCount": 0,
       "parameters": [],
       "compilerName": "TaskSemDef",
-      "status": "incomplete",
-      "incompleteReason": "缺少参数契约与协议定义 (TODO)"
+      "status": "supported",
+      "incompleteReason": ""
     }
   },
   {
@@ -2181,8 +2181,8 @@
       "parameterCount": 0,
       "parameters": [],
       "compilerName": "TaskSemWait",
-      "status": "incomplete",
-      "incompleteReason": "缺少参数契约与协议定义 (TODO)"
+      "status": "supported",
+      "incompleteReason": ""
     }
   },
   {
@@ -2199,8 +2199,8 @@
       "parameterCount": 0,
       "parameters": [],
       "compilerName": "TaskSemPost",
-      "status": "incomplete",
-      "incompleteReason": "缺少参数契约与协议定义 (TODO)"
+      "status": "supported",
+      "incompleteReason": ""
     }
   },
   {
@@ -2217,8 +2217,8 @@
       "parameterCount": 0,
       "parameters": [],
       "compilerName": "TaskEnd",
-      "status": "incomplete",
-      "incompleteReason": "缺少参数契约与协议定义 (TODO)"
+      "status": "supported",
+      "incompleteReason": ""
     }
   },
   {
@@ -2325,8 +2325,8 @@
       "parameterCount": 0,
       "parameters": [],
       "compilerName": "TSO",
-      "status": "incomplete",
-      "incompleteReason": "缺少参数契约与协议定义 (TODO)"
+      "status": "supported",
+      "incompleteReason": ""
     }
   },
   {
@@ -2343,8 +2343,8 @@
       "parameterCount": 0,
       "parameters": [],
       "compilerName": "TSOAutoTune",
-      "status": "incomplete",
-      "incompleteReason": "缺少参数契约与协议定义 (TODO)"
+      "status": "supported",
+      "incompleteReason": ""
     }
   },
   {
@@ -2361,8 +2361,8 @@
       "parameterCount": 0,
       "parameters": [],
       "compilerName": "TwoPosition",
-      "status": "incomplete",
-      "incompleteReason": "缺少参数契约与协议定义 (TODO)"
+      "status": "supported",
+      "incompleteReason": ""
     }
   },
   {
@@ -2379,8 +2379,8 @@
       "parameterCount": 0,
       "parameters": [],
       "compilerName": "RelayCtrl2",
-      "status": "incomplete",
-      "incompleteReason": "缺少参数契约与协议定义 (TODO)"
+      "status": "supported",
+      "incompleteReason": ""
     }
   },
   {

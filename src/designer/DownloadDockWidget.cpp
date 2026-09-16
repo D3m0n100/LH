@@ -1,4 +1,4 @@
-﻿// 文件：src/designer/DownloadDockWidget.cpp
+// 文件：src/designer/DownloadDockWidget.cpp
 
 #include "DownloadDockWidget.h"
 
@@ -23,17 +23,21 @@ DownloadDockWidget::DownloadDockWidget(QWidget* parent)
     : QWidget(parent)
 {
     m_port = new QComboBox(this);
+    m_port->setObjectName(QStringLiteral("cbPort"));
+    m_port->setEditable(true);
     for (const auto& info : QSerialPortInfo::availablePorts()) {
         m_port->addItem(info.portName());
     }
 
     m_baud = new QComboBox(this);
+    m_baud->setObjectName(QStringLiteral("cbBaud"));
     m_baud->addItems({QStringLiteral("1200"), QStringLiteral("2400"), QStringLiteral("4800"),
                       QStringLiteral("9600"), QStringLiteral("19200"), QStringLiteral("38400"),
                       QStringLiteral("57600"), QStringLiteral("115200")});
     m_baud->setCurrentText(QStringLiteral("115200"));
 
     m_targetId = new QSpinBox(this);
+    m_targetId->setObjectName(QStringLiteral("sbTargetId"));
     m_targetId->setRange(1, 247);
     m_targetId->setValue(2);
 
@@ -97,6 +101,9 @@ DownloadDockWidget::DownloadDockWidget(QWidget* parent)
     connect(m_mgr, &DownloadManager::errorOccurred, this, [this](DownloadManager::ErrorCode c, const QString& msg, const QString& det) {
         appendLog(QStringLiteral("[错误] code=%1 msg=%2 details=%3").arg(int(c)).arg(msg, det));
     });
+
+    connect(m_port, &QComboBox::currentTextChanged, this, &DownloadDockWidget::targetConfigChanged);
+    connect(m_targetId, QOverload<int>::of(&QSpinBox::valueChanged), this, &DownloadDockWidget::targetConfigChanged);
 }
 
 void DownloadDockWidget::appendLog(const QString& s)
@@ -181,4 +188,33 @@ void DownloadDockWidget::onDownload()
     appendLog(QStringLiteral("[界面] 用户确认专家诊断下载，开始下载..."));
     m_mgr->setConfig(buildCommConfig());
     m_mgr->startDownload(profile, payload);
+}
+
+QString DownloadDockWidget::selectedPort() const
+{
+    return m_port ? m_port->currentText().trimmed() : QString();
+}
+
+void DownloadDockWidget::setPort(const QString& port)
+{
+    if (m_port) {
+        m_port->setEditText(port);
+    }
+}
+
+int DownloadDockWidget::baudRate() const
+{
+    return m_baud ? m_baud->currentText().toInt() : 115200;
+}
+
+int DownloadDockWidget::targetStationId() const
+{
+    return m_targetId ? m_targetId->value() : 2;
+}
+
+void DownloadDockWidget::setTargetStationId(int id)
+{
+    if (m_targetId) {
+        m_targetId->setValue(id);
+    }
 }

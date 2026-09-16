@@ -16,6 +16,10 @@ public:
 
     void addProblem(const QString& severity, const QString& source, const QString& message);
     void clearProblems();
+    void selectFirstError();
+    int errorCount() const { return m_errorCount; }
+    int warningCount() const { return m_warningCount; }
+    int infoCount() const { return m_infoCount; }
     int problemCount() const;
     void setDiagnosticSummary(const QString& summary);
 

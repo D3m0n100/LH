@@ -6,6 +6,7 @@
 
 #include "ProjectController.h"
 #include "RunController.h"
+#include "ProfileResolution.h"
 #include "../communication/ControllerDeviceBackend.h"
 #include "../communication/IDeviceBackend.h"
 #include "../core/AppLogging.h"
@@ -82,89 +83,6 @@ QString currentTimeLabel()
     return QDateTime::currentDateTime().toString(QStringLiteral("HH:mm:ss"));
 }
 
-QVariantMap resolveDownloadOptions(const QVariantMap& options,
-                                   const ProjectRuntimeConfig& config,
-                                   const QString& projectPath)
-{
-    QVariantMap resolved = options;
-    QString optionProfilePath;
-    const QStringList profileKeys = {
-        QStringLiteral("downloadProfilePath"),
-        QStringLiteral("profileJsonPath"),
-        QStringLiteral("profilePath")
-    };
-    const QStringList sourceProfileKeys = {
-        QStringLiteral("downloadProfileSourcePath"),
-        QStringLiteral("profileSourcePath"),
-        QStringLiteral("sourceProfilePath")
-    };
-    for (const QString& key : profileKeys) {
-        optionProfilePath = options.value(key).toString().trimmed();
-        if (!optionProfilePath.isEmpty()) {
-            break;
-        }
-    }
-
-    QString configuredProfilePath;
-    for (const QString& key : profileKeys) {
-        configuredProfilePath = config.downloadArtifact.metadata.value(key).toString().trimmed();
-        if (!configuredProfilePath.isEmpty()) {
-            break;
-        }
-    }
-    const bool publishedBinding = !config.downloadArtifact.metadata
-            .value(QStringLiteral("generationId")).toString().trimmed().isEmpty()
-            || !config.downloadArtifact.metadata
-                    .value(QStringLiteral("runtimeManifestPath")).toString().trimmed().isEmpty();
-    if (configuredProfilePath.isEmpty() && !publishedBinding) {
-        for (const QString& key : sourceProfileKeys) {
-            configuredProfilePath = config.downloadArtifact.metadata.value(key).toString().trimmed();
-            if (!configuredProfilePath.isEmpty())
-                break;
-        }
-    }
-
-    const auto absoluteProfilePath = [&projectPath](const QString& path) {
-        if (path.trimmed().isEmpty())
-            return QString();
-        const QFileInfo info(path);
-        return QDir::cleanPath(info.isRelative() && !projectPath.trimmed().isEmpty()
-                                       ? QDir(projectPath).absoluteFilePath(path)
-                                       : info.absoluteFilePath());
-    };
-    const auto comparableProfilePath = [](const QString& path) {
-        const QString canonical = QFileInfo(path).canonicalFilePath();
-        return canonical.isEmpty() ? QDir::cleanPath(QFileInfo(path).absoluteFilePath()) : canonical;
-    };
-
-    const QString configuredAbsolute = absoluteProfilePath(configuredProfilePath);
-    const QString optionAbsolute = absoluteProfilePath(optionProfilePath);
-    if (publishedBinding) {
-        if (!optionAbsolute.isEmpty() && configuredAbsolute.isEmpty()) {
-            resolved.insert(QStringLiteral("profileOverrideConflict"), true);
-            resolved.insert(QStringLiteral("profileOverrideError"),
-                           QStringLiteral("正式下载禁止使用未绑定到已发布 generation 的 Profile override。"));
-        } else if (!optionAbsolute.isEmpty()
-                   && comparableProfilePath(optionAbsolute) != comparableProfilePath(configuredAbsolute)) {
-            resolved.insert(QStringLiteral("profileOverrideConflict"), true);
-            resolved.insert(QStringLiteral("profileOverrideError"),
-                           QStringLiteral("下载 Profile override 与项目配置/manifest 不一致。"));
-        }
-    }
-
-    const QString profilePath = !configuredAbsolute.isEmpty()
-            ? configuredAbsolute
-            : optionAbsolute;
-    if (!profilePath.isEmpty()) {
-        resolved.insert(QStringLiteral("downloadProfilePath"), profilePath);
-        for (const QString& key : profileKeys) {
-            if (key != QStringLiteral("downloadProfilePath"))
-                resolved.remove(key);
-        }
-    }
-    return resolved;
-}
-
 } // namespace
 
 bool RuntimeSessionController::requestDownload(const QString& artifactPath, const QVariantMap& options)
@@ -192,7 +110,7 @@ bool RuntimeSessionController::requestDownload(const QString& artifactPath, cons
         runtimeConfig = m_projectController->runtimeConfig();
         projectPath = m_projectController->currentProjectPath();
     }
-    const QVariantMap effectiveOptions = resolveDownloadOptions(options, runtimeConfig, projectPath);
+    const QVariantMap effectiveOptions = resolveDownloadProfileOptions(options, runtimeConfig, projectPath);
     const int maxAttempts = qMax(1, effectiveOptions.value(QStringLiteral("retryCount"), 1).toInt());
 
     const auto restoreStateAfterDownload = [this, prevState]() {

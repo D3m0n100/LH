@@ -164,6 +164,22 @@ public:
     
     int totalPointCount() const;
     int channelPointCount(const QString& channelId) const;
+    QLabel* infoLabel() const { return m_infoLabel; }
+    void updateInfoLabel();
+
+    // ===== 紧凑与自适应排版 (R8-01) =====
+    void updateResponsiveLayout();
+    bool isCompactMode() const { return m_isCompactMode; }
+    void setCompactMode(bool compact);
+    int toolbarHeight() const;
+    QChartView* chartView() const { return m_chartView; }
+    QDateTimeAxis* axisX() const { return m_axisX; }
+    QValueAxis* axisY() const { return m_axisY; }
+    QChart* chart() const { return m_chart; }
+    QPushButton* channelLegendButton() const { return m_channelLegendButton; }
+
+protected:
+    void resizeEvent(QResizeEvent* event) override;
 
 public slots:
     void resetZoom();
@@ -186,6 +202,7 @@ private slots:
     void handleSeriesClicked(const QPointF& point);
     void onAutoScaleCheckChanged(int state);
     void onLegendMarkerClicked();
+    void openChannelLegendMenu();
 
 private:
     void setupChart();
@@ -193,7 +210,7 @@ private:
     void updateAxisRanges();
     void calculateVisibleYRange(double& minY, double& maxY) const;
     QColor allocateDefaultColor();
-    void updateInfoLabel();
+    void updateTicksAndPrecision();
     
     /**
      * @brief 限制曲线点数（LTTB 降采样）
@@ -210,7 +227,12 @@ private:
     QPushButton* m_resetZoomButton;
     QCheckBox*   m_autoScaleCheck;
     QPushButton* m_exportImageButton;
+    QPushButton* m_channelLegendButton;
     QLabel*      m_infoLabel;
+
+    // 紧凑模式
+    bool m_isCompactMode;
+    bool m_userLegendVisible;
 
     // 图表组件
     QChartView*    m_chartView;

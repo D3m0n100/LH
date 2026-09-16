@@ -65,7 +65,14 @@ class QToolBar;
 class QMenu;
 class QMdiSubWindow;
 class QTabWidget;
+class QDialog;
 QT_END_NAMESPACE
+
+namespace WorkspaceId {
+    inline const QString Programming = QStringLiteral("programming");
+    inline const QString Monitor = QStringLiteral("monitor");
+    inline const QString Device = QStringLiteral("device");
+}
 
 #include "DslScriptEditor.h"
 #include "common/ConfigTypes.h"
@@ -87,7 +94,9 @@ class MonitorController;
 class ProgramBlocksWidget;
 class ProjectExplorerWidget;
 class GlobalStatusBar;
+class DeviceWorkspaceWidget;
 class InspectorPanel;
+class ParameterTuningPanel;
 class ParameterTuningWindow;
 class ProblemsPanel;
 
@@ -121,6 +130,23 @@ public:
     /// 应用运行时配置到监控系统
     bool applyRuntimeConfigToMonitor();
 
+    // ===== 工作区路由与布局持久化 =====
+    QString currentWorkspaceId() const { return m_currentWorkspaceId; }
+    void switchToWorkspace(const QString& workspaceId);
+    void saveWorkspaceLayout(const QString& workspaceId);
+    void restoreWorkspaceLayout(const QString& workspaceId);
+    void applyDefaultWorkspaceLayout(const QString& workspaceId);
+    void restoreWindowGeometryAndWorkspaces();
+    void saveWindowGeometryAndWorkspaces();
+    void setSettingsStorage(const QString& organization, const QString& application);
+    QString workspaceIdForTabIndex(int index) const;
+    int tabIndexForWorkspaceId(const QString& workspaceId) const;
+    SettingsController* settingsController() const { return m_settingsController; }
+    void appendOutput(const QString& message);
+    void addProblem(const QString& severity, const QString& source, const QString& message);
+    void refreshInspectorPanel();
+    void updateDeviceWorkspaceInfo();
+
 protected:
     void closeEvent(QCloseEvent* event) override;
     bool eventFilter(QObject* watched, QEvent* event) override;
@@ -149,9 +175,15 @@ private slots:
     void onToggleDownloadDock(bool checked);
     void onToggleFunctionList(bool visible);
     void onToggleExplorerDock(bool checked);
+    void onToggleInspectorDock(bool checked);
     void onToggleDslEditor(bool checked);
     void onResetLayout();
+    void onResetCurrentWorkspaceLayout();
+    void onResetAllWorkspaceLayouts();
     void onOpenDownloadWindow();
+    void onOpenDisplayBlocksWindow();
+    void onFileSelectedInExplorer(const QString& filePath);
+    void onSnippetSelectedInBlocks(const FunctionSnippet& snippet);
     void onClearOutput();
 
     // ===== 设置相关（转发给 SettingsController）=====
@@ -176,6 +208,8 @@ private slots:
     // ===== 监控相关 =====
     void onOpenMonitor();
     void onOpenParameterTuningWindow();
+    void onPopOutParameterTuning();
+    void onDockBackParameterTuning();
     void onStartMonitoring();
     void onStopMonitoring();
     void onExportMonitorData();
@@ -246,6 +280,7 @@ private slots:
 
 private:
     // ===== UI 构建 =====
+    void createActions();
     void createMenus();
     void createToolBars();
     void createStatusBar();
@@ -255,7 +290,9 @@ private:
     void connectControllerSignals();
     void createWorkspaceTabs();
     void createInspectorDock();
+    void createTuningDock();
     void createParameterTuningWindow();
+    void adjustBottomTuningDockHeight();
     
     void updateStatusBar(const QString& message);
     void updateEditActions();
@@ -263,16 +300,16 @@ private:
     
     void setCompileActionsEnabled(bool enabled);
     void updateRecentProjectsMenu();
-    void appendOutput(const QString& message);
     void updateWindowTitle();
     void updateEditorSubWindowTitle();
-    void refreshInspectorPanel();
     void refreshInspectorPanel(InspectorPanel* panel);
+    void refreshInspectorPanel(ParameterTuningPanel* panel);
     void refreshInspectorPanel(ParameterTuningWindow* window);
-    void addProblem(const QString& severity, const QString& source, const QString& message);
-    
+    void updateToolBarForWorkspace(const QString& workspaceId);
+
     void createDslEditorSubWindow();
     void connectDslEditorSignals();
+    void bindFunctionLibraryDataSource();
     
     void applyFontSize(int pointSize);
     void showValidationErrors(const QStringList& errors);
@@ -286,6 +323,7 @@ private:
     bool saveAuxiliarySubWindow(QMdiSubWindow* sub);
     bool saveAuxiliaryFiles(bool all);
     bool confirmAuxiliaryChanges();
+
 
     // ===== Demo Mode（演示数据模式） =====
     void startDemoModeIfNeeded(const QString& reason);
@@ -306,6 +344,8 @@ private:
 
     // ================= Dock 窗口 =================
     QDockWidget*  m_explorerDock = nullptr;
+    QTabWidget*   m_leftTabs = nullptr;
+    ProgramBlocksWidget* m_programBlocksWidget = nullptr;
     QDockWidget*  m_logDock;
     QDockWidget*  m_monitorDock;
     QDockWidget*  m_downloadDock;
@@ -316,10 +356,14 @@ private:
     QWidget*      m_workspaceBuildPage = nullptr;
     QWidget*      m_workspaceMonitorPage = nullptr;
     QWidget*      m_workspaceDisplayPage = nullptr;
+    DeviceWorkspaceWidget* m_deviceWorkspaceWidget = nullptr;
     DownloadDockWidget* m_downloadWidget = nullptr;
     ProgramBlocksWidget* m_displayBlocksWidget = nullptr;
+    QDialog*      m_displayBlocksWindow = nullptr;
     QDockWidget*  m_inspectorDock = nullptr;
     InspectorPanel* m_inspectorPanel = nullptr;
+    QDockWidget*  m_tuningDock = nullptr;
+    ParameterTuningPanel* m_parameterTuningPanel = nullptr;
     ParameterTuningWindow* m_parameterTuningWindow = nullptr;
     ProblemsPanel* m_problemsPanel = nullptr;
     GlobalStatusBar* m_globalStatusBar = nullptr;
@@ -333,12 +377,13 @@ private:
     QProgressBar* m_progressBar;
 
     // ================= 工具栏 =================
-    QToolBar*     m_fileToolBar;
-    QToolBar*     m_runToolBar;
-    QToolBar*     m_overviewToolBar = nullptr;
+    QToolBar*     m_mainToolBar = nullptr;
 
     // ================= 文件菜单 =================
     QMenu*        m_recentProjectsMenu;
+    QAction*      m_actSaveAll = nullptr;
+    QAction*      m_actCloseProject = nullptr;
+    QAction*      m_actExit = nullptr;
 
     // ================= 编辑菜单 QAction =================
     QAction*      m_actUndo;
@@ -354,9 +399,12 @@ private:
     QAction*      m_actToggleMonitorDock;
     QAction*      m_actToggleDownloadDock;
     QAction*      m_actToggleExplorerDock = nullptr;
+    QAction*      m_actToggleInspectorDock = nullptr;
     QAction*      m_actToggleFunctionList;
     QAction*      m_actToggleDslEditor;
     QAction*      m_actResetLayout;
+    QAction*      m_actResetCurrentLayout = nullptr;
+    QAction*      m_actResetAllLayouts = nullptr;
     QAction*      m_actClearOutput;
     QAction*      m_actOpenDisplayWorkspace = nullptr;
 
@@ -380,6 +428,7 @@ private:
     QAction*      m_actStopMonitor;
     QAction*      m_actExportMonitorData;
     QAction*      m_actExportMonitorImage;
+    QAction*      m_actParameterTuning = nullptr;
 
     // ================= 文件工具栏 QAction =================
     QAction*      m_actNew;
@@ -388,9 +437,12 @@ private:
     QAction*      m_actCompile;
     QAction*      m_actOpenDslEditorToolBar;
 
-    // ================= 设置相关 QAction =================
+    // ================= 设置/工具相关 QAction =================
+    QAction*      m_actOpenLogDir = nullptr;
+    QAction*      m_actDiagnosis = nullptr;
     QAction*      m_actSettings;
     QAction*      m_actOpcServerSettings = nullptr;
+    QAction*      m_actAbout = nullptr;
 
     // ================= 模块封装 =================
     MonitorWidget* m_monitorWidget;
@@ -408,6 +460,8 @@ private:
     QString m_lastOpcError;
     QVariantMap m_lastOpcStatusExtras;
     QVariantMap m_lastDownloadDiagnostic;
+    QString m_currentWorkspaceId = QStringLiteral("programming");
+    bool m_switchingWorkspace = false;
 };
 
 #endif // MAINWINDOW_H

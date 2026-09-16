@@ -62,6 +62,7 @@ public:
     
     /// 获取当前项目路径
     QString currentProjectPath() const { return m_currentProject; }
+    void setCurrentProjectPath(const QString& path) { m_currentProject = path; }
     
     /// 获取当前脚本文件路径
     QString currentScriptFile() const { return m_currentScriptFile; }

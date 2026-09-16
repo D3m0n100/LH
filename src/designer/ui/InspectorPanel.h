@@ -44,6 +44,17 @@ public:
     void setParameterDeviationMap(const QMap<QString, double>& deviationMap);
     void setParameterStateMap(const QMap<QString, ParameterStateInfo>& stateMap);
 
+    void clearSelection();
+    void setSelectedObject(const QString& type, const QString& name, const QMap<QString, QString>& properties);
+    bool hasSelectedObject() const { return m_hasSelection; }
+    QString selectedObjectType() const { return m_selectedType; }
+    QString selectedObjectName() const { return m_selectedName; }
+
+    bool areDetailColumnsVisible() const;
+    void setDetailColumnsVisible(bool visible);
+    QPushButton* toggleDetailColumnsButton() const { return m_toggleDetailColumnsButton; }
+    QTableWidget* parameterTable() const { return m_parameterTable; }
+
 signals:
     void requestCompile();
     void requestRun();
@@ -58,6 +69,16 @@ private:
     QString readbackStateFor(const ParameterDefinition& parameter) const;
     QString deviationStateFor(const ParameterDefinition& parameter) const;
     QString issueSummaryFor(const ParameterDefinition& parameter) const;
+    void onParameterSelectionChanged();
+
+    bool m_hasSelection = false;
+    QString m_selectedType;
+    QString m_selectedName;
+    QLabel* m_selectionHintLabel = nullptr;
+    QGroupBox* m_selectedGroup = nullptr;
+    QLabel* m_selectedTypeValue = nullptr;
+    QLabel* m_selectedNameValue = nullptr;
+    QTableWidget* m_selectedPropsTable = nullptr;
 
     QLabel* m_projectPathValue = nullptr;
     QLabel* m_currentFileValue = nullptr;
@@ -74,6 +95,7 @@ private:
     QTableWidget* m_parameterTable = nullptr;
     QToolButton* m_parameterEditButton = nullptr;
     QToolButton* m_applyParametersButton = nullptr;
+    QPushButton* m_toggleDetailColumnsButton = nullptr;
     QList<ParameterDefinition> m_parameterData;
     QStringList m_readbackReadyParameters;
     QMap<QString, double> m_parameterDeviationMap;

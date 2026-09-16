@@ -258,6 +258,7 @@ void RuntimeSessionController::executeRun()
 
 void RuntimeSessionController::finishRunStart()
 {
+    setPaused(false);
     setState(RuntimeSessionState::Running);
 
     emit logMessage(QStringLiteral("[%1] 项目已启动，下载产物：%2")
@@ -267,8 +268,18 @@ void RuntimeSessionController::finishRunStart()
     startOpcServerIfEnabled();
 }
 
+void RuntimeSessionController::setPaused(bool paused)
+{
+    if (m_isPaused == paused) {
+        return;
+    }
+    m_isPaused = paused;
+    emit pausedChanged(m_isPaused);
+}
+
 void RuntimeSessionController::requestStop()
 {
+    setPaused(false);
     m_pendingRunAfterDownload = false;
     if (m_state == RuntimeSessionState::Idle && m_downloadState == DownloadState::Idle) {
         const QString message = QStringLiteral("运行会话已停止，OPC 写入已取消");
@@ -455,6 +466,9 @@ void RuntimeSessionController::setState(RuntimeSessionState newState)
          {QStringLiteral("to"), static_cast<int>(newState)}});
 
     emit stateChanged(oldState, newState);
+    if (newState != RuntimeSessionState::Running && newState != RuntimeSessionState::Monitoring) {
+        setPaused(false);
+    }
 
     const bool wasMonitoring = oldState == RuntimeSessionState::Monitoring;
     const bool isMonitoringNow = newState == RuntimeSessionState::Monitoring;

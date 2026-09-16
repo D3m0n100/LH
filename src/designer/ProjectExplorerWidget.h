@@ -25,10 +25,12 @@ public:
 
 signals:
     void fileOpenRequested(const QString& filePath);
+    void fileSelected(const QString& filePath);
     void locateCurrentFileRequested();
 
 private slots:
     void onItemDoubleClicked(const QModelIndex& index);
+    void onCurrentItemChanged(const QModelIndex& current, const QModelIndex& previous);
     void onFilterTextChanged(const QString& text);
     void onRefreshClicked();
     void onCollapseAllClicked();

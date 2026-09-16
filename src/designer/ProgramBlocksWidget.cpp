@@ -17,6 +17,8 @@
 #include <QDataStream>
 #include <QPainter>
 #include <QApplication>
+#include <QLabel>
+#include <QPushButton>
 
 #include <QMap>
 
@@ -152,8 +154,64 @@ QTreeWidget::item:hover {
     m_tree->setObjectName("ProgramBlocksTree");
     layout->addWidget(m_tree, 1);
 
+    m_emptyContainer = new QWidget(this);
+    m_emptyContainer->setObjectName(QStringLiteral("ProgramBlocksEmptyState"));
+    auto* emptyLayout = new QVBoxLayout(m_emptyContainer);
+    emptyLayout->setContentsMargins(12, 24, 12, 24);
+    emptyLayout->setSpacing(12);
+    emptyLayout->setAlignment(Qt::AlignCenter);
+
+    m_emptyLabel = new QLabel(m_emptyContainer);
+    m_emptyLabel->setObjectName(QStringLiteral("ProgramBlocksEmptyLabel"));
+    m_emptyLabel->setAlignment(Qt::AlignCenter);
+    m_emptyLabel->setWordWrap(true);
+    m_emptyLabel->setTextFormat(Qt::RichText);
+    m_emptyLabel->setStyleSheet(QStringLiteral("color: #6e7781; font-size: 13px; line-height: 1.5;"));
+    emptyLayout->addWidget(m_emptyLabel);
+
+    m_clearFilterBtn = new QPushButton(QStringLiteral("清除搜索"), m_emptyContainer);
+    m_clearFilterBtn->setObjectName(QStringLiteral("ClearFilterButton"));
+    m_clearFilterBtn->setFixedWidth(96);
+    m_clearFilterBtn->setStyleSheet(R"(
+QPushButton {
+    background-color: #f6f8fa;
+    border: 1px solid #d0d7de;
+    border-radius: 4px;
+    padding: 4px 12px;
+    color: #24292f;
+    font-size: 12px;
+}
+QPushButton:hover {
+    background-color: #f3f4f6;
+    border-color: #0969da;
+}
+QPushButton:pressed {
+    background-color: #ebecf0;
+}
+)");
+    emptyLayout->addWidget(m_clearFilterBtn, 0, Qt::AlignCenter);
+
+    layout->addWidget(m_emptyContainer, 1);
+    m_emptyContainer->hide();
+
     connect(m_filterEdit, &QLineEdit::textChanged,
             this, &ProgramBlocksWidget::onFilterTextChanged);
+    connect(m_tree, &QTreeWidget::currentItemChanged,
+            this, &ProgramBlocksWidget::onCurrentItemChanged);
+    connect(m_tree, &QTreeWidget::itemDoubleClicked,
+            this, &ProgramBlocksWidget::onTreeItemDoubleClicked);
+    connect(m_clearFilterBtn, &QPushButton::clicked, this, [this]() {
+        if (m_filterEdit) {
+            m_filterEdit->clear();
+        }
+    });
+    connect(m_emptyLabel, &QLabel::linkActivated, this, [this]() {
+        if (m_filterEdit) {
+            m_filterEdit->clear();
+        }
+    });
+
+    updateEmptyState(0);
 }
 
 void ProgramBlocksWidget::setCompletionEngine(DslCompletionEngine* engine)
@@ -171,6 +229,10 @@ void ProgramBlocksWidget::setCompletionEngine(DslCompletionEngine* engine)
     if (m_engine) {
         connect(m_engine, &DslCompletionEngine::snippetsChanged,
                 this, &ProgramBlocksWidget::reloadFromEngine);
+        connect(m_engine, &QObject::destroyed, this, [this]() {
+            m_engine = nullptr;
+            reloadFromEngine();
+        });
     }
 
     reloadFromEngine();
@@ -197,6 +259,49 @@ void ProgramBlocksWidget::onFilterTextChanged(const QString& text)
     applyFilter(text);
 }
 
+void ProgramBlocksWidget::filterCategory(const QString& category)
+{
+    if (m_filterEdit) {
+        m_filterEdit->setText(category);
+    }
+}
+
+void ProgramBlocksWidget::onCurrentItemChanged(QTreeWidgetItem* current, QTreeWidgetItem* previous)
+{
+    Q_UNUSED(previous);
+    if (!current || current->childCount() > 0) {
+        return;
+    }
+    const QString id = current->data(0, Qt::UserRole).toString();
+    FunctionSnippet sn = findSnippetById(id);
+    if (sn.isValid()) {
+        emit snippetSelected(sn);
+    }
+}
+
+void ProgramBlocksWidget::onTreeItemDoubleClicked(QTreeWidgetItem* item, int column)
+{
+    Q_UNUSED(column);
+    if (!item || item->childCount() > 0) {
+        return;
+    }
+    const QString id = item->data(0, Qt::UserRole).toString();
+    FunctionSnippet sn = findSnippetById(id);
+    if (sn.isValid()) {
+        emit snippetDoubleClicked(sn);
+    }
+}
+
+FunctionSnippet ProgramBlocksWidget::findSnippetById(const QString& id) const
+{
+    for (const auto& sn : m_cachedSnippets) {
+        if (sn.id == id) {
+            return sn;
+        }
+    }
+    return FunctionSnippet();
+}
+
 QString ProgramBlocksWidget::normalizeCategory(const QString& category)
 {
     const QString c = category.trimmed();
@@ -210,26 +315,17 @@ QString ProgramBlocksWidget::makeSnippetTooltip(const FunctionSnippet& snippet)
     const QString unit = snippet.unit.isEmpty() ? QStringLiteral("-") : snippet.unit;
     const QString codePreview = snippet.templateCode.left(140).replace("\n", "<br/>");
 
-    const QString status = snippet.metadata.value(QStringLiteral("status")).toString();
-    const QString incompleteReason = snippet.metadata.value(QStringLiteral("incompleteReason")).toString();
-    QString statusHtml;
-    if (status == QStringLiteral("incomplete")) {
-        statusHtml = QStringLiteral("<br/><font color='#d9534f'><b>状态: 未完善契约 (incomplete)%1</b></font><br/>")
-            .arg(incompleteReason.isEmpty() ? QString() : QStringLiteral(" - ") + incompleteReason);
-    }
-
     return QString("<b>%1</b><br/>"
                    "<i>%2</i><br/><br/>"
                    "分类: %3<br/>"
                    "单位: %4<br/>"
-                   "采样周期: %5 ms%6<br/>"
-                   "<code>%7</code>")
+                   "采样周期: %5 ms<br/>"
+                   "<code>%6</code>")
         .arg(snippet.name)
         .arg(desc)
         .arg(cat)
         .arg(unit)
         .arg(snippet.defaultPeriodMs)
-        .arg(statusHtml)
         .arg(codePreview);
 }
 
@@ -270,12 +366,8 @@ void ProgramBlocksWidget::rebuildTree(const QList<FunctionSnippet>& snippets)
         leaf->setData(0, Qt::UserRole + 2, sn.description);
         leaf->setToolTip(0, makeSnippetTooltip(sn));
 
-        // 简单分类配色，未完善功能块灰态呈现
-        const QString status = sn.metadata.value(QStringLiteral("status")).toString();
-        if (status == QStringLiteral("incomplete")) {
-            leaf->setForeground(0, QColor("#8c8c8c"));
-            leaf->setText(0, QStringLiteral("%1 [未完善]").arg(sn.name));
-        } else if (sn.category == "input") {
+        // 简单分类配色
+        if (sn.category == "input") {
             leaf->setForeground(0, QColor("#16825d"));
         } else if (sn.category == "output") {
             leaf->setForeground(0, QColor("#007acc"));
@@ -295,11 +387,13 @@ void ProgramBlocksWidget::applyFilter(const QString& text)
 
     const QString key = text.trimmed().toLower();
     const bool filtering = !key.isEmpty();
+    int visibleLeafCount = 0;
 
     for (int i = 0; i < m_tree->topLevelItemCount(); ++i) {
         QTreeWidgetItem* catItem = m_tree->topLevelItem(i);
         if (!catItem) continue;
 
+        const bool catMatch = !key.isEmpty() && catItem->text(0).toLower().contains(key);
         bool anyChildVisible = false;
         for (int c = 0; c < catItem->childCount(); ++c) {
             QTreeWidgetItem* leaf = catItem->child(c);
@@ -307,9 +401,12 @@ void ProgramBlocksWidget::applyFilter(const QString& text)
 
             const QString name = leaf->text(0).toLower();
             const QString desc = leaf->data(0, Qt::UserRole + 2).toString().toLower();
-            const bool match = !filtering || name.contains(key) || desc.contains(key);
+            const bool match = !filtering || catMatch || name.contains(key) || desc.contains(key);
             leaf->setHidden(!match);
-            anyChildVisible = anyChildVisible || match;
+            if (match) {
+                anyChildVisible = true;
+                ++visibleLeafCount;
+            }
         }
 
         catItem->setHidden(!anyChildVisible);
@@ -317,5 +414,47 @@ void ProgramBlocksWidget::applyFilter(const QString& text)
             m_tree->expandItem(catItem);
         }
     }
+
+    updateEmptyState(visibleLeafCount);
+}
+
+void ProgramBlocksWidget::updateEmptyState(int visibleLeafCount)
+{
+    if (!m_emptyContainer || !m_emptyLabel || !m_tree) {
+        return;
+    }
+
+    if (!m_engine) {
+        m_emptyLabel->setText(QStringLiteral("编辑器未打开，暂无可用函数"));
+        if (m_clearFilterBtn) {
+            m_clearFilterBtn->setVisible(false);
+        }
+        m_emptyContainer->setVisible(true);
+        m_tree->setVisible(false);
+        return;
+    }
+
+    if (m_cachedSnippets.isEmpty()) {
+        m_emptyLabel->setText(QStringLiteral("暂无函数"));
+        if (m_clearFilterBtn) {
+            m_clearFilterBtn->setVisible(false);
+        }
+        m_emptyContainer->setVisible(true);
+        m_tree->setVisible(false);
+        return;
+    }
+
+    if (visibleLeafCount == 0) {
+        m_emptyLabel->setText(QStringLiteral("没有匹配结果 (<a href=\"#clear\" style=\"color:#0969da; text-decoration:none;\">清除搜索</a>)"));
+        if (m_clearFilterBtn) {
+            m_clearFilterBtn->setVisible(true);
+        }
+        m_emptyContainer->setVisible(true);
+        m_tree->setVisible(false);
+        return;
+    }
+
+    m_emptyContainer->setVisible(false);
+    m_tree->setVisible(true);
 }
 

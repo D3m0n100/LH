@@ -89,6 +89,19 @@ configure_lh_test(monitor_manager_backend_test
     ${CMAKE_SOURCE_DIR}/src/monitor
 )
 
+# MonitorWidget UI Streamlining (U06) tests
+add_executable(monitor_widget_ui_test monitor_widget_ui_test.cpp)
+target_link_libraries(monitor_widget_ui_test
+    Qt5::Core
+    Qt5::Widgets
+    Qt5::Test
+    monitor
+    core_module
+)
+configure_lh_test(monitor_widget_ui_test
+    ${CMAKE_SOURCE_DIR}/src/monitor
+)
+
 # AsyncDatabaseWorker (T12) tests
 add_executable(async_database_worker_test async_database_worker_test.cpp)
 target_link_libraries(async_database_worker_test
@@ -388,6 +401,7 @@ register_lh_test(MonitorDataProcessorTest monitor_data_processor_test)
 register_lh_test(MonitorDataLoggerTest monitor_data_logger_test)
 register_lh_test(AsyncDatabaseWorkerTest async_database_worker_test)
 register_lh_test(MonitorManagerBackendTest monitor_manager_backend_test)
+register_lh_test(MonitorWidgetUiTest monitor_widget_ui_test)
 register_lh_test(MainWindowIntegrationTest main_window_integration_test)
 register_lh_test(DownloadManagerLifecycleTest download_manager_lifecycle_test)
 register_lh_test(DslCompletionEngineTest dsl_completion_engine_test)

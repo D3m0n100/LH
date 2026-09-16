@@ -8,7 +8,9 @@ add_library(designer_module STATIC
     MainWindowUi.cpp
     MainWindowInspector.cpp
     MainWindowExplorer.cpp
+    MainWindowWorkspace.cpp
     DownloadDockWidget.cpp
+    DeviceWorkspaceWidget.cpp
     ProjectExplorerWidget.cpp
     ProgramBlocksWidget.cpp
     DslScriptEditor.cpp
@@ -29,10 +31,12 @@ add_library(designer_module STATIC
     ui/ThemeManager.cpp
     ui/GlobalStatusBar.cpp
     ui/InspectorPanel.cpp
+    ParameterTuningPanel.cpp
     ParameterTuningWindow.cpp
     ParameterController.cpp
     RuntimeSessionController.cpp
     RuntimeSessionDownload.cpp
+    ProfileResolution.cpp
     RuntimeSessionDebug.cpp
     RuntimeSessionOpc.cpp
     ui/ProblemsPanel.cpp

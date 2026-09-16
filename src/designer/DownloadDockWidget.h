@@ -1,4 +1,4 @@
-﻿// 文件：src/designer/DownloadDockWidget.h
+// 文件：src/designer/DownloadDockWidget.h
 // 下载 Dock：连接/探测/下载 + 进度 + 日志
 
 #pragma once
@@ -19,6 +19,15 @@ class DownloadDockWidget : public QWidget
     Q_OBJECT
 public:
     explicit DownloadDockWidget(QWidget* parent = nullptr);
+
+    QString selectedPort() const;
+    void setPort(const QString& port);
+    int baudRate() const;
+    int targetStationId() const;
+    void setTargetStationId(int id);
+
+signals:
+    void targetConfigChanged();
 
 private slots:
     void onConnectProbe();

@@ -43,6 +43,12 @@ bool RuntimeSessionController::pauseController()
 {
     auto* backend = controllerBackend();
     if (!backend) {
+        if (m_demoModeActive) {
+            setPaused(true);
+            emit logMessage(QStringLiteral("[%1] 控制器已暂停")
+                            .arg(QDateTime::currentDateTime().toString(QStringLiteral("HH:mm:ss"))));
+            return true;
+        }
         emit runtimeError(QStringLiteral("控制器后端不可用，无法暂停。"));
         return false;
     }
@@ -58,6 +64,7 @@ bool RuntimeSessionController::pauseController()
         return false;
     }
 
+    setPaused(true);
     emit logMessage(QStringLiteral("[%1] 控制器已暂停")
                     .arg(QDateTime::currentDateTime().toString(QStringLiteral("HH:mm:ss"))));
     return true;
@@ -67,6 +74,12 @@ bool RuntimeSessionController::resumeController()
 {
     auto* backend = controllerBackend();
     if (!backend) {
+        if (m_demoModeActive) {
+            setPaused(false);
+            emit logMessage(QStringLiteral("[%1] 控制器已继续运行")
+                            .arg(QDateTime::currentDateTime().toString(QStringLiteral("HH:mm:ss"))));
+            return true;
+        }
         emit runtimeError(QStringLiteral("控制器后端不可用，无法继续。"));
         return false;
     }
@@ -82,6 +95,7 @@ bool RuntimeSessionController::resumeController()
         return false;
     }
 
+    setPaused(false);
     emit logMessage(QStringLiteral("[%1] 控制器已继续运行")
                     .arg(QDateTime::currentDateTime().toString(QStringLiteral("HH:mm:ss"))));
     return true;
@@ -91,6 +105,12 @@ bool RuntimeSessionController::stepController()
 {
     auto* backend = controllerBackend();
     if (!backend) {
+        if (m_demoModeActive) {
+            setPaused(true);
+            emit logMessage(QStringLiteral("[%1] 控制器单步执行")
+                            .arg(QDateTime::currentDateTime().toString(QStringLiteral("HH:mm:ss"))));
+            return true;
+        }
         emit runtimeError(QStringLiteral("控制器后端不可用，无法单步。"));
         return false;
     }
@@ -106,6 +126,7 @@ bool RuntimeSessionController::stepController()
         return false;
     }
 
+    setPaused(true);
     emit logMessage(QStringLiteral("[%1] 控制器单步执行")
                     .arg(QDateTime::currentDateTime().toString(QStringLiteral("HH:mm:ss"))));
     return true;

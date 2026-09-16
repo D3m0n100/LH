@@ -89,6 +89,47 @@ QLabel#GlobalStatusItem[state="error"] {
 QLabel#GlobalStatusItem[state="muted"] {
     color: #5f6a72;
 }
+QStatusBar QWidget#GlobalStatusBar {
+    background: transparent;
+}
+QStatusBar QLabel#GlobalStatusItem {
+    color: #ffffff;
+    background: transparent;
+    border-right: 1px solid rgba(255, 255, 255, 0.25);
+    padding: 2px 8px;
+    font-weight: 600;
+}
+QStatusBar QLabel#GlobalStatusItem[state="active"] {
+    color: #fffb8f;
+}
+QStatusBar QLabel#GlobalStatusItem[state="success"] {
+    color: #dff6dd;
+}
+QStatusBar QLabel#GlobalStatusItem[state="warning"] {
+    color: #ffe066;
+}
+QStatusBar QLabel#GlobalStatusItem[state="error"] {
+    color: #ffcccc;
+}
+QStatusBar QLabel#GlobalStatusItem[state="muted"] {
+    color: #d0e6f8;
+}
+QStatusBar QLabel#GlobalStatusProblemItem:hover,
+QStatusBar QLabel#GlobalStatusAlarmItem:hover {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 3px;
+}
+QStatusBar QToolButton#GlobalStatusDetailsToggle {
+    color: #ffffff;
+    background: transparent;
+    border: none;
+    padding: 2px 6px;
+    font-weight: 600;
+}
+QStatusBar QToolButton#GlobalStatusDetailsToggle:hover {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 3px;
+}
 QDockWidget::title {
     background: #f3f3f3;
     padding: 5px 8px;
@@ -215,6 +256,84 @@ QMenu::item {
 QMenu::item:selected {
     background: #e8f3ff;
     color: #1f1f1f;
+}
+QGroupBox {
+    border: 1px solid #d0d7de;
+    border-radius: 6px;
+    margin-top: 10px;
+    padding: 12px 10px 10px 10px;
+    background: #ffffff;
+    font-weight: 600;
+    color: #24292f;
+}
+QGroupBox::title {
+    subcontrol-origin: margin;
+    subcontrol-position: top left;
+    left: 8px;
+    padding: 0 4px;
+    background: #ffffff;
+    color: #24292f;
+}
+QPushButton:focus, QToolButton:focus {
+    border-color: #007acc;
+}
+QLabel[badgeState="success"] {
+    color: #116329;
+    background: #dafbe1;
+    border: 1px solid #aceebb;
+    border-radius: 4px;
+    padding: 2px 8px;
+    font-weight: bold;
+}
+QLabel[badgeState="warning"] {
+    color: #7d4e00;
+    background: #fff8c5;
+    border: 1px solid #f0d98c;
+    border-radius: 4px;
+    padding: 2px 8px;
+    font-weight: bold;
+}
+QLabel[badgeState="error"] {
+    color: #cf222e;
+    background: #ffebe9;
+    border: 1px solid #ff8182;
+    border-radius: 4px;
+    padding: 2px 8px;
+    font-weight: bold;
+}
+QLabel[badgeState="muted"], QLabel[badgeState="idle"] {
+    color: #57606a;
+    background: #f6f8fa;
+    border: 1px solid #d0d7de;
+    border-radius: 4px;
+    padding: 2px 8px;
+    font-weight: bold;
+}
+QScrollBar:vertical {
+    background: #f3f3f3;
+    width: 8px;
+    margin: 0px;
+}
+QScrollBar::handle:vertical {
+    background: #c8c8c8;
+    min-height: 20px;
+    border-radius: 4px;
+}
+QScrollBar::handle:vertical:hover {
+    background: #a0a0a0;
+}
+QScrollBar:horizontal {
+    background: #f3f3f3;
+    height: 8px;
+    margin: 0px;
+}
+QScrollBar::handle:horizontal {
+    background: #c8c8c8;
+    min-width: 20px;
+    border-radius: 4px;
+}
+QScrollBar::handle:horizontal:hover {
+    background: #a0a0a0;
 }
 )");
 }

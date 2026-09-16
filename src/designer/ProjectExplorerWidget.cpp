@@ -166,6 +166,10 @@ void ProjectExplorerWidget::setupConnections()
 {
     connect(m_treeView, &QTreeView::doubleClicked,
             this, &ProjectExplorerWidget::onItemDoubleClicked);
+    if (m_treeView->selectionModel()) {
+        connect(m_treeView->selectionModel(), &QItemSelectionModel::currentChanged,
+                this, &ProjectExplorerWidget::onCurrentItemChanged);
+    }
     connect(m_searchEdit, &QLineEdit::textChanged,
             this, &ProjectExplorerWidget::onFilterTextChanged);
     connect(m_refreshButton, &QToolButton::clicked,
@@ -306,6 +310,24 @@ void ProjectExplorerWidget::onItemDoubleClicked(const QModelIndex& index)
     }
 
     emit fileOpenRequested(info.absoluteFilePath());
+}
+
+void ProjectExplorerWidget::onCurrentItemChanged(const QModelIndex& current, const QModelIndex& previous)
+{
+    Q_UNUSED(previous);
+    if (!current.isValid() || !m_proxyModel || !m_fileSystemModel) {
+        return;
+    }
+
+    const QModelIndex sourceIndex = m_proxyModel->mapToSource(current);
+    if (!sourceIndex.isValid()) {
+        return;
+    }
+
+    const QFileInfo info = m_fileSystemModel->fileInfo(sourceIndex);
+    if (info.exists() && !info.isDir()) {
+        emit fileSelected(info.absoluteFilePath());
+    }
 }
 
 void ProjectExplorerWidget::onFilterTextChanged(const QString& text)

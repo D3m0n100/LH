@@ -43,27 +43,12 @@ bool MainWindow::applyRuntimeConfigToMonitor()
 
 void MainWindow::onToggleMonitorDock(bool checked)
 {
-    if (m_workspaceTabs && m_workspaceMonitorPage) {
-        if (checked) {
-            m_workspaceTabs->setCurrentWidget(m_workspaceMonitorPage);
-        } else if (m_workspaceDslPage) {
-            m_workspaceTabs->setCurrentWidget(m_workspaceDslPage);
-        }
-    } else if (m_monitorDock) {
-        m_monitorDock->setVisible(checked);
-    }
+    switchToWorkspace(checked ? WorkspaceId::Monitor : WorkspaceId::Programming);
 }
 
 void MainWindow::onOpenMonitor()
 {
-    if (m_workspaceTabs && m_workspaceMonitorPage) {
-        m_workspaceTabs->setCurrentWidget(m_workspaceMonitorPage);
-    } else if (m_monitorDock) {
-        m_monitorDock->setVisible(true);
-    }
-    if (m_actToggleMonitorDock) {
-        m_actToggleMonitorDock->setChecked(true);
-    }
+    switchToWorkspace(WorkspaceId::Monitor);
 
     const bool demoWasActive = m_demoModeActive;
     startDemoModeIfNeeded(QStringLiteral("打开监控"));

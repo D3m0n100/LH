@@ -1,4 +1,4 @@
-﻿#include "ProblemsPanel.h"
+#include "ProblemsPanel.h"
 
 #include <QAbstractItemView>
 #include <QColor>
@@ -168,6 +168,28 @@ void ProblemsPanel::clearProblems()
     m_infoCount = 0;
     updateSummaryLabels();
     emit problemCountChanged(0);
+}
+
+void ProblemsPanel::selectFirstError()
+{
+    if (!m_table) {
+        return;
+    }
+    for (int row = 0; row < m_table->rowCount(); ++row) {
+        auto* item = m_table->item(row, 1);
+        if (item && item->text() == QStringLiteral("错误")) {
+            m_table->selectRow(row);
+            m_table->scrollToItem(item, QAbstractItemView::PositionAtCenter);
+            return;
+        }
+    }
+    if (m_table->rowCount() > 0) {
+        m_table->selectRow(0);
+        auto* item = m_table->item(0, 0);
+        if (item) {
+            m_table->scrollToItem(item, QAbstractItemView::PositionAtCenter);
+        }
+    }
 }
 
 int ProblemsPanel::problemCount() const

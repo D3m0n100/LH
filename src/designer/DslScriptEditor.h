@@ -236,6 +236,9 @@ public:
     /// 跳转到指定行（行号从 1 开始）
     void gotoLine(int lineNumber);
 
+    /// 向脚本中插入一段 DSL 模板
+    void insertSnippet(const QString& text);
+
 
     // ===== DSL 映射稳定（插入标记法） =====
 
@@ -375,9 +378,6 @@ private:
     void initCompletion();
     /// 连接模块信号
     void connectModuleSignals();
-
-    /// 向脚本中插入一段 DSL 模板
-    void insertSnippet(const QString& text);
 
     // ===== 自动补全相关 =====
     bool eventFilter(QObject* obj, QEvent* event) override;

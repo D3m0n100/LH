@@ -71,6 +71,8 @@ public:
     bool isRunning() const { return m_state == RuntimeSessionState::Running
                                     || m_state == RuntimeSessionState::Monitoring; }
     bool isMonitoring() const { return m_state == RuntimeSessionState::Monitoring; }
+    bool isPaused() const { return m_isPaused; }
+    void setPaused(bool paused);
     bool isDemoMode() const { return m_demoModeActive; }
     bool hasPendingRunAfterCompile() const { return m_pendingRunAfterCompile; }
     QString artifactPath() const { return m_artifactPath; }
@@ -113,6 +115,7 @@ signals:
     void downloadDiagnosticChanged(const QVariantMap& diagnostic);
     void opcRunningChanged(bool running);
     void opcErrorOccurred(const QString& message);
+    void pausedChanged(bool paused);
 
 private:
     void finishRunStart();
@@ -156,6 +159,7 @@ private:
     RuntimeSessionState m_state = RuntimeSessionState::Idle;
     DownloadState m_downloadState = DownloadState::Idle;
     bool m_demoModeActive = false;
+    bool m_isPaused = false;
     bool m_pendingRunAfterCompile = false;
     bool m_pendingRunAfterDownload = false;
     bool m_skipNextBuildSave = false;

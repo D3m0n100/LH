@@ -9,6 +9,7 @@
 // - 格式选择通过文件对话框过滤器实现
 #include "MonitorWidget.h"
 #include "MonitorChartView.h"
+#include "ChartWidget.h"
 #include "MonitorDataProcessor.h"
 #include "MonitorManager.h"
 #include "SampleDataProvider.h"
@@ -27,6 +28,11 @@
 #include <QLabel>
 #include <QComboBox>
 #include <QSpinBox>
+#include <QLineEdit>
+#include <QCheckBox>
+#include <QToolButton>
+#include <QMenu>
+#include <QWidgetAction>
 #include <QHeaderView>
 #include <QDateTime>
 #include <QDebug>
@@ -47,6 +53,8 @@ MonitorWidget::MonitorWidget(QWidget* parent)
     , m_splitter(nullptr)
     , m_channelPanel(nullptr)
     , m_channelPanelLayout(nullptr)
+    , m_channelSearchEdit(nullptr)
+    , m_onlySelectedCheckBox(nullptr)
     , m_channelListWidget(nullptr)
     , m_selectAllButton(nullptr)
     , m_deselectAllButton(nullptr)
@@ -62,6 +70,10 @@ MonitorWidget::MonitorWidget(QWidget* parent)
     , m_controlBarLayout(nullptr)
     , m_startStopButton(nullptr)
     , m_clearButton(nullptr)
+    , m_tuneButton(nullptr)
+    , m_exportButton(nullptr)
+    , m_displaySettingsButton(nullptr)
+    , m_toggleDetailsButton(nullptr)
     , m_timeWindowCombo(nullptr)
     , m_fpsSpinBox(nullptr)
     , m_statsLabel(nullptr)
@@ -130,7 +142,7 @@ void MonitorWidget::setupUI()
 
     m_mainLayout = new QVBoxLayout(this);
     m_mainLayout->setContentsMargins(0, 0, 0, 0);
-    m_mainLayout->setSpacing(6);
+    m_mainLayout->setSpacing(4);
 
     setupMainContent();
     setupControlBar();
@@ -142,10 +154,11 @@ void MonitorWidget::setupChannelPanel()
     m_channelPanel->setObjectName("MonitorChannelPanel");
     m_channelPanel->setMinimumWidth(180);
     m_channelPanel->setMaximumWidth(280);
+    m_channelPanel->setMinimumHeight(150);
 
     m_channelPanelLayout = new QVBoxLayout(m_channelPanel);
-    m_channelPanelLayout->setContentsMargins(8, 8, 8, 8);
-    m_channelPanelLayout->setSpacing(8);
+    m_channelPanelLayout->setContentsMargins(6, 4, 6, 4);
+    m_channelPanelLayout->setSpacing(4);
 
     // 鏍囬
     QLabel* titleLabel = new QLabel(tr("监控通道"));
@@ -169,6 +182,20 @@ void MonitorWidget::setupChannelPanel()
 
     m_channelPanelLayout->addLayout(buttonLayout);
 
+    m_channelSearchEdit = new QLineEdit(m_channelPanel);
+    m_channelSearchEdit->setObjectName(QStringLiteral("MonitorChannelSearchEdit"));
+    m_channelSearchEdit->setPlaceholderText(tr("搜索通道..."));
+    m_channelSearchEdit->setClearButtonEnabled(true);
+    connect(m_channelSearchEdit, &QLineEdit::textChanged,
+            this, &MonitorWidget::onFilterChannelList);
+    m_channelPanelLayout->addWidget(m_channelSearchEdit);
+
+    m_onlySelectedCheckBox = new QCheckBox(tr("仅显示已选"), m_channelPanel);
+    m_onlySelectedCheckBox->setObjectName(QStringLiteral("MonitorOnlySelectedCheckBox"));
+    connect(m_onlySelectedCheckBox, &QCheckBox::toggled,
+            this, &MonitorWidget::onFilterChannelList);
+    m_channelPanelLayout->addWidget(m_onlySelectedCheckBox);
+
     // 通道列表
     m_channelListWidget = new QListWidget();
     m_channelListWidget->setSelectionMode(QAbstractItemView::NoSelection);
@@ -187,6 +214,7 @@ void MonitorWidget::setupChannelPanel()
 void MonitorWidget::setupMainContent()
 {
     m_splitter = new QSplitter(Qt::Horizontal);
+    m_splitter->setMinimumHeight(150);
 
     // 左侧通道面板
     setupChannelPanel();
@@ -199,7 +227,9 @@ void MonitorWidget::setupMainContent()
 
     // 右侧：数据 / 告警 Tab
     m_rightTabWidget = new QTabWidget();
+    m_rightTabWidget->setObjectName(QStringLiteral("MonitorRightTabWidget"));
     m_rightTabWidget->setMaximumWidth(320);
+    m_rightTabWidget->setVisible(false); // 默认收起详情面板
 
     // ---- 数据 Tab ----
     QWidget* dataTab = new QWidget();
@@ -289,6 +319,8 @@ void MonitorWidget::onThresholdExceeded(const QString& channelName, double value
     if (m_alarmCountLabel) {
         m_alarmCountLabel->setText(tr("告警: %1").arg(m_alarmTable->rowCount()));
     }
+    updateDetailsButtonText();
+    emit alarmCountChanged(m_alarmTable->rowCount());
 }
 
 void MonitorWidget::onClearAlarmsClicked()
@@ -300,34 +332,111 @@ void MonitorWidget::onClearAlarmsClicked()
     if (m_alarmCountLabel) {
         m_alarmCountLabel->setText(tr("告警: 0"));
     }
+    updateDetailsButtonText();
+    emit alarmCountChanged(0);
+}
+
+int MonitorWidget::alarmCount() const
+{
+    return m_alarmTable ? m_alarmTable->rowCount() : 0;
+}
+
+void MonitorWidget::showAlarmTab()
+{
+    if (!m_rightTabWidget) {
+        return;
+    }
+    setDetailsPanelVisible(true);
+    for (int i = 0; i < m_rightTabWidget->count(); ++i) {
+        if (m_rightTabWidget->tabText(i) == tr("告警")) {
+            m_rightTabWidget->setCurrentIndex(i);
+            break;
+        }
+    }
+}
+
+bool MonitorWidget::isDetailsPanelVisible() const
+{
+    return m_rightTabWidget ? m_rightTabWidget->isVisible() : false;
+}
+
+void MonitorWidget::setDetailsPanelVisible(bool visible)
+{
+    if (m_toggleDetailsButton) {
+        m_toggleDetailsButton->setChecked(visible);
+    }
+    if (m_rightTabWidget) {
+        m_rightTabWidget->setVisible(visible);
+    }
+    updateDetailsButtonText();
+}
+
+void MonitorWidget::onToggleDetailsClicked(bool checked)
+{
+    if (m_rightTabWidget) {
+        m_rightTabWidget->setVisible(checked);
+    }
+    updateDetailsButtonText();
+}
+
+void MonitorWidget::updateDetailsButtonText()
+{
+    if (!m_toggleDetailsButton) {
+        return;
+    }
+    const int count = alarmCount();
+    const QString arrow = (m_rightTabWidget && m_rightTabWidget->isVisible()) ? QStringLiteral("◂") : QStringLiteral("▸");
+    m_toggleDetailsButton->setText(tr("详情 %1 (告警: %2)").arg(arrow).arg(count));
+}
+
+void MonitorWidget::onFilterChannelList()
+{
+    const QString query = m_channelSearchEdit ? m_channelSearchEdit->text().trimmed().toLower() : QString();
+    const bool onlySelected = m_onlySelectedCheckBox && m_onlySelectedCheckBox->isChecked();
+
+    for (int i = 0; i < m_channelListWidget->count(); ++i) {
+        QListWidgetItem* item = m_channelListWidget->item(i);
+        const QString channelId = item->data(Qt::UserRole).toString().toLower();
+        const QString channelText = item->text().toLower();
+        const bool matchQuery = query.isEmpty() || channelId.contains(query) || channelText.contains(query);
+        const bool matchSelected = !onlySelected || (item->checkState() == Qt::Checked);
+        item->setHidden(!(matchQuery && matchSelected));
+    }
+    updateChannelCountLabel();
 }
 
 void MonitorWidget::setupControlBar()
 {
     m_controlBar = new QWidget();
-    m_controlBarLayout = new QHBoxLayout(m_controlBar);
     m_controlBar->setObjectName("MonitorControlBar");
+    m_controlBar->setMinimumHeight(44);
+    m_controlBarLayout = new QHBoxLayout(m_controlBar);
     m_controlBarLayout->setContentsMargins(8, 6, 8, 6);
     m_controlBarLayout->setSpacing(8);
 
-    m_startStopButton = new QPushButton(tr("开始监控"));
+    m_startStopButton = new QPushButton(tr("开始监控"), m_controlBar);
+    m_startStopButton->setObjectName(QStringLiteral("MonitorStartStopButton"));
     m_startStopButton->setFixedWidth(100);
+    m_startStopButton->setToolTip(tr("启动/停止图表数据监控采集（不影响控制器运行）"));
     connect(m_startStopButton, &QPushButton::clicked,
             this, &MonitorWidget::onStartStopClicked);
     m_controlBarLayout->addWidget(m_startStopButton);
 
-    m_clearButton = new QPushButton(tr("清空数据"));
+    m_clearButton = new QPushButton(tr("清空显示"), m_controlBar);
+    m_clearButton->setObjectName(QStringLiteral("MonitorClearDisplayButton"));
     m_clearButton->setFixedWidth(80);
+    m_clearButton->setToolTip(tr("清空当前图表和表格的实时显示数据（不影响已保存的数据库历史记录）"));
     connect(m_clearButton, &QPushButton::clicked,
             this, &MonitorWidget::onClearClicked);
     m_controlBarLayout->addWidget(m_clearButton);
 
-    m_controlBarLayout->addSpacing(20);
+    m_controlBarLayout->addSpacing(12);
 
-    QLabel* windowLabel = new QLabel(tr("时间窗口:"));
+    QLabel* windowLabel = new QLabel(tr("时间窗口:"), m_controlBar);
     m_controlBarLayout->addWidget(windowLabel);
 
-    m_timeWindowCombo = new QComboBox();
+    m_timeWindowCombo = new QComboBox(m_controlBar);
+    m_timeWindowCombo->setObjectName(QStringLiteral("MonitorTimeWindowCombo"));
     m_timeWindowCombo->addItem(tr("10 秒"), 10000);
     m_timeWindowCombo->addItem(tr("30 秒"), 30000);
     m_timeWindowCombo->addItem(tr("1 分钟"), 60000);
@@ -337,23 +446,69 @@ void MonitorWidget::setupControlBar()
             this, &MonitorWidget::onTimeWindowChanged);
     m_controlBarLayout->addWidget(m_timeWindowCombo);
 
-    m_controlBarLayout->addSpacing(20);
+    m_tuneButton = new QPushButton(tr("调参"), m_controlBar);
+    m_tuneButton->setObjectName(QStringLiteral("MonitorTuneButton"));
+    m_tuneButton->setFixedWidth(70);
+    m_tuneButton->setToolTip(tr("打开参数整定面板"));
+    connect(m_tuneButton, &QPushButton::clicked,
+            this, &MonitorWidget::requestOpenParameterTuning);
+    m_controlBarLayout->addWidget(m_tuneButton);
 
-    QLabel* fpsLabel = new QLabel(tr("刷新率:"));
-    m_controlBarLayout->addWidget(fpsLabel);
+    // 导出按钮及下拉菜单
+    m_exportButton = new QToolButton(m_controlBar);
+    m_exportButton->setObjectName(QStringLiteral("MonitorExportButton"));
+    m_exportButton->setText(tr("导出"));
+    m_exportButton->setPopupMode(QToolButton::InstantPopup);
+    QMenu* exportMenu = new QMenu(m_exportButton);
+    QAction* actExportData = exportMenu->addAction(tr("导出监控数据 (CSV/JSON/TSV)..."));
+    connect(actExportData, &QAction::triggered, this, &MonitorWidget::onExportData);
+    QAction* actExportImg = exportMenu->addAction(tr("导出当前图表为图片..."));
+    connect(actExportImg, &QAction::triggered, this, &MonitorWidget::exportCurrentChartImage);
+    m_exportButton->setMenu(exportMenu);
+    m_controlBarLayout->addWidget(m_exportButton);
 
-    m_fpsSpinBox = new QSpinBox();
+    // 显示设置（包含刷新率与统计）
+    m_displaySettingsButton = new QToolButton(m_controlBar);
+    m_displaySettingsButton->setObjectName(QStringLiteral("MonitorDisplaySettingsButton"));
+    m_displaySettingsButton->setText(tr("显示设置"));
+    m_displaySettingsButton->setPopupMode(QToolButton::InstantPopup);
+    QMenu* displayMenu = new QMenu(m_displaySettingsButton);
+
+    QWidget* fpsWidget = new QWidget(displayMenu);
+    QHBoxLayout* fpsLayout = new QHBoxLayout(fpsWidget);
+    fpsLayout->setContentsMargins(8, 4, 8, 4);
+    fpsLayout->setSpacing(6);
+    QLabel* fpsLabel = new QLabel(tr("刷新率:"), fpsWidget);
+    m_fpsSpinBox = new QSpinBox(fpsWidget);
     m_fpsSpinBox->setRange(1, 60);
     m_fpsSpinBox->setValue(25);
     m_fpsSpinBox->setSuffix(" FPS");
     connect(m_fpsSpinBox, QOverload<int>::of(&QSpinBox::valueChanged),
             this, &MonitorWidget::onFpsChanged);
-    m_controlBarLayout->addWidget(m_fpsSpinBox);
+    fpsLayout->addWidget(fpsLabel);
+    fpsLayout->addWidget(m_fpsSpinBox);
+    QWidgetAction* fpsAction = new QWidgetAction(displayMenu);
+    fpsAction->setDefaultWidget(fpsWidget);
+    displayMenu->addAction(fpsAction);
+
+    m_displaySettingsButton->setMenu(displayMenu);
+    m_controlBarLayout->addWidget(m_displaySettingsButton);
 
     m_controlBarLayout->addStretch();
 
-    m_statsLabel = new QLabel(tr("就绪"));
+    // 详情折叠按钮（始终展示告警数量）
+    m_toggleDetailsButton = new QPushButton(tr("详情 ▸ (告警: 0)"), m_controlBar);
+    m_toggleDetailsButton->setObjectName(QStringLiteral("MonitorToggleDetailsButton"));
+    m_toggleDetailsButton->setToolTip(tr("展开/折叠右侧数据与告警详情"));
+    m_toggleDetailsButton->setCheckable(true);
+    m_toggleDetailsButton->setChecked(false);
+    connect(m_toggleDetailsButton, &QPushButton::toggled,
+            this, &MonitorWidget::onToggleDetailsClicked);
+    m_controlBarLayout->addWidget(m_toggleDetailsButton);
+
+    m_statsLabel = new QLabel(tr("就绪"), m_controlBar);
     m_statsLabel->setObjectName("MonitorMetaLabel");
+    m_statsLabel->setVisible(false);
     m_controlBarLayout->addWidget(m_statsLabel);
 
     m_mainLayout->addWidget(m_controlBar);
@@ -967,7 +1122,10 @@ void MonitorWidget::onClearClicked()
     if (m_dataProcessor) {
         m_dataProcessor->clearAllCache();
     }
-    qDebug() << "[MonitorWidget] Data cleared.";
+    if (m_dataTable) {
+        m_dataTable->setRowCount(0);
+    }
+    qDebug() << "[MonitorWidget] 仅清空图表与表格显示，数据库历史记录保留。";
 }
 
 void MonitorWidget::onChannelItemChanged(QListWidgetItem* item)
@@ -977,7 +1135,11 @@ void MonitorWidget::onChannelItemChanged(QListWidgetItem* item)
     }
 
     syncChannelSelectionToChart();
-    updateChannelCountLabel();
+    if (m_onlySelectedCheckBox && m_onlySelectedCheckBox->isChecked()) {
+        onFilterChannelList();
+    } else {
+        updateChannelCountLabel();
+    }
 
     QString channelId = item->data(Qt::UserRole).toString();
     bool visible = (item->checkState() == Qt::Checked);
@@ -1068,14 +1230,31 @@ void MonitorWidget::refreshChannelList()
 
     m_updatingChannelList = false;
     syncChannelSelectionToChart();
-    updateChannelCountLabel();
+    onFilterChannelList();
 }
 
 void MonitorWidget::updateChannelCountLabel()
 {
-    int selected = selectedChannels().size();
-    int total = m_channelListWidget->count();
-    m_channelCountLabel->setText(tr("已选择: %1/%2").arg(selected).arg(total));
+    if (!m_channelCountLabel || !m_channelListWidget) {
+        return;
+    }
+    int selected = 0;
+    int visible = 0;
+    const int total = m_channelListWidget->count();
+    for (int i = 0; i < total; ++i) {
+        QListWidgetItem* item = m_channelListWidget->item(i);
+        if (item->checkState() == Qt::Checked) {
+            selected++;
+        }
+        if (!item->isHidden()) {
+            visible++;
+        }
+    }
+    if (visible == total) {
+        m_channelCountLabel->setText(tr("已选择: %1/%2").arg(selected).arg(total));
+    } else {
+        m_channelCountLabel->setText(tr("已选择: %1/%2 (显示: %3)").arg(selected).arg(total).arg(visible));
+    }
 }
 
 void MonitorWidget::updateStatsDisplay()
@@ -1124,4 +1303,19 @@ void MonitorWidget::updateDataTableRow(const QString& channelName,
     m_dataTable->setItem(row, 0, new QTableWidgetItem(channelName));
     m_dataTable->setItem(row, 1, new QTableWidgetItem(QString::number(value, 'f', 2)));
     m_dataTable->setItem(row, 2, new QTableWidgetItem(unit));
+}
+
+int MonitorWidget::minimumReadableHeight() const
+{
+    int chartMin = 160;
+    if (m_chartView && m_chartView->chartWidget()) {
+        chartMin += m_chartView->chartWidget()->toolbarHeight();
+    } else {
+        chartMin += 34;
+    }
+    const int panelMin = m_channelPanel ? m_channelPanel->minimumHeight() : 150;
+    const int contentMin = qMax(panelMin, chartMin);
+    const int controlBarH = m_controlBar ? m_controlBar->minimumHeight() : 44;
+    const int spacing = m_mainLayout ? m_mainLayout->spacing() : 4;
+    return contentMin + controlBarH + spacing;
 }

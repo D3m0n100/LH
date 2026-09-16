@@ -1,4 +1,4 @@
-﻿#include "InspectorPanel.h"
+#include "InspectorPanel.h"
 #include "ParameterController.h"
 #include "StatusTextHelper.h"
 
@@ -126,8 +126,8 @@ void configureParameterTable(QTableWidget* table, bool inspectionMode)
               QStringLiteral("偏差")}
         : QStringList{
               QStringLiteral("名称"),
-              QStringLiteral("默认值"),
-              QStringLiteral("当前值"),
+              QStringLiteral("已读取值"),
+              QStringLiteral("待应用值"),
               QStringLiteral("状态"),
               QStringLiteral("确认"),
               QStringLiteral("回读"),
@@ -140,7 +140,7 @@ void configureParameterTable(QTableWidget* table, bool inspectionMode)
                                                                       : QHeaderView::ResizeToContents);
     for (int column = 4; column < table->columnCount(); ++column) {
         table->horizontalHeader()->setSectionResizeMode(column, QHeaderView::ResizeToContents);
-        table->setColumnHidden(column, inspectionMode);
+        table->setColumnHidden(column, true);
     }
     for (int column = 0; column < 4; ++column) {
         table->setColumnHidden(column, false);
@@ -266,29 +266,14 @@ QToolButton:pressed {
     m_parameterTable->setAlternatingRowColors(true);
     m_parameterTable->setTextElideMode(Qt::ElideRight);
     m_parameterTable->setMinimumHeight(80);
-    m_stateGroup = new QGroupBox(QStringLiteral("状态概览"), content);
-    auto* stateGroupLayout = new QVBoxLayout(m_stateGroup);
-    stateGroupLayout->setContentsMargins(6, 2, 6, 6);
-    stateGroupLayout->setSpacing(6);
 
-    auto* stateLayout = new QGridLayout();
-    stateLayout->setContentsMargins(0, 0, 0, 0);
-    stateLayout->setHorizontalSpacing(4);
-    stateLayout->setVerticalSpacing(4);
-    stateLayout->addWidget(new QLabel(QStringLiteral("运行"), this), 0, 0);
-    stateLayout->addWidget(m_runtimeValue, 0, 1);
-    stateLayout->addWidget(new QLabel(QStringLiteral("构建"), this), 0, 2);
-    stateLayout->addWidget(m_buildValue, 0, 3);
-    stateLayout->addWidget(new QLabel(QStringLiteral("监控"), this), 1, 0);
-    stateLayout->addWidget(m_monitorValue, 1, 1);
-    stateLayout->addWidget(new QLabel(QStringLiteral("OPC"), this), 1, 2);
-    stateLayout->addWidget(m_opcValue, 1, 3);
-    stateLayout->addWidget(new QLabel(QStringLiteral("下载"), this), 2, 0);
-    stateLayout->addWidget(m_downloadValue, 2, 1, 1, 3);
-    stateLayout->setColumnStretch(1, 1);
-    stateLayout->setColumnStretch(3, 1);
-    stateGroupLayout->addLayout(stateLayout);
-    contentLayout->addWidget(m_stateGroup);
+    // U04: 右侧属性面板移除重复全局概览，仅保留项目上下文与参数检查
+    m_stateGroup = nullptr;
+    m_runtimeValue = nullptr;
+    m_buildValue = nullptr;
+    m_monitorValue = nullptr;
+    m_downloadValue = nullptr;
+    m_opcValue = nullptr;
 
     m_contextGroup = new QGroupBox(QStringLiteral("项目上下文"), content);
     auto* contextLayout = new QVBoxLayout(m_contextGroup);
@@ -321,6 +306,46 @@ QToolButton:pressed {
     summaryLayout->setColumnStretch(1, 1);
     contextLayout->addLayout(summaryLayout);
     contentLayout->addWidget(m_contextGroup);
+    m_contextGroup->setVisible(false);
+
+    m_selectionHintLabel = new QLabel(QStringLiteral("未选择任何对象。\n可在项目树、函数库或参数列表中选中项以查看其详细属性。"), content);
+    m_selectionHintLabel->setWordWrap(true);
+    m_selectionHintLabel->setAlignment(Qt::AlignCenter);
+    m_selectionHintLabel->setStyleSheet(QStringLiteral("QLabel { color: #57606a; padding: 16px 8px; font-size: 12px; }"));
+    contentLayout->addWidget(m_selectionHintLabel);
+
+    m_selectedGroup = new QGroupBox(QStringLiteral("选中对象属性"), content);
+    auto* selLayout = new QVBoxLayout(m_selectedGroup);
+    selLayout->setContentsMargins(6, 4, 6, 6);
+    selLayout->setSpacing(6);
+
+    auto* selHeaderLayout = new QGridLayout();
+    selHeaderLayout->setContentsMargins(0, 0, 0, 0);
+    selHeaderLayout->setHorizontalSpacing(6);
+    selHeaderLayout->setVerticalSpacing(4);
+    selHeaderLayout->addWidget(makeCaptionLabel(QStringLiteral("类型"), this), 0, 0);
+    m_selectedTypeValue = makeElidedValueLabel(this);
+    selHeaderLayout->addWidget(m_selectedTypeValue, 0, 1);
+    selHeaderLayout->addWidget(makeCaptionLabel(QStringLiteral("名称"), this), 1, 0);
+    m_selectedNameValue = makeElidedValueLabel(this);
+    selHeaderLayout->addWidget(m_selectedNameValue, 1, 1);
+    selHeaderLayout->setColumnStretch(1, 1);
+    selLayout->addLayout(selHeaderLayout);
+
+    m_selectedPropsTable = new QTableWidget(this);
+    m_selectedPropsTable->setColumnCount(2);
+    m_selectedPropsTable->setHorizontalHeaderLabels({QStringLiteral("属性"), QStringLiteral("值")});
+    m_selectedPropsTable->horizontalHeader()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
+    m_selectedPropsTable->horizontalHeader()->setSectionResizeMode(1, QHeaderView::Stretch);
+    m_selectedPropsTable->verticalHeader()->setVisible(false);
+    m_selectedPropsTable->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    m_selectedPropsTable->setSelectionMode(QAbstractItemView::NoSelection);
+    m_selectedPropsTable->setAlternatingRowColors(true);
+    m_selectedPropsTable->setMinimumHeight(110);
+    selLayout->addWidget(m_selectedPropsTable);
+
+    contentLayout->addWidget(m_selectedGroup);
+    m_selectedGroup->setVisible(false);
 
     m_paramGroup = new QGroupBox(QStringLiteral("参数检查"), content);
     auto* paramLayout = new QVBoxLayout(m_paramGroup);
@@ -330,6 +355,24 @@ QToolButton:pressed {
     m_paramHint->setStyleSheet("QLabel { color: #57606a; }");
     paramLayout->addWidget(m_paramHint);
     paramLayout->addWidget(m_parameterTable, 1);
+    connect(m_parameterTable, &QTableWidget::itemSelectionChanged,
+            this, &InspectorPanel::onParameterSelectionChanged);
+
+    m_toggleDetailColumnsButton = new QPushButton(QStringLiteral("展开明细列 ▸"), this);
+    m_toggleDetailColumnsButton->setObjectName(QStringLiteral("ToggleDetailColumnsButton"));
+    m_toggleDetailColumnsButton->setCheckable(true);
+    m_toggleDetailColumnsButton->setChecked(false);
+    m_toggleDetailColumnsButton->setMinimumHeight(28);
+    m_toggleDetailColumnsButton->setStyleSheet(QStringLiteral(
+        "QPushButton { background: #f6f8fa; border: 1px solid #d0d7de; border-radius: 4px; padding: 4px 8px; color: #57606a; font-size: 12px; }"
+        "QPushButton:hover { background: #eaeef2; color: #24292f; }"
+        "QPushButton:checked { background: #ddf4ff; border-color: #54aeff; color: #0969da; }"
+    ));
+    connect(m_toggleDetailColumnsButton, &QPushButton::toggled, this, [this](bool checked) {
+        setDetailColumnsVisible(checked);
+    });
+    paramLayout->addWidget(m_toggleDetailColumnsButton);
+
     m_parameterEditButton = makeActionButton(QStringLiteral("编辑选中参数"), ":/icons/settings.svg", this);
     connect(m_parameterEditButton, &QToolButton::clicked, this, [this]() {
         if (!m_parameterTable || !m_parameterTable->currentItem()) {
@@ -342,6 +385,32 @@ QToolButton:pressed {
     connect(m_applyParametersButton, &QToolButton::clicked, this, &InspectorPanel::requestApplyParameters);
     paramLayout->addWidget(m_applyParametersButton);
     contentLayout->addWidget(m_paramGroup, 1);
+
+    clearSelection();
+}
+
+bool InspectorPanel::areDetailColumnsVisible() const
+{
+    if (!m_parameterTable || m_parameterTable->columnCount() <= 4) {
+        return false;
+    }
+    return !m_parameterTable->isColumnHidden(4);
+}
+
+void InspectorPanel::setDetailColumnsVisible(bool visible)
+{
+    if (!m_parameterTable) {
+        return;
+    }
+    for (int col = 4; col < m_parameterTable->columnCount(); ++col) {
+        m_parameterTable->setColumnHidden(col, !visible);
+    }
+    if (m_toggleDetailColumnsButton) {
+        m_toggleDetailColumnsButton->blockSignals(true);
+        m_toggleDetailColumnsButton->setChecked(visible);
+        m_toggleDetailColumnsButton->setText(visible ? QStringLiteral("收起明细列 ◂") : QStringLiteral("展开明细列 ▸"));
+        m_toggleDetailColumnsButton->blockSignals(false);
+    }
 }
 
 void InspectorPanel::setPanelMode(PanelMode mode)
@@ -357,6 +426,9 @@ void InspectorPanel::setPanelMode(PanelMode mode)
     if (m_paramGroup) {
         m_paramGroup->setTitle(inspectionMode ? QStringLiteral("参数检查") : QStringLiteral("PID 参数"));
     }
+    if (m_toggleDetailColumnsButton) {
+        m_toggleDetailColumnsButton->setVisible(!inspectionMode);
+    }
     if (m_parameterEditButton) {
         m_parameterEditButton->setText(inspectionMode ? QStringLiteral("编辑选中参数")
                                                       : QStringLiteral("编辑选中 PID 参数"));
@@ -371,6 +443,7 @@ void InspectorPanel::setPanelMode(PanelMode mode)
         m_paramHint->setVisible(!inspectionMode);
     }
     configureParameterTable(m_parameterTable, inspectionMode);
+    setDetailColumnsVisible(false);
     refreshParameterTable();
 }
 
@@ -406,6 +479,9 @@ void InspectorPanel::setWorkspaceName(const QString& workspaceName)
 
 void InspectorPanel::setRuntimeState(const QString& runtimeState)
 {
+    if (!m_runtimeValue) {
+        return;
+    }
     const QString state = runtimeState.isEmpty() ? "-" : runtimeState;
     m_runtimeValue->setText(state);
     applyStateStyle(m_runtimeValue, state);
@@ -413,6 +489,9 @@ void InspectorPanel::setRuntimeState(const QString& runtimeState)
 
 void InspectorPanel::setBuildState(const QString& buildState)
 {
+    if (!m_buildValue) {
+        return;
+    }
     const QString state = buildState.isEmpty() ? "-" : buildState;
     m_buildValue->setText(state);
     applyStateStyle(m_buildValue, state);
@@ -420,6 +499,9 @@ void InspectorPanel::setBuildState(const QString& buildState)
 
 void InspectorPanel::setMonitoringState(const QString& monitoringState)
 {
+    if (!m_monitorValue) {
+        return;
+    }
     const QString state = monitoringState.isEmpty() ? "-" : monitoringState;
     m_monitorValue->setText(state);
     applyStateStyle(m_monitorValue, state);
@@ -427,6 +509,9 @@ void InspectorPanel::setMonitoringState(const QString& monitoringState)
 
 void InspectorPanel::setDownloadState(const QString& downloadState)
 {
+    if (!m_downloadValue) {
+        return;
+    }
     const QString state = downloadState.isEmpty() ? QStringLiteral("-") : downloadState;
     const QString shortState = state.section(QStringLiteral(" | "), 0, 0).trimmed();
     m_downloadValue->setText(shortState.isEmpty() ? QStringLiteral("-") : shortState);
@@ -436,6 +521,9 @@ void InspectorPanel::setDownloadState(const QString& downloadState)
 
 void InspectorPanel::setOpcState(const QString& opcState)
 {
+    if (!m_opcValue) {
+        return;
+    }
     const QString state = opcState.isEmpty() ? QStringLiteral("-") : opcState;
     const QString shortState = state.section(QStringLiteral(" | "), 0, 0).trimmed();
     m_opcValue->setText(shortState.isEmpty() ? QStringLiteral("-") : shortState);
@@ -528,32 +616,75 @@ void InspectorPanel::refreshParameterTable()
             m_parameterTable->setItem(row, 2, stateItem);
             m_parameterTable->setItem(row, 3, issueItem);
         } else {
-            // 状态列：优先使用 ParameterController 的状态
+            // 状态列：优先使用 ParameterController 的状态，并直接呈现错误与偏差原因
             QString stateText;
             bool stateIsError = false;
             auto stIt = m_parameterStateMap.constFind(p.name);
+            QString readText = QStringLiteral("未读取");
+            QString pendingText = QStringLiteral("-");
             if (stIt != m_parameterStateMap.constEnd()) {
+                if (!stIt->readbackValue.isEmpty()) {
+                    readText = stIt->readbackValue;
+                } else if (p.confirmed && !p.currentValue.isEmpty()) {
+                    readText = p.currentValue;
+                }
+
+                // 待应用值生命周期：确认成功或初始干净状态清除待应用标记，未应用/失败/超时保留以供重试
+                if (stIt->state == ParameterState::Confirmed || stIt->state == ParameterState::Clean) {
+                    pendingText = QStringLiteral("-");
+                } else if (!stIt->editedValue.isEmpty()) {
+                    pendingText = stIt->editedValue;
+                }
+
                 stateText = parameterStateText(stIt->state);
                 stateIsError = (stIt->state == ParameterState::Modified
                                 || stIt->state == ParameterState::ApplyFailed
                                 || stIt->state == ParameterState::Mismatch
                                 || stIt->state == ParameterState::Timeout);
+                if (stIt->state == ParameterState::ApplyFailed && !stIt->lastError.isEmpty()) {
+                    stateText = QStringLiteral("应用失败: %1").arg(stIt->lastError);
+                } else if (stIt->state == ParameterState::Mismatch) {
+                    const auto devIt = m_parameterDeviationMap.constFind(p.name);
+                    if (devIt != m_parameterDeviationMap.constEnd()) {
+                        stateText = QStringLiteral("偏差超限 (%1)").arg(QString::number(devIt.value(), 'f', 3));
+                    } else if (!stIt->readbackValue.isEmpty()) {
+                        stateText = QStringLiteral("偏差 (回读 %1)").arg(stIt->readbackValue);
+                    }
+                } else if (stIt->state == ParameterState::Timeout) {
+                    stateText = QStringLiteral("回读超时");
+                }
             } else {
-                stateText = current == p.defaultValue ? QStringLiteral("未变更") : QStringLiteral("已变更");
-                stateIsError = (current != p.defaultValue);
+                if (p.confirmed && !p.currentValue.isEmpty()) {
+                    readText = p.currentValue;
+                    stateText = QStringLiteral("已确认");
+                } else {
+                    readText = QStringLiteral("未读取");
+                    stateText = QStringLiteral("未读取");
+                }
             }
 
-            auto* stateItem = makeParameterItem(stateText);
+            const QString localCfg = p.defaultValue.isEmpty() ? (p.currentValue.isEmpty() ? QStringLiteral("-") : p.currentValue) : p.defaultValue;
+            const QString detailToolTip = QStringLiteral("本地配置值: %1\n已读取值: %2\n待应用值: %3\n状态: %4\n确认: %5\n回读: %6\n偏差: %7")
+                                              .arg(localCfg,
+                                                   readText,
+                                                   pendingText,
+                                                   stateText,
+                                                   p.confirmed ? QStringLiteral("已确认") : QStringLiteral("待确认"),
+                                                   readbackStateFor(p),
+                                                   deviationStateFor(p));
+            auto* readItem = makeParameterItem(readText, QStringLiteral("本地配置值: %1").arg(localCfg));
+            auto* pendingItem = makeParameterItem(pendingText);
+            auto* stateItem = makeParameterItem(stateText, detailToolTip);
             auto* confirmItem = makeParameterItem(p.confirmed ? QStringLiteral("已确认") : QStringLiteral("待确认"));
             auto* readbackItem = makeParameterItem(readbackStateFor(p));
             auto* deviationItem = makeParameterItem(deviationStateFor(p));
-            auto* defaultItem = makeParameterItem(p.defaultValue);
+            setErrorText(pendingItem, pendingText != QStringLiteral("-"));
             setErrorText(stateItem, stateIsError);
             setErrorText(confirmItem, !p.confirmed);
             setErrorText(readbackItem, readbackItem->text() == QStringLiteral("待回读"));
             setErrorText(deviationItem, deviationItem->text() != QStringLiteral("无"));
-            m_parameterTable->setItem(row, 1, defaultItem);
-            m_parameterTable->setItem(row, 2, valueItem);
+            m_parameterTable->setItem(row, 1, readItem);
+            m_parameterTable->setItem(row, 2, pendingItem);
             m_parameterTable->setItem(row, 3, stateItem);
             m_parameterTable->setItem(row, 4, confirmItem);
             m_parameterTable->setItem(row, 5, readbackItem);
@@ -602,7 +733,7 @@ void InspectorPanel::onParameterItemDoubleClicked(QTableWidgetItem* item)
     if (m_panelMode == PanelMode::Inspection) {
         return;
     }
-    if (!item || item->column() != 1 || !m_parameterTable) {
+    if (!item || (item->column() != 1 && item->column() != 2) || !m_parameterTable) {
         return;
     }
 
@@ -648,4 +779,99 @@ void InspectorPanel::applyStateStyle(QLabel* label, const QString& state)
     label->setProperty("state", QVariant(visualState));
     label->style()->unpolish(label);
     label->style()->polish(label);
+}
+
+void InspectorPanel::clearSelection()
+{
+    m_hasSelection = false;
+    m_selectedType.clear();
+    m_selectedName.clear();
+
+    if (m_selectionHintLabel) {
+        m_selectionHintLabel->setVisible(true);
+    }
+    if (m_selectedGroup) {
+        m_selectedGroup->setVisible(false);
+    }
+    if (m_contextGroup) {
+        m_contextGroup->setVisible(false);
+    }
+}
+
+void InspectorPanel::setSelectedObject(const QString& type, const QString& name, const QMap<QString, QString>& properties)
+{
+    m_hasSelection = true;
+    m_selectedType = type;
+    m_selectedName = name;
+
+    if (m_selectionHintLabel) {
+        m_selectionHintLabel->setVisible(false);
+    }
+    if (m_contextGroup) {
+        m_contextGroup->setVisible(false);
+    }
+    if (m_selectedGroup) {
+        m_selectedGroup->setVisible(true);
+    }
+    if (m_selectedTypeValue) {
+        m_selectedTypeValue->setText(type);
+    }
+    if (m_selectedNameValue) {
+        m_selectedNameValue->setText(name);
+    }
+
+    if (m_selectedPropsTable) {
+        m_selectedPropsTable->setRowCount(properties.size());
+        int row = 0;
+        for (auto it = properties.cbegin(); it != properties.cend(); ++it) {
+            auto* kItem = new QTableWidgetItem(it.key());
+            kItem->setToolTip(it.key());
+            auto* vItem = new QTableWidgetItem(it.value());
+            vItem->setToolTip(it.value());
+            m_selectedPropsTable->setItem(row, 0, kItem);
+            m_selectedPropsTable->setItem(row, 1, vItem);
+            ++row;
+        }
+    }
+}
+
+void InspectorPanel::onParameterSelectionChanged()
+{
+    if (!m_parameterTable) {
+        return;
+    }
+    const auto items = m_parameterTable->selectedItems();
+    if (items.isEmpty()) {
+        clearSelection();
+        return;
+    }
+    const int row = items.first()->row();
+    const QString paramName = m_parameterTable->item(row, 0) ? m_parameterTable->item(row, 0)->text() : QString();
+    if (paramName.isEmpty()) {
+        clearSelection();
+        return;
+    }
+
+    QMap<QString, QString> props;
+    for (const auto& p : m_parameterData) {
+        if (p.name == paramName) {
+            props.insert(QStringLiteral("当前值"), p.currentValue.isEmpty() ? p.defaultValue : p.currentValue);
+            props.insert(QStringLiteral("默认值"), p.defaultValue);
+            props.insert(QStringLiteral("数据类型"), p.dataType.isEmpty() ? QStringLiteral("LREAL") : p.dataType);
+            props.insert(QStringLiteral("单位"), p.unit.isEmpty() ? QStringLiteral("-") : p.unit);
+            if (!p.minValue.isEmpty()) {
+                props.insert(QStringLiteral("最小值"), p.minValue);
+            }
+            if (!p.maxValue.isEmpty()) {
+                props.insert(QStringLiteral("最大值"), p.maxValue);
+            }
+            props.insert(QStringLiteral("在线可改"), p.onlineEditable ? QStringLiteral("是") : QStringLiteral("否"));
+            const QString desc = p.metadata.value(QStringLiteral("description")).toString();
+            if (!desc.isEmpty()) {
+                props.insert(QStringLiteral("描述"), desc);
+            }
+            break;
+        }
+    }
+    setSelectedObject(QStringLiteral("参数"), paramName, props);
 }

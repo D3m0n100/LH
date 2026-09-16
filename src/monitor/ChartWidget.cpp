@@ -1,4 +1,4 @@
-﻿/**
+/**
  * @file ChartWidget.cpp
  * @brief 实时监控图表控件实现（性能优化版本）
  */
@@ -11,6 +11,9 @@
 #include <QPushButton>
 #include <QCheckBox>
 #include <QLabel>
+#include <QMenu>
+#include <QAction>
+#include <QFontMetrics>
 #include <QDebug>
 #include <QDateTime>
 #include <QFileDialog>
@@ -31,7 +34,10 @@ ChartWidget::ChartWidget(QWidget* parent)
     , m_resetZoomButton(nullptr)
     , m_autoScaleCheck(nullptr)
     , m_exportImageButton(nullptr)
+    , m_channelLegendButton(nullptr)
     , m_infoLabel(nullptr)
+    , m_isCompactMode(false)
+    , m_userLegendVisible(true)
     , m_chartView(nullptr)
     , m_chart(new QChart())
     , m_axisX(new QDateTimeAxis())
@@ -48,6 +54,7 @@ ChartWidget::ChartWidget(QWidget* parent)
 {
     m_mainLayout->setContentsMargins(0, 0, 0, 0);
     m_mainLayout->setSpacing(2);
+    setMinimumHeight(120);
 
     setupControlButtons();
     setupChart();
@@ -57,6 +64,7 @@ ChartWidget::ChartWidget(QWidget* parent)
     m_updateTimer->start();
     
     m_lastAxisUpdateTime.start();
+    updateInfoLabel();
 }
 
 ChartWidget::~ChartWidget()
@@ -73,6 +81,7 @@ void ChartWidget::setupControlButtons()
 {
     m_toolbarWidget = new QWidget(this);
     m_toolbarWidget->setObjectName("ChartToolbar");
+    m_toolbarWidget->setMinimumHeight(34);
     m_toolbarWidget->setStyleSheet(
         "#ChartToolbar {"
         "  background-color: #f3f3f3;"
@@ -112,6 +121,15 @@ void ChartWidget::setupControlButtons()
     connect(m_exportImageButton, &QPushButton::clicked, this, &ChartWidget::onExportImage);
     m_toolbarLayout->addWidget(m_exportImageButton);
 
+    // 通道图例按钮（紧凑模式折叠展示）
+    m_channelLegendButton = new QPushButton(tr("通道图例"), m_toolbarWidget);
+    m_channelLegendButton->setObjectName("ChartChannelLegendButton");
+    m_channelLegendButton->setToolTip(tr("查看通道图例与切换可见性"));
+    m_channelLegendButton->setFixedHeight(26);
+    m_channelLegendButton->setVisible(false);
+    connect(m_channelLegendButton, &QPushButton::clicked, this, &ChartWidget::openChannelLegendMenu);
+    m_toolbarLayout->addWidget(m_channelLegendButton);
+
     m_toolbarLayout->addStretch();
 
     // 信息标签
@@ -125,11 +143,9 @@ void ChartWidget::setupChart()
 {
     m_axisX->setFormat("hh:mm:ss");
     m_axisX->setTitleText("时间");
-    m_axisX->setTickCount(6);
 
     m_axisY->setTitleText("数值");
-    m_axisY->setLabelFormat("%.2f");
-    m_axisY->setTickCount(6);
+    updateTicksAndPrecision();
 
     const QPen gridPen(QColor("#e5e5e5"));
     const QPen axisPen(QColor("#8c959f"));
@@ -146,7 +162,7 @@ void ChartWidget::setupChart()
     m_chart->addAxis(m_axisX, Qt::AlignBottom);
     m_chart->addAxis(m_axisY, Qt::AlignLeft);
     m_chart->setAnimationOptions(QChart::NoAnimation);
-    m_chart->setMargins(QMargins(0, 0, 0, 0));
+    m_chart->setMargins(QMargins(16, 6, 12, 6));
     m_chart->setBackgroundBrush(QBrush(QColor("#ffffff")));
     m_chart->setPlotAreaBackgroundBrush(QBrush(QColor("#ffffff")));
     m_chart->setPlotAreaBackgroundVisible(true);
@@ -165,6 +181,7 @@ void ChartWidget::setupChart()
     QDateTime now = QDateTime::currentDateTime();
     m_axisX->setRange(now.addMSecs(-m_timeWindowMs), now);
     m_axisY->setRange(m_fixedMinY, m_fixedMaxY);
+    updateResponsiveLayout();
 }
 
 // ============================================================================
@@ -211,6 +228,12 @@ bool ChartWidget::addChannelSeries(const QString& channelId,
                 this, &ChartWidget::onLegendMarkerClicked);
     }
 
+    if (m_isCompactMode && m_userLegendVisible) {
+        if (m_channelLegendButton) {
+            m_channelLegendButton->setVisible(true);
+        }
+    }
+
     updateInfoLabel();
     return true;
 }
@@ -227,6 +250,9 @@ bool ChartWidget::removeChannelSeries(const QString& channelId)
     }
 
     m_channels.remove(channelId);
+    if (m_channels.isEmpty() && m_channelLegendButton) {
+        m_channelLegendButton->setVisible(false);
+    }
     updateInfoLabel();
     return true;
 }
@@ -570,6 +596,7 @@ void ChartWidget::setYAxisRange(double min, double max)
     m_fixedMaxY = max;
     if (!m_autoScale) {
         m_axisY->setRange(min, max);
+        updateTicksAndPrecision();
     }
 }
 
@@ -613,12 +640,23 @@ void ChartWidget::setAutoScaleEnabled(bool enabled)
 
 void ChartWidget::setLegendVisible(bool visible)
 {
-    m_chart->legend()->setVisible(visible);
+    m_userLegendVisible = visible;
+    if (m_isCompactMode) {
+        m_chart->legend()->setVisible(false);
+        if (m_channelLegendButton) {
+            m_channelLegendButton->setVisible(visible && !m_channels.isEmpty());
+        }
+    } else {
+        m_chart->legend()->setVisible(visible);
+        if (m_channelLegendButton) {
+            m_channelLegendButton->setVisible(false);
+        }
+    }
 }
 
 bool ChartWidget::isLegendVisible() const
 {
-    return m_chart->legend()->isVisible();
+    return m_userLegendVisible;
 }
 
 void ChartWidget::setLegendAlignment(Qt::Alignment alignment)
@@ -747,6 +785,8 @@ void ChartWidget::updateAxisRanges()
         }
     }
 
+    updateTicksAndPrecision();
+
     emit rangeChanged(now.addMSecs(-m_timeWindowMs).toMSecsSinceEpoch(),
                       now.toMSecsSinceEpoch());
 }
@@ -801,9 +841,17 @@ void ChartWidget::updateInfoLabel()
         totalPoints += info.pointCount;
     }
 
-    m_infoLabel->setText(QString("通道: %1/%2 | 数据点: %3")
-                         .arg(totalChannels)
-                         .arg(totalPoints));
+    if (m_isCompactMode) {
+        m_infoLabel->setText(QString("通道: %1/%2 | 点数: %3 (数值/时间)")
+                             .arg(visibleChannels)
+                             .arg(totalChannels)
+                             .arg(totalPoints));
+    } else {
+        m_infoLabel->setText(QString("通道: %1/%2 | 数据点: %3")
+                             .arg(visibleChannels)
+                             .arg(totalChannels)
+                             .arg(totalPoints));
+    }
 }
 
 void ChartWidget::enforcePointLimit(const QString& channelId)
@@ -826,4 +874,205 @@ void ChartWidget::enforcePointLimit(const QString& channelId)
     if (info.series->count() > 0) {
         info.oldestTimestampMs = static_cast<qint64>(info.series->at(0).x());
     }
+}
+
+
+// ============================================================================
+// 紧凑与自适应排版 (R8-01)
+// ============================================================================
+
+void ChartWidget::updateResponsiveLayout()
+{
+    const int h = m_chartView ? m_chartView->height() : (height() - toolbarHeight());
+    if (h > 0) {
+        if (h < 180) {
+            if (!m_isCompactMode) {
+                setCompactMode(true);
+            }
+        } else if (h > 200) {
+            if (m_isCompactMode) {
+                setCompactMode(false);
+            }
+        }
+    }
+    updateTicksAndPrecision();
+}
+
+void ChartWidget::setCompactMode(bool compact)
+{
+    m_isCompactMode = compact;
+    if (m_isCompactMode) {
+        m_chart->setMargins(QMargins(4, 2, 4, 2));
+        m_axisX->setTitleText(QString());
+        m_axisY->setTitleText(QString());
+        m_chart->legend()->setVisible(false);
+        if (m_channelLegendButton) {
+            m_channelLegendButton->setVisible(m_userLegendVisible && !m_channels.isEmpty());
+        }
+    } else {
+        m_chart->setMargins(QMargins(16, 6, 12, 6));
+        m_axisX->setTitleText(tr("时间"));
+        m_axisY->setTitleText(tr("数值"));
+        m_chart->legend()->setVisible(m_userLegendVisible);
+        if (m_channelLegendButton) {
+            m_channelLegendButton->setVisible(false);
+        }
+    }
+    updateTicksAndPrecision();
+    updateInfoLabel();
+}
+
+int ChartWidget::toolbarHeight() const
+{
+    if (m_toolbarWidget && m_toolbarWidget->isVisible()) {
+        return qMax(m_toolbarWidget->height(), m_toolbarWidget->minimumHeight());
+    }
+    return 0;
+}
+
+void ChartWidget::resizeEvent(QResizeEvent* event)
+{
+    QWidget::resizeEvent(event);
+    updateResponsiveLayout();
+}
+
+void ChartWidget::openChannelLegendMenu()
+{
+    if (!m_channelLegendButton) {
+        return;
+    }
+    QMenu menu(this);
+    menu.setTitle(tr("通道图例与可见性"));
+    for (auto it = m_channels.begin(); it != m_channels.end(); ++it) {
+        const QString channelId = it.key();
+        const ChannelSeriesInfo& info = it.value();
+        QPixmap iconPix(12, 12);
+        iconPix.fill(info.color);
+        QAction* act = menu.addAction(QIcon(iconPix), info.displayName);
+        act->setCheckable(true);
+        act->setChecked(info.visible);
+        connect(act, &QAction::toggled, this, [this, channelId](bool checked) {
+            setChannelVisible(channelId, checked);
+        });
+    }
+    if (menu.actions().isEmpty()) {
+        QAction* emptyAct = menu.addAction(tr("（无通道）"));
+        emptyAct->setEnabled(false);
+    }
+    menu.exec(m_channelLegendButton->mapToGlobal(QPoint(0, m_channelLegendButton->height())));
+}
+
+void ChartWidget::updateTicksAndPrecision()
+{
+    if (!m_axisX || !m_axisY) {
+        return;
+    }
+
+    const int plotW = (m_chartView && m_chartView->width() > 0) ? m_chartView->width() : width();
+    const int plotH = (m_chartView && m_chartView->height() > 0) ? m_chartView->height() : (height() - toolbarHeight());
+
+    // X 轴刻度计算
+    const QFontMetrics fmX(m_axisX->labelsFont());
+    const int sampleXWidth = fmX.horizontalAdvance(QStringLiteral("00:00:00"));
+    const int maxFittingX = qMax(2, plotW / qMax(50, sampleXWidth + 24));
+    int countX = 6;
+    if (m_isCompactMode) {
+        countX = qBound(3, maxFittingX, 4);
+    } else {
+        countX = qBound(3, maxFittingX, 6);
+    }
+    m_axisX->setTickCount(countX);
+
+    // Y 轴刻度计算
+    const QFontMetrics fmY(m_axisY->labelsFont());
+    const int labelH = qMax(12, fmY.height());
+    const int maxFittingY = qMax(2, plotH / (labelH * 2 + 10));
+    int countY = 6;
+    if (m_isCompactMode) {
+        countY = qBound(2, maxFittingY, 3);
+    } else {
+        countY = qBound(2, maxFittingY, 6);
+    }
+    m_axisY->setTickCount(countY);
+
+    // Y 轴动态精度计算
+    const double minY = m_axisY->min();
+    const double maxY = m_axisY->max();
+    const double rangeY = std::abs(maxY - minY);
+    const double interval = (countY > 1) ? (rangeY / (countY - 1)) : rangeY;
+
+    // Y 轴动态精度计算：根据实际刻度步长计算所需精度，移除固定 4 位小数上限，保证刻度可区分
+    if (interval <= 0.0 || std::isnan(interval)) {
+        m_axisY->setLabelFormat(QStringLiteral("%.1f"));
+        return;
+    }
+
+    QVector<double> tickValues;
+    for (int i = 0; i < countY; ++i) {
+        const double val = (countY > 1) ? (minY + (maxY - minY) * i / (countY - 1.0)) : minY;
+        tickValues.append(val);
+    }
+
+    auto areTicksDistinct = [&](const QString& fmt) -> bool {
+        QString prev;
+        for (int i = 0; i < tickValues.size(); ++i) {
+            const QString curr = QString::asprintf(fmt.toLatin1().constData(), tickValues[i]);
+            if (i > 0 && curr == prev) {
+                return false;
+            }
+            prev = curr;
+        }
+        return true;
+    };
+
+    // 检查整数格式 (%.0f) 是否满足条件：刻度间隔 >= 1.0 且所有刻度点均为整数
+    if (interval >= 1.0) {
+        bool allInts = true;
+        for (double v : tickValues) {
+            if (std::abs(v - std::round(v)) > 1e-4) {
+                allInts = false;
+                break;
+            }
+        }
+        if (allInts && areTicksDistinct(QStringLiteral("%.0f"))) {
+            m_axisY->setLabelFormat(QStringLiteral("%.0f"));
+            return;
+        }
+    }
+
+    // 根据实际刻度步长计算所需基准小数位数
+    int basePrec = 1;
+    if (interval < 1.0) {
+        basePrec = qMax(1, static_cast<int>(std::ceil(-std::log10(interval) - 1e-5)));
+    }
+
+    // 从基准精度开始尝试浮点定点格式，确保相邻刻度标签严格可区分
+    for (int p = basePrec; p <= 8; ++p) {
+        const QString fmt = QStringLiteral("%.%1f").arg(p);
+        if (areTicksDistinct(fmt)) {
+            // 当数值跨度极小且需要较多小数位 (p >= 6) 时，若两端数值绝对值较小且科学计数法更紧凑，尝试科学计数法
+            if (p >= 6 && std::abs(minY) < 1.0 && std::abs(maxY) < 1.0) {
+                for (int ep = 1; ep <= 3; ++ep) {
+                    const QString eFmt = QStringLiteral("%.%1e").arg(ep);
+                    if (areTicksDistinct(eFmt)) {
+                        m_axisY->setLabelFormat(eFmt);
+                        return;
+                    }
+                }
+            }
+            m_axisY->setLabelFormat(fmt);
+            return;
+        }
+    }
+
+    // 若定点格式尝试完毕仍未能区分，回退尝试科学计数法
+    for (int ep = 1; ep <= 5; ++ep) {
+        const QString eFmt = QStringLiteral("%.%1e").arg(ep);
+        if (areTicksDistinct(eFmt)) {
+            m_axisY->setLabelFormat(eFmt);
+            return;
+        }
+    }
+
+    m_axisY->setLabelFormat(QStringLiteral("%.6f"));
 }

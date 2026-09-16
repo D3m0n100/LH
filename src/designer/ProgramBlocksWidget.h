@@ -13,9 +13,13 @@
 
 #include <QWidget>
 #include <QList>
+#include <QPointer>
 
 class QLineEdit;
+class QTreeWidgetItem;
 class QTreeWidget;
+class QLabel;
+class QPushButton;
 
 struct FunctionSnippet;
 class DslCompletionEngine;
@@ -32,26 +36,45 @@ public:
 
     /// 绑定补全引擎作为数据源（推荐：直接传 DslScriptEditor::completionEngine()）
     void setCompletionEngine(DslCompletionEngine* engine);
-    DslCompletionEngine* completionEngine() const { return m_engine; }
+    DslCompletionEngine* completionEngine() const { return m_engine.data(); }
 
     /// 直接设置 snippets（通常由引擎驱动刷新）
     void setSnippets(const QList<FunctionSnippet>& snippets);
 
+    /// 按分类筛选（如 "display"）
+    void filterCategory(const QString& category);
+
+    QTreeWidget* treeWidget() const { return m_tree; }
+    QLabel* emptyLabel() const { return m_emptyLabel; }
+    QPushButton* clearFilterButton() const { return m_clearFilterBtn; }
+
+signals:
+    void snippetSelected(const FunctionSnippet& snippet);
+    void snippetDoubleClicked(const FunctionSnippet& snippet);
+
 private slots:
     void onFilterTextChanged(const QString& text);
     void reloadFromEngine();
+    void onCurrentItemChanged(QTreeWidgetItem* current, QTreeWidgetItem* previous);
+    void onTreeItemDoubleClicked(QTreeWidgetItem* item, int column);
 
 private:
     void rebuildTree(const QList<FunctionSnippet>& snippets);
     void applyFilter(const QString& text);
+    void updateEmptyState(int visibleLeafCount);
+    FunctionSnippet findSnippetById(const QString& id) const;
     static QString normalizeCategory(const QString& category);
     static QString makeSnippetTooltip(const FunctionSnippet& snippet);
 
 private:
-    DslCompletionEngine* m_engine = nullptr;
+    QPointer<DslCompletionEngine> m_engine;
 
     QLineEdit* m_filterEdit = nullptr;
     QTreeWidget* m_tree = nullptr;
+
+    QWidget* m_emptyContainer = nullptr;
+    QLabel* m_emptyLabel = nullptr;
+    QPushButton* m_clearFilterBtn = nullptr;
 
     QList<FunctionSnippet> m_cachedSnippets;
 };

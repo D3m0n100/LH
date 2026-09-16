@@ -1,4 +1,4 @@
-﻿/**
+/**
  * @file DslScriptEditor.cpp
  * @brief DSL 脚本编辑器实现
  * ============== 架构说明 ==============
@@ -589,6 +589,7 @@ void DslScriptEditor::setupUi()
 
     m_functionList->setMinimumWidth(220);
     m_functionList->setSelectionMode(QAbstractItemView::SingleSelection);
+    m_functionList->setVisible(false);
 
     m_editor->setAcceptDrops(true);
     m_editor->setTabStopDistance(4 * m_editor->fontMetrics().horizontalAdvance(' '));
@@ -613,6 +614,7 @@ void DslScriptEditor::setupUi()
 
     mainLayout->addWidget(m_splitter);
     setLayout(mainLayout);
+    setFocusProxy(m_editor);
 
     connect(m_functionList, &QListWidget::itemDoubleClicked,
             this, &DslScriptEditor::onFunctionItemActivated);
@@ -669,7 +671,7 @@ void DslScriptEditor::setupFindReplaceBar()
     m_replaceAllButton = new QPushButton("全部替换", m_findReplaceBar);
     m_replaceAllButton->setToolTip("替换所有匹配项");
 
-    m_closeFindBarButton = new QPushButton("脳", m_findReplaceBar);
+    m_closeFindBarButton = new QPushButton(QStringLiteral("✕"), m_findReplaceBar);
     m_closeFindBarButton->setFixedSize(24, 24);
     m_closeFindBarButton->setToolTip("关闭查找工具栏 (Escape)");
     m_closeFindBarButton->setFlat(true);

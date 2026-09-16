@@ -188,9 +188,15 @@ void MainWindow::openFileFromExplorer(const QString& filePath)
                 m_projectController->setCurrentScriptFile(filePath);
             }
             if (m_editorSubWindow) {
+                if (m_dslEditor) {
+                    m_dslEditor->show();
+                }
                 m_editorSubWindow->show();
                 m_editorSubWindow->raise();
                 m_mdiArea->setActiveSubWindow(m_editorSubWindow);
+                if (m_dslEditor) {
+                    m_dslEditor->setFocus();
+                }
             }
             if (m_projectExplorerWidget) {
                 m_projectExplorerWidget->revealPath(filePath);
@@ -205,9 +211,15 @@ void MainWindow::openFileFromExplorer(const QString& filePath)
     if (!currentDslFile.isEmpty() && canonicalTarget == currentDslFile) {
         if (loadTextFileToEditor(filePath)) {
             if (m_editorSubWindow) {
+                if (m_dslEditor) {
+                    m_dslEditor->show();
+                }
                 m_editorSubWindow->show();
                 m_editorSubWindow->raise();
                 m_mdiArea->setActiveSubWindow(m_editorSubWindow);
+                if (m_dslEditor) {
+                    m_dslEditor->setFocus();
+                }
             }
             if (m_projectExplorerWidget) {
                 m_projectExplorerWidget->revealPath(filePath);
