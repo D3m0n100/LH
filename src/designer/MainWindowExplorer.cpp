@@ -19,6 +19,32 @@
 #include <QPlainTextEdit>
 #include <QPointer>
 #include <QSet>
+#include <QTextBlock>
+#include <QTextCursor>
+#include <QTextDocument>
+
+QString MainWindow::normalizeDocumentIdentity(const QString& path)
+{
+    const QString trimmed = path.trimmed();
+    if (trimmed.isEmpty()) {
+        return QString();
+    }
+    const QFileInfo fi(trimmed);
+    if (fi.exists()) {
+        return fi.canonicalFilePath();
+    }
+    return QDir::cleanPath(fi.absoluteFilePath());
+}
+
+bool MainWindow::isSameDocument(const QString& pathA, const QString& pathB)
+{
+    const QString idA = normalizeDocumentIdentity(pathA);
+    const QString idB = normalizeDocumentIdentity(pathB);
+    if (idA.isEmpty() || idB.isEmpty()) {
+        return false;
+    }
+    return idA.compare(idB, Qt::CaseInsensitive) == 0;
+}
 
 QString MainWindow::resolveExplorerRootPath() const
 {
@@ -61,106 +87,212 @@ bool MainWindow::isSupportedTextFile(const QString& filePath) const
     return allowed.contains(suffix) || QFileInfo(filePath).fileName() == "CMakeLists.txt";
 }
 
-bool MainWindow::loadTextFileToEditor(const QString& filePath)
+QWidget* MainWindow::openAndActivateFile(const QString& filePath)
 {
-    if (!m_dslEditor) {
-        return false;
+    const QString targetId = normalizeDocumentIdentity(filePath);
+    if (targetId.isEmpty()) {
+        return nullptr;
     }
 
-    const QString currentPath = QFileInfo(m_dslEditor->currentFilePath()).canonicalFilePath();
-    const QString targetPath = QFileInfo(filePath).canonicalFilePath();
-    if (!currentPath.isEmpty() && currentPath != targetPath && m_dslEditor->isModified()) {
-        const auto choice = QMessageBox::warning(this, QStringLiteral("未保存修改"),
-                                                  QStringLiteral("当前 DSL 有未保存修改，是否保存？"),
-                                                  QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel,
-                                                  QMessageBox::Save);
-        if (choice == QMessageBox::Cancel) return false;
-        if (choice == QMessageBox::Save && !m_projectController->saveProject()) return false;
+    if (!isSupportedTextFile(filePath)) {
+        updateStatusBar(QStringLiteral("不支持直接打开该文件类型: %1").arg(QFileInfo(filePath).fileName()));
+        return nullptr;
+    }
+
+    // 1. 先查复用：若已打开，直接激活并返回（不读盘、不弹保存确认、完整保留未保存缓冲区）
+    if (m_mdiArea) {
+        const auto subWindows = m_mdiArea->subWindowList();
+        for (QMdiSubWindow* sub : subWindows) {
+            if (!sub) {
+                continue;
+            }
+            const QString existingPath = sub->property("filePath").toString();
+            if (isSameDocument(existingPath, targetId)) {
+                sub->show();
+                sub->raise();
+                m_mdiArea->setActiveSubWindow(sub);
+                if (QWidget* w = sub->widget()) {
+                    w->setFocus();
+                    return w;
+                }
+                return sub;
+            }
+        }
+    }
+
+    if (m_dslEditor && isSameDocument(m_dslEditor->currentFilePath(), targetId)) {
+        if (m_editorSubWindow) {
+            m_dslEditor->show();
+            m_editorSubWindow->show();
+            m_editorSubWindow->raise();
+            m_mdiArea->setActiveSubWindow(m_editorSubWindow);
+            m_dslEditor->setFocus();
+        }
+        return m_dslEditor;
+    }
+
+    // 2. 读目标文件至临时缓冲区（若读取失败则直接中止，原文档不被切走）
+    QFileInfo info(filePath);
+    if (!info.exists() || !info.isFile()) {
+        updateStatusBar(QStringLiteral("文件不存在: %1").arg(info.fileName()));
+        return nullptr;
     }
 
     QFile file(filePath);
     if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
-        QMessageBox::warning(this, "打开失败", QString("无法打开文件: %1").arg(filePath));
-        return false;
+        showMessageBox(QStringLiteral("打开失败"),
+                       QStringLiteral("无法打开文件: %1").arg(filePath));
+        return nullptr;
     }
-
     const QString content = TextEncoding::decodeUtf8WithLocalFallback(file.readAll());
     file.close();
 
-    m_dslEditor->setScript(content);
-    m_dslEditor->setCurrentFilePath(filePath);
-    m_dslEditor->editor()->setReadOnly(false);
-    m_dslEditor->setModified(false);
-    updateStatusBar(QString("已打开文件: %1").arg(QFileInfo(filePath).fileName()));
-    refreshInspectorPanel();
-    return true;
-}
-
-void MainWindow::openAuxiliaryTextFileInMdi(const QString& filePath)
-{
-    const QString canonicalPath = QFileInfo(filePath).canonicalFilePath();
-
-    const auto subWindows = m_mdiArea->subWindowList();
-    for (QMdiSubWindow* sub : subWindows) {
-        if (!sub) {
-            continue;
+    // 3. 仅在需要替换当前主 DSL 文档且处于未保存状态时，才确认保存
+    if (info.suffix().compare("lh", Qt::CaseInsensitive) == 0) {
+        if (m_dslEditor && m_dslEditor->isModified()) {
+            const auto choice = showMessageBox(QStringLiteral("未保存修改"),
+                                               QStringLiteral("当前 DSL 脚本有未保存修改，是否保存？"),
+                                               QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel,
+                                               QMessageBox::Save);
+            if (choice == QMessageBox::Cancel) {
+                return nullptr;
+            }
+            if (choice == QMessageBox::Save) {
+                if (!m_projectController || !m_projectController->saveProject()) {
+                    return nullptr; // 保存失败中止切换
+                }
+            }
         }
-        const QString existingPath = sub->property("filePath").toString();
-        if (!existingPath.isEmpty() && QFileInfo(existingPath).canonicalFilePath() == canonicalPath) {
-            sub->show();
-            sub->raise();
-            m_mdiArea->setActiveSubWindow(sub);
-            return;
+
+        m_dslEditor->setCurrentFilePath(filePath);
+
+        m_dslEditor->setScript(content);
+        m_dslEditor->editor()->setReadOnly(false);
+        m_dslEditor->setModified(false);
+
+        if (m_projectController) {
+            m_projectController->setCurrentScriptFile(filePath);
         }
+        if (m_editorSubWindow) {
+            m_dslEditor->show();
+            m_editorSubWindow->show();
+            m_editorSubWindow->raise();
+            m_mdiArea->setActiveSubWindow(m_editorSubWindow);
+            m_dslEditor->setFocus();
+        }
+        updateStatusBar(QStringLiteral("已打开文件: %1").arg(info.fileName()));
+        refreshInspectorPanel();
+        if (m_projectExplorerWidget) {
+            m_projectExplorerWidget->revealPath(filePath);
+        }
+        return m_dslEditor;
     }
 
-    QFile file(filePath);
-    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
-        QMessageBox::warning(this, "打开失败", QString("无法打开文件: %1").arg(filePath));
-        return;
-    }
-
-    const QString content = TextEncoding::decodeUtf8WithLocalFallback(file.readAll());
-    file.close();
-
+    // 4. 打开辅助文本文件
     auto* viewer = new QPlainTextEdit;
     viewer->setReadOnly(false);
     viewer->setLineWrapMode(QPlainTextEdit::NoWrap);
     viewer->setPlainText(content);
-    viewer->setWindowTitle(QFileInfo(filePath).fileName());
+    viewer->setWindowTitle(info.fileName());
 
     auto* sub = m_mdiArea->addSubWindow(viewer);
     sub->setAttribute(Qt::WA_DeleteOnClose, true);
-    sub->setProperty("filePath", filePath);
+    sub->setProperty("filePath", targetId);
     sub->setProperty("modified", false);
-    sub->setWindowTitle(QFileInfo(filePath).fileName());
+    sub->setWindowTitle(info.fileName());
     sub->installEventFilter(this);
-    connect(viewer, &QPlainTextEdit::textChanged, this, [sub = QPointer<QMdiSubWindow>(sub), filePath]() {
+
+    connect(viewer, &QPlainTextEdit::textChanged, this, [this, sub = QPointer<QMdiSubWindow>(sub), targetId]() {
         if (!sub) {
             return;
         }
-        if (sub->property("modified").toBool()) {
-            return;
+        if (!sub->property("modified").toBool()) {
+            sub->setProperty("modified", true);
+            sub->setWindowTitle(QFileInfo(targetId).fileName() + "*");
         }
-        sub->setProperty("modified", true);
-        sub->setWindowTitle(QFileInfo(filePath).fileName() + "*");
+        onDocumentModified(targetId);
     });
+
     sub->show();
     m_mdiArea->setActiveSubWindow(sub);
+    viewer->setFocus();
 
-    updateStatusBar(QString("已打开文件: %1").arg(QFileInfo(filePath).fileName()));
+    updateStatusBar(QStringLiteral("已打开文件: %1").arg(info.fileName()));
     refreshInspectorPanel();
+    if (m_projectExplorerWidget) {
+        m_projectExplorerWidget->revealPath(filePath);
+    }
+    return viewer;
+}
+
+void MainWindow::navigateEditorPosition(QWidget* editorWidget, int targetLine, int targetColumn, bool hasExactColumn)
+{
+    if (!editorWidget || targetLine <= 0) {
+        return;
+    }
+
+    QPlainTextEdit* plainEdit = nullptr;
+    if (auto* dsl = qobject_cast<DslScriptEditor*>(editorWidget)) {
+        plainEdit = dsl->editor();
+    } else {
+        plainEdit = qobject_cast<QPlainTextEdit*>(editorWidget);
+    }
+
+    if (!plainEdit) {
+        return;
+    }
+
+    QTextDocument* doc = plainEdit->document();
+    if (!doc) {
+        return;
+    }
+
+    const int totalBlocks = doc->blockCount();
+    const int clampedLine = qBound(1, targetLine, totalBlocks);
+    QTextBlock block = doc->findBlockByNumber(clampedLine - 1);
+    if (!block.isValid()) {
+        return;
+    }
+
+    int utf16Offset = 0;
+    if (targetColumn > 1 && hasExactColumn) {
+        const QString lineText = block.text();
+        int charCount = 0;
+        int i = 0;
+        const int targetCharIndex = targetColumn - 1;
+        while (i < lineText.length() && charCount < targetCharIndex) {
+            if (lineText.at(i).isHighSurrogate() && (i + 1 < lineText.length()) && lineText.at(i + 1).isLowSurrogate()) {
+                i += 2;
+            } else {
+                i += 1;
+            }
+            charCount++;
+        }
+        utf16Offset = qMin(i, lineText.length());
+    }
+
+    QTextCursor cursor(block);
+    cursor.setPosition(block.position() + utf16Offset);
+    plainEdit->setTextCursor(cursor);
+    plainEdit->ensureCursorVisible();
+    plainEdit->setFocus();
+}
+
+bool MainWindow::loadTextFileToEditor(const QString& filePath)
+{
+    QWidget* w = openAndActivateFile(filePath);
+    return (w != nullptr);
+}
+
+void MainWindow::openAuxiliaryTextFileInMdi(const QString& filePath)
+{
+    openAndActivateFile(filePath);
 }
 
 void MainWindow::openFileFromExplorer(const QString& filePath)
 {
     const QFileInfo info(filePath);
     if (!info.exists() || !info.isFile()) {
-        return;
-    }
-
-    if (!isSupportedTextFile(filePath)) {
-        updateStatusBar(QString("不支持直接打开该文件类型: %1").arg(info.fileName()));
         return;
     }
 
@@ -182,53 +314,7 @@ void MainWindow::openFileFromExplorer(const QString& filePath)
         }
     }
 
-    if (info.suffix().compare("lh", Qt::CaseInsensitive) == 0) {
-        if (loadTextFileToEditor(filePath)) {
-            if (m_projectController) {
-                m_projectController->setCurrentScriptFile(filePath);
-            }
-            if (m_editorSubWindow) {
-                if (m_dslEditor) {
-                    m_dslEditor->show();
-                }
-                m_editorSubWindow->show();
-                m_editorSubWindow->raise();
-                m_mdiArea->setActiveSubWindow(m_editorSubWindow);
-                if (m_dslEditor) {
-                    m_dslEditor->setFocus();
-                }
-            }
-            if (m_projectExplorerWidget) {
-                m_projectExplorerWidget->revealPath(filePath);
-            }
-        }
-        return;
-    }
-
-    const QString canonicalTarget = info.canonicalFilePath();
-    const QString currentDslFile = QFileInfo(m_projectController ? m_projectController->currentScriptFile() : QString()).canonicalFilePath();
-
-    if (!currentDslFile.isEmpty() && canonicalTarget == currentDslFile) {
-        if (loadTextFileToEditor(filePath)) {
-            if (m_editorSubWindow) {
-                if (m_dslEditor) {
-                    m_dslEditor->show();
-                }
-                m_editorSubWindow->show();
-                m_editorSubWindow->raise();
-                m_mdiArea->setActiveSubWindow(m_editorSubWindow);
-                if (m_dslEditor) {
-                    m_dslEditor->setFocus();
-                }
-            }
-            if (m_projectExplorerWidget) {
-                m_projectExplorerWidget->revealPath(filePath);
-            }
-        }
-        return;
-    }
-
-    openAuxiliaryTextFileInMdi(filePath);
+    openAndActivateFile(filePath);
 }
 
 void MainWindow::onExplorerFileOpenRequested(const QString& filePath)

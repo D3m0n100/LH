@@ -40,6 +40,8 @@ add_library(designer_module STATIC
     RuntimeSessionDebug.cpp
     RuntimeSessionOpc.cpp
     ui/ProblemsPanel.cpp
+    ui/DiagnosticParser.cpp
+    ui/CommandPaletteDialog.cpp
 )
 
 target_link_libraries(designer_module

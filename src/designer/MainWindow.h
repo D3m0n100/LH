@@ -49,8 +49,10 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
+#include <QMessageBox>
 #include <QString>
 #include <QStringList>
+#include <functional>
 
 QT_BEGIN_NAMESPACE
 class QMdiArea;
@@ -77,6 +79,7 @@ namespace WorkspaceId {
 #include "DslScriptEditor.h"
 #include "common/ConfigTypes.h"
 #include "BuildController.h"  // 需要 BuildType 枚举
+#include "ui/DiagnosticItem.h"
 
 // 前向声明 - 控制器类
 class ProjectController;
@@ -146,6 +149,31 @@ public:
     void addProblem(const QString& severity, const QString& source, const QString& message);
     void refreshInspectorPanel();
     void updateDeviceWorkspaceInfo();
+
+    // ===== 统一文档身份与安全打开导航 =====
+    static QString normalizeDocumentIdentity(const QString& path);
+    static bool isSameDocument(const QString& pathA, const QString& pathB);
+    QWidget* openAndActivateFile(const QString& filePath);
+    void navigateEditorPosition(QWidget* editorWidget, int targetLine, int targetColumn = -1, bool hasExactColumn = false);
+    bool saveAuxiliarySubWindow(QMdiSubWindow* sub);
+
+    using MessageBoxHook = std::function<int(const QString& title, const QString& message,
+                                             QMessageBox::StandardButtons buttons,
+                                             QMessageBox::StandardButton defaultButton)>;
+    void setMessageBoxHook(MessageBoxHook hook) { m_messageBoxHook = std::move(hook); }
+    int showMessageBox(const QString& title, const QString& message,
+                       QMessageBox::StandardButtons buttons = QMessageBox::Ok,
+                       QMessageBox::StandardButton defaultButton = QMessageBox::NoButton);
+
+    quint64 nextScanTaskId() { return ++m_nextScanTaskId; }
+    QString projectSessionId() const { return m_projectSessionId; }
+    QString resolveExplorerRootPath() const;
+    QWidget* getCurrentTextEditor() const;
+
+public slots:
+    void closeCurrentActiveTab();
+    void onDiagnosticActivated(const DiagnosticItem& item);
+    void onDiagnosticsProduced(quint64 generation, const QString& projectSessionId, const QList<DiagnosticItem>& items);
 
 protected:
     void closeEvent(QCloseEvent* event) override;
@@ -278,6 +306,12 @@ private slots:
     void onExplorerFileOpenRequested(const QString& filePath);
     void onLocateCurrentFileInExplorer();
 
+    // ===== 快速打开与命令面板槽 =====
+    void openCommandPalette();
+    void openQuickOpen();
+    void openGotoLine();
+    void onDocumentModified(const QString& filePath);
+
 private:
     // ===== UI 构建 =====
     void createActions();
@@ -296,7 +330,6 @@ private:
     
     void updateStatusBar(const QString& message);
     void updateEditActions();
-    QWidget* getCurrentTextEditor() const;
     
     void setCompileActionsEnabled(bool enabled);
     void updateRecentProjectsMenu();
@@ -314,13 +347,11 @@ private:
     void applyFontSize(int pointSize);
     void showValidationErrors(const QStringList& errors);
 
-    QString resolveExplorerRootPath() const;
     void refreshExplorerRoot();
     void openFileFromExplorer(const QString& filePath);
     bool loadTextFileToEditor(const QString& filePath);
     void openAuxiliaryTextFileInMdi(const QString& filePath);
     bool isSupportedTextFile(const QString& filePath) const;
-    bool saveAuxiliarySubWindow(QMdiSubWindow* sub);
     bool saveAuxiliaryFiles(bool all);
     bool confirmAuxiliaryChanges();
 
@@ -462,6 +493,23 @@ private:
     QVariantMap m_lastDownloadDiagnostic;
     QString m_currentWorkspaceId = QStringLiteral("programming");
     bool m_switchingWorkspace = false;
+
+    // ================= 快速打开与会话生命周期 =================
+    quint64 m_nextScanTaskId = 0;
+    quint64 m_activeScanTaskId = 0;
+    QString m_activeScanSessionId;
+    QString m_projectSessionId;
+    QHash<QString, quint64> m_documentVersions;
+    quint64 m_latestDiagnosticGeneration = 0;
+
+    // ================= 快捷动作 =================
+    QAction* m_actCommandPalette = nullptr;
+    QAction* m_actQuickOpen = nullptr;
+    QAction* m_actGotoLine = nullptr;
+    QAction* m_actCloseActiveTab = nullptr;
+    QAction* m_actToggleSidebar = nullptr;
+    QAction* m_actToggleBottomPanel = nullptr;
+    MessageBoxHook m_messageBoxHook;
 };
 
 #endif // MAINWINDOW_H

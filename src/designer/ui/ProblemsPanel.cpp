@@ -1,11 +1,15 @@
 #include "ProblemsPanel.h"
+#include "DiagnosticParser.h"
 
 #include <QAbstractItemView>
 #include <QColor>
 #include <QDateTime>
+#include <QDir>
+#include <QFileInfo>
 #include <QHeaderView>
 #include <QHBoxLayout>
 #include <QIcon>
+#include <QKeyEvent>
 #include <QLabel>
 #include <QSize>
 #include <QTableWidget>
@@ -79,19 +83,8 @@ QHeaderView::section {
     root->addLayout(tools);
 
     m_table = new QTableWidget(this);
-    m_table->setColumnCount(4);
-    m_table->setHorizontalHeaderLabels(QStringList()
-                                       << QStringLiteral("时间")
-                                       << QStringLiteral("级别")
-                                       << QStringLiteral("来源")
-                                       << QStringLiteral("消息"));
-    m_table->horizontalHeader()->setStretchLastSection(false);
-    m_table->horizontalHeader()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
-    m_table->horizontalHeader()->setSectionResizeMode(1, QHeaderView::ResizeToContents);
-    m_table->horizontalHeader()->setSectionResizeMode(2, QHeaderView::Interactive);
-    m_table->horizontalHeader()->setSectionResizeMode(3, QHeaderView::Stretch);
-    m_table->horizontalHeader()->setDefaultAlignment(Qt::AlignLeft | Qt::AlignVCenter);
-    m_table->horizontalHeader()->setMinimumSectionSize(64);
+    setupTableHeaders();
+
     m_table->setEditTriggers(QAbstractItemView::NoEditTriggers);
     m_table->setSelectionBehavior(QAbstractItemView::SelectRows);
     m_table->setSelectionMode(QAbstractItemView::SingleSelection);
@@ -102,58 +95,220 @@ QHeaderView::section {
     m_table->verticalHeader()->setVisible(false);
     m_table->verticalHeader()->setDefaultSectionSize(28);
     m_table->horizontalHeader()->setHighlightSections(false);
-    m_table->setColumnWidth(2, 140);
+
+    m_table->installEventFilter(this);
+    connect(m_table, &QTableWidget::cellDoubleClicked, this, [this](int row, int /*column*/) {
+        onRowActivated(row);
+    });
+
     root->addWidget(m_table);
+}
+
+void ProblemsPanel::setupTableHeaders()
+{
+    m_table->setColumnCount(5);
+    m_table->setHorizontalHeaderLabels(QStringList()
+                                       << QStringLiteral("时间")
+                                       << QStringLiteral("级别")
+                                       << QStringLiteral("来源")
+                                       << QStringLiteral("位置")
+                                       << QStringLiteral("说明"));
+    m_table->horizontalHeader()->setStretchLastSection(false);
+    m_table->horizontalHeader()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
+    m_table->horizontalHeader()->setSectionResizeMode(1, QHeaderView::ResizeToContents);
+    m_table->horizontalHeader()->setSectionResizeMode(2, QHeaderView::Interactive);
+    m_table->horizontalHeader()->setSectionResizeMode(3, QHeaderView::Interactive);
+    m_table->horizontalHeader()->setSectionResizeMode(4, QHeaderView::Stretch);
+    m_table->horizontalHeader()->setDefaultAlignment(Qt::AlignLeft | Qt::AlignVCenter);
+    m_table->horizontalHeader()->setMinimumSectionSize(64);
+    m_table->setColumnWidth(2, 110);
+    m_table->setColumnWidth(3, 140);
 }
 
 void ProblemsPanel::addProblem(const QString& severity, const QString& source, const QString& message)
 {
+    DiagnosticItem item = DiagnosticParser::parseSingleMessage(severity, source, message);
+    addStructuredProblem(item);
+}
+
+void ProblemsPanel::addStructuredProblem(const DiagnosticItem& item)
+{
+    if (!m_table) {
+        return;
+    }
+    appendRowForDiagnostic(item);
+    updateSummaryLabels();
+    emit problemCountChanged(m_table->rowCount());
+}
+
+void ProblemsPanel::replaceBuildDiagnostics(const QList<DiagnosticItem>& items)
+{
+    QList<DiagnosticItem> merged;
+    for (int row = 0; row < problemCount(); ++row) {
+        const auto item = itemAtRow(row);
+        if (item.source != QStringLiteral("构建")) merged.append(item);
+    }
+    for (auto item : items) {
+        item.source = QStringLiteral("构建");
+        merged.append(item);
+    }
+    setDiagnostics(merged);
+}
+
+void ProblemsPanel::setDiagnostics(const QList<DiagnosticItem>& items)
+{
+    clearProblems();
     if (!m_table) {
         return;
     }
 
+    m_table->setUpdatesEnabled(false);
+    for (const DiagnosticItem& item : items) {
+        appendRowForDiagnostic(item);
+    }
+    m_table->setUpdatesEnabled(true);
+
+    updateSummaryLabels();
+    emit problemCountChanged(m_table->rowCount());
+}
+
+void ProblemsPanel::appendRowForDiagnostic(const DiagnosticItem& item)
+{
     const int row = m_table->rowCount();
     m_table->insertRow(row);
 
-    auto* timeItem = new QTableWidgetItem(QDateTime::currentDateTime().toString("HH:mm:ss"));
-    auto* severityItem = new QTableWidgetItem(severity);
-    auto* sourceItem = new QTableWidgetItem(source);
-    auto* messageItem = new QTableWidgetItem(message);
+    const QString timeStr = item.timestamp.isValid()
+        ? item.timestamp.toString("HH:mm:ss")
+        : QDateTime::currentDateTime().toString("HH:mm:ss");
 
-    if (severity.compare(QStringLiteral("错误"), Qt::CaseInsensitive) == 0
-            || severity.compare(QStringLiteral("error"), Qt::CaseInsensitive) == 0) {
+    auto* timeItem = new QTableWidgetItem(timeStr);
+    timeItem->setData(Qt::UserRole, QVariant::fromValue(item));
+    timeItem->setForeground(QColor("#57606a"));
+
+    auto* severityItem = new QTableWidgetItem;
+    const QString sevLower = item.severity.toLower();
+    if (sevLower == "error" || sevLower == "错误") {
         severityItem->setText(QStringLiteral("错误"));
         severityItem->setForeground(QColor("#cf222e"));
         severityItem->setBackground(QColor("#ffebe9"));
-    } else if (severity.compare(QStringLiteral("警告"), Qt::CaseInsensitive) == 0
-               || severity.compare(QStringLiteral("warning"), Qt::CaseInsensitive) == 0) {
+        ++m_errorCount;
+    } else if (sevLower == "warning" || sevLower == "警告") {
         severityItem->setText(QStringLiteral("警告"));
         severityItem->setForeground(QColor("#7d4e00"));
         severityItem->setBackground(QColor("#fff8c5"));
+        ++m_warningCount;
     } else {
-        severityItem->setText(severity.isEmpty() ? QStringLiteral("信息") : severity);
+        severityItem->setText(item.severity.isEmpty() ? QStringLiteral("信息") : item.severity);
         severityItem->setForeground(QColor("#0969da"));
         severityItem->setBackground(QColor("#ddf4ff"));
+        ++m_infoCount;
     }
 
-    timeItem->setForeground(QColor("#57606a"));
+    auto* sourceItem = new QTableWidgetItem(item.source);
     sourceItem->setForeground(QColor("#57606a"));
+
+    // 位置列 (Location)
+    auto* locationItem = new QTableWidgetItem;
+    if (item.hasLocation()) {
+        QString loc = QFileInfo(item.filePath).fileName() + ":" + QString::number(item.line);
+        if (item.column > 0) {
+            loc += ":" + QString::number(item.column);
+        }
+        locationItem->setText(loc);
+        locationItem->setToolTip(item.filePath);
+        locationItem->setForeground(QColor("#0969da"));
+    } else {
+        locationItem->setText(QStringLiteral("--"));
+        locationItem->setForeground(QColor("#8c8c8c"));
+    }
+
+    // 说明列 (Message)
+    auto* messageItem = new QTableWidgetItem;
+    if (item.isOutdated) {
+        messageItem->setText(QStringLiteral("[可能已过期] ") + item.message);
+        messageItem->setForeground(QColor("#8c8c8c"));
+    } else {
+        messageItem->setText(item.message);
+    }
 
     m_table->setItem(row, 0, timeItem);
     m_table->setItem(row, 1, severityItem);
     m_table->setItem(row, 2, sourceItem);
-    m_table->setItem(row, 3, messageItem);
+    m_table->setItem(row, 3, locationItem);
+    m_table->setItem(row, 4, messageItem);
+}
 
-    if (severityItem->text() == QStringLiteral("错误")) {
-        ++m_errorCount;
-    } else if (severityItem->text() == QStringLiteral("警告")) {
-        ++m_warningCount;
-    } else {
-        ++m_infoCount;
+void ProblemsPanel::markDiagnosticsOutdatedForFile(const QString& filePath)
+{
+    if (!m_table || filePath.trimmed().isEmpty()) {
+        return;
     }
-    updateSummaryLabels();
 
-    emit problemCountChanged(m_table->rowCount());
+    const QString targetCanonical = QFileInfo(filePath.trimmed()).canonicalFilePath();
+    const QString targetClean = QDir::cleanPath(filePath.trimmed());
+
+    for (int row = 0; row < m_table->rowCount(); ++row) {
+        auto* timeItem = m_table->item(row, 0);
+        if (!timeItem) {
+            continue;
+        }
+
+        DiagnosticItem item = timeItem->data(Qt::UserRole).value<DiagnosticItem>();
+        if (item.filePath.isEmpty()) {
+            continue;
+        }
+
+        const QString itemCanonical = QFileInfo(item.filePath).canonicalFilePath();
+        const QString itemClean = QDir::cleanPath(item.filePath);
+
+        const bool match = (!targetCanonical.isEmpty() && !itemCanonical.isEmpty() && targetCanonical == itemCanonical)
+                           || (targetClean.compare(itemClean, Qt::CaseInsensitive) == 0);
+
+        if (match) {
+            item.isOutdated = true;
+            timeItem->setData(Qt::UserRole, QVariant::fromValue(item));
+
+            auto* msgItem = m_table->item(row, 4);
+            if (msgItem) {
+                if (!msgItem->text().startsWith(QStringLiteral("[可能已过期]"))) {
+                    msgItem->setText(QStringLiteral("[可能已过期] ") + msgItem->text());
+                }
+                msgItem->setForeground(QColor("#8c8c8c"));
+            }
+        }
+    }
+}
+
+DiagnosticItem ProblemsPanel::itemAtRow(int row) const
+{
+    if (!m_table || row < 0 || row >= m_table->rowCount()) {
+        return DiagnosticItem();
+    }
+    auto* timeItem = m_table->item(row, 0);
+    if (!timeItem) {
+        return DiagnosticItem();
+    }
+    return timeItem->data(Qt::UserRole).value<DiagnosticItem>();
+}
+
+void ProblemsPanel::onRowActivated(int row)
+{
+    DiagnosticItem item = itemAtRow(row);
+    if (!item.message.isEmpty() || !item.filePath.isEmpty()) {
+        emit diagnosticActivated(item);
+    }
+}
+
+bool ProblemsPanel::eventFilter(QObject* watched, QEvent* event)
+{
+    if (watched == m_table && event->type() == QEvent::KeyPress) {
+        auto* keyEvent = static_cast<QKeyEvent*>(event);
+        if (keyEvent->key() == Qt::Key_Return || keyEvent->key() == Qt::Key_Enter) {
+            onRowActivated(m_table->currentRow());
+            return true;
+        }
+    }
+    return QWidget::eventFilter(watched, event);
 }
 
 void ProblemsPanel::clearProblems()

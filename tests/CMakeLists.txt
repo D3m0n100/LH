@@ -450,3 +450,11 @@ add_executable(pid_history_async_test pid_history_async_test.cpp)
 target_link_libraries(pid_history_async_test PRIVATE designer_module monitor Qt5::Widgets Qt5::Charts Qt5::Test)
 configure_lh_test(pid_history_async_test)
 register_lh_test(PidHistoryAsyncTest pid_history_async_test)
+
+add_executable(designer_p1_robustness_test designer_p1_robustness_test.cpp
+    ${CMAKE_SOURCE_DIR}/resources/resources.qrc)
+target_link_libraries(designer_p1_robustness_test PRIVATE designer_module monitor Qt5::Widgets Qt5::Charts Qt5::Test)
+configure_lh_test(designer_p1_robustness_test
+    ${CMAKE_SOURCE_DIR}/src/designer
+)
+register_lh_test(DesignerP1RobustnessTest designer_p1_robustness_test)

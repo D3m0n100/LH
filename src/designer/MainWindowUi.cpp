@@ -49,6 +49,7 @@ void MainWindow::createActions()
         action->setObjectName(objectName);
         action->setText(text);
         action->setToolTip(tooltip);
+        action->setShortcutContext(Qt::WindowShortcut);
         if (!iconPath.isEmpty()) {
             action->setIcon(QIcon(iconPath));
         }
@@ -69,8 +70,11 @@ void MainWindow::createActions()
     m_actSave->setIconText("保存");
     connect(m_actSave, &QAction::triggered, this, &MainWindow::onSaveProject);
 
-    m_actSaveAll = makeSharedAction("actSaveAll", "", "全部保存", "保存所有修改");
+    m_actSaveAll = makeSharedAction("actSaveAll", "", "全部保存(&L)", "保存所有修改 (Ctrl+Shift+S)", QKeySequence("Ctrl+Shift+S"));
     connect(m_actSaveAll, &QAction::triggered, this, &MainWindow::onSaveAll);
+
+    m_actCloseActiveTab = makeSharedAction("actCloseActiveTab", "", "关闭当前标签(&W)", "关闭当前标签页 (Ctrl+W)", QKeySequence("Ctrl+W"));
+    connect(m_actCloseActiveTab, &QAction::triggered, this, &MainWindow::closeCurrentActiveTab);
 
     m_actCloseProject = makeSharedAction("actCloseProject", "", "关闭项目", "关闭当前项目");
     connect(m_actCloseProject, &QAction::triggered, this, &MainWindow::onCloseProject);
@@ -100,7 +104,31 @@ void MainWindow::createActions()
     m_actFind = makeSharedAction("actFind", "", "查找(&F)...", "查找 (Ctrl+F)", QKeySequence("Ctrl+F"));
     connect(m_actFind, &QAction::triggered, this, &MainWindow::onFind);
 
+    m_actGotoLine = makeSharedAction("actGotoLine", "", "转到行(&G)...", "转到指定行 (Ctrl+G)", QKeySequence("Ctrl+G"));
+    connect(m_actGotoLine, &QAction::triggered, this, &MainWindow::openGotoLine);
+
     // 视图操作
+    m_actCommandPalette = makeSharedAction("actCommandPalette", "", "命令面板...", "显示所有命令 (Ctrl+Shift+P / F1)");
+    m_actCommandPalette->setShortcuts({QKeySequence("Ctrl+Shift+P"), QKeySequence(Qt::Key_F1)});
+    connect(m_actCommandPalette, &QAction::triggered, this, &MainWindow::openCommandPalette);
+
+    m_actQuickOpen = makeSharedAction("actQuickOpen", "", "快速打开...", "按文件名快速打开 (Ctrl+P)", QKeySequence("Ctrl+P"));
+    connect(m_actQuickOpen, &QAction::triggered, this, &MainWindow::openQuickOpen);
+
+    m_actToggleSidebar = makeSharedAction("actToggleSidebar", "", "切换侧边栏(&B)", "显示或隐藏项目浏览器侧边栏 (Ctrl+B)", QKeySequence("Ctrl+B"));
+    connect(m_actToggleSidebar, &QAction::triggered, this, [this]() {
+        if (m_actToggleExplorerDock) {
+            m_actToggleExplorerDock->toggle();
+        }
+    });
+
+    m_actToggleBottomPanel = makeSharedAction("actToggleBottomPanel", "", "切换底部面板(&J)", "显示或隐藏输出与问题面板 (Ctrl+J)", QKeySequence("Ctrl+J"));
+    connect(m_actToggleBottomPanel, &QAction::triggered, this, [this]() {
+        if (m_actToggleOutputDock) {
+            m_actToggleOutputDock->toggle();
+        }
+    });
+
     m_actToggleDslEditor = makeSharedAction("actToggleDslEditor", ":/icons/output.svg", "LH编辑器(&D)", "显示或隐藏 LH 编辑器窗口 (Ctrl+D)", QKeySequence("Ctrl+D"));
     m_actToggleDslEditor->setCheckable(true);
     m_actToggleDslEditor->setChecked(true);
@@ -229,6 +257,14 @@ void MainWindow::createActions()
 
     m_actAbout = makeSharedAction("actAbout", "", "关于...", "关于本软件");
     connect(m_actAbout, &QAction::triggered, this, &MainWindow::onAbout);
+
+    addAction(m_actSaveAll);
+    addAction(m_actCloseActiveTab);
+    addAction(m_actCommandPalette);
+    addAction(m_actQuickOpen);
+    addAction(m_actGotoLine);
+    addAction(m_actToggleSidebar);
+    addAction(m_actToggleBottomPanel);
 }
 
 void MainWindow::createMenus()
@@ -240,6 +276,7 @@ void MainWindow::createMenus()
     fileMenu->addSeparator();
     fileMenu->addAction(m_actSave);
     fileMenu->addAction(m_actSaveAll);
+    fileMenu->addAction(m_actCloseActiveTab);
     fileMenu->addSeparator();
     fileMenu->addAction(m_actCloseProject);
     fileMenu->addSeparator();
@@ -256,11 +293,17 @@ void MainWindow::createMenus()
     editMenu->addAction(m_actSelectAll);
     editMenu->addSeparator();
     editMenu->addAction(m_actFind);
+    editMenu->addAction(m_actGotoLine);
     updateEditActions();
 
     QMenu* viewMenu = menuBar()->addMenu("视图(&V)");
+    viewMenu->addAction(m_actCommandPalette);
+    viewMenu->addAction(m_actQuickOpen);
+    viewMenu->addSeparator();
     viewMenu->addAction(m_actToggleDslEditor);
     viewMenu->addSeparator();
+    viewMenu->addAction(m_actToggleSidebar);
+    viewMenu->addAction(m_actToggleBottomPanel);
     viewMenu->addAction(m_actToggleExplorerDock);
     viewMenu->addAction(m_actToggleInspectorDock);
     viewMenu->addAction(m_actToggleFunctionList);
@@ -592,6 +635,9 @@ void MainWindow::createDockWidgets()
         }
     });
 
+    connect(m_problemsPanel, &ProblemsPanel::diagnosticActivated,
+            this, &MainWindow::onDiagnosticActivated);
+
     if (m_monitorWidget) {
         connect(m_monitorWidget, &MonitorWidget::alarmCountChanged, this, [this](int count) {
             m_alarmCount = count;
@@ -847,6 +893,9 @@ void MainWindow::connectDslEditorSignals()
 
     connect(m_dslEditor, &DslScriptEditor::cursorPositionChanged,
             this, &MainWindow::onEditorCursorPositionChanged);
+    connect(m_dslEditor->editor(), &QPlainTextEdit::textChanged, this, [this]() {
+        if (m_dslEditor) onDocumentModified(m_dslEditor->currentFilePath());
+    });
     connect(m_dslEditor, &DslScriptEditor::editorModified,
             this, &MainWindow::onEditorModified);
 

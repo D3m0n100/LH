@@ -1,10 +1,11 @@
-﻿/**
+/**
  * @file BuildController.cpp
  * @brief Build flow controller implementation
  */
 
 #include "BuildController.h"
 #include "Common.h"
+#include "ui/DiagnosticParser.h"
 
 #include "common/PathSecurityUtils.h"
 #include <QDateTime>
@@ -538,6 +539,15 @@ BuildController::~BuildController()
     LOG_DEBUG("BuildController destroyed.");
 }
 
+void BuildController::setCompileSessionContext(const QString& sessionId, const QString& filePath, quint64 docVersion, const QHash<QString, quint64>& versions)
+{
+    m_compileProjectSessionId = sessionId;
+    m_compileFilePath = filePath;
+    m_compileDocVersion = docVersion;
+    m_compileDocumentVersions = versions;
+    m_compileDocumentVersions.insert(filePath, docVersion);
+}
+
 void BuildController::compileConfiguration(const QString& projectPath,
                                            const ProjectRuntimeConfig& config)
 {
@@ -669,9 +679,14 @@ void BuildController::onDslCompilerFinished(quint64 operationGeneration,
         return;
     }
 
+    const QString projectSessionId = m_compileProjectSessionId;
+    const QString compiledFile = m_compileFilePath;
+    const auto documentVersions = m_compileDocumentVersions;
+    const QString projectPath = m_currentProjectPath;
     const BuildType buildType = m_currentBuildType;
     const QString outputDir = buildOutputDirectory(buildType);
     m_lastCompileResult = m_dslCompiler->lastCompileResult();
+    const auto sourceLocations = m_lastCompileResult.metadata.value("diagnosticSourceLocations").toMap();
     m_activeOperationGeneration = 0;
     setCompileState(CompileState::Idle);
     if (m_compileState != CompileState::Idle || m_activeOperationGeneration != 0) {
@@ -695,6 +710,7 @@ void BuildController::onDslCompilerFinished(quint64 operationGeneration,
         }
     }
 
+    const quint64 generation = operationGeneration;
     if (exitCode == 0 && normalExit) {
         emit compileProgress(100);
         if (m_compileState != CompileState::Idle || m_activeOperationGeneration != 0) {
@@ -703,6 +719,7 @@ void BuildController::onDslCompilerFinished(quint64 operationGeneration,
         emit logMessage(timestampedMessage(
                 QStringLiteral("编译完成，输出目录: %1")
                         .arg(outputDir)));
+        emit diagnosticsProduced(generation, projectSessionId, QList<DiagnosticItem>());
         emit compileSucceeded(buildType);
         return;
     }
@@ -718,6 +735,26 @@ void BuildController::onDslCompilerFinished(quint64 operationGeneration,
     if (m_compileState != CompileState::Idle || m_activeOperationGeneration != 0) {
         return;
     }
+    QList<DiagnosticItem> diagnostics = DiagnosticParser::parseCompilerOutput(
+        stdOut, stdErr, projectPath, compiledFile);
+    for (auto& item : diagnostics) {
+        if (item.line > 0) {
+            const auto location = sourceLocations.value(QString::number(item.line)).toMap();
+            item.filePath = location.value("filePath").toString();
+            if (!item.filePath.isEmpty()) {
+                item.line = location.value("line").toInt();
+                item.hasExactColumn = item.hasExactColumn && location.value("exactColumn").toBool();
+            } else {
+                item.message += QStringLiteral(" [编译器输入第 %1 行；源文件位置无法可靠映射]").arg(item.line);
+                item.line = -1;
+                item.column = -1;
+                item.hasExactColumn = false;
+            }
+        }
+        item.compiledFilePath = item.filePath.isEmpty() ? compiledFile : item.filePath;
+        item.compiledDocVersion = documentVersions.value(item.compiledFilePath, 0);
+    }
+    emit diagnosticsProduced(generation, projectSessionId, diagnostics);
     emit compileFailed(buildType, errorMessage);
 }
 
@@ -731,6 +768,8 @@ void BuildController::onDslCompilerFailedToStart(quint64 operationGeneration,
     }
 
     const BuildType buildType = m_currentBuildType;
+    const quint64 generation = operationGeneration;
+    const QString projectSessionId = m_compileProjectSessionId;
     m_activeOperationGeneration = 0;
     setCompileState(CompileState::Idle);
     if (m_compileState != CompileState::Idle || m_activeOperationGeneration != 0) {
@@ -740,6 +779,12 @@ void BuildController::onDslCompilerFailedToStart(quint64 operationGeneration,
     if (m_compileState != CompileState::Idle || m_activeOperationGeneration != 0) {
         return;
     }
+    DiagnosticItem item;
+    item.severity = QStringLiteral("error");
+    item.source = QStringLiteral("构建");
+    item.message = errorString;
+    item.timestamp = QDateTime::currentDateTime();
+    emit diagnosticsProduced(generation, projectSessionId, {item});
     emit compileFailed(buildType, errorString);
 }
 

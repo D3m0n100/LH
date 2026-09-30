@@ -240,6 +240,7 @@ private:
     QString m_asyncStdErr;
     QTimer*   m_compileTimeoutTimer = nullptr;
     CompileResult m_lastCompileResult;
+    QVariantMap m_asyncSourceLocations;
     ProjectRuntimeConfig m_asyncProjectConfig;  // 异步项目编译时暂存配置
     quint64 m_nextOperationGeneration = 0;
     quint64 m_asyncOperationGeneration = 0;

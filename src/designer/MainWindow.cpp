@@ -31,6 +31,8 @@
 #include "ui/InspectorPanel.h"
 #include "ui/StatusTextHelper.h"
 #include "ui/ProblemsPanel.h"
+#include "ui/CommandPaletteDialog.h"
+#include <QUuid>
 #include "ParameterTuningPanel.h"
 #include "ParameterTuningWindow.h"
 #include "ParameterController.h"
@@ -140,6 +142,7 @@ MainWindow::MainWindow(QWidget* parent)
     , m_sampleDataProvider(nullptr)
     , m_projectRunning(false)
 {
+    m_projectSessionId = QUuid::createUuid().toString();
     resize(1500, 900);
     setWindowTitle("LH v1.0.0 - DSL组态");
 
@@ -289,10 +292,10 @@ bool MainWindow::eventFilter(QObject* watched, QEvent* event)
     }
     if (sub && event->type() == QEvent::Close && sub != m_editorSubWindow
             && sub->property("modified").toBool()) {
-        const auto choice = QMessageBox::warning(this, QStringLiteral("未保存修改"),
-                                                  QStringLiteral("文件尚未保存，是否保存？"),
-                                                  QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel,
-                                                  QMessageBox::Save);
+        const auto choice = showMessageBox(QStringLiteral("未保存修改"),
+                                            QStringLiteral("文件尚未保存，是否保存？"),
+                                            QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel,
+                                            QMessageBox::Save);
         if (choice == QMessageBox::Cancel) return true;
         if (choice == QMessageBox::Save && !saveAuxiliarySubWindow(sub)) return true;
     }
@@ -307,7 +310,7 @@ bool MainWindow::saveAuxiliarySubWindow(QMdiSubWindow* sub)
     if (path.isEmpty() || !editor) return true;
     QSaveFile file(path);
     if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
-        QMessageBox::warning(this, QStringLiteral("保存失败"), QStringLiteral("无法保存文件: %1").arg(path));
+        showMessageBox(QStringLiteral("保存失败"), QStringLiteral("无法保存文件: %1").arg(path));
         return false;
     }
     QTextStream out(&file);
@@ -316,7 +319,7 @@ bool MainWindow::saveAuxiliarySubWindow(QMdiSubWindow* sub)
     out.flush();
     if (out.status() != QTextStream::Ok || !file.commit()) {
         file.cancelWriting();
-        QMessageBox::warning(this, QStringLiteral("保存失败"), QStringLiteral("写入文件失败: %1").arg(path));
+        showMessageBox(QStringLiteral("保存失败"), QStringLiteral("写入文件失败: %1").arg(path));
         return false;
     }
     sub->setProperty("modified", false);
@@ -327,6 +330,16 @@ bool MainWindow::saveAuxiliarySubWindow(QMdiSubWindow* sub)
     return true;
 }
 
+int MainWindow::showMessageBox(const QString& title, const QString& message,
+                               QMessageBox::StandardButtons buttons,
+                               QMessageBox::StandardButton defaultButton)
+{
+    if (m_messageBoxHook) {
+        return m_messageBoxHook(title, message, buttons, defaultButton);
+    }
+    return QMessageBox::warning(this, title, message, buttons, defaultButton);
+}
+
 bool MainWindow::saveAuxiliaryFiles(bool all)
 {
     if (!m_mdiArea) return true;
@@ -335,9 +348,9 @@ bool MainWindow::saveAuxiliaryFiles(bool all)
         auto* editor = qobject_cast<QPlainTextEdit*>(sub->widget());
         const bool isDirty = sub->property("modified").toBool()
                 || (editor && editor->document()->isModified());
-        if (!isDirty) continue;
-        if (!all && sub != m_mdiArea->activeSubWindow()) continue;
-        if (!saveAuxiliarySubWindow(sub)) return false;
+        if (isDirty && (all || sub == m_mdiArea->activeSubWindow())) {
+            if (!saveAuxiliarySubWindow(sub)) return false;
+        }
     }
     return true;
 }
@@ -357,10 +370,10 @@ bool MainWindow::confirmAuxiliaryChanges()
         }
     }
     if (!dirty) return true;
-    const auto choice = QMessageBox::warning(this, QStringLiteral("未保存修改"),
-                                              QStringLiteral("附属文件有未保存修改，是否保存全部？"),
-                                              QMessageBox::SaveAll | QMessageBox::Discard | QMessageBox::Cancel,
-                                              QMessageBox::SaveAll);
+    const auto choice = showMessageBox(QStringLiteral("未保存修改"),
+                                       QStringLiteral("附属文件有未保存修改，是否保存全部？"),
+                                       QMessageBox::SaveAll | QMessageBox::Discard | QMessageBox::Cancel,
+                                       QMessageBox::SaveAll);
     if (choice == QMessageBox::Cancel) return false;
     return choice == QMessageBox::Discard || saveAuxiliaryFiles(true);
 }
@@ -623,6 +636,8 @@ void MainWindow::connectControllerSignals()
             this, &MainWindow::onLogMessage);
     connect(m_buildController, &BuildController::saveRequired,
             this, &MainWindow::onBuildSaveRequired);
+    connect(m_buildController, &BuildController::diagnosticsProduced,
+            this, &MainWindow::onDiagnosticsProduced);
     // validationRequired 已改为回调模式，通过 setValidationCallback 设置
     m_buildController->setValidationCallback([this](BuildType type, QStringList& errors) -> bool {
         return onBuildValidation(type, errors);
@@ -1644,7 +1659,10 @@ void MainWindow::onEditorCursorPositionChanged(int line, int column, int totalLi
 
 void MainWindow::onEditorModified(bool modified)
 {
-    m_projectController->setModified(modified);
+    if (m_projectController) {
+        m_projectController->setModified(modified);
+    }
+
 }
 
 void MainWindow::onSnippetInserted(const DslInsertRecord& record)
@@ -1674,6 +1692,11 @@ void MainWindow::onProjectCreated(const QString& projectPath, const QString& pro
 {
     Q_UNUSED(projectPath);
     Q_UNUSED(projectName);
+    m_projectSessionId = QUuid::createUuid().toString();
+    m_documentVersions.clear();
+    m_latestDiagnosticGeneration = 0;
+    m_activeScanTaskId = 0;
+
     updateWindowTitle();
     updateRecentProjectsMenu();
     refreshExplorerRoot();
@@ -1683,6 +1706,11 @@ void MainWindow::onProjectCreated(const QString& projectPath, const QString& pro
 void MainWindow::onProjectOpened(const ProjectRuntimeConfig& config)
 {
     Q_UNUSED(config);
+    m_projectSessionId = QUuid::createUuid().toString();
+    m_documentVersions.clear();
+    m_latestDiagnosticGeneration = 0;
+    m_activeScanTaskId = 0;
+
     if (m_mdiArea) {
         for (QMdiSubWindow* sub : m_mdiArea->subWindowList()) {
             if (sub && sub != m_editorSubWindow && !sub->property("modified").toBool()) sub->close();
@@ -1713,6 +1741,11 @@ void MainWindow::onProjectSaved()
 
 void MainWindow::onProjectClosed()
 {
+    m_projectSessionId = QUuid::createUuid().toString();
+    m_documentVersions.clear();
+    m_latestDiagnosticGeneration = 0;
+    m_activeScanTaskId = 0;
+
     if (m_sessionController) {
         m_sessionController->requestStop();
     }
@@ -1776,8 +1809,8 @@ void MainWindow::onSaveConfirmationRequired(bool& shouldSave, bool& cancelled)
 void MainWindow::onScriptLoadRequired(const QString& scriptPath, const QString& content)
 {
     if (m_dslEditor) {
-        m_dslEditor->setScript(content);
         m_dslEditor->setCurrentFilePath(scriptPath);
+        m_dslEditor->setScript(content);
         m_dslEditor->editor()->setReadOnly(false);
         m_dslEditor->setModified(false);
         m_dslEditor->clearInsertRecords();
@@ -1818,6 +1851,15 @@ void MainWindow::onCompileStarted(BuildType type)
     if (m_globalStatusBar) {
         m_globalStatusBar->setBuildState(QStringLiteral("编译中"));
     }
+
+    const QString scriptPath = (m_dslEditor && !m_dslEditor->currentFilePath().isEmpty())
+        ? normalizeDocumentIdentity(m_dslEditor->currentFilePath())
+        : (m_projectController ? normalizeDocumentIdentity(m_projectController->currentScriptFile()) : QString());
+    const quint64 docVer = m_documentVersions.value(scriptPath, 0);
+    if (m_buildController) {
+        m_buildController->setCompileSessionContext(m_projectSessionId, scriptPath, docVer, m_documentVersions);
+    }
+
     refreshInspectorPanel();
 }
 
@@ -2012,4 +2054,106 @@ void MainWindow::onWarningOccurred(const QString& title, const QString& message)
 {
     addProblem("warning", title, message);
     QMessageBox::warning(this, title, message);
+}
+
+// ================= 诊断、命令面板与快速导航实现 =================
+
+void MainWindow::onDocumentModified(const QString& filePath)
+{
+    const QString norm = normalizeDocumentIdentity(filePath);
+    if (!norm.isEmpty()) {
+        m_documentVersions[norm]++;
+        if (m_problemsPanel) {
+            m_problemsPanel->markDiagnosticsOutdatedForFile(norm);
+        }
+    }
+}
+
+void MainWindow::onDiagnosticsProduced(quint64 generation, const QString& projectSessionId, const QList<DiagnosticItem>& items)
+{
+    if (generation < m_latestDiagnosticGeneration) return;
+    if (projectSessionId != m_projectSessionId) {
+        return; // 项目已切换，丢弃旧批次
+    }
+
+    m_latestDiagnosticGeneration = generation;
+    QList<DiagnosticItem> processedItems = items;
+    for (auto& item : processedItems) {
+        if (!item.compiledFilePath.isEmpty()
+                && m_documentVersions.value(item.compiledFilePath, 0) != item.compiledDocVersion) {
+            item.isOutdated = true;
+        }
+    }
+
+    if (m_problemsPanel) {
+        m_problemsPanel->replaceBuildDiagnostics(processedItems);
+    }
+}
+
+void MainWindow::onDiagnosticActivated(const DiagnosticItem& item)
+{
+    if (item.filePath.isEmpty() || !QFile::exists(item.filePath)) {
+        updateStatusBar(QStringLiteral("诊断详情: %1").arg(item.message));
+        return;
+    }
+
+    QWidget* editor = openAndActivateFile(item.filePath);
+    if (!editor) {
+        return; // 用户取消或打开失败：绝对不执行任何行列跳转
+    }
+
+    QString activePath;
+    if (auto* dsl = qobject_cast<DslScriptEditor*>(editor)) {
+        activePath = dsl->currentFilePath();
+    } else if (auto* sub = m_mdiArea ? m_mdiArea->activeSubWindow() : nullptr) {
+        activePath = sub->property("filePath").toString();
+    }
+
+    if (!isSameDocument(activePath, item.filePath)) {
+        return;
+    }
+
+    navigateEditorPosition(editor, item.line, item.column, item.hasExactColumn);
+}
+
+void MainWindow::openCommandPalette()
+{
+    CommandPaletteDialog dlg(this, CommandPaletteDialog::Mode::Command);
+    dlg.exec();
+}
+
+void MainWindow::openQuickOpen()
+{
+    CommandPaletteDialog dlg(this, CommandPaletteDialog::Mode::QuickOpen);
+    dlg.exec();
+}
+
+void MainWindow::openGotoLine()
+{
+    CommandPaletteDialog dlg(this, CommandPaletteDialog::Mode::GotoLine);
+    dlg.exec();
+}
+
+void MainWindow::closeCurrentActiveTab()
+{
+    if (!m_mdiArea) {
+        return;
+    }
+    QMdiSubWindow* sub = m_mdiArea->activeSubWindow();
+    if (!sub) {
+        return;
+    }
+
+    // 若为主 DSL 编辑器子窗口：执行“关闭仅隐藏”保护（对齐 FL15-01）
+    if (sub == m_editorSubWindow) {
+        if (m_actToggleDslEditor) {
+            m_actToggleDslEditor->setChecked(false);
+        } else {
+            sub->hide();
+        }
+        return;
+    }
+
+    // 统一由子窗口 Close 事件过滤器执行保存/放弃/取消决策。
+    sub->close();
 }

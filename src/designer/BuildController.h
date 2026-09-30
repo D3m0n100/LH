@@ -34,7 +34,8 @@
 #include <QString>
 #include <functional>
 #include "common/ConfigTypes.h"
-#include "compiler/DSLCompilerInterface.h"
+#include "DSLCompilerInterface.h"
+#include "ui/DiagnosticItem.h"
 
 /**
  * @brief 编译类型枚举
@@ -90,6 +91,12 @@ public slots:
     /// 取消当前编译（如果支持）
     void cancelCompile();
 
+    /// 设置当前编译会话上下文（项目会话UUID、源文件路径、启动时文档版本）
+    void setCompileSessionContext(const QString& sessionId, const QString& filePath, quint64 docVersion, const QHash<QString, quint64>& versions = {});
+    QString compileProjectSessionId() const { return m_compileProjectSessionId; }
+    QString compileFilePath() const { return m_compileFilePath; }
+    quint64 compileDocVersion() const { return m_compileDocVersion; }
+
 signals:
     // ===== 编译状态信号 =====
     
@@ -116,6 +123,9 @@ signals:
     
     /// 需要先保存项目
     void saveRequired();
+
+    /// 结构化诊断结果产生
+    void diagnosticsProduced(quint64 generation, const QString& projectSessionId, const QList<DiagnosticItem>& items);
 
     /// 设置编译前校验回调（替代旧的 validationRequired 信号，避免引用参数）
 private slots:
@@ -174,6 +184,11 @@ private:
     BuildType m_currentBuildType = BuildType::Configuration;
     QString m_currentProjectPath;
     CompileResult m_lastCompileResult;
+
+    QString m_compileProjectSessionId;
+    QString m_compileFilePath;
+    quint64 m_compileDocVersion = 0;
+    QHash<QString, quint64> m_compileDocumentVersions;
 };
 
 #endif // BUILDCONTROLLER_H

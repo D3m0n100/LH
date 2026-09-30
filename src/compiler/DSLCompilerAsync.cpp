@@ -4,12 +4,48 @@
 
 #include <QDir>
 #include <QFileInfo>
+#include <QFile>
 #include <QProcess>
 #include <QTimer>
 
 #include <utility>
 
 namespace {
+
+// Only map an unchanged, uniquely embedded source block. Transformed or
+// ambiguous blocks deliberately remain non-navigable instead of guessing.
+QVariantMap compilerSourceLocations(const QString& inputPath, const QStringList& sources)
+{
+    QFile input(inputPath);
+    if (!input.open(QIODevice::ReadOnly)) return {};
+    const QString compiled = TextEncoding::decodeUtf8WithLocalFallback(input.readAll()).replace("\r\n", "\n");
+    QVariantMap locations;
+    for (const auto& path : sources) {
+        QFile source(path);
+        if (!source.open(QIODevice::ReadOnly)) continue;
+        const QString original = TextEncoding::decodeUtf8WithLocalFallback(source.readAll()).replace("\r\n", "\n");
+        const QString block = original.trimmed();
+        if (block.isEmpty()) continue;
+        const int start = compiled.indexOf(block);
+        if (start < 0 || compiled.indexOf(block, start + 1) >= 0) continue;
+        if (start > 0 && compiled.at(start - 1) != QLatin1Char('\n')) continue;
+        const int end = start + block.size();
+        if (end < compiled.size() && compiled.at(end) != QLatin1Char('\n')) continue;
+        const int originalStart = original.indexOf(block);
+        const int compiledLine = compiled.left(start).count('\n') + 1;
+        const int originalLine = original.left(originalStart).count('\n') + 1;
+        const QStringList lines = block.split('\n');
+        for (int i = 0; i < lines.size(); ++i) {
+            QVariantMap location;
+            location.insert("filePath", QFileInfo(path).canonicalFilePath());
+            location.insert("line", originalLine + i);
+            // Trimming may remove indentation from the first line.
+            location.insert("exactColumn", i > 0 || originalStart == 0 || original.at(originalStart - 1) == QLatin1Char('\n'));
+            locations.insert(QString::number(compiledLine + i), location);
+        }
+    }
+    return locations;
+}
 
 constexpr int kAsyncCompilerOutputLimit = 1024 * 1024;
 constexpr char kAsyncCompilerOutputMarker[] =
@@ -399,6 +435,7 @@ void DSLCompilerInterface::startAsyncCompilerProcess(const QString& logPrefix,
     m_process->setProperty("projectName", projectName);
     m_process->setProperty("expectedOutputFile", outputFile);
     m_process->setProperty("compilerInputFile", compilerInputFile);
+    m_process->setProperty("diagnosticSourceLocations", m_asyncSourceLocations);
     m_process->setProperty("projectPath", projectPath);
     m_process->setProperty("generationId", generationId);
     m_process->setProperty("operationGeneration", QVariant::fromValue(m_asyncOperationGeneration));
@@ -476,6 +513,7 @@ void DSLCompilerInterface::compileDslFileAsync(const QString& sourceFile,
     }
 
     const QString outputFile = DSLCompilerInternal::defaultOutputFileForSource(sourceFile, outputDir);
+    m_asyncSourceLocations = compilerSourceLocations(compilerInputFile, QStringList{sourceFile});
     const QStringList args = DSLCompilerInternal::buildCompilerProcessArgs(entryScript, compilerInputFile, outputFile);
     resolvePythonInterpreterAsync(generation,
                                   [this, workDir, sourceFile, outputDir, projectName, outputFile,
@@ -572,6 +610,7 @@ void DSLCompilerInterface::compileProjectAsync(const QString& projectPath,
     }
 
     const QString outputFile = DSLCompilerInternal::projectOutputFile(generationDir);
+    m_asyncSourceLocations = compilerSourceLocations(compilerInputFile, scriptFiles);
     const QStringList args = DSLCompilerInternal::buildCompilerProcessArgs(entryScript, compilerInputFile, outputFile);
     resolvePythonInterpreterAsync(generation,
                                   [this, config, workDir, mainScriptFile, scriptFiles, generationDir,
@@ -787,6 +826,7 @@ void DSLCompilerInterface::onProcessFinished(int exitCode, QProcess::ExitStatus 
                                                  m_asyncStdErr);
     }
 
+    m_lastCompileResult.metadata.insert("diagnosticSourceLocations", process->property("diagnosticSourceLocations"));
     success = success && m_lastCompileResult.success;
     const int resultExitCode = success ? 0 : (exitCode == 0 ? 1 : exitCode);
     const bool resultNormalExit = normalExit && success;
