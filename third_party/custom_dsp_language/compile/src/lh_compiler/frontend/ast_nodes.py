@@ -122,6 +122,7 @@ class Variable:
     initial_value: Optional[Any] = None
     line: int = 0
     column: int = 0
+    read_only: bool = False
 
     def accept(self, visitor):
         m = getattr(visitor, 'visit_Variable', None)

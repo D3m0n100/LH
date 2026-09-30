@@ -17,15 +17,19 @@ src_dir = current_dir.parent.parent
 if str(src_dir) not in sys.path:
     sys.path.insert(0, str(src_dir))
 
+class CompilerDependencyError(ImportError):
+    """The parser/runtime is unavailable; callers can report this without exiting."""
+
+
+_parser_import_error = None
 try:
     from antlr4 import InputStream, CommonTokenStream
     from antlr4.error.ErrorListener import ErrorListener
     from grammar.LHLexer import LHLexer
     from grammar.LHParser import LHParser
 except ImportError as e:
-    print(f"错误: 无法导入ANTLR解析器: {e}")
-    print("请确保 grammar 目录存在且包含生成的解析器文件")
-    sys.exit(1)
+    _parser_import_error = e
+    ErrorListener = object
 
 from lh_compiler.frontend.ast_builder import ASTBuilder
 from lh_compiler.frontend.ast_nodes import Program
@@ -88,6 +92,11 @@ class LHCompiler:
             debug: 是否显示调试信息
             grammar_path: ANTLR语法文件路径（可选）
         """
+        if _parser_import_error is not None:
+            raise CompilerDependencyError(
+                f"无法导入 ANTLR 解析器: {_parser_import_error}; "
+                "请安装 antlr4-python3-runtime==4.13.2 并确认 grammar 包包含生成的解析器"
+            ) from _parser_import_error
         self.verbose = verbose
         self.debug = debug
 
@@ -450,7 +459,11 @@ def main():
     args = parser.parse_args()
 
     # 创建编译器
-    compiler = LHCompiler(verbose=args.verbose, debug=args.debug)
+    try:
+        compiler = LHCompiler(verbose=args.verbose, debug=args.debug)
+    except CompilerDependencyError as error:
+        print(f"错误: {error}", file=sys.stderr)
+        return 1
 
     # 编译
     result = compiler.compile_file(args.input, args.output)
@@ -467,4 +480,4 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    sys.exit(main())

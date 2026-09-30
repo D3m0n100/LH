@@ -13,10 +13,17 @@ from rich import print as rprint
 
 from ..function_blocks.registry import FunctionBlockRegistry
 from ..utils.logger import setup_logger
-from ..compiler import LHCompiler
+from ..compiler import LHCompiler, CompilerDependencyError
 
 
 console = Console()
+
+
+def _create_compiler():
+    try:
+        return LHCompiler()
+    except CompilerDependencyError as error:
+        raise click.ClickException(str(error)) from error
 
 
 def _get_registry():
@@ -39,7 +46,7 @@ def main(verbose):
 def compile(input_file, output):
     """Compile an LH source file"""
     console.print(f"[bold blue]Compiling:[/bold blue] {input_file}")
-    compiler = LHCompiler()
+    compiler = _create_compiler()
     result = compiler.compile_file(input_file, output)
     if not result.success:
         err_msg = "\n".join(result.errors) if result.errors else "Compilation failed"
@@ -133,7 +140,7 @@ def describe(block_name):
 def check(input_file):
     """Check syntax without compiling"""
     console.print(f"[bold blue]Checking:[/bold blue] {input_file}")
-    compiler = LHCompiler()
+    compiler = _create_compiler()
     with open(input_file, 'r', encoding='utf-8', errors='replace') as f:
         src = f.read()
     result = compiler.compile_string(src)

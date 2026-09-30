@@ -53,6 +53,7 @@
 #include <QString>
 #include <QStringList>
 #include <functional>
+#include "../core/ProjectCommandCoordinator.h"
 
 QT_BEGIN_NAMESPACE
 class QMdiArea;
@@ -77,7 +78,7 @@ namespace WorkspaceId {
 }
 
 #include "DslScriptEditor.h"
-#include "common/ConfigTypes.h"
+#include "../common/ConfigTypes.h"
 #include "BuildController.h"  // 需要 BuildType 枚举
 #include "ui/DiagnosticItem.h"
 
@@ -118,6 +119,7 @@ class ProblemsPanel;
  */
 class MainWindow : public QMainWindow
 {
+    ProjectCommandCoordinator m_projectCommands;
     Q_OBJECT
 
 public:
@@ -156,6 +158,7 @@ public:
     QWidget* openAndActivateFile(const QString& filePath);
     void navigateEditorPosition(QWidget* editorWidget, int targetLine, int targetColumn = -1, bool hasExactColumn = false);
     bool saveAuxiliarySubWindow(QMdiSubWindow* sub);
+    void deleteProjectDocumentPath(const QString& path);
 
     using MessageBoxHook = std::function<int(const QString& title, const QString& message,
                                              QMessageBox::StandardButtons buttons,

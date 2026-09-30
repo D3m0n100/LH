@@ -39,7 +39,7 @@
 #include <QStringList>
 #include <QDateTime>
 
-#include "common/ConfigTypes.h"
+#include "../common/ConfigTypes.h"
 #include "DslCompletionEngine.h"  // 需要 DslInsertRecord 的完整定义
 
 // 前向声明
@@ -67,8 +67,10 @@ public:
     /// 获取当前脚本文件路径
     QString currentScriptFile() const { return m_currentScriptFile; }
 
-    /// 设置当前脚本文件路径
+    /// 切换编辑文档，不改变工程入口或脚本顺序
     void setCurrentScriptFile(const QString& scriptFile);
+    bool setMainScriptFile(const QString& scriptFile);
+    bool removeProjectPath(const QString& path, QString* errorMessage = nullptr);
     QString currentMainScriptFile() const { return m_runtimeConfig.mainScriptPath; }
     QStringList projectScriptFiles() const { return m_runtimeConfig.scriptFiles; }
     

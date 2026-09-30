@@ -1,0 +1,275 @@
+[
+  {
+    "id": "T07",
+    "status": "已实现待总控验收",
+    "files": [
+      "src/communication/IDeviceBackend.h",
+      "src/communication/ControllerDeviceBackend.h",
+      "src/communication/ControllerDeviceBackendPoints.cpp",
+      "src/communication/VirtualDeviceBackend.h",
+      "src/communication/VirtualDeviceBackend.cpp",
+      "src/designer/ParameterController.h",
+      "src/designer/ParameterController.cpp",
+      "tests/parameter_controller_test.cpp"
+    ],
+    "behavior": [
+      "参数写入与每次回读使用异步完成接口；生产 transport actor 与虚拟定时完成各自实现",
+      "15 秒总 deadline、取消令牌、代次和 QObject 上下文隔离",
+      "先更新批次状态再发信号，避免回调切工程使容器迭代失效；取消后晚到结果不继续旧操作"
+    ],
+    "compatibility": "同步接口保留；异步入口明确拒绝不支持 async write/read 的后端",
+    "checks": [
+      "ctest --test-dir build_current_mingw -R ParameterControllerTest --output-on-failure",
+      "总控用延迟生产 transport 验证 GUI 心跳、销毁和总时限"
+    ],
+    "remainingQuestions": [
+      "新增虚拟写入期间心跳/取消回归未执行；生产 transport 队列与 deadline 需专项验收"
+    ]
+  },
+  {
+    "id": "T08",
+    "status": "已实现待总控验收",
+    "files": [
+      "src/communication/ClassicOpcServer.cpp",
+      "src/communication/ClassicOpcServer.h"
+    ],
+    "behavior": [
+      "Classic 读写复用 RuntimePointRegisterCodec；范围/有限值/宽度/短响应先校验",
+      "BOOL register 位字段按原地址提取；写入采用保留其它位的 read-modify-write",
+      "显式非法地址、unit、bit 和列表数量拒绝；读取失败存 Bad 空值"
+    ],
+    "compatibility": "默认 Matrikon 不改动；holding+ReadOnly 不改变寄存器区",
+    "checks": [
+      "ctest --test-dir build_current_mingw -R OpcServerConfigTest --output-on-failure",
+      "总控补齐 Classic transport 负 INT、UINT、DINT、REAL、字序、BOOL 和短响应矩阵"
+    ],
+    "remainingQuestions": [
+      "尚未增加完整 Classic transport mock 读写矩阵；T26 异步批量轮询独立实施"
+    ]
+  },
+  {
+    "id": "T16",
+    "status": "已实现待总控验收",
+    "files": [
+      "resources/snippets/default_snippets.json",
+      "src/designer/DslCompletionEngine.h",
+      "src/designer/DslCompletionEngine.cpp",
+      "src/designer/DslDragDropHandler.cpp",
+      "src/designer/DslScriptEditor.cpp",
+      "src/designer/ProgramBlocksWidget.cpp",
+      "src/designer/SnippetRepository.cpp",
+      "src/designer/MainWindowUi.cpp"
+    ],
+    "behavior": [
+      "140 个资源的 status/incompleteReason 同步当前定义；21 个 incomplete 可查询但补全/拖拽/双击插入拒绝",
+      "未完成状态与原因可见；supported 显示为本地编译契约而非硬件支持",
+      "工程覆盖模板不得提升内置 status/compilerName/capability；组件补全模型每次重建过滤"
+    ],
+    "compatibility": "保留功能目录及项目新建自定义 Snippet；已有 supported 定义仍可插入",
+    "checks": [
+      "ctest --test-dir build_current_mingw -R DesignerP1RobustnessTest --output-on-failure",
+      "总控比对 registry 与资源 140 项并覆盖项目级同名覆盖"
+    ],
+    "remainingQuestions": [
+      "105 个空参数项的完整功能契约未确认，见 C03 能力矩阵"
+    ]
+  },
+  {
+    "id": "T18",
+    "remainingQuestions": [
+      "详情累计 16 MiB 上限且清空时释放；超限明确提示未保留详情；总控验收磁盘/Unicode边界"
+    ]
+  },
+  {
+    "id": "T20",
+    "status": "已实现待总控验收",
+    "files": [
+      "src/designer/ProjectExplorerWidget.h",
+      "src/designer/ProjectExplorerWidget.cpp",
+      "src/designer/ProjectController.h",
+      "src/designer/ProjectController.cpp",
+      "src/designer/MainWindow.h",
+      "src/designer/MainWindowExplorer.cpp",
+      "src/designer/MainWindowUi.cpp",
+      "src/designer/RuntimeSessionController.h",
+      "src/designer/RuntimeSessionController.cpp",
+      "tests/project_save_close_test.cpp"
+    ],
+    "behavior": [
+      "工程树只发删除请求；处理全部受影响 dirty 文档的保存/放弃/取消，活动构建/运行时拒绝",
+      "工程控制器暂存路径后写配置；失败恢复原路径，成功清理脚本引用及已发布产物指针",
+      "成功后关闭辅助文档、清空受影响 DSL 路径及缓冲、移除诊断并使会话编译产物失效",
+      "保护工程根和 project_config.json；保留 T05 路径/链接校验"
+    ],
+    "compatibility": "删除主脚本后须重新显式配置入口；未清理的暂存目录会明确报告",
+    "checks": [
+      "ctest --test-dir build_current_mingw -R ProjectSaveCloseTest --output-on-failure",
+      "总控覆盖目录多文档、保存失败、配置提交失败、取消、暂存恢复失败"
+    ],
+    "remainingQuestions": [
+      "文件系统最终暂存清理失败时逻辑删除已完成，暂存内容保留并警告；需总控故障注入"
+    ]
+  },
+  {
+    "id": "T22",
+    "status": "已实现待总控验收",
+    "files": [
+      "src/common/ArtifactSnapshot.h",
+      "src/communication/ControllerDeviceBackendDownload.cpp",
+      "src/compiler/DSLCompilerArtifacts.cpp",
+      "tests/controller_device_backend_test.cpp"
+    ],
+    "behavior": [
+      "下载收集 payload/profile/points/manifest/清单产物不可变快照，每文件 16 MiB/整组 64 MiB",
+      "摘要、Profile 解析和实际发送消费同一内存字节；读错、变长和超限先失败",
+      "编译 Profile 发布不再验证后重读源文件，发布已验证快照"
+    ],
+    "compatibility": "超限产物现在显式拒绝；无 Profile compileOnly 保留",
+    "checks": [
+      "ctest --test-dir build_current_mingw -R ControllerDeviceBackendTest --output-on-failure",
+      "总控在验证后替换文件并核对 transport 摘要，注入短读/读错/超限"
+    ],
+    "remainingQuestions": [
+      "新增快照替换和超限回归未执行；传输级零写入/摘要一致需总控专项检查"
+    ]
+  },
+  {
+    "id": "T23",
+    "status": "已实现待总控验收",
+    "files": [
+      "src/communication/DownloadProfile.h",
+      "src/communication/DownloadProfile.cpp",
+      "src/communication/CMakeLists.txt",
+      "src/compiler/CMakeLists.txt",
+      "src/compiler/DSLCompilerArtifacts.cpp",
+      "src/designer/RunController.cpp",
+      "src/communication/ControllerBridge.cpp",
+      "src/communication/ControllerDeviceBackendDownload.cpp",
+      "tests/controller_device_backend_test.cpp"
+    ],
+    "behavior": [
+      "QtCore download_profile_contract 共享结构解析与 Executor 能力校验",
+      "编译发布/运行预检/正式后端拒绝 Controller 不支持的 coils/no-response/target-select mode",
+      "Bridge 保留 writeCoils 与无需响应广播写；共享解析拒绝小数 ID、非对象 params、非布尔 needResponse"
+    ],
+    "compatibility": "读取仍125/寄存器写123；Controller 为1..63，Bridge 通用范围0..247但广播仅无响应写",
+    "checks": [
+      "ctest --test-dir build_current_mingw -R \"ControllerDeviceBackendTest|CommunicationRoutingTest|ProjectSaveCloseTest\" --output-on-failure"
+    ],
+    "remainingQuestions": [
+      "后端仍有 payload/设备上下文专项计划检查；总控验收 Bridge 广播与寻址模式矩阵"
+    ]
+  },
+  {
+    "id": "T24",
+    "status": "已实现待总控验收",
+    "files": [
+      "src/common/RuntimeHistoryTypes.h",
+      "src/core/AsyncDatabaseWorker.cpp",
+      "src/core/DataManager.cpp",
+      "src/monitor/AsyncHistoryStoreAdapter.cpp"
+    ],
+    "behavior": [
+      "共享页大小1..10000、普通时间范围 epoch/current UTC 默认值；统一最近条数拒绝",
+      "页为空仍保留快照游标；异步库旧同步列表误用会明确 warning，状态式 API 返回错误",
+      "请求查询异常转 HISTORY_REQUEST_EXCEPTION 并完成；完成回调异常被隔离；不可用/队列满通过上下文完成"
+    ],
+    "compatibility": "连接和所有权分别保持原线程；SQL 参数继续绑定",
+    "checks": [
+      "ctest --test-dir build_current_mingw -R \"AsyncDatabaseWorkerTest|DataManagerTest|MonitorHistoryServiceTest\" --output-on-failure",
+      "总控执行两个 adapter 同一分页/计数/UTC/maxId 查询矩阵"
+    ],
+    "remainingQuestions": [
+      "两个 SQL 实现仍保留各自查询方式，页返回不超过指定大小；完整并发一致快照属于 T25"
+    ]
+  },
+  {
+    "id": "T27",
+    "status": "已实现待总控验收",
+    "files": [
+      "src/designer/ui/ThemeManager.h",
+      "src/designer/ui/ThemeManager.cpp",
+      "src/designer/SettingsDialog.cpp",
+      "src/designer/ui/InspectorPanel.cpp",
+      "src/designer/DeviceWorkspaceWidget.cpp"
+    ],
+    "behavior": [
+      "QGroupBox 公共边框、标题、padding 和颜色规则由 ThemeManager 一处维护",
+      "设置/属性使用 muted 外观，设备页保留 bold 局部覆盖"
+    ],
+    "compatibility": "不合并 OPC 后端特有节点路径或不等价样式",
+    "checks": [
+      "ctest --test-dir build_current_mingw -R DesignerP1RobustnessTest --output-on-failure",
+      "总控截图回归设置/属性/设备分组"
+    ],
+    "remainingQuestions": [
+      "本轮只提取已证实相同的 QGroupBox 规则，其它相似显示逻辑不强行合并"
+    ]
+  },
+  {
+    "id": "C01",
+    "status": "已实现待总控验收",
+    "files": [
+      "review_execution/lh-target-observed-contract-v1.json",
+      "review_execution/target-contract-and-language-boundaries-v1.md"
+    ],
+    "behavior": [
+      "冻结当前 LH 生成器可观察行为与未知固件项，版本化 fixture 明示 downloadableTargetCertified=false",
+      "读取真实 SEHC 源/list/typ/code/rep，保存归档条目 SHA256、行号和摘录",
+      "40967/751、41148/851 差异可追踪，LM 地址与 ID 不复制到生产默认值"
+    ],
+    "compatibility": "这是离线契约取证；不会赋予任何未经确认的设备支持",
+    "checks": [
+      "总控独立复核 fixture 对照当前源码与程序.zip",
+      "取得 LH 固件版本对应指令/操作数、地址/对齐、初始化/写回支持表"
+    ],
+    "remainingQuestions": [
+      "LH 固件支持表、地址单位/对齐、引用/初始化/写回/IQ/任务协议资料仍缺，构成 C02/T03/T04 等生产编码前置"
+    ]
+  },
+  {
+    "id": "C03",
+    "status": "已实现待总控验收",
+    "files": [
+      "review_execution/function-block-capability-matrix-v1.json",
+      "review_execution/target-contract-and-language-boundaries-v1.md",
+      "resources/snippets/default_snippets.json"
+    ],
+    "behavior": [
+      "140 项逐项记录源码/行号/status/参数数与能力限制",
+      "105 空契约项归类为仅现行无参调用、完整功能未核实；不据 supported 数量声称硬件能力",
+      "21 missing-contract 和14有参数定义分别归类；未证实无实例操作不伪造实例例外"
+    ],
+    "compatibility": "不在审计卡一次实现或禁用105块；明确空定义限制，具体契约需独立证据",
+    "checks": [
+      "总控核对140/119/21与105/14计数和每项来源",
+      "复核真正无参数标记与缺失契约的差别"
+    ],
+    "remainingQuestions": [
+      "没有固件/运行时布局证据的项 hardwareSupported=null；不能标成可下载支持"
+    ]
+  },
+  {
+    "id": "C08",
+    "status": "已实现待总控验收",
+    "files": [
+      "third_party/custom_dsp_language/compile/src/lh_compiler/frontend/ast_nodes.py",
+      "third_party/custom_dsp_language/compile/src/lh_compiler/frontend/ast_builder.py",
+      "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+      "third_party/custom_dsp_language/compile/tests/unit/test_language_boundaries.py",
+      "review_execution/target-contract-and-language-boundaries-v1.md"
+    ],
+    "behavior": [
+      "VAR_CONSTANT 保留 read_only，要求初值并拒绝写入/常量 FB 实例",
+      "LREAL 在声明/参数/常量构建/字面量处明确拒绝，不再按 float32 缩窄",
+      "冻结 STRING/TIME/日期/POINTER/ARRAY/LREAL 支持矩阵与各自 ABI 前置"
+    ],
+    "compatibility": "语法可解析不等同产物支持；常量初始化实际写回仍受 T03 目标契约约束",
+    "checks": [
+      "python -m pytest third_party/custom_dsp_language/compile/tests/unit/test_language_boundaries.py"
+    ],
+    "remainingQuestions": [
+      "新类型 ABI 和初始化写回不在 C08 里伪造；测试未执行"
+    ]
+  }
+]

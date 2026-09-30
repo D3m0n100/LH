@@ -5,6 +5,7 @@
 #include "ProjectController.h"
 #include "BuildController.h"
 #include "ParameterController.h"
+#include "RuntimeMonitorAdapter.h"
 #include "../communication/ControllerDeviceBackend.h"
 #include "../communication/ControllerDebugProtocol.h"
 #include "../communication/IDeviceBackend.h"
@@ -22,9 +23,18 @@
 
 #include <utility>
 
-RuntimeSessionController::RuntimeSessionController(QObject* parent)
+RuntimeSessionController::RuntimeSessionController(QObject* parent, RuntimeSessionService* service)
     : QObject(parent)
 {
+    // Compatibility facade for existing callers; the application composition root
+    // supplies an explicit service. The QtCore service performs no global lookup.
+    m_runtimeService = service ? service : new RuntimeSessionService(
+        makeRuntimeMonitorPort(Monitor::MonitorManager::instance()),
+        Monitor::MonitorManager::instance().historyStore(), this);
+    connect(m_runtimeService, &RuntimeSessionService::stateChanged,
+            this, &RuntimeSessionController::handleRuntimeStateChanged);
+    connect(m_runtimeService, &RuntimeSessionService::downloadStateChanged,
+            this, &RuntimeSessionController::downloadStateChanged);
     m_opcServer = OpcServerFactory::createDefault(this);
     connectOpcServerSignals();
 }
@@ -37,10 +47,10 @@ IDeviceBackend* RuntimeSessionController::deviceBackend() const
 void RuntimeSessionController::setDeviceBackend(IDeviceBackend* backend)
 {
     if (m_backend == backend) {
-        Monitor::MonitorManager::instance().setDeviceBackend(backend);
+        m_runtimeService->setBackend(backend);
         if (m_backend && m_backend->isOnline()
-                && (m_state == RuntimeSessionState::Idle
-                    || m_state == RuntimeSessionState::Compiled)) {
+                && (state() == RuntimeSessionState::Idle
+                    || state() == RuntimeSessionState::Compiled)) {
             setState(RuntimeSessionState::Connected);
         }
         return;
@@ -81,23 +91,23 @@ void RuntimeSessionController::setDeviceBackend(IDeviceBackend* backend)
                     if (m_parameterController)
                         m_parameterController->cancelPendingReadback(failure);
                     stopOpcServer();
-                    Monitor::MonitorManager::instance().setDeviceBackend(nullptr);
-                    if (m_downloadState == DownloadState::Precheck
-                            || m_downloadState == DownloadState::Downloading
-                            || m_downloadState == DownloadState::Retrying
-                            || m_downloadState == DownloadState::Verifying) {
+                    m_runtimeService->setBackend(nullptr);
+                    if (downloadState() == DownloadState::Precheck
+                            || downloadState() == DownloadState::Downloading
+                            || downloadState() == DownloadState::Retrying
+                            || downloadState() == DownloadState::Verifying) {
                         setDownloadState(DownloadState::TransportFailed);
                     }
-                    if (m_state != RuntimeSessionState::Idle
-                            && m_state != RuntimeSessionState::Fault) {
+                    if (state() != RuntimeSessionState::Idle
+                            && state() != RuntimeSessionState::Fault) {
                         setState(RuntimeSessionState::Fault);
                     }
                 });
     }
-    Monitor::MonitorManager::instance().setDeviceBackend(backend);
+    m_runtimeService->setBackend(backend);
     if (m_backend && m_backend->isOnline()) {
-        if (m_state == RuntimeSessionState::Idle
-                || m_state == RuntimeSessionState::Compiled) {
+        if (state() == RuntimeSessionState::Idle
+                || state() == RuntimeSessionState::Compiled) {
             setState(RuntimeSessionState::Connected);
         }
     }
@@ -154,6 +164,7 @@ void RuntimeSessionController::setParameterController(ParameterController* contr
                    &RuntimeSessionController::handleParameterReadbackFinished);
     }
     m_parameterController = controller;
+    m_runtimeService->setParameters(controller);
     if (m_parameterController) {
         connect(m_parameterController,
                 &ParameterController::readbackFinished,
@@ -170,7 +181,7 @@ bool RuntimeSessionController::prepareRun()
         return false;
     }
 
-    if (m_state == RuntimeSessionState::Running || m_state == RuntimeSessionState::Monitoring) {
+    if (state() == RuntimeSessionState::Running || state() == RuntimeSessionState::Monitoring) {
         emit runtimeError(QStringLiteral("项目已在运行中。"));
         return false;
     }
@@ -219,13 +230,13 @@ bool RuntimeSessionController::applyRuntimeConfig()
         return false;
     }
 
-    const bool ok = Monitor::MonitorManager::instance().applyConfiguration(cfg);
+    const bool ok = m_runtimeService->monitor().applyConfiguration(cfg);
     if (!ok) {
         emit runtimeError(QStringLiteral("运行时配置应用到监控系统失败"));
         return false;
     }
 
-    const QStringList providers = Monitor::MonitorManager::instance().providerIds();
+    const QStringList providers = m_runtimeService->monitor().providerIds();
     if (!providers.isEmpty()) {
         stopDemoMode(QStringLiteral("已应用运行时配置，并检测到 %1 个 provider").arg(providers.size()));
     }
@@ -239,8 +250,8 @@ bool RuntimeSessionController::applyRuntimeConfig()
 
 void RuntimeSessionController::executeRun()
 {
-    if (m_state == RuntimeSessionState::Running || m_state == RuntimeSessionState::Monitoring
-            || m_backendDownloadInProgress || m_state == RuntimeSessionState::Downloading)
+    if (state() == RuntimeSessionState::Running || state() == RuntimeSessionState::Monitoring
+            || m_backendDownloadInProgress || state() == RuntimeSessionState::Downloading)
         return;
 
     if (shouldAutoDownload()) {
@@ -279,9 +290,10 @@ void RuntimeSessionController::setPaused(bool paused)
 
 void RuntimeSessionController::requestStop()
 {
+    m_runtimeService->cancelOperations();
     setPaused(false);
     m_pendingRunAfterDownload = false;
-    if (m_state == RuntimeSessionState::Idle && m_downloadState == DownloadState::Idle) {
+    if (state() == RuntimeSessionState::Idle && downloadState() == DownloadState::Idle) {
         const QString message = QStringLiteral("运行会话已停止，OPC 写入已取消");
         cancelPendingOpcWrite(message);
         if (m_parameterController)
@@ -297,15 +309,15 @@ void RuntimeSessionController::requestStop()
     if (m_backend) {
         m_backend->cancelDownload();
     }
-    const bool wasMonitoring = m_state == RuntimeSessionState::Monitoring;
-    const bool wasDownloading = m_state == RuntimeSessionState::Downloading
-            || m_downloadState == DownloadState::Precheck
-            || m_downloadState == DownloadState::Downloading
-            || m_downloadState == DownloadState::Retrying
-            || m_downloadState == DownloadState::Verifying;
+    const bool wasMonitoring = state() == RuntimeSessionState::Monitoring;
+    const bool wasDownloading = state() == RuntimeSessionState::Downloading
+            || downloadState() == DownloadState::Precheck
+            || downloadState() == DownloadState::Downloading
+            || downloadState() == DownloadState::Retrying
+            || downloadState() == DownloadState::Verifying;
     setDownloadState(DownloadState::Idle);
     stopOpcServer();
-    Monitor::MonitorManager::instance().stopMonitoring();
+    m_runtimeService->monitor().stopMonitoring();
 
     // 先发布 Idle，再断开后端，避免断开信号把停止过程短暂推入 Fault。
     setState(RuntimeSessionState::Idle);
@@ -326,6 +338,13 @@ void RuntimeSessionController::requestStop()
 
     emit logMessage(QStringLiteral("[%1] 项目已停止")
                     .arg(QDateTime::currentDateTime().toString(QStringLiteral("HH:mm:ss"))));
+}
+
+void RuntimeSessionController::invalidateCompiledArtifact()
+{
+    m_artifactPath.clear();
+    m_pendingRunAfterCompile = false;
+    if (state() == RuntimeSessionState::Compiled) setState(RuntimeSessionState::Idle);
 }
 
 bool RuntimeSessionController::onCompileSucceeded(const CompileResult& result)
@@ -355,7 +374,7 @@ bool RuntimeSessionController::onCompileSucceeded(const CompileResult& result)
 
 void RuntimeSessionController::startDemoMode(const QString& reason)
 {
-    auto& manager = Monitor::MonitorManager::instance();
+    auto& manager = m_runtimeService->monitor();
     if (!manager.providerIds().isEmpty()) {
         if (m_demoModeActive) {
             stopDemoMode(QStringLiteral("检测到真实采集器，关闭演示模式：%1").arg(reason));
@@ -386,13 +405,8 @@ void RuntimeSessionController::stopDemoMode(const QString& reason)
     if (m_sampleDataProvider && m_sampleDataProvider->isRunning())
         m_sampleDataProvider->stop();
 
-    auto& manager = Monitor::MonitorManager::instance();
-    const QStringList channels = manager.channelNames();
-    for (const QString& ch : channels) {
-        const auto cfg = manager.channelConfig(ch);
-        if (cfg.metadata.value(QStringLiteral("__demoMode")).toBool())
-            manager.removeChannel(ch);
-    }
+    auto& manager = m_runtimeService->monitor();
+    manager.removeDemoChannels();
 
     m_demoModeActive = false;
     emit demoModeChanged(false);
@@ -403,15 +417,15 @@ void RuntimeSessionController::stopDemoMode(const QString& reason)
 
 void RuntimeSessionController::startMonitoring()
 {
-    if (m_state == RuntimeSessionState::Monitoring)
+    if (state() == RuntimeSessionState::Monitoring)
         return;
 
-    if (m_state != RuntimeSessionState::Running) {
+    if (state() != RuntimeSessionState::Running) {
         emit runtimeError(QStringLiteral("当前状态不允许启动监控。"));
         return;
     }
 
-    auto& manager = Monitor::MonitorManager::instance();
+    auto& manager = m_runtimeService->monitor();
     if (m_projectController || m_sampleDataProvider) {
         if (manager.providerIds().isEmpty()
                 && !m_demoModeActive
@@ -440,20 +454,20 @@ void RuntimeSessionController::startMonitoring()
 
 void RuntimeSessionController::stopMonitoring()
 {
-    if (m_state != RuntimeSessionState::Monitoring)
+    if (state() != RuntimeSessionState::Monitoring)
         return;
 
-    Monitor::MonitorManager::instance().stopMonitoring();
+    m_runtimeService->monitor().stopMonitoring();
     setState(RuntimeSessionState::Running);
 }
 
 void RuntimeSessionController::setState(RuntimeSessionState newState)
 {
-    if (m_state == newState)
-        return;
+    m_runtimeService->setState(newState);
+}
 
-    const RuntimeSessionState oldState = m_state;
-    m_state = newState;
+void RuntimeSessionController::handleRuntimeStateChanged(RuntimeSessionState oldState, RuntimeSessionState newState)
+{
     AppLogging::writeBusinessEvent(
         QStringLiteral("session_state_changed"),
         (newState == RuntimeSessionState::Fault ? QtCriticalMsg : QtInfoMsg),
@@ -479,12 +493,7 @@ void RuntimeSessionController::setState(RuntimeSessionState newState)
 
 void RuntimeSessionController::setDownloadState(DownloadState newState)
 {
-    if (m_downloadState == newState)
-        return;
-
-    const DownloadState oldState = m_downloadState;
-    m_downloadState = newState;
-    emit downloadStateChanged(oldState, newState);
+    m_runtimeService->setDownloadState(newState);
 }
 
 void RuntimeSessionController::handleBackendConnectionStateChanged(bool connected)
@@ -499,28 +508,28 @@ void RuntimeSessionController::handleBackendConnectionStateChanged(bool connecte
         QStringLiteral("DeviceBackend"));
 
     if (connected) {
-        if (m_state == RuntimeSessionState::Idle
-                || m_state == RuntimeSessionState::Compiled
-                || m_state == RuntimeSessionState::Fault) {
+        if (state() == RuntimeSessionState::Idle
+                || state() == RuntimeSessionState::Compiled
+                || state() == RuntimeSessionState::Fault) {
             setState(RuntimeSessionState::Connected);
         }
         return;
     }
 
-    if (m_state == RuntimeSessionState::Idle || m_state == RuntimeSessionState::Fault)
+    if (state() == RuntimeSessionState::Idle || state() == RuntimeSessionState::Fault)
         return;
 
     if (m_internalReconnect) {
         return;
     }
 
-    const bool wasMonitoring = m_state == RuntimeSessionState::Monitoring;
-    Monitor::MonitorManager::instance().stopMonitoring();
+    const bool wasMonitoring = state() == RuntimeSessionState::Monitoring;
+    m_runtimeService->monitor().stopMonitoring();
     stopOpcServer();
-    if (m_downloadState == DownloadState::Precheck
-            || m_downloadState == DownloadState::Downloading
-            || m_downloadState == DownloadState::Retrying
-            || m_downloadState == DownloadState::Verifying) {
+    if (downloadState() == DownloadState::Precheck
+            || downloadState() == DownloadState::Downloading
+            || downloadState() == DownloadState::Retrying
+            || downloadState() == DownloadState::Verifying) {
         setDownloadState(DownloadState::TransportFailed);
     }
     setState(RuntimeSessionState::Fault);

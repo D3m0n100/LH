@@ -1,0 +1,118 @@
+[
+  {
+    "remainingQuestions": [
+      "静态检查未运行；模块目录中内部头文件仍需后续细化公开白名单"
+    ],
+    "behavior": [
+      "src 根只作为模块/主程序/测试 PRIVATE 包含目录；公共头文件显式相对包含跨模块类型",
+      "移除 designer 额外 PUBLIC monitor 路径；通信安装补齐公共 common 头文件",
+      "静态依赖检查禁止 common/core/compiler/communication 向 UI 反向依赖并检查公开根目录"
+    ],
+    "id": "T29",
+    "checks": [
+      "ctest --test-dir build_current_mingw -R ModuleBoundaryCheck --output-on-failure",
+      "总控检查全部构建与通信头文件安装消费"
+    ],
+    "status": "已实现待总控验收",
+    "compatibility": "直接依赖模块的消费者应使用其公开头名；历史根命名空间包含仅在显式 PRIVATE src 环境兼容",
+    "files": [
+      "CMakeLists.txt",
+      "src/core/CMakeLists.txt",
+      "src/compiler/CMakeLists.txt",
+      "src/communication/CMakeLists.txt",
+      "src/designer/CMakeLists.txt",
+      "src/monitor/CMakeLists.txt",
+      "src/*/*.h",
+      "tests/CMakeLists.txt",
+      "tests/check_module_boundaries.py"
+    ]
+  },
+  {
+    "remainingQuestions": [
+      "仅源码和用例已实现；总控执行 QtCore 无界面顺序/失败/重入验收"
+    ],
+    "behavior": [
+      "保存当前/全部工程命令移入独立仅 QtCore 链接的协调器",
+      "文档保存失败阻断工程保存；工程保存失败返回明确结果；嵌套事件循环重入同一协调器返回 Busy",
+      "MainWindow 仅注入文档/工程操作回调，无协调器 QWidget 所有权"
+    ],
+    "id": "T31",
+    "checks": [
+      "ctest --test-dir build_current_mingw -R ProjectCommandCoordinatorTest --output-on-failure"
+    ],
+    "status": "已实现待总控验收",
+    "compatibility": "按任务要求只迁移保存工作流；其他工程/运行命令保持现有路径",
+    "files": [
+      "src/core/ProjectCommandCoordinator.h",
+      "src/core/ProjectCommandCoordinator.cpp",
+      "src/core/CMakeLists.txt",
+      "src/designer/MainWindow.h",
+      "src/designer/MainWindow.cpp",
+      "src/designer/CMakeLists.txt",
+      "tests/project_command_coordinator_test.cpp",
+      "tests/CMakeLists.txt"
+    ]
+  },
+  {
+    "remainingQuestions": [
+      "缺 LH 固件初始化写回指令、目标地址单位、执行时机，不能从 LM 地址推导生产实现"
+    ],
+    "behavior": [
+      "有效简单变量初始值经过类型检查后明确拒绝无契约的初始化写回，功能块初始值同样拒绝",
+      "不再成功生成忽略初始值的控制产物，错误路径仍清理旧产物"
+    ],
+    "id": "T03",
+    "checks": [
+      "总控执行 language_boundaries/semantics 与离线无 Profile 用例"
+    ],
+    "status": "资料不足",
+    "compatibility": "此前静默忽略的初始化现在失败；无初始值声明与 compileOnly 流程保留",
+    "files": [
+      "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+      "third_party/custom_dsp_language/compile/tests/unit/test_language_boundaries.py",
+      "tests/dsl_compiler_semantics_test.cpp"
+    ]
+  },
+  {
+    "remainingQuestions": [
+      "缺目标变量写回指令及操作数契约，尚不能实现真正赋值"
+    ],
+    "behavior": [
+      "保留常量折叠及类型/数值诊断，阻断使用另一个 _const_var 内存块冒充变量写回",
+      "已调整错误的赋值 golden 断言，增加 BOOL/INT/REAL/重复赋值拒绝及旧产物清理用例"
+    ],
+    "id": "T04",
+    "checks": [
+      "总控执行 Python semantics/language_boundaries/runtime_layout 用例"
+    ],
+    "status": "资料不足",
+    "compatibility": "过去看似成功但未写变量地址的赋值改为显式失败",
+    "files": [
+      "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+      "third_party/custom_dsp_language/compile/tests/unit/test_language_boundaries.py",
+      "third_party/custom_dsp_language/compile/tests/unit/test_semantics.py"
+    ]
+  },
+  {
+    "remainingQuestions": [
+      "VariableRef/MemberRef 目标编码、可写字段固件证据、合法无实例操作分类仍缺契约，不能标为完整实现"
+    ],
+    "behavior": [
+      "构造参数与显式 RuntimeFieldDef 分离；运行时字段验证唯一名、方向、边界和重叠",
+      "get_parameter_offset 只查询经校验的运行时字段，默认 offset 从伪零变为未知",
+      "list 不再为构造参数伪造地址；typ 明确 constructor_parameter 与 runtime_field，显式字段共享 metadata layout"
+    ],
+    "id": "C02",
+    "checks": [
+      "总控执行 runtime_layout 单元用例及 sidecar/组态消费检查"
+    ],
+    "status": "资料不足",
+    "compatibility": "旧定义仅描述常量参数，未证明的参数地址留空；没有填造引用编码或无实例操作 ABI",
+    "files": [
+      "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/registry.py",
+      "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+      "third_party/custom_dsp_language/compile/src/lh_compiler/backend/emitter.py",
+      "third_party/custom_dsp_language/compile/tests/unit/test_runtime_layout.py"
+    ]
+  }
+]

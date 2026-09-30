@@ -42,10 +42,7 @@ htmlcov/
 .hypothesis/
 
 # ANTLR generated files
-grammar/*Lexer.py
-grammar/*Parser.py
-grammar/*Listener.py
-grammar/*Visitor.py
+# Generated parser sources are release inputs, pinned to ANTLR 4.13.2.
 grammar/*.tokens
 grammar/*.interp
 

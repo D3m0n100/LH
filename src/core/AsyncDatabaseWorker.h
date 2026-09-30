@@ -15,7 +15,7 @@
 #include <QWaitCondition>
 
 #include "Common.h"
-#include "core/DataManager.h"
+#include "DataManager.h"
 
 namespace Core {
 

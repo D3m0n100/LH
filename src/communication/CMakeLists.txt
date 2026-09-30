@@ -17,9 +17,9 @@ set(COMM_SOURCES
     ControllerDebugClient.cpp
     ControllerDebugProtocol.cpp
     RuntimePointRegisterCodec.cpp
-    DownloadProfile.cpp
     VirtualDeviceBackend.cpp
     ClassicOpcServer.cpp
+    ClassicOpcPollWorker.cpp
     MatrikonOpcServer.cpp
     OpcServerFactory.cpp
 )
@@ -50,7 +50,13 @@ set(COMM_HEADERS
     MatrikonOpcServer.h
     OpcServerFactory.h
     RuntimePointQualityMapper.h
+    ModbusLimits.h
 )
+
+add_library(download_profile_contract STATIC DownloadProfile.cpp DownloadProfile.h ModbusLimits.h)
+target_include_directories(download_profile_contract PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_link_libraries(download_profile_contract PUBLIC Qt5::Core)
+target_compile_features(download_profile_contract PUBLIC cxx_std_17)
 
 add_library(ServoValveComm STATIC
     ${COMM_SOURCES}
@@ -65,6 +71,7 @@ target_include_directories(ServoValveComm
 
 target_link_libraries(ServoValveComm
     PUBLIC
+        download_profile_contract
         Qt5::Core
         Qt5::Network
         Qt5::SerialPort
@@ -83,7 +90,7 @@ set_target_properties(ServoValveComm PROPERTIES
     AUTORCC ON
 )
 
-install(TARGETS ServoValveComm
+install(TARGETS ServoValveComm download_profile_contract
     LIBRARY DESTINATION lib
     ARCHIVE DESTINATION lib
 )
@@ -91,3 +98,9 @@ install(TARGETS ServoValveComm
 install(FILES ${COMM_HEADERS}
     DESTINATION include/communication
 )
+
+install(DIRECTORY ${CMAKE_SOURCE_DIR}/src/common/
+    DESTINATION include/common FILES_MATCHING PATTERN "*.h")
+install(FILES ${CMAKE_SOURCE_DIR}/include/Common.h DESTINATION include)
+
+target_include_directories(ServoValveComm PRIVATE ${LX_PRIVATE_INCLUDE_DIRS})

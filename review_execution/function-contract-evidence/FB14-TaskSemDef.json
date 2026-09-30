@@ -1,0 +1,56 @@
+{
+  "calls": [],
+  "scope": "offline lexical LM evidence; production LH contract unverified",
+  "extractionLimits": [
+    "First 24 call excerpts retained; total count includes all matches",
+    "Lexical operator/value classification is not semantic direction or type proof",
+    "No unaddressed marker opcode is inferred from an empty parameter list"
+  ],
+  "externalPrerequisites": [
+    "用于生产编码的 LH 目标指令/操作数/数值版本支持证据"
+  ],
+  "planScope": "仅处理 TaskSemDef。根据 用户手册 PDF 第 33、37–38 页；程序包无对应调用 建立 SemaIni/SemaVal；初值与同步/资源共享用途 的 LH 契约，输出名称/参数类别/方向/范围/初值/字段/布局/指令形式与来源映射。可以补编译侧定义、取值和字段契约；TaskSemDef 与 SemaDef 仅为候选对应，未知目标编码继续拒绝。",
+  "fields": [],
+  "archive": "D:/Table/LM/程序.zip",
+  "missing": [
+    "LH firmware version, opcode and operand table",
+    "LH address unit, alignment, field width/direction",
+    "Named legacy operators/enums are not translated into LH values"
+  ],
+  "taskId": "FB14",
+  "candidateCodeRows": [],
+  "lhNameMappingCertified": false,
+  "legacyCandidate": "_SemaDef",
+  "downloadableTargetCertified": false,
+  "callCount": 0,
+  "block": "TaskSemDef",
+  "observedLegacyName": "SemaDef",
+  "schemaVersion": 1,
+  "mappingStatus": "名称映射候选",
+  "manualPages": [
+    {
+      "path": "D:\\Table\\LM\\LM2007用户手册(1).pdf",
+      "sha256": "99d42e57db22fe0107fd3bde810a61267392196bd4612469e1256dcc77c3f706",
+      "physicalPage": 33,
+      "extractedText": "manual-evidence/manual-page-33.txt",
+      "typeDirectionAndLayoutCertifiedForLH": false
+    },
+    {
+      "path": "D:\\Table\\LM\\LM2007用户手册(1).pdf",
+      "sha256": "99d42e57db22fe0107fd3bde810a61267392196bd4612469e1256dcc77c3f706",
+      "physicalPage": 37,
+      "extractedText": "manual-evidence/manual-page-37.txt",
+      "typeDirectionAndLayoutCertifiedForLH": false
+    },
+    {
+      "path": "D:\\Table\\LM\\LM2007用户手册(1).pdf",
+      "sha256": "99d42e57db22fe0107fd3bde810a61267392196bd4612469e1256dcc77c3f706",
+      "physicalPage": 38,
+      "extractedText": "manual-evidence/manual-page-38.txt",
+      "typeDirectionAndLayoutCertifiedForLH": false
+    }
+  ],
+  "reviewCandidateContract": "SemaIni/SemaVal；初值与同步/资源共享用途",
+  "reviewAssessment": "可以补编译侧定义、取值和字段契约；TaskSemDef 与 SemaDef 仅为候选对应，未知目标编码继续拒绝。",
+  "manualExtractionScope": "Physical PDF pages, copied as evidence; legacy numeric tables do not certify LH operand encodings"
+}

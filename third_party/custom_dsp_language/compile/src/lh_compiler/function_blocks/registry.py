@@ -14,12 +14,40 @@ class ParameterDef:
     name: str
     data_type: str          # BOOL, INT, REAL, DINT, ...
     direction: str = "IN"   # IN, OUT, IN_OUT
-    offset: int = 0         # 在功能块内存中的偏移量
+    offset: Optional[int] = None  # 仅显式证据可指定；构造参数不推导运行时地址
     default_value: Any = None
     description: str = ""
 
     def __repr__(self):
         return f"ParameterDef({self.name}: {self.data_type}, offset={self.offset})"
+
+
+@dataclass(frozen=True)
+class RuntimeFieldDef:
+    """Explicit local field layout, separate from encoded constructor arguments."""
+    name: str
+    data_type: str
+    offset: int
+    size: int
+    direction: str = "IN"
+
+
+def validate_runtime_layout(fields: List[RuntimeFieldDef], memory_size: int):
+    names = set()
+    occupied = []
+    for field in fields:
+        if field.name.upper() in names:
+            raise ValueError(f"重复运行时字段: {field.name}")
+        names.add(field.name.upper())
+        if field.direction not in {"IN", "OUT", "IN_OUT"}:
+            raise ValueError(f"字段方向非法: {field.name}")
+        if (type(field.offset) is not int or type(field.size) is not int or
+                field.offset < 0 or field.size <= 0 or field.offset + field.size > memory_size):
+            raise ValueError(f"字段布局越界: {field.name}")
+        for start, end in occupied:
+            if field.offset < end and start < field.offset + field.size:
+                raise ValueError(f"字段布局重叠: {field.name}")
+        occupied.append((field.offset, field.offset + field.size))
 
 
 @dataclass
@@ -33,6 +61,11 @@ class FunctionBlockMeta:
     category: str = ""      # 分类: system, math, logic, timer, counter, ...
     status: str = "supported"              # "supported" | "incomplete"
     incomplete_reason: str = ""            # 缺失契约/参数定义的原因说明
+    runtime_fields: List[RuntimeFieldDef] = field(default_factory=list)
+
+    def runtime_field_layout(self):
+        validate_runtime_layout(self.runtime_fields, self.memory_size)
+        return tuple(self.runtime_fields)
 
     @property
     def is_supported(self) -> bool:
@@ -51,8 +84,10 @@ class FunctionBlockMeta:
 
     def get_parameter_offset(self, name: str) -> Optional[int]:
         """获取参数在功能块内存中的偏移量"""
-        param = self.get_parameter(name)
-        return param.offset if param else None
+        for runtime_field in self.runtime_field_layout():
+            if runtime_field.name.upper() == name.upper():
+                return runtime_field.offset
+        return None
 
     def __repr__(self):
         status_suffix = f", status={self.status}" if self.status != "supported" else ""

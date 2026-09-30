@@ -1,0 +1,56 @@
+{
+  "calls": [],
+  "scope": "offline lexical LM evidence; production LH contract unverified",
+  "extractionLimits": [
+    "First 24 call excerpts retained; total count includes all matches",
+    "Lexical operator/value classification is not semantic direction or type proof",
+    "No unaddressed marker opcode is inferred from an empty parameter list"
+  ],
+  "externalPrerequisites": [
+    "用于生产编码的 LH 目标指令/操作数/数值版本支持证据"
+  ],
+  "planScope": "仅处理 TwoPosition。根据 用户手册 PDF 第 169、181–182 页；程序包无 RelayCtrl 同名调用 建立 Input/PosiOut/NegOut/NonActive/ResortLoop 的 LH 契约，输出名称/参数类别/方向/范围/初值/字段/布局/指令形式与来源映射。文档提供参数、默认值与死区/滞环模型，可做编译侧契约和状态模型验证；与 TwoPosition 对应关系和目标编码仍需确定。",
+  "fields": [],
+  "archive": "D:/Table/LM/程序.zip",
+  "missing": [
+    "LH firmware version, opcode and operand table",
+    "LH address unit, alignment, field width/direction",
+    "Named legacy operators/enums are not translated into LH values"
+  ],
+  "taskId": "FB20",
+  "candidateCodeRows": [],
+  "lhNameMappingCertified": false,
+  "legacyCandidate": "_RelayCtrl",
+  "downloadableTargetCertified": false,
+  "callCount": 0,
+  "block": "TwoPosition",
+  "observedLegacyName": "RelayCtrl",
+  "schemaVersion": 1,
+  "mappingStatus": "名称映射候选",
+  "manualPages": [
+    {
+      "path": "D:\\Table\\LM\\LM2007用户手册(1).pdf",
+      "sha256": "99d42e57db22fe0107fd3bde810a61267392196bd4612469e1256dcc77c3f706",
+      "physicalPage": 169,
+      "extractedText": "manual-evidence/manual-page-169.txt",
+      "typeDirectionAndLayoutCertifiedForLH": false
+    },
+    {
+      "path": "D:\\Table\\LM\\LM2007用户手册(1).pdf",
+      "sha256": "99d42e57db22fe0107fd3bde810a61267392196bd4612469e1256dcc77c3f706",
+      "physicalPage": 181,
+      "extractedText": "manual-evidence/manual-page-181.txt",
+      "typeDirectionAndLayoutCertifiedForLH": false
+    },
+    {
+      "path": "D:\\Table\\LM\\LM2007用户手册(1).pdf",
+      "sha256": "99d42e57db22fe0107fd3bde810a61267392196bd4612469e1256dcc77c3f706",
+      "physicalPage": 182,
+      "extractedText": "manual-evidence/manual-page-182.txt",
+      "typeDirectionAndLayoutCertifiedForLH": false
+    }
+  ],
+  "reviewCandidateContract": "Input/PosiOut/NegOut/NonActive/ResortLoop",
+  "reviewAssessment": "文档提供参数、默认值与死区/滞环模型，可做编译侧契约和状态模型验证；与 TwoPosition 对应关系和目标编码仍需确定。",
+  "manualExtractionScope": "Physical PDF pages, copied as evidence; legacy numeric tables do not certify LH operand encodings"
+}

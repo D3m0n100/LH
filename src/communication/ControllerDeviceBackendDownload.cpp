@@ -2,6 +2,8 @@
 // File: src/communication/ControllerDeviceBackendDownload.cpp
 
 #include "ControllerDeviceBackend.h"
+#include "ModbusLimits.h"
+#include "common/ArtifactSnapshot.h"
 
 #include "ControllerDebugProtocol.h"
 
@@ -149,8 +151,25 @@ bool validatePublishedProfileBinding(const QString& artifactPath,
                                      const QVariantMap& options,
                                      const ProjectRuntimeConfig& config,
                                      QString* profilePath,
-                                     QString* errorMessage)
+                                     QString* errorMessage,
+                                     QHash<QString, QByteArray>& snapshots)
 {
+    snapshots.clear();
+    qint64 totalBytes = 0;
+    const auto snapshotChecksum = [&](const QString& path) {
+        const QString key = ArtifactSnapshot::key(path);
+        if (!snapshots.contains(key)) {
+            QByteArray bytes;
+            if (!ArtifactSnapshot::read(path, &bytes, errorMessage)) return QString();
+            if (totalBytes + bytes.size() > ArtifactSnapshot::MaxTotalBytes) {
+                if (errorMessage) *errorMessage = QStringLiteral("Artifact snapshot set exceeds 64 MiB");
+                return QString();
+            }
+            totalBytes += bytes.size();
+            snapshots.insert(key, bytes);
+        }
+        return ArtifactSnapshot::checksum(snapshots.value(key));
+    };
     const QString selectedProfile = profilePathFromOptions(options, config).trimmed();
     if (options.value(QStringLiteral("profileOverrideConflict")).toBool()) {
         if (errorMessage) {
@@ -170,7 +189,8 @@ bool validatePublishedProfileBinding(const QString& artifactPath,
     if (!requiresPublishedBinding) {
         if (profilePath)
             *profilePath = selectedProfile;
-        return !selectedProfile.isEmpty();
+        return !selectedProfile.isEmpty() && !snapshotChecksum(artifactPath).isEmpty()
+                && !snapshotChecksum(selectedProfile).isEmpty();
     }
 
     const QFileInfo codeInfo(artifactPath);
@@ -195,14 +215,13 @@ bool validatePublishedProfileBinding(const QString& artifactPath,
     }
 
     const QString manifestPath = generationDir.filePath(QStringLiteral("runtime_manifest.json"));
-    QFile manifestFile(manifestPath);
-    if (!manifestFile.open(QIODevice::ReadOnly | QIODevice::Text)) {
+    if (snapshotChecksum(manifestPath).isEmpty()) {
         if (errorMessage)
             *errorMessage = QStringLiteral("已发布 generation 缺少 runtime_manifest.json。");
         return false;
     }
     QJsonParseError parseError;
-    const QJsonDocument manifestDocument = QJsonDocument::fromJson(manifestFile.readAll(), &parseError);
+    const QJsonDocument manifestDocument = QJsonDocument::fromJson(snapshots.value(ArtifactSnapshot::key(manifestPath)), &parseError);
     if (parseError.error != QJsonParseError::NoError || !manifestDocument.isObject()) {
         if (errorMessage)
             *errorMessage = QStringLiteral("runtime_manifest.json 无效。");
@@ -266,7 +285,7 @@ bool validatePublishedProfileBinding(const QString& artifactPath,
         return false;
     }
 
-    const QString actualCodeChecksum = sha256ForFile(codeInfo.absoluteFilePath());
+    const QString actualCodeChecksum = snapshotChecksum(codeInfo.absoluteFilePath());
     const QString expectedCodeChecksum = config.downloadArtifact.checksum.trimmed();
     const QString manifestCodeChecksum = manifest.value(QStringLiteral("codeChecksum"))
                                                  .toString().trimmed();
@@ -283,9 +302,9 @@ bool validatePublishedProfileBinding(const QString& artifactPath,
     const QString configuredManifestChecksum = config.downloadArtifact.metadata
                                                        .value(QStringLiteral("runtimeManifestChecksum"))
                                                        .toString().trimmed();
-    const QString actualProfileChecksum = sha256ForFile(manifestProfile);
-    const QString actualPointsChecksum = sha256ForFile(manifestPoints);
-    const QString actualManifestChecksum = sha256ForFile(manifestPath);
+    const QString actualProfileChecksum = snapshotChecksum(manifestProfile);
+    const QString actualPointsChecksum = snapshotChecksum(manifestPoints);
+    const QString actualManifestChecksum = snapshotChecksum(manifestPath);
     if (actualCodeChecksum.isEmpty() || expectedCodeChecksum.isEmpty()
             || manifestCodeChecksum.isEmpty()
             || actualCodeChecksum.compare(expectedCodeChecksum, Qt::CaseInsensitive) != 0
@@ -320,7 +339,7 @@ bool validatePublishedProfileBinding(const QString& artifactPath,
                 || !pathWithinDirectory(generationDir.absolutePath(), artifact)
                 || !QFileInfo(artifact).isFile()
                 || expected.isEmpty()
-                || sha256ForFile(artifact).compare(expected, Qt::CaseInsensitive) != 0) {
+                || snapshotChecksum(artifact).compare(expected, Qt::CaseInsensitive) != 0) {
             if (errorMessage)
                 *errorMessage = QStringLiteral("runtime_manifest artifact 路径或 checksum 无效：%1")
                         .arg(relative);
@@ -471,11 +490,12 @@ bool ControllerDeviceBackend::downloadArtifact(const QString& artifactPath,
 
     QString downloadProfilePath;
     QString profileBindingError;
+    QHash<QString, QByteArray> snapshots;
     if (!validatePublishedProfileBinding(path,
                                          options,
                                          m_config,
                                          &downloadProfilePath,
-                                         &profileBindingError)) {
+                                         &profileBindingError, snapshots)) {
         return setOperationError(CommErrorCode::InvalidConfig,
                                  profileBindingError.isEmpty()
                                          ? QStringLiteral("未配置或未绑定已发布下载 Profile，已阻止下载。")
@@ -509,20 +529,12 @@ bool ControllerDeviceBackend::downloadArtifact(const QString& artifactPath,
     {
         DownloadProfile profile;
         QString profileError;
-        if (!DownloadProfile::fromJsonFile(downloadProfilePath, profile, &profileError)) {
+        if (!DownloadProfile::fromJson(snapshots.value(ArtifactSnapshot::key(downloadProfilePath)), profile, &profileError)) {
             return setOperationError(CommErrorCode::InvalidConfig,
                                      QStringLiteral("下载配置读取失败：%1").arg(profileError),
                                      operationError,
                                      errorMessage,
                                      downloadProfilePath);
-        }
-
-        QFile payloadFile(path);
-        if (!payloadFile.open(QIODevice::ReadOnly)) {
-            return setOperationError(CommErrorCode::InvalidParameter,
-                                     QStringLiteral("下载产物无法读取：%1").arg(path),
-                                     operationError,
-                                     errorMessage);
         }
 
         QMutexLocker lock(&m_mutex);
@@ -531,7 +543,7 @@ bool ControllerDeviceBackend::downloadArtifact(const QString& artifactPath,
         m_lastDownloadError.clear();
         lock.unlock();
 
-        const bool ok = executeDownloadProfile(profile, payloadFile.readAll(), errorMessage, operationError);
+        const bool ok = executeDownloadProfile(profile, snapshots.value(ArtifactSnapshot::key(path)), errorMessage, operationError);
         lock.relock();
         m_downloading = false;
         m_downloadPercent = ok ? 100 : 0;
@@ -577,33 +589,19 @@ bool ControllerDeviceBackend::dryRunDownloadArtifact(const QString& artifactPath
         return false;
     }
 
-    QFile payloadFile(path);
-    if (!payloadFile.open(QIODevice::ReadOnly)) {
-        const QString message = QStringLiteral("下载 dry-run 失败：产物无法读取：%1").arg(path);
-        if (errorMessage) {
-            *errorMessage = message;
-        }
-        if (operationError) {
-            *operationError = CommError(CommProtocolType::ModbusRTU,
-                                        CommErrorCode::InvalidParameter,
-                                        message);
-        }
-        return false;
-    }
-    const QByteArray payload = payloadFile.readAll();
-
     QVariantMap localReport;
     localReport.insert(QStringLiteral("artifactPath"), path);
-    localReport.insert(QStringLiteral("payloadBytes"), payload.size());
-    localReport.insert(QStringLiteral("payloadRegisters"), bytesToRegisters(payload).size());
+
+
 
     QString profilePath;
     QString profileBindingError;
+    QHash<QString, QByteArray> snapshots;
     if (!validatePublishedProfileBinding(path,
                                          options,
                                          m_config,
                                          &profilePath,
-                                         &profileBindingError)) {
+                                         &profileBindingError, snapshots)) {
         const QString message = QStringLiteral("下载 dry-run 失败：%1")
                 .arg(profileBindingError.isEmpty()
                              ? QStringLiteral("未配置或未绑定已发布下载 Profile。")
@@ -622,10 +620,13 @@ bool ControllerDeviceBackend::dryRunDownloadArtifact(const QString& artifactPath
         return false;
     }
     localReport.insert(QStringLiteral("profilePath"), profilePath);
+    const QByteArray payload = snapshots.value(ArtifactSnapshot::key(path));
+    localReport.insert(QStringLiteral("payloadBytes"), payload.size());
+    localReport.insert(QStringLiteral("payloadRegisters"), bytesToRegisters(payload).size());
 
     DownloadProfile profile;
     QString profileError;
-    if (!DownloadProfile::fromJsonFile(profilePath, profile, &profileError)) {
+    if (!DownloadProfile::fromJson(snapshots.value(ArtifactSnapshot::key(profilePath)), profile, &profileError)) {
         const QString message = QStringLiteral("下载 dry-run 失败：profile 读取失败：%1").arg(profileError);
         if (errorMessage) {
             *errorMessage = message;
@@ -681,7 +682,9 @@ bool ControllerDeviceBackend::validateDownloadProfilePlan(const DownloadProfile&
     const int payloadRegisters = bytesToRegisters(payload).size();
 
     QStringList structuralErrors;
-    profile.validate(&structuralErrors);
+    profile.validateForExecutor(DownloadProfile::Executor::Controller, &structuralErrors,
+                               m_config.bridge.parameters.value(QStringLiteral("addressing")).toMap()
+                                       .value(QStringLiteral("mode")).toString());
     localErrors.append(structuralErrors);
 
     if (!ControllerDebugProtocol::canReadDeviceId(profile.slaveId)) {
@@ -738,6 +741,9 @@ bool ControllerDeviceBackend::validateDownloadProfilePlan(const DownloadProfile&
                 stepErrors << QStringLiteral("缺少 values");
             }
             const int valueCount = variantToRegisters(params.value(QStringLiteral("values"))).size();
+            if (valueCount > ModbusLimits::WriteRegisters) {
+                stepErrors << QStringLiteral("values 长度超出 FC16 上限 123");
+            }
             if (stepAddress >= 0 && valueCount > 0 && stepAddress + valueCount > 65536) {
                 stepErrors << QStringLiteral("address 与 values 长度超出 16 位地址空间");
             }
@@ -787,8 +793,8 @@ bool ControllerDeviceBackend::validateDownloadProfilePlan(const DownloadProfile&
             if (dataAddress > 65535) {
                 stepErrors << QStringLiteral("dataAddress 超出 16 位范围");
             }
-            if (chunkWords <= 0 || chunkWords > 125) {
-                stepErrors << QStringLiteral("chunkWords 必须为 1..125");
+            if (chunkWords <= 0 || chunkWords > ModbusLimits::WriteRegisters) {
+                stepErrors << QStringLiteral("chunkWords 必须为 1..123");
             } else if (dataAddress >= 0 && dataAddress + chunkWords > 65536) {
                 stepErrors << QStringLiteral("dataAddress 与 chunkWords 超出 16 位地址空间");
             } else {
@@ -1011,7 +1017,7 @@ bool ControllerDeviceBackend::executeDownloadStep(const DownloadProfile& profile
                                                configuredByteOrder).toString();
         const bool littleEndian = byteOrder.compare(QStringLiteral("LittleEndian"),
                                                     Qt::CaseInsensitive) == 0;
-        if (dataAddress < 0 || dataAddress > 65535 || chunkWords <= 0 || chunkWords > 125
+        if (dataAddress < 0 || dataAddress > 65535 || chunkWords <= 0 || chunkWords > ModbusLimits::WriteRegisters
                 || dataAddress + chunkWords > 65536 || !needResponse) {
             return failStep(CommErrorCode::InvalidConfig,
                             QStringLiteral("dataAddress/chunkWords/needResponse 配置无效。"));

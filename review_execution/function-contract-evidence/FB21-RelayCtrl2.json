@@ -1,0 +1,147 @@
+{
+  "calls": [
+    {
+      "sha256": "ea52c38bacea2fadfee4a6925a8e768d93de314a57d1d3b395562da635bedf8a",
+      "entry": "265C8I/VC102/TSub/Motor/Motor.inva",
+      "instance": "MotorCtrl",
+      "source": "_RelayCtrl2[MotorCtrl] \"输入\":=GunBias.Output;",
+      "orderedParameters": [
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "输入",
+          "lhOperandEncoding": null,
+          "rawValue": "GunBias.Output",
+          "operator": ":="
+        }
+      ],
+      "line": 66
+    }
+  ],
+  "scope": "offline lexical LM evidence; production LH contract unverified",
+  "extractionLimits": [
+    "First 24 call excerpts retained; total count includes all matches",
+    "Lexical operator/value classification is not semantic direction or type proof",
+    "No unaddressed marker opcode is inferred from an empty parameter list"
+  ],
+  "externalPrerequisites": [
+    "用于生产编码的 LH 目标指令/操作数/数值版本支持证据",
+    "不能证明 RelayCtrl2 与 RelayCtrl/TwoPosition 仅是别名；必须核实变体差异、字段布局、状态与使能/故障行为。"
+  ],
+  "planScope": "仅处理 RelayCtrl2。根据 Motor.inva:66；手册仅描述 RelayCtrl 建立 Input 与 PosiOut 等被引用字段；完整变体契约未知 的 LH 契约，输出名称/参数类别/方向/范围/初值/字段/布局/指令形式与来源映射。不能证明 RelayCtrl2 与 RelayCtrl/TwoPosition 仅是别名；必须核实变体差异、字段布局、状态与使能/故障行为。",
+  "fields": [
+    {
+      "sha256": "f464a5f185449d0dd99f6f0ba436c0aaddbfd0b20ab291e371d02f54e4bf332c",
+      "entry": "265C8I/VC102/SECD/SECD.typ",
+      "lhOffset": null,
+      "line": 1258,
+      "instance": "MotorCtrl",
+      "direction": null,
+      "field": "Input",
+      "lhType": null,
+      "legacyAddress": 1251,
+      "legacyTypeCode": 3
+    },
+    {
+      "sha256": "f464a5f185449d0dd99f6f0ba436c0aaddbfd0b20ab291e371d02f54e4bf332c",
+      "entry": "265C8I/VC102/SECD/SECD.typ",
+      "lhOffset": null,
+      "line": 1259,
+      "instance": "MotorCtrl",
+      "direction": null,
+      "field": "PosiOut",
+      "lhType": null,
+      "legacyAddress": 1252,
+      "legacyTypeCode": 2
+    },
+    {
+      "sha256": "f464a5f185449d0dd99f6f0ba436c0aaddbfd0b20ab291e371d02f54e4bf332c",
+      "entry": "265C8I/VC102/SECD/SECD.typ",
+      "lhOffset": null,
+      "line": 1260,
+      "instance": "MotorCtrl",
+      "direction": null,
+      "field": "NegOut",
+      "lhType": null,
+      "legacyAddress": 1253,
+      "legacyTypeCode": 2
+    },
+    {
+      "sha256": "f464a5f185449d0dd99f6f0ba436c0aaddbfd0b20ab291e371d02f54e4bf332c",
+      "entry": "265C8I/VC102/SECD/SECD.typ",
+      "lhOffset": null,
+      "line": 1261,
+      "instance": "MotorCtrl",
+      "direction": null,
+      "field": "NonActiveP",
+      "lhType": null,
+      "legacyAddress": 1254,
+      "legacyTypeCode": 3
+    },
+    {
+      "sha256": "f464a5f185449d0dd99f6f0ba436c0aaddbfd0b20ab291e371d02f54e4bf332c",
+      "entry": "265C8I/VC102/SECD/SECD.typ",
+      "lhOffset": null,
+      "line": 1262,
+      "instance": "MotorCtrl",
+      "direction": null,
+      "field": "ResortLoopP",
+      "lhType": null,
+      "legacyAddress": 1255,
+      "legacyTypeCode": 3
+    },
+    {
+      "sha256": "f464a5f185449d0dd99f6f0ba436c0aaddbfd0b20ab291e371d02f54e4bf332c",
+      "entry": "265C8I/VC102/SECD/SECD.typ",
+      "lhOffset": null,
+      "line": 1263,
+      "instance": "MotorCtrl",
+      "direction": null,
+      "field": "NonActiveN",
+      "lhType": null,
+      "legacyAddress": 1256,
+      "legacyTypeCode": 3
+    },
+    {
+      "sha256": "f464a5f185449d0dd99f6f0ba436c0aaddbfd0b20ab291e371d02f54e4bf332c",
+      "entry": "265C8I/VC102/SECD/SECD.typ",
+      "lhOffset": null,
+      "line": 1264,
+      "instance": "MotorCtrl",
+      "direction": null,
+      "field": "ResortLoopN",
+      "lhType": null,
+      "legacyAddress": 1257,
+      "legacyTypeCode": 3
+    }
+  ],
+  "archive": "D:/Table/LM/程序.zip",
+  "missing": [
+    "LH firmware version, opcode and operand table",
+    "LH address unit, alignment, field width/direction",
+    "Named legacy operators/enums are not translated into LH values"
+  ],
+  "taskId": "FB21",
+  "candidateCodeRows": [
+    {
+      "sha256": "521c52a07d11014405c4ee1b25f2a2e26746ef7c250778fc5eb1606b2e71e695",
+      "entry": "265C8I/VC102/SECD/SECD.code",
+      "source": "41127\t41127\t1251\t1235\t",
+      "correlation": "candidate matching first legacy field address; no LH ABI translation",
+      "instance": "MotorCtrl",
+      "line": 214
+    }
+  ],
+  "lhNameMappingCertified": false,
+  "legacyCandidate": "_RelayCtrl2",
+  "downloadableTargetCertified": false,
+  "callCount": 1,
+  "block": "RelayCtrl2",
+  "observedLegacyName": "RelayCtrl2",
+  "schemaVersion": 1,
+  "mappingStatus": "同名",
+  "manualPages": [],
+  "reviewCandidateContract": "Input 与 PosiOut 等被引用字段；完整变体契约未知",
+  "reviewAssessment": "不能证明 RelayCtrl2 与 RelayCtrl/TwoPosition 仅是别名；必须核实变体差异、字段布局、状态与使能/故障行为。",
+  "manualExtractionScope": "Physical PDF pages, copied as evidence; legacy numeric tables do not certify LH operand encodings"
+}

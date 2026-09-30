@@ -25,6 +25,8 @@ public:
 
 signals:
     void fileOpenRequested(const QString& filePath);
+    void mainScriptRequested(const QString& filePath);
+    void deleteRequested(const QString& path);
     void fileSelected(const QString& filePath);
     void locateCurrentFileRequested();
 

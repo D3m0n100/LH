@@ -1,4 +1,5 @@
 #include "ProjectExplorerWidget.h"
+#include "common/PathSecurityUtils.h"
 
 #include <QFileSystemModel>
 #include <QSortFilterProxyModel>
@@ -385,6 +386,9 @@ void ProjectExplorerWidget::onContextMenuRequested(const QPoint& pos)
     QAction* newFileAction = menu.addAction(tr("新建文件"));
     QAction* newFolderAction = menu.addAction(tr("新建文件夹"));
     QAction* deleteAction = nullptr;
+    QAction* mainScriptAction = nullptr;
+    if (info.isFile() && info.suffix().compare(QStringLiteral("lh"), Qt::CaseInsensitive) == 0)
+        mainScriptAction = menu.addAction(tr("设置为主脚本"));
     if (!targetPath.isEmpty()) {
         menu.addSeparator();
         deleteAction = menu.addAction(tr("删除"));
@@ -392,6 +396,10 @@ void ProjectExplorerWidget::onContextMenuRequested(const QPoint& pos)
 
     QAction* picked = menu.exec(m_treeView->viewport()->mapToGlobal(pos));
     if (!picked) {
+        return;
+    }
+    if (mainScriptAction && picked == mainScriptAction) {
+        emit mainScriptRequested(targetPath);
         return;
     }
 
@@ -431,6 +439,11 @@ void ProjectExplorerWidget::createFileInDirectory(const QString& directoryPath)
     }
 
     const QString absoluteFilePath = QDir(directoryPath).filePath(fileName);
+    QString pathError;
+    if (!PathSecurityUtils::safeProjectMutation(m_rootPath, absoluteFilePath, false, &pathError)) {
+        QMessageBox::warning(this, tr("创建失败"), pathError);
+        return;
+    }
     if (QFileInfo::exists(absoluteFilePath)) {
         QMessageBox::warning(this, tr("已存在"),
                              tr("同名文件或文件夹已经存在。"));
@@ -438,7 +451,7 @@ void ProjectExplorerWidget::createFileInDirectory(const QString& directoryPath)
     }
 
     QFile file(absoluteFilePath);
-    if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
+    if (!file.open(QIODevice::WriteOnly | QIODevice::Text | QIODevice::NewOnly)) {
         QMessageBox::warning(this, tr("创建失败"),
                              tr("无法创建文件:\n%1").arg(absoluteFilePath));
         return;
@@ -503,6 +516,11 @@ void ProjectExplorerWidget::createFolderInDirectory(const QString& directoryPath
     }
 
     const QString absoluteFolderPath = QDir(directoryPath).filePath(folderName);
+    QString pathError;
+    if (!PathSecurityUtils::safeProjectMutation(m_rootPath, absoluteFolderPath, false, &pathError)) {
+        QMessageBox::warning(this, tr("创建失败"), pathError);
+        return;
+    }
     if (QFileInfo::exists(absoluteFolderPath)) {
         QMessageBox::warning(this, tr("已存在"),
                              tr("同名文件或文件夹已经存在。"));
@@ -546,20 +564,13 @@ void ProjectExplorerWidget::deletePath(const QString& targetPath)
         return;
     }
 
-    bool ok = false;
-    if (info.isDir()) {
-        QDir dir(targetPath);
-        ok = dir.removeRecursively();
-    } else {
-        ok = QFile::remove(targetPath);
-    }
-
-    if (!ok) {
-        QMessageBox::warning(this, tr("删除失败"),
-                             tr("无法删除:\n%1").arg(targetPath));
+    QString pathError;
+    if (!PathSecurityUtils::safeProjectMutation(m_rootPath, targetPath, true, &pathError)) {
+        QMessageBox::warning(this, tr("删除失败"), pathError);
         return;
     }
 
+    emit deleteRequested(targetPath);
     onRefreshClicked();
 }
 

@@ -8,6 +8,10 @@
 #include <QHash>
 #include <QRegularExpression>
 #include <QSet>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QSaveFile>
+#include <QCryptographicHash>
 
 namespace {
 
@@ -49,211 +53,171 @@ QString normalizeFunctionBlockTypeName(QString blockType)
     return blockType;
 }
 
-QString injectMissingInstanceDeclarations(const QString& sourceText,
-                                          const QStringList& instanceOrder,
-                                          const QHash<QString, QString>& instanceTypeMap)
+struct MappedLine {
+    QString text;
+    QString filePath;
+    int sourceLine = 0;
+    bool exactColumn = false;
+};
+using MappedLines = QList<MappedLine>;
+
+MappedLine synthetic(const QString& text) { return {text, QString(), 0, false}; }
+QString joined(const MappedLines& lines)
 {
-    if (instanceOrder.isEmpty()) {
-        return sourceText;
-    }
-
-    QStringList lines = sourceText.split(QLatin1Char('\n'));
-    QSet<QString> declaredInstances;
-    const QRegularExpression declarationRe(
-        QStringLiteral(R"(^\s*([A-Za-z_][A-Za-z0-9_]*)\s*:)"));
-
-    int varLine = -1;
-    int endVarLine = -1;
-    int programLine = -1;
-
-    for (int i = 0; i < lines.size(); ++i) {
-        const QString trimmed = lines.at(i).trimmed();
-        if (programLine < 0 && trimmed.startsWith(QStringLiteral("PROGRAM "), Qt::CaseInsensitive)) {
-            programLine = i;
-        }
-        if (varLine < 0 && trimmed.compare(QStringLiteral("VAR"), Qt::CaseInsensitive) == 0) {
-            varLine = i;
-        } else if (varLine >= 0
-                   && endVarLine < 0
-                   && trimmed.compare(QStringLiteral("END_VAR"), Qt::CaseInsensitive) == 0) {
-            endVarLine = i;
-        }
-
-        const QRegularExpressionMatch declarationMatch = declarationRe.match(lines.at(i));
-        if (declarationMatch.hasMatch()) {
-            declaredInstances.insert(declarationMatch.captured(1));
-        }
-    }
-
-    QStringList missingDeclarations;
-    for (const QString& instanceName : instanceOrder) {
-        if (!declaredInstances.contains(instanceName)) {
-            missingDeclarations << QStringLiteral("    %1 : %2;")
-                                       .arg(instanceName, instanceTypeMap.value(instanceName));
-        }
-    }
-    if (missingDeclarations.isEmpty()) {
-        return sourceText;
-    }
-
-    if (varLine >= 0 && endVarLine > varLine) {
-        for (int i = missingDeclarations.size() - 1; i >= 0; --i) {
-            lines.insert(endVarLine, missingDeclarations.at(i));
-        }
-        return lines.join(QLatin1Char('\n'));
-    }
-
-    if (programLine >= 0) {
-        QStringList varBlock;
-        varBlock << QStringLiteral("VAR");
-        varBlock << missingDeclarations;
-        varBlock << QStringLiteral("END_VAR");
-        varBlock << QString();
-        for (int i = varBlock.size() - 1; i >= 0; --i) {
-            lines.insert(programLine + 1, varBlock.at(i));
-        }
-    }
-
-    return lines.join(QLatin1Char('\n'));
+    QStringList text;
+    for (const auto& line : lines) text.append(line.text);
+    return text.join(QLatin1Char('\n'));
+}
+MappedLines sourceLines(const QString& text, const QString& path)
+{
+    MappedLines result;
+    const QStringList lines = text.split(QLatin1Char('\n'));
+    const QString canonical = QFileInfo(path).canonicalFilePath();
+    for (int i = 0; i < lines.size(); ++i) result.append({lines.at(i), canonical, i + 1, true});
+    return result;
+}
+void trimBlankLines(MappedLines& lines)
+{
+    while (!lines.isEmpty() && lines.first().text.trimmed().isEmpty()) lines.removeFirst();
+    while (!lines.isEmpty() && lines.last().text.trimmed().isEmpty()) lines.removeLast();
+}
+void insertLines(MappedLines& target, int at, const MappedLines& lines)
+{
+    for (int i = lines.size() - 1; i >= 0; --i) target.insert(at, lines.at(i));
 }
 
-QString normalizeLegacyDslSource(const QString& sourceText, const QString& sourceBaseName)
+MappedLines normalizeLegacyDslSource(MappedLines lines, const QString& baseName)
 {
-    const QRegularExpression legacyCallRe(
-        QStringLiteral(R"(^(\s*)([A-Za-z_][A-Za-z0-9_]*)\s*=\s*([_A-Za-z][_A-Za-z0-9_]*)\s*\()"));
-    const QRegularExpression paramAssignRe(
-        QStringLiteral(R"(^(\s*[A-Za-z_][A-Za-z0-9_]*\s*)=(\s*.+)$)"));
-
-    const QStringList lines = sourceText.split(QLatin1Char('\n'));
-    QStringList transformed;
-    transformed.reserve(lines.size());
-
+    const QRegularExpression callRe(QStringLiteral(R"(^(\s*)([A-Za-z_][A-Za-z0-9_]*)\s*=\s*([_A-Za-z][_A-Za-z0-9_]*)\s*\()"));
+    const QRegularExpression paramRe(QStringLiteral(R"(^(\s*[A-Za-z_][A-Za-z0-9_]*\s*)=(\s*.+)$)"));
     QStringList instanceOrder;
-    QHash<QString, QString> instanceTypeMap;
-
-    int parenDepth = 0;
-    for (const QString& rawLine : lines) {
-        QString line = rawLine;
-        const QString trimmed = line.trimmed();
-        const bool commentOnly = trimmed.startsWith(QStringLiteral("//"));
-
-        const QRegularExpressionMatch callMatch = legacyCallRe.match(line);
-        if (callMatch.hasMatch()) {
-            const QString indentation = callMatch.captured(1);
-            const QString instanceName = callMatch.captured(2);
-            const QString blockType = normalizeFunctionBlockTypeName(callMatch.captured(3));
-
-            if (!instanceTypeMap.contains(instanceName)) {
-                instanceOrder.append(instanceName);
-                instanceTypeMap.insert(instanceName, blockType);
+    QHash<QString, QString> instanceTypes;
+    int depth = 0;
+    for (auto& line : lines) {
+        const QString original = line.text;
+        const auto call = callRe.match(original);
+        if (call.hasMatch()) {
+            const QString instance = call.captured(2);
+            if (!instanceTypes.contains(instance)) {
+                instanceOrder.append(instance);
+                instanceTypes.insert(instance, normalizeFunctionBlockTypeName(call.captured(3)));
             }
-
-            line = indentation + instanceName + QStringLiteral("(");
-        } else if (parenDepth > 0
-                   && !commentOnly
-                   && !trimmed.contains(QStringLiteral(":="))
-                   && !trimmed.contains(QStringLiteral("=>"))) {
-            const QRegularExpressionMatch paramMatch = paramAssignRe.match(line);
-            if (paramMatch.hasMatch()) {
-                line = paramMatch.captured(1) + QStringLiteral(":=") + paramMatch.captured(2);
-            }
+            // Preserve same-line arguments and the closing parenthesis.
+            line.text = call.captured(1) + instance + QStringLiteral("(") + original.mid(call.capturedEnd());
+        } else if (depth > 0 && !original.trimmed().startsWith(QStringLiteral("//"))
+                   && !original.contains(QStringLiteral(":=")) && !original.contains(QStringLiteral("=>"))) {
+            const auto parameter = paramRe.match(original);
+            if (parameter.hasMatch()) line.text = parameter.captured(1) + QStringLiteral(":=") + parameter.captured(2);
         }
-
-        transformed.append(line);
-
-        parenDepth += line.count(QLatin1Char('('));
-        parenDepth -= line.count(QLatin1Char(')'));
-        if (parenDepth < 0) {
-            parenDepth = 0;
-        }
+        if (line.text != original) line.exactColumn = false;
+        depth = qMax(0, depth + line.text.count(QLatin1Char('(')) - line.text.count(QLatin1Char(')')));
     }
-
-    const QString transformedBody = transformed.join(QLatin1Char('\n'));
-    if (hasProgramEnvelope(transformedBody)) {
-        return injectMissingInstanceDeclarations(transformedBody, instanceOrder, instanceTypeMap);
-    }
-
-    QStringList wrapped;
-    wrapped << (QStringLiteral("PROGRAM ") + sanitizeProgramName(sourceBaseName));
-    wrapped << QStringLiteral("VAR");
-    for (const QString& instanceName : instanceOrder) {
-        wrapped << QStringLiteral("    %1 : %2;")
-                       .arg(instanceName, instanceTypeMap.value(instanceName));
-    }
-    wrapped << QStringLiteral("END_VAR");
-    wrapped << QString();
-
-    const QString trimmedBody = transformedBody.trimmed();
-    if (!trimmedBody.isEmpty()) {
-        wrapped << trimmedBody;
-        wrapped << QString();
-    }
-
-    wrapped << QStringLiteral("END_PROGRAM");
-    return wrapped.join(QLatin1Char('\n'));
-}
-
-QString extractProgramStatements(const QString& sourceText,
-                                 const QString& sourcePath,
-                                 QStringList* varDeclarations,
-                                 QString* errorMessage)
-{
-    if (!hasProgramEnvelope(sourceText)) {
-        return sourceText.trimmed();
-    }
-
-    const QString normalized = normalizeLegacyDslSource(sourceText, QFileInfo(sourcePath).completeBaseName());
-    const QStringList lines = normalized.split(QLatin1Char('\n'));
-    int programLine = -1;
-    int endProgramLine = -1;
-    bool inVarBlock = false;
-    QStringList statements;
-
+    const bool enveloped = hasProgramEnvelope(joined(lines));
+    int program = -1, var = -1, endVar = -1;
+    QSet<QString> declared;
+    const QRegularExpression declaration(QStringLiteral(R"(^\s*([A-Za-z_][A-Za-z0-9_]*)\s*:(?!=)\s*[A-Za-z_])"));
     for (int i = 0; i < lines.size(); ++i) {
-        const QString trimmed = lines.at(i).trimmed();
-        if (programLine < 0 && trimmed.startsWith(QStringLiteral("PROGRAM "), Qt::CaseInsensitive)) {
-            programLine = i;
-            continue;
-        }
-        if (trimmed.compare(QStringLiteral("END_PROGRAM"), Qt::CaseInsensitive) == 0) {
-            endProgramLine = i;
-            break;
-        }
-        if (programLine < 0) {
-            continue;
-        }
-
-        if (trimmed.compare(QStringLiteral("VAR"), Qt::CaseInsensitive) == 0) {
-            inVarBlock = true;
-            continue;
-        }
-        if (trimmed.compare(QStringLiteral("END_VAR"), Qt::CaseInsensitive) == 0) {
-            inVarBlock = false;
-            continue;
-        }
-
-        if (inVarBlock) {
-            if (!trimmed.isEmpty()) {
-                if (varDeclarations) {
-                    varDeclarations->append(lines.at(i));
-                }
+        const QString text = lines.at(i).text.trimmed();
+        if (program < 0 && text.startsWith(QStringLiteral("PROGRAM "), Qt::CaseInsensitive)) program = i;
+        if (var < 0 && text.compare(QStringLiteral("VAR"), Qt::CaseInsensitive) == 0) var = i;
+        else if (var >= 0 && endVar < 0 && text.compare(QStringLiteral("END_VAR"), Qt::CaseInsensitive) == 0) endVar = i;
+        const auto match = declaration.match(lines.at(i).text);
+        if (match.hasMatch()) declared.insert(match.captured(1));
+    }
+    MappedLines missing;
+    for (const QString& name : instanceOrder)
+        if (!declared.contains(name)) missing.append(synthetic(QStringLiteral("    %1 : %2;").arg(name, instanceTypes.value(name))));
+    if (enveloped) {
+        if (!missing.isEmpty()) {
+            if (var >= 0 && endVar > var) insertLines(lines, endVar, missing);
+            else if (program >= 0) {
+                missing.prepend(synthetic(QStringLiteral("VAR")));
+                missing.append(synthetic(QStringLiteral("END_VAR")));
+                missing.append(synthetic(QString()));
+                insertLines(lines, program + 1, missing);
             }
-            continue;
         }
-
-        statements << lines.at(i);
+        return lines;
     }
-
-    if (programLine < 0 || endProgramLine < 0) {
-        if (errorMessage) {
-            *errorMessage = QStringLiteral("Program envelope is incomplete: %1").arg(sourcePath);
-        }
-        return QString();
+    trimBlankLines(lines);
+    MappedLines wrapped;
+    wrapped.append(synthetic(QStringLiteral("PROGRAM ") + sanitizeProgramName(baseName)));
+    MappedLines variables = missing;
+    // Existing declarations in an envelope-free fragment stay in the VAR section.
+    for (auto it = lines.begin(); it != lines.end();) {
+        if (declaration.match(it->text).hasMatch()) { variables.append(*it); it = lines.erase(it); }
+        else ++it;
     }
-
-    return statements.join(QLatin1Char('\n')).trimmed();
+    if (!variables.isEmpty()) {
+        wrapped.append(synthetic(QStringLiteral("VAR")));
+        wrapped.append(variables);
+        wrapped.append(synthetic(QStringLiteral("END_VAR")));
+    }
+    wrapped.append(synthetic(QString()));
+    wrapped.append(lines);
+    wrapped.append(synthetic(QString()));
+    wrapped.append(synthetic(QStringLiteral("END_PROGRAM")));
+    return wrapped;
 }
 
+MappedLines extractProgramStatements(const MappedLines& lines, MappedLines* declarations, QString* error)
+{
+    MappedLines statements;
+    MappedLines variableSection;
+    bool hasDeclaration = false;
+    bool started = false, ended = false, inVars = false;
+    for (const auto& line : lines) {
+        const QString text = line.text.trimmed();
+        if (!started && text.startsWith(QStringLiteral("PROGRAM "), Qt::CaseInsensitive)) { started = true; continue; }
+        if (!started) continue;
+        if (text.compare(QStringLiteral("END_PROGRAM"), Qt::CaseInsensitive) == 0) { ended = true; break; }
+        if (text.compare(QStringLiteral("VAR"), Qt::CaseInsensitive) == 0
+                || text.compare(QStringLiteral("VAR_CONSTANT"), Qt::CaseInsensitive) == 0) {
+            variableSection.clear();
+            variableSection.append(line);
+            hasDeclaration = false;
+            inVars = true; continue;
+        }
+        if (text.compare(QStringLiteral("END_VAR"), Qt::CaseInsensitive) == 0) {
+            variableSection.append(line);
+            if (hasDeclaration) declarations->append(variableSection);
+            inVars = false; continue;
+        }
+        if (inVars) {
+            variableSection.append(line);
+            if (!text.isEmpty() && !text.startsWith(QStringLiteral("//"))) hasDeclaration = true;
+        }
+        else statements.append(line);
+    }
+    if (!started || !ended) {
+        if (error) *error = QStringLiteral("Program envelope is incomplete");
+        return {};
+    }
+    trimBlankLines(statements);
+    return statements;
+}
+
+bool writeMappedSource(const QString& path, const MappedLines& lines, QString* error)
+{
+    const QString text = joined(lines);
+    if (!DSLCompilerInternal::writeTextFile(path, text, error)) return false;
+    QJsonObject locations;
+    for (int i = 0; i < lines.size(); ++i) {
+        const auto& line = lines.at(i);
+        if (line.sourceLine <= 0 || line.filePath.isEmpty()) continue;
+        locations.insert(QString::number(i + 1), QJsonObject{{"filePath", line.filePath},
+                         {"line", line.sourceLine}, {"exactColumn", line.exactColumn}});
+    }
+    QJsonObject map{{"version", 1}, {"locations", locations},
+                    {"normalizedSha256", QString::fromLatin1(QCryptographicHash::hash(text.toUtf8(), QCryptographicHash::Sha256).toHex())}};
+    QSaveFile output(path + QStringLiteral(".source-map.json"));
+    const QByteArray bytes = QJsonDocument(map).toJson();
+    if (!output.open(QIODevice::WriteOnly) || output.write(bytes) != bytes.size() || !output.commit()) {
+        if (error) *error = QStringLiteral("Failed to commit compiler source map: %1").arg(path);
+        return false;
+    }
+    return true;
+}
 } // namespace
 
 namespace DSLCompilerInternal {
@@ -282,14 +246,18 @@ bool writeTextFile(const QString& filePath, const QString& text, QString* errorM
         return false;
     }
 
-    QFile file(filePath);
-    if (!file.open(QIODevice::WriteOnly | QIODevice::Text | QIODevice::Truncate)) {
+    QSaveFile file(filePath);
+    if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
         if (errorMessage) {
             *errorMessage = QStringLiteral("Failed to write staging file: %1").arg(filePath);
         }
         return false;
     }
-    file.write(text.toUtf8());
+    const QByteArray bytes = text.toUtf8();
+    if (file.write(bytes) != bytes.size() || !file.commit()) {
+        if (errorMessage) *errorMessage = QStringLiteral("Failed to commit staging file: %1").arg(filePath);
+        return false;
+    }
     return true;
 }
 
@@ -360,140 +328,45 @@ QString assembleProjectCompilerInput(const QString& projectPath,
         return QString();
     }
 
-    QString mainSourceText;
-    QStringList childFragments;
-    QStringList childVarDeclarations;
-    const QString normalizedMainPath = QFileInfo(mainScriptFile).absoluteFilePath();
-
-    for (int i = 0; i < scriptFiles.size(); ++i) {
-        const QString& scriptFile = scriptFiles.at(i);
-        const QFileInfo info(scriptFile);
-        if (!info.exists() || !info.isFile()) {
-            if (errorMessage) {
-                *errorMessage = QStringLiteral("Project script file not found: %1").arg(scriptFile);
-            }
-            return QString();
+    MappedLines mainLines, childLines, declarations;
+    const QString normalizedMain = QFileInfo(mainScriptFile).absoluteFilePath();
+    bool mainFound = false;
+    for (const QString& script : scriptFiles) {
+        const QFileInfo info(script);
+        if (!info.isFile() || info.suffix().compare(QStringLiteral("lh"), Qt::CaseInsensitive) != 0) {
+            if (errorMessage) *errorMessage = QStringLiteral("Project script missing or invalid: %1").arg(script);
+            return {};
         }
-        if (info.suffix().toLower() != QStringLiteral("lh")) {
-            if (errorMessage) {
-                *errorMessage = QStringLiteral("Unsupported project script suffix: %1")
-                                    .arg(info.fileName());
-            }
-            return QString();
-        }
-
-        QString readError;
-        const QString sourceText = readTextFile(info.absoluteFilePath(), &readError);
-        if (!readError.isEmpty()) {
-            if (errorMessage) {
-                *errorMessage = readError;
-            }
-            return QString();
-        }
-        const bool isMainFile = info.absoluteFilePath() == normalizedMainPath || i == 0;
-
-        const QString relativePath = QDir(projectPath).relativeFilePath(info.absoluteFilePath());
-        QStringList decoratedFragment;
-        decoratedFragment << QStringLiteral("// BEGIN %1").arg(relativePath);
-        QString fragmentText = sourceText.trimmed();
-        if (!isMainFile) {
-            QString fragmentError;
-            fragmentText = extractProgramStatements(sourceText,
-                                                    info.absoluteFilePath(),
-                                                    &childVarDeclarations,
-                                                    &fragmentError);
-            if (!fragmentError.isEmpty()) {
-                if (errorMessage) {
-                    *errorMessage = fragmentError;
-                }
-                return QString();
-            }
-        }
-        decoratedFragment << fragmentText;
-        decoratedFragment << QStringLiteral("// END %1").arg(relativePath);
-        decoratedFragment << QString();
-
-        if (isMainFile) {
-            mainSourceText = decoratedFragment.join(QLatin1Char('\n'));
-        } else {
-            childFragments << decoratedFragment;
+        QString error;
+        const QString text = readTextFile(info.absoluteFilePath(), &error);
+        if (!error.isEmpty()) { if (errorMessage) *errorMessage = error; return {}; }
+        auto lines = normalizeLegacyDslSource(sourceLines(text, info.absoluteFilePath()), info.completeBaseName());
+        if (info.absoluteFilePath() == normalizedMain) { mainLines = lines; mainFound = true; }
+        else {
+            auto statements = extractProgramStatements(lines, &declarations, &error);
+            if (!error.isEmpty()) { if (errorMessage) *errorMessage = error + QStringLiteral(": ") + script; return {}; }
+            childLines.append(synthetic(QStringLiteral("// BEGIN %1").arg(QDir(projectPath).relativeFilePath(script))));
+            childLines.append(statements);
+            childLines.append(synthetic(QStringLiteral("// END %1").arg(QDir(projectPath).relativeFilePath(script))));
+            childLines.append(synthetic(QString()));
         }
     }
-
-    const QFileInfo mainInfo(mainScriptFile);
-    QString assembledSource = mainSourceText;
-    const QString childSourceText = childFragments.join(QLatin1Char('\n'));
-    if (!childSourceText.trimmed().isEmpty()) {
-        if (hasProgramEnvelope(mainSourceText)) {
-            QStringList mainLines = mainSourceText.split(QLatin1Char('\n'));
-            int varLine = -1;
-            int endVarLine = -1;
-            int endProgramLine = -1;
-            for (int i = 0; i < mainLines.size(); ++i) {
-                const QString trimmed = mainLines.at(i).trimmed();
-                if (varLine < 0 && trimmed.compare(QStringLiteral("VAR"), Qt::CaseInsensitive) == 0) {
-                    varLine = i;
-                } else if (varLine >= 0
-                           && endVarLine < 0
-                           && trimmed.compare(QStringLiteral("END_VAR"), Qt::CaseInsensitive) == 0) {
-                    endVarLine = i;
-                }
-                if (trimmed.compare(
-                        QStringLiteral("END_PROGRAM"), Qt::CaseInsensitive) == 0) {
-                    endProgramLine = i;
-                }
-            }
-            if (endProgramLine < 0) {
-                if (errorMessage) {
-                    *errorMessage = QStringLiteral("Main script PROGRAM envelope is missing END_PROGRAM: %1")
-                                        .arg(mainScriptFile);
-                }
-                return QString();
-            }
-            if (!childVarDeclarations.isEmpty()) {
-                if (varLine >= 0 && endVarLine > varLine) {
-                    for (int i = childVarDeclarations.size() - 1; i >= 0; --i) {
-                        mainLines.insert(endVarLine, childVarDeclarations.at(i));
-                    }
-                    endProgramLine += childVarDeclarations.size();
-                } else {
-                    QStringList varBlock;
-                    varBlock << QStringLiteral("VAR");
-                    varBlock << childVarDeclarations;
-                    varBlock << QStringLiteral("END_VAR");
-                    varBlock << QString();
-                    const int insertLine = qMax(0, endProgramLine);
-                    for (int i = varBlock.size() - 1; i >= 0; --i) {
-                        mainLines.insert(insertLine, varBlock.at(i));
-                    }
-                    endProgramLine += varBlock.size();
-                }
-            }
-            mainLines.insert(endProgramLine, childSourceText.trimmed());
-            mainLines.insert(endProgramLine + 1, QString());
-            assembledSource = mainLines.join(QLatin1Char('\n'));
-        } else {
-            QStringList fragmentParts;
-            fragmentParts << mainSourceText;
-            if (!childVarDeclarations.isEmpty()) {
-                fragmentParts << childVarDeclarations.join(QLatin1Char('\n'));
-            }
-            fragmentParts << childSourceText;
-            assembledSource = fragmentParts.join(QLatin1Char('\n'));
-        }
+    if (!mainFound) { if (errorMessage) *errorMessage = QStringLiteral("Configured main script is not in the script list"); return {}; }
+    int endProgram = -1, program = -1;
+    for (int i = 0; i < mainLines.size(); ++i) {
+        const QString text = mainLines.at(i).text.trimmed();
+        if (program < 0 && text.startsWith(QStringLiteral("PROGRAM "), Qt::CaseInsensitive)) program = i;
+        if (text.compare(QStringLiteral("END_PROGRAM"), Qt::CaseInsensitive) == 0) endProgram = i;
     }
-
-    const QString assembledText = normalizeLegacyDslSource(assembledSource, mainInfo.completeBaseName());
+    if (endProgram < 0) { if (errorMessage) *errorMessage = QStringLiteral("Main script missing END_PROGRAM"); return {}; }
+    if (!declarations.isEmpty()) {
+        insertLines(mainLines, program + 1, declarations);
+        endProgram += declarations.size();
+    }
+    insertLines(mainLines, endProgram, childLines);
     const QString assembledPath = QDir(compilerStagingDir(outputDir)).absoluteFilePath(
-        mainInfo.completeBaseName() + QStringLiteral("_assembled.lh"));
-
-    QString writeError;
-    if (!writeTextFile(assembledPath, assembledText, &writeError)) {
-        if (errorMessage) {
-            *errorMessage = writeError;
-        }
-        return QString();
-    }
+        QFileInfo(mainScriptFile).completeBaseName() + QStringLiteral("_assembled.lh"));
+    if (!writeMappedSource(assembledPath, mainLines, errorMessage)) return {};
     return assembledPath;
 }
 
@@ -528,12 +401,12 @@ QString DSLCompilerInterface::prepareCompilerInput(const QString& sourceFile,
         return QString();
     }
 
-    const QString stagedText = normalizeLegacyDslSource(sourceText, sourceInfo.completeBaseName());
+    const MappedLines stagedLines = normalizeLegacyDslSource(sourceLines(sourceText, sourceInfo.absoluteFilePath()), sourceInfo.completeBaseName());
     const QString stagedPath = QDir(DSLCompilerInternal::compilerStagingDir(outputDir)).absoluteFilePath(
         sourceInfo.completeBaseName() + QStringLiteral(".lh"));
 
     QString writeError;
-    if (!DSLCompilerInternal::writeTextFile(stagedPath, stagedText, &writeError)) {
+    if (!writeMappedSource(stagedPath, stagedLines, &writeError)) {
         if (errorMessage) {
             *errorMessage = writeError;
         }

@@ -3,7 +3,7 @@
 
 #include <QObject>
 
-#include "common/ConfigTypes.h"
+#include "../common/ConfigTypes.h"
 
 class IOpcServer;
 

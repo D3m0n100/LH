@@ -1,0 +1,18 @@
+ 
+4.5 数据显示处理 
+1、显示数示可能过“串口显示数据发送”和“ M600 文本批量显示”， 
+1)串口显示数据发送 _SCIDispTrans TxAdd=:Memb; 
+0xAA98+文字左上角 X 轴坐标+文字左上角 Y 轴坐标 + Lib_ID+ 高８位 C_Mode 和低８位 C_dots+高８位前景色和低８位背景色 +字符 
+ 
+ 
+ 
+具体参见《 HMI指令集》。 
+ 
+ 
+2)M600 文本批量显示 
+_M600TextDisp[.]Xo::Const,Yo::Const,DeltaX::Const,DeltaY::Const,Li bID::Const,ModeDots::Const,Colo r::Const,BColor::Const,ModeAdd =:Memb,I
+nput::Memb, …,Item::#ItemEnd; 
+ 
+具体参见《 LM工程机械软件专题》 
+2011 Page 67 of 176 
+ 

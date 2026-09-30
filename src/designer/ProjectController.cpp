@@ -21,6 +21,7 @@ using namespace ProjectConfigValidation;
 #include <QSettings>
 #include <QTextStream>
 #include <QUuid>
+#include "common/PathSecurityUtils.h"
 #include <QDateTime>
 #include <QSet>
 #include <QMap>
@@ -182,7 +183,86 @@ void ProjectController::setCurrentScriptFile(const QString& scriptFile)
     }
 
     m_currentScriptFile = scriptFile;
-    syncScriptConfigFields();
+}
+
+bool ProjectController::setMainScriptFile(const QString& scriptFile)
+{
+    if (m_currentProject.isEmpty() || !isContainedProjectPath(m_currentProject, scriptFile)
+            || !QFileInfo(scriptFile).isFile()
+            || QFileInfo(scriptFile).suffix().compare(QStringLiteral("lh"), Qt::CaseInsensitive) != 0) {
+        emit errorOccurred(QStringLiteral("设置主脚本失败"), QStringLiteral("主脚本必须是工程目录内的 .lh 文件"));
+        return false;
+    }
+    const QString relative = relativeProjectPath(m_currentProject, scriptFile);
+    m_runtimeConfig.mainScriptPath = relative;
+    m_runtimeConfig.dslScriptPath = relative;
+    m_runtimeConfig.scriptFiles.removeAll(relative);
+    m_runtimeConfig.scriptFiles.prepend(relative);
+    setModified(true);
+    return true;
+}
+
+bool ProjectController::removeProjectPath(const QString& path, QString* errorMessage)
+{
+    auto fail = [&](const QString& message) { if (errorMessage) *errorMessage = message; return false; };
+    const QString absolute = QFileInfo(path).absoluteFilePath();
+    const QDir root(m_currentProject);
+    QString securityError;
+    if (m_currentProject.isEmpty() || !PathSecurityUtils::safeProjectMutation(m_currentProject, absolute, true, &securityError))
+        return fail(securityError.isEmpty() ? QStringLiteral("未打开工程") : securityError);
+    const QString configPath = root.filePath(QStringLiteral("project_config.json"));
+    const bool directory = QFileInfo(absolute).isDir();
+    const auto affected = [&](const QString& configured) {
+        if (configured.isEmpty()) return false;
+        const QString full = QDir::cleanPath(QFileInfo(configured).isRelative() ? root.absoluteFilePath(configured) : configured);
+        return full.compare(absolute, Qt::CaseInsensitive) == 0
+                || (directory && full.startsWith(absolute + QLatin1Char('/'), Qt::CaseInsensitive));
+    };
+    if (affected(configPath)) return fail(QStringLiteral("不能删除工程配置；请先关闭工程再管理工程目录"));
+    const ProjectRuntimeConfig previous = m_runtimeConfig;
+    const QString previousCurrent = m_currentScriptFile;
+    const QString staged = QDir(QFileInfo(absolute).absolutePath()).filePath(
+            QStringLiteral(".lh-delete-%1").arg(QUuid::createUuid().toString(QUuid::WithoutBraces)));
+    if (!QDir().rename(absolute, staged)) return fail(QStringLiteral("无法暂存删除路径：%1").arg(absolute));
+    if (affected(m_runtimeConfig.mainScriptPath)) {
+        m_runtimeConfig.mainScriptPath.clear();
+        m_runtimeConfig.dslScriptPath.clear();
+        m_runtimeConfig.dslMappings.clear();
+    }
+    if (affected(m_currentScriptFile)) m_currentScriptFile.clear();
+    for (int i = m_runtimeConfig.scriptFiles.size() - 1; i >= 0; --i)
+        if (affected(m_runtimeConfig.scriptFiles.at(i))) m_runtimeConfig.scriptFiles.removeAt(i);
+    for (int i = m_runtimeConfig.dslMappings.size() - 1; i >= 0; --i) {
+        const auto& metadata = m_runtimeConfig.dslMappings.at(i).metadata;
+        if (affected(metadata.value(QStringLiteral("filePath")).toString())
+                || affected(metadata.value(QStringLiteral("sourcePath")).toString())) m_runtimeConfig.dslMappings.removeAt(i);
+    }
+    m_runtimeConfig.downloadArtifact.filePath.clear();
+    m_runtimeConfig.downloadArtifact.checksum.clear();
+    const QString oldProfile = m_runtimeConfig.downloadArtifact.metadata.value(QStringLiteral("downloadProfilePath")).toString();
+    if (!oldProfile.isEmpty() && !affected(oldProfile)
+            && !QDir::fromNativeSeparators(oldProfile).contains(QStringLiteral("generations/"))
+            && !m_runtimeConfig.downloadArtifact.metadata.contains(QStringLiteral("downloadProfileSourcePath")))
+        m_runtimeConfig.downloadArtifact.metadata.insert(QStringLiteral("downloadProfileSourcePath"), oldProfile);
+    for (const QString& key : {QStringLiteral("runtimeManifestPath"), QStringLiteral("runtimePointsPath"),
+                               QStringLiteral("generationId"), QStringLiteral("downloadProfilePath"),
+                               QStringLiteral("downloadProfileChecksum"), QStringLiteral("runtimePointsChecksum"),
+                               QStringLiteral("runtimeManifestChecksum")}) m_runtimeConfig.downloadArtifact.metadata.remove(key);
+    const auto artifactKeys = m_runtimeConfig.downloadArtifact.metadata.keys();
+    for (const QString& key : artifactKeys)
+        if (key.endsWith(QStringLiteral("Path")) && affected(m_runtimeConfig.downloadArtifact.metadata.value(key).toString()))
+            m_runtimeConfig.downloadArtifact.metadata.remove(key);
+    if (!saveProjectConfig(m_currentProject)) {
+        m_runtimeConfig = previous;
+        m_currentScriptFile = previousCurrent;
+        if (!QDir().rename(staged, absolute))
+            return fail(QStringLiteral("配置保存失败且恢复路径失败；原内容保留在：%1").arg(staged));
+        return fail(QStringLiteral("配置保存失败，删除已取消并恢复原路径"));
+    }
+    const bool removed = directory ? QDir(staged).removeRecursively() : QFile::remove(staged);
+    if (!removed) emit warningOccurred(QStringLiteral("删除清理未完成"), QStringLiteral("工程路径已删除；暂存内容仍保留在：%1").arg(staged));
+    setModified(true);
+    return true;
 }
 
 // ================= 项目状态 =================
@@ -846,12 +926,6 @@ void ProjectController::syncScriptConfigFields()
         return QFileInfo(path).suffix().compare(QStringLiteral("lh"), Qt::CaseInsensitive) == 0;
     };
 
-    if (!m_currentScriptFile.isEmpty()) {
-        const QString relative = relativeProjectPath(m_currentProject, m_currentScriptFile);
-        if (!relative.isEmpty())
-            m_runtimeConfig.mainScriptPath = relative;
-    }
-
     if (!m_runtimeConfig.mainScriptPath.isEmpty() && !isLhScript(m_runtimeConfig.mainScriptPath)) {
         m_runtimeConfig.mainScriptPath.clear();
     }
@@ -871,9 +945,9 @@ void ProjectController::syncScriptConfigFields()
     }
     m_runtimeConfig.scriptFiles = lhScripts;
 
-    if (!m_runtimeConfig.mainScriptPath.isEmpty()) {
-        m_runtimeConfig.scriptFiles.removeAll(m_runtimeConfig.mainScriptPath);
-        m_runtimeConfig.scriptFiles.prepend(m_runtimeConfig.mainScriptPath);
+    if (!m_runtimeConfig.mainScriptPath.isEmpty()
+            && !m_runtimeConfig.scriptFiles.contains(m_runtimeConfig.mainScriptPath)) {
+        m_runtimeConfig.scriptFiles.append(m_runtimeConfig.mainScriptPath);
     }
 
     m_runtimeConfig.dslScriptPath = m_runtimeConfig.mainScriptPath;

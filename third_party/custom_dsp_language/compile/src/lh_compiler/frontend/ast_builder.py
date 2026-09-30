@@ -162,6 +162,9 @@ class ASTBuilder(_BaseClass):
                 for vd in var_decls:
                     var = self.visitVariableDeclaration(vd)
                     if var:
+                        var.read_only = bool(ctx.VAR_CONSTANT()) if hasattr(ctx, 'VAR_CONSTANT') else False
+                        if var.read_only and var.initial_value is None:
+                            self.errors.append(f"第 {var.line} 行: 常量 '{var.name}' 必须声明初始值")
                         variables.append(var)
             else:
                 self.errors.append(f"第 {line} 行: VAR 段中未声明任何变量")

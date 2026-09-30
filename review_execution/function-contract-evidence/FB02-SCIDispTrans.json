@@ -1,0 +1,458 @@
+{
+  "calls": [
+    {
+      "sha256": "7ea5b217ac989a54089457a13ff5ba19495cb6e400c5844920663cd8e2251645",
+      "entry": "265C8I/VC102/DSub/Dwin/Dwin.inva",
+      "instance": "",
+      "source": "_SCIDispTrans TxAdd=:DwinTx100.Int1;",
+      "orderedParameters": [
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "TxAdd",
+          "lhOperandEncoding": null,
+          "rawValue": "DwinTx100.Int1",
+          "operator": "=:"
+        }
+      ],
+      "line": 12
+    },
+    {
+      "sha256": "46ff7a2217b788404e8c9ff8a1a37950552255ff948edd48df037c23c859388c",
+      "entry": "265C8I/VC102/DSub/Page/AutoDemaFig.inva",
+      "instance": "",
+      "source": "_SCIDispTrans TxAdd=:ModeDnFm.Int1;",
+      "orderedParameters": [
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "TxAdd",
+          "lhOperandEncoding": null,
+          "rawValue": "ModeDnFm.Int1",
+          "operator": "=:"
+        }
+      ],
+      "line": 55
+    },
+    {
+      "sha256": "46ff7a2217b788404e8c9ff8a1a37950552255ff948edd48df037c23c859388c",
+      "entry": "265C8I/VC102/DSub/Page/AutoDemaFig.inva",
+      "instance": "",
+      "source": "_SCIDispTrans TxAdd=:PubBuf2.Int1;",
+      "orderedParameters": [
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "TxAdd",
+          "lhOperandEncoding": null,
+          "rawValue": "PubBuf2.Int1",
+          "operator": "=:"
+        }
+      ],
+      "line": 60
+    },
+    {
+      "sha256": "46ff7a2217b788404e8c9ff8a1a37950552255ff948edd48df037c23c859388c",
+      "entry": "265C8I/VC102/DSub/Page/AutoDemaFig.inva",
+      "instance": "",
+      "source": "_SCIDispTrans TxAdd=:PubBuf3.Int1;",
+      "orderedParameters": [
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "TxAdd",
+          "lhOperandEncoding": null,
+          "rawValue": "PubBuf3.Int1",
+          "operator": "=:"
+        }
+      ],
+      "line": 73
+    },
+    {
+      "sha256": "46ff7a2217b788404e8c9ff8a1a37950552255ff948edd48df037c23c859388c",
+      "entry": "265C8I/VC102/DSub/Page/AutoDemaFig.inva",
+      "instance": "",
+      "source": "_SCIDispTrans TxAdd=:PubBuf4.Int1;",
+      "orderedParameters": [
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "TxAdd",
+          "lhOperandEncoding": null,
+          "rawValue": "PubBuf4.Int1",
+          "operator": "=:"
+        }
+      ],
+      "line": 79
+    },
+    {
+      "sha256": "169123193277a91b6e2352399984d316b4dbc7a5ddce2728a967808563b74ac1",
+      "entry": "265C8I/VC102/DSub/Page/CallServFig.inva",
+      "instance": "",
+      "source": "_SCIDispTrans TxAdd=:PubBuf20.Int1;",
+      "orderedParameters": [
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "TxAdd",
+          "lhOperandEncoding": null,
+          "rawValue": "PubBuf20.Int1",
+          "operator": "=:"
+        }
+      ],
+      "line": 48
+    },
+    {
+      "sha256": "0b2cbb25acc172870321589ea1ab5e4fc3e17a63e7463f3c5c335a981efbb2bb",
+      "entry": "265C8I/VC102/DSub/Page/InfoListFig.inva",
+      "instance": "",
+      "source": "_SCIDispTrans TxAdd=:Pg3OppoColFm.Int1;",
+      "orderedParameters": [
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "TxAdd",
+          "lhOperandEncoding": null,
+          "rawValue": "Pg3OppoColFm.Int1",
+          "operator": "=:"
+        }
+      ],
+      "line": 26
+    },
+    {
+      "sha256": "0b2cbb25acc172870321589ea1ab5e4fc3e17a63e7463f3c5c335a981efbb2bb",
+      "entry": "265C8I/VC102/DSub/Page/InfoListFig.inva",
+      "instance": "",
+      "source": "_SCIDispTrans TxAdd=:Pg3NoteFm.Int1;",
+      "orderedParameters": [
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "TxAdd",
+          "lhOperandEncoding": null,
+          "rawValue": "Pg3NoteFm.Int1",
+          "operator": "=:"
+        }
+      ],
+      "line": 31
+    },
+    {
+      "sha256": "0b2cbb25acc172870321589ea1ab5e4fc3e17a63e7463f3c5c335a981efbb2bb",
+      "entry": "265C8I/VC102/DSub/Page/InfoListFig.inva",
+      "instance": "",
+      "source": "_SCIDispTrans TxAdd=:Pg3NoteFm.Int1;",
+      "orderedParameters": [
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "TxAdd",
+          "lhOperandEncoding": null,
+          "rawValue": "Pg3NoteFm.Int1",
+          "operator": "=:"
+        }
+      ],
+      "line": 36
+    },
+    {
+      "sha256": "0b2cbb25acc172870321589ea1ab5e4fc3e17a63e7463f3c5c335a981efbb2bb",
+      "entry": "265C8I/VC102/DSub/Page/InfoListFig.inva",
+      "instance": "",
+      "source": "_SCIDispTrans TxAdd=:Pg3NoteFm.Int1;",
+      "orderedParameters": [
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "TxAdd",
+          "lhOperandEncoding": null,
+          "rawValue": "Pg3NoteFm.Int1",
+          "operator": "=:"
+        }
+      ],
+      "line": 41
+    },
+    {
+      "sha256": "0e5877f4301006d1186df9eb5582eaca92566ad0e202be9ea8afe00c1143c526",
+      "entry": "265C8I/VC102/DSub/Page/InfoListFigKy.inva",
+      "instance": "",
+      "source": "_SCIDispTrans TxAdd=:Pg3OppoColFm.Int1;",
+      "orderedParameters": [
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "TxAdd",
+          "lhOperandEncoding": null,
+          "rawValue": "Pg3OppoColFm.Int1",
+          "operator": "=:"
+        }
+      ],
+      "line": 89
+    },
+    {
+      "sha256": "0e5877f4301006d1186df9eb5582eaca92566ad0e202be9ea8afe00c1143c526",
+      "entry": "265C8I/VC102/DSub/Page/InfoListFigKy.inva",
+      "instance": "",
+      "source": "_SCIDispTrans TxAdd=:Pg3OppoColFm.Int1;",
+      "orderedParameters": [
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "TxAdd",
+          "lhOperandEncoding": null,
+          "rawValue": "Pg3OppoColFm.Int1",
+          "operator": "=:"
+        }
+      ],
+      "line": 122
+    },
+    {
+      "sha256": "0e5877f4301006d1186df9eb5582eaca92566ad0e202be9ea8afe00c1143c526",
+      "entry": "265C8I/VC102/DSub/Page/InfoListFigKy.inva",
+      "instance": "",
+      "source": "_SCIDispTrans TxAdd=:Pg3NoteFm.Int1;",
+      "orderedParameters": [
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "TxAdd",
+          "lhOperandEncoding": null,
+          "rawValue": "Pg3NoteFm.Int1",
+          "operator": "=:"
+        }
+      ],
+      "line": 128
+    },
+    {
+      "sha256": "a25b0e33f53f54756c5b20cfa9f1c650e109b5896300f924fa07b0f5a6851b3a",
+      "entry": "265C8I/VC102/DSub/Page/InfoPasswFigKy.inva",
+      "instance": "",
+      "source": "_SCIDispTrans TxAdd=:PassDispFm.Int1;",
+      "orderedParameters": [
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "TxAdd",
+          "lhOperandEncoding": null,
+          "rawValue": "PassDispFm.Int1",
+          "operator": "=:"
+        }
+      ],
+      "line": 91
+    },
+    {
+      "sha256": "a25b0e33f53f54756c5b20cfa9f1c650e109b5896300f924fa07b0f5a6851b3a",
+      "entry": "265C8I/VC102/DSub/Page/InfoPasswFigKy.inva",
+      "instance": "",
+      "source": "_SCIDispTrans TxAdd=:PubBuf16.Int1;",
+      "orderedParameters": [
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "TxAdd",
+          "lhOperandEncoding": null,
+          "rawValue": "PubBuf16.Int1",
+          "operator": "=:"
+        }
+      ],
+      "line": 196
+    },
+    {
+      "sha256": "a25b0e33f53f54756c5b20cfa9f1c650e109b5896300f924fa07b0f5a6851b3a",
+      "entry": "265C8I/VC102/DSub/Page/InfoPasswFigKy.inva",
+      "instance": "",
+      "source": "_SCIDispTrans TxAdd=:PubBuf5.Int1;",
+      "orderedParameters": [
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "TxAdd",
+          "lhOperandEncoding": null,
+          "rawValue": "PubBuf5.Int1",
+          "operator": "=:"
+        }
+      ],
+      "line": 202
+    },
+    {
+      "sha256": "a25b0e33f53f54756c5b20cfa9f1c650e109b5896300f924fa07b0f5a6851b3a",
+      "entry": "265C8I/VC102/DSub/Page/InfoPasswFigKy.inva",
+      "instance": "",
+      "source": "_SCIDispTrans TxAdd=:PassDispFm.Int1;",
+      "orderedParameters": [
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "TxAdd",
+          "lhOperandEncoding": null,
+          "rawValue": "PassDispFm.Int1",
+          "operator": "=:"
+        }
+      ],
+      "line": 240
+    },
+    {
+      "sha256": "a25b0e33f53f54756c5b20cfa9f1c650e109b5896300f924fa07b0f5a6851b3a",
+      "entry": "265C8I/VC102/DSub/Page/InfoPasswFigKy.inva",
+      "instance": "",
+      "source": "_SCIDispTrans TxAdd=:PassDispFm.Int1;",
+      "orderedParameters": [
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "TxAdd",
+          "lhOperandEncoding": null,
+          "rawValue": "PassDispFm.Int1",
+          "operator": "=:"
+        }
+      ],
+      "line": 249
+    },
+    {
+      "sha256": "a25b0e33f53f54756c5b20cfa9f1c650e109b5896300f924fa07b0f5a6851b3a",
+      "entry": "265C8I/VC102/DSub/Page/InfoPasswFigKy.inva",
+      "instance": "",
+      "source": "_SCIDispTrans TxAdd=:PassDispFm.Int1;",
+      "orderedParameters": [
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "TxAdd",
+          "lhOperandEncoding": null,
+          "rawValue": "PassDispFm.Int1",
+          "operator": "=:"
+        }
+      ],
+      "line": 279
+    },
+    {
+      "sha256": "38c83498a814c355058481bc0f537e02827525fbc9f01af9dc1455289cdbb136",
+      "entry": "265C8I/VC102/DSub/Page/KeyEnd.inva",
+      "instance": "",
+      "source": "_SCIDispTrans TxAdd=:DispFigFm.Int1;",
+      "orderedParameters": [
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "TxAdd",
+          "lhOperandEncoding": null,
+          "rawValue": "DispFigFm.Int1",
+          "operator": "=:"
+        }
+      ],
+      "line": 19
+    },
+    {
+      "sha256": "361105a6ccaf0fa89275eb149862f68bda7911b329748bef9f52194b6a8c65aa",
+      "entry": "265C8I/VC102/DSub/Page/MachDemaFig.inva",
+      "instance": "",
+      "source": "_SCIDispTrans TxAdd=:PubBuf15.Int1;",
+      "orderedParameters": [
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "TxAdd",
+          "lhOperandEncoding": null,
+          "rawValue": "PubBuf15.Int1",
+          "operator": "=:"
+        }
+      ],
+      "line": 35
+    },
+    {
+      "sha256": "361105a6ccaf0fa89275eb149862f68bda7911b329748bef9f52194b6a8c65aa",
+      "entry": "265C8I/VC102/DSub/Page/MachDemaFig.inva",
+      "instance": "",
+      "source": "_SCIDispTrans TxAdd=:PubBuf23.Int1;",
+      "orderedParameters": [
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "TxAdd",
+          "lhOperandEncoding": null,
+          "rawValue": "PubBuf23.Int1",
+          "operator": "=:"
+        }
+      ],
+      "line": 40
+    },
+    {
+      "sha256": "bbc3261baeb116f626a3bb469a1687f1207e28df5b579510815e7077056f3604",
+      "entry": "265C8I/VC102/DSub/Page/MainFig.inva",
+      "instance": "",
+      "source": "_SCIDispTrans TxAdd=:PubBuf15.Int1;",
+      "orderedParameters": [
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "TxAdd",
+          "lhOperandEncoding": null,
+          "rawValue": "PubBuf15.Int1",
+          "operator": "=:"
+        }
+      ],
+      "line": 68
+    },
+    {
+      "sha256": "bbc3261baeb116f626a3bb469a1687f1207e28df5b579510815e7077056f3604",
+      "entry": "265C8I/VC102/DSub/Page/MainFig.inva",
+      "instance": "",
+      "source": "_SCIDispTrans TxAdd=:PubBuf16.Int1;",
+      "orderedParameters": [
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "TxAdd",
+          "lhOperandEncoding": null,
+          "rawValue": "PubBuf16.Int1",
+          "operator": "=:"
+        }
+      ],
+      "line": 85
+    }
+  ],
+  "scope": "offline lexical LM evidence; production LH contract unverified",
+  "extractionLimits": [
+    "First 24 call excerpts retained; total count includes all matches",
+    "Lexical operator/value classification is not semantic direction or type proof",
+    "No unaddressed marker opcode is inferred from an empty parameter list"
+  ],
+  "externalPrerequisites": [
+    "用于生产编码的 LH 目标指令/操作数/数值版本支持证据"
+  ],
+  "planScope": "仅处理 SCIDispTrans。根据 指南 PDF 第 67、69 页；35 处源调用 建立 TxAdd 为发送缓冲区成员地址 的 LH 契约，输出名称/参数类别/方向/范围/初值/字段/布局/指令形式与来源映射。可以实现发送缓冲区地址绑定与合法性校验；不能将地址编码为 REAL 常量或把 HMI 样例当作完整设备协议。",
+  "fields": [],
+  "archive": "D:/Table/LM/程序.zip",
+  "missing": [
+    "LH firmware version, opcode and operand table",
+    "LH address unit, alignment, field width/direction",
+    "Named legacy operators/enums are not translated into LH values"
+  ],
+  "taskId": "FB02",
+  "candidateCodeRows": [],
+  "lhNameMappingCertified": false,
+  "legacyCandidate": "_SCIDispTrans",
+  "downloadableTargetCertified": false,
+  "callCount": 35,
+  "block": "SCIDispTrans",
+  "observedLegacyName": "SCIDispTrans",
+  "schemaVersion": 1,
+  "mappingStatus": "同名",
+  "manualPages": [
+    {
+      "path": "D:\\Table\\LM\\高质量LM编程指南V1.05.pdf",
+      "sha256": "5a8f7e95ff9632750a76d06bbebb8aa1ae3056fc8a503f4a468e57118c0819d4",
+      "physicalPage": 67,
+      "extractedText": "manual-evidence/guide-page-67.txt",
+      "typeDirectionAndLayoutCertifiedForLH": false
+    },
+    {
+      "path": "D:\\Table\\LM\\高质量LM编程指南V1.05.pdf",
+      "sha256": "5a8f7e95ff9632750a76d06bbebb8aa1ae3056fc8a503f4a468e57118c0819d4",
+      "physicalPage": 69,
+      "extractedText": "manual-evidence/guide-page-69.txt",
+      "typeDirectionAndLayoutCertifiedForLH": false
+    }
+  ],
+  "reviewCandidateContract": "TxAdd 为发送缓冲区成员地址",
+  "reviewAssessment": "可以实现发送缓冲区地址绑定与合法性校验；不能将地址编码为 REAL 常量或把 HMI 样例当作完整设备协议。",
+  "manualExtractionScope": "Physical PDF pages, copied as evidence; legacy numeric tables do not certify LH operand encodings"
+}

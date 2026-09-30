@@ -8,6 +8,7 @@
 
 #include "ICommInterface.h"
 #include "CommTypes.h"
+#include "ModbusLimits.h"
 
 #include <QMap>
 #include <QMutex>
@@ -139,7 +140,7 @@ private:
     QMap<int, QVector<bool>> m_discreteInputs;
     mutable QMutex m_dataMutex;
 
-    static constexpr int MAX_REGISTERS = 125; // Modbus 标准限制
+    static constexpr int MAX_REGISTERS = ModbusLimits::ReadRegisters;
     static constexpr int MAX_COILS = 2000;
 };
 

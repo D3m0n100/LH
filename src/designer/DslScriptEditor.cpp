@@ -65,6 +65,10 @@ void FunctionListWidget::setSnippets(const QList<FunctionSnippet>& snippets)
         auto* item = new QListWidgetItem(snippet.name, this);
         item->setData(Qt::UserRole, snippet.id);
         item->setData(Qt::UserRole + 1, snippet.templateCode);
+        if (!snippet.canInsert()) {
+            item->setText(snippet.name + QStringLiteral("（未完成）"));
+            item->setFlags(item->flags() & ~Qt::ItemIsDragEnabled);
+        }
         
         // 设置 Tooltip
         QString tooltip = QString("<b>%1</b><br/>"
@@ -79,6 +83,7 @@ void FunctionListWidget::setSnippets(const QList<FunctionSnippet>& snippets)
             .arg(snippet.unit.isEmpty() ? "-" : snippet.unit)
             .arg(snippet.defaultPeriodMs)
             .arg(snippet.templateCode.left(100).replace("\n", "<br/>"));
+        if (!snippet.canInsert()) tooltip += QStringLiteral("<br/>暂不可插入：%1").arg(snippet.capabilityReason().toHtmlEscaped());
         item->setToolTip(tooltip);
         
         if (snippet.category == "input") {
@@ -105,6 +110,7 @@ QMimeData* FunctionListWidget::mimeData(const QList<QListWidgetItem*> items) con
 
     auto* mime = new QMimeData;
     const QListWidgetItem* item = items.first();
+    if (!snippetById(item->data(Qt::UserRole).toString()).canInsert()) { delete mime; return nullptr; }
     
     QString snippetId = item->data(Qt::UserRole).toString();
     QString snippetCode = item->data(Qt::UserRole + 1).toString();
@@ -130,6 +136,7 @@ void FunctionListWidget::startDrag(Qt::DropActions supportedActions)
         return;
 
     QString snippetId = items.first()->data(Qt::UserRole).toString();
+    if (!snippetById(snippetId).canInsert()) return;
     emit dragStarted(snippetId);
     
     // 高亮被拖拽的条目
@@ -1426,6 +1433,7 @@ void DslScriptEditor::insertCompletion(const QString& completion)
     // 1) 若补全项对应一个 Snippet，则插入整个模板代码，而不是仅插入名称
     // 2) 否则回退到“补全单词”的旧逻辑
     const FunctionSnippet snippet = m_completionEngine->snippetByName(completion);
+    if (snippet.isValid() && !snippet.canInsert()) return;
     if (snippet.isValid() && !snippet.templateCode.isEmpty()) {
         QTextCursor cursor = m_editor->textCursor();
         const int blockPos = cursor.block().position();

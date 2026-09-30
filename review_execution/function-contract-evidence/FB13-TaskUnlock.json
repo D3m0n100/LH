@@ -1,0 +1,58 @@
+{
+  "calls": [
+    {
+      "sha256": "dc1240a89fe2d551f6f7920604a7d62273f281301b4d7be925bfee8062e7c4e0",
+      "entry": "265C8I/VC102/HSub/WrkT/WrkT.inva",
+      "instance": "",
+      "source": "_TaskUnlock;",
+      "orderedParameters": [],
+      "line": 22
+    }
+  ],
+  "scope": "offline lexical LM evidence; production LH contract unverified",
+  "extractionLimits": [
+    "First 24 call excerpts retained; total count includes all matches",
+    "Lexical operator/value classification is not semantic direction or type proof",
+    "No unaddressed marker opcode is inferred from an empty parameter list"
+  ],
+  "externalPrerequisites": [
+    "用于生产编码的 LH 目标指令/操作数/数值版本支持证据"
+  ],
+  "planScope": "仅处理 TaskUnlock。根据 用户手册 PDF 第 32、37 页；WrkT.inva:22 建立 无参数操作；解开任务锁定 的 LH 契约，输出名称/参数类别/方向/范围/初值/字段/布局/指令形式与来源映射。可独立使用固定 TaskLock 契约 fixture 验证；不要求另一 FB 任务先实现，但要明确目标指令形式。",
+  "fields": [],
+  "archive": "D:/Table/LM/程序.zip",
+  "missing": [
+    "LH firmware version, opcode and operand table",
+    "LH address unit, alignment, field width/direction",
+    "Named legacy operators/enums are not translated into LH values"
+  ],
+  "taskId": "FB13",
+  "candidateCodeRows": [],
+  "lhNameMappingCertified": false,
+  "legacyCandidate": "_TaskUnlock",
+  "downloadableTargetCertified": false,
+  "callCount": 1,
+  "block": "TaskUnlock",
+  "observedLegacyName": "TaskUnlock",
+  "schemaVersion": 1,
+  "mappingStatus": "同名",
+  "manualPages": [
+    {
+      "path": "D:\\Table\\LM\\LM2007用户手册(1).pdf",
+      "sha256": "99d42e57db22fe0107fd3bde810a61267392196bd4612469e1256dcc77c3f706",
+      "physicalPage": 32,
+      "extractedText": "manual-evidence/manual-page-32.txt",
+      "typeDirectionAndLayoutCertifiedForLH": false
+    },
+    {
+      "path": "D:\\Table\\LM\\LM2007用户手册(1).pdf",
+      "sha256": "99d42e57db22fe0107fd3bde810a61267392196bd4612469e1256dcc77c3f706",
+      "physicalPage": 37,
+      "extractedText": "manual-evidence/manual-page-37.txt",
+      "typeDirectionAndLayoutCertifiedForLH": false
+    }
+  ],
+  "reviewCandidateContract": "无参数操作；解开任务锁定",
+  "reviewAssessment": "可独立使用固定 TaskLock 契约 fixture 验证；不要求另一 FB 任务先实现，但要明确目标指令形式。",
+  "manualExtractionScope": "Physical PDF pages, copied as evidence; legacy numeric tables do not certify LH operand encodings"
+}

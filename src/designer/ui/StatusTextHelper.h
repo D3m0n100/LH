@@ -3,7 +3,7 @@
 
 #include <QString>
 
-#include "designer/ParameterController.h"
+#include "../ParameterController.h"
 
 inline QString runtimeStateText(bool running)
 {

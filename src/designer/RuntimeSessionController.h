@@ -11,7 +11,8 @@
 #include <QVariantMap>
 #include <QtGlobal>
 
-#include "common/ConfigTypes.h"
+#include "../common/ConfigTypes.h"
+#include "../runtime/RuntimeSessionService.h"
 
 class IDeviceBackend;
 class IOpcServer;
@@ -23,38 +24,13 @@ class ParameterController;
 struct CompileResult;
 struct CommError;
 
-enum class RuntimeSessionState {
-    Idle,
-    Compiled,
-    Connecting,
-    Connected,
-    Running,
-    Monitoring,
-    Downloading,
-    Fault
-};
-
-enum class DownloadState {
-    Idle,
-    Precheck,
-    PrecheckFailed,
-    Downloading,
-    Retrying,
-    Verifying,
-    Succeeded,
-    TransportFailed,
-    DeviceRejected,
-    VerifyFailed,
-    Failed
-};
-
-Q_DECLARE_METATYPE(DownloadState)
+#include "../runtime/RuntimeSessionTypes.h"
 
 class RuntimeSessionController : public QObject
 {
     Q_OBJECT
 public:
-    explicit RuntimeSessionController(QObject* parent = nullptr);
+    explicit RuntimeSessionController(QObject* parent = nullptr, RuntimeSessionService* service = nullptr);
 
     void setDeviceBackend(IDeviceBackend* backend);
     IDeviceBackend* deviceBackend() const;
@@ -66,11 +42,11 @@ public:
     void setBuildController(BuildController* controller);
     void setParameterController(ParameterController* controller);
 
-    RuntimeSessionState state() const { return m_state; }
-    DownloadState downloadState() const { return m_downloadState; }
-    bool isRunning() const { return m_state == RuntimeSessionState::Running
-                                    || m_state == RuntimeSessionState::Monitoring; }
-    bool isMonitoring() const { return m_state == RuntimeSessionState::Monitoring; }
+    RuntimeSessionState state() const { return m_runtimeService->state(); }
+    DownloadState downloadState() const { return m_runtimeService->downloadState(); }
+    bool isRunning() const { return state() == RuntimeSessionState::Running
+                                    || state() == RuntimeSessionState::Monitoring; }
+    bool isMonitoring() const { return state() == RuntimeSessionState::Monitoring; }
     bool isPaused() const { return m_isPaused; }
     void setPaused(bool paused);
     bool isDemoMode() const { return m_demoModeActive; }
@@ -88,6 +64,7 @@ public:
     bool skipNextBuildSave() const { return m_skipNextBuildSave; }
 
     bool onCompileSucceeded(const CompileResult& result);
+    void invalidateCompiledArtifact();
 
     void startDemoMode(const QString& reason);
     void stopDemoMode(const QString& reason);
@@ -125,6 +102,7 @@ private:
 
 private:
     void setState(RuntimeSessionState newState);
+    void handleRuntimeStateChanged(RuntimeSessionState oldState, RuntimeSessionState newState);
     void setDownloadState(DownloadState newState);
     void handleBackendConnectionStateChanged(bool connected);
     DownloadState classifyDownloadFailure(const CommError* operationError,
@@ -156,8 +134,7 @@ private:
     BuildController* m_buildController = nullptr;
     ParameterController* m_parameterController = nullptr;
 
-    RuntimeSessionState m_state = RuntimeSessionState::Idle;
-    DownloadState m_downloadState = DownloadState::Idle;
+    RuntimeSessionService* m_runtimeService = nullptr;
     bool m_demoModeActive = false;
     bool m_isPaused = false;
     bool m_pendingRunAfterCompile = false;

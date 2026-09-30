@@ -1,0 +1,195 @@
+{
+  "calls": [
+    {
+      "sha256": "cf7b1aff92b60f1a45ad3fd2402c5f252e135a6ad954f9ef9bbc8680ac2bcb37",
+      "entry": "265C8I/VC102/DSub/Page/GpsFig.inva",
+      "instance": "Pg8ProgressBar",
+      "source": "_M600ProgressBar[Pg8ProgressBar] Xo::0x00D3,Yo::0x017E,DeltaX::0x0000,DeltaY::0x002E,Length::0x00C6,\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t  Width::0x0028,Color::0x001F,BColor::0xFFFF,ModeAdd=:PubBuf1.Int10,LimitAdd:=FloatParam.F1,\r\n\t\t\t\t\t\t\t\t\t              Input=:GPRSSgm1.Output,Input=:GPRSSgm2.Output,Input=:GPRSSgm3.Output,Input=:GPRSSgm4.Output,\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t  Item::#ItemEnd;",
+      "orderedParameters": [
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "Xo",
+          "lhOperandEncoding": null,
+          "rawValue": "0x00D3",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "Yo",
+          "lhOperandEncoding": null,
+          "rawValue": "0x017E",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "DeltaX",
+          "lhOperandEncoding": null,
+          "rawValue": "0x0000",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "DeltaY",
+          "lhOperandEncoding": null,
+          "rawValue": "0x002E",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "Length",
+          "lhOperandEncoding": null,
+          "rawValue": "0x00C6",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "Width",
+          "lhOperandEncoding": null,
+          "rawValue": "0x0028",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "Color",
+          "lhOperandEncoding": null,
+          "rawValue": "0x001F",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "BColor",
+          "lhOperandEncoding": null,
+          "rawValue": "0xFFFF",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "ModeAdd",
+          "lhOperandEncoding": null,
+          "rawValue": "PubBuf1.Int10",
+          "operator": "=:"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "LimitAdd",
+          "lhOperandEncoding": null,
+          "rawValue": "FloatParam.F1",
+          "operator": ":="
+        },
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "Input",
+          "lhOperandEncoding": null,
+          "rawValue": "GPRSSgm1.Output",
+          "operator": "=:"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "Input",
+          "lhOperandEncoding": null,
+          "rawValue": "GPRSSgm2.Output",
+          "operator": "=:"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "Input",
+          "lhOperandEncoding": null,
+          "rawValue": "GPRSSgm3.Output",
+          "operator": "=:"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "Input",
+          "lhOperandEncoding": null,
+          "rawValue": "GPRSSgm4.Output",
+          "operator": "=:"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "legacy-enum-token",
+          "name": "Item",
+          "lhOperandEncoding": null,
+          "rawValue": "#ItemEnd",
+          "operator": "::"
+        }
+      ],
+      "line": 89
+    }
+  ],
+  "scope": "offline lexical LM evidence; production LH contract unverified",
+  "extractionLimits": [
+    "First 24 call excerpts retained; total count includes all matches",
+    "Lexical operator/value classification is not semantic direction or type proof",
+    "No unaddressed marker opcode is inferred from an empty parameter list"
+  ],
+  "externalPrerequisites": [
+    "用于生产编码的 LH 目标指令/操作数/数值版本支持证据",
+    "可取证和实现明确子集；ModeAdd 在表头写为 Const，而程序用成员地址，限幅/数据类型/项数/序列化规则须核对。"
+  ],
+  "planScope": "仅处理 M600ProgressBar。根据 指南 PDF 第 71 页；GpsFig.inva:89 建立 几何/颜色常量；ModeAdd/LimitAdd；重复 Input 列表 的 LH 契约，输出名称/参数类别/方向/范围/初值/字段/布局/指令形式与来源映射。可取证和实现明确子集；ModeAdd 在表头写为 Const，而程序用成员地址，限幅/数据类型/项数/序列化规则须核对。",
+  "fields": [
+    {
+      "sha256": "f464a5f185449d0dd99f6f0ba436c0aaddbfd0b20ab291e371d02f54e4bf332c",
+      "entry": "265C8I/VC102/SECD/SECD.typ",
+      "lhOffset": null,
+      "line": 1710,
+      "instance": "Pg8ProgressBar",
+      "direction": null,
+      "field": "DataNumb",
+      "lhType": null,
+      "legacyAddress": 1703,
+      "legacyTypeCode": 2
+    }
+  ],
+  "archive": "D:/Table/LM/程序.zip",
+  "missing": [
+    "LH firmware version, opcode and operand table",
+    "LH address unit, alignment, field width/direction",
+    "Named legacy operators/enums are not translated into LH values"
+  ],
+  "taskId": "FB05",
+  "candidateCodeRows": [
+    {
+      "sha256": "521c52a07d11014405c4ee1b25f2a2e26746ef7c250778fc5eb1606b2e71e695",
+      "entry": "265C8I/VC102/SECD/SECD.code",
+      "source": "41203\t41203\t1703\t211\t382\t0\t46\t198\t40\t31\t65535\t523\t397\t1687\t1691\t1695\t1699\t0\t",
+      "correlation": "candidate matching first legacy field address; no LH ABI translation",
+      "instance": "Pg8ProgressBar",
+      "line": 1004
+    }
+  ],
+  "lhNameMappingCertified": false,
+  "legacyCandidate": "_M600ProgressBar",
+  "downloadableTargetCertified": false,
+  "callCount": 1,
+  "block": "M600ProgressBar",
+  "observedLegacyName": "M600ProgressBar",
+  "schemaVersion": 1,
+  "mappingStatus": "同名",
+  "manualPages": [
+    {
+      "path": "D:\\Table\\LM\\高质量LM编程指南V1.05.pdf",
+      "sha256": "5a8f7e95ff9632750a76d06bbebb8aa1ae3056fc8a503f4a468e57118c0819d4",
+      "physicalPage": 71,
+      "extractedText": "manual-evidence/guide-page-71.txt",
+      "typeDirectionAndLayoutCertifiedForLH": false
+    }
+  ],
+  "reviewCandidateContract": "几何/颜色常量；ModeAdd/LimitAdd；重复 Input 列表",
+  "reviewAssessment": "可取证和实现明确子集；ModeAdd 在表头写为 Const，而程序用成员地址，限幅/数据类型/项数/序列化规则须核对。",
+  "manualExtractionScope": "Physical PDF pages, copied as evidence; legacy numeric tables do not certify LH operand encodings"
+}

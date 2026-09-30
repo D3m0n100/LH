@@ -9,6 +9,7 @@
 class QTableWidget;
 class QToolButton;
 class QLabel;
+class QTemporaryFile;
 
 class ProblemsPanel : public QWidget
 {
@@ -37,6 +38,11 @@ public:
     int infoCount() const { return m_infoCount; }
     int problemCount() const;
     void setDiagnosticSummary(const QString& summary);
+    QString diagnosticDetailsPath() const;
+    static constexpr int MaxRows = 1000;
+    static constexpr int MaxRowsPerSource = 250;
+    static constexpr int MaxMessageCharacters = 4096;
+    static constexpr qint64 MaxDetailsBytes = 16 * 1024 * 1024;
 
     /// 获取指定行所绑定的 DiagnosticItem（若行无效返回空条目）
     DiagnosticItem itemAtRow(int row) const;
@@ -55,6 +61,7 @@ private:
     void setupTableHeaders();
     void updateSummaryLabels();
     void appendRowForDiagnostic(const DiagnosticItem& item);
+    void removeDiagnosticRow(int row);
 
 private:
     QToolButton* m_clearButton = nullptr;
@@ -63,6 +70,7 @@ private:
     int m_errorCount = 0;
     int m_warningCount = 0;
     int m_infoCount = 0;
+    QTemporaryFile* m_details = nullptr;
 };
 
 #endif // PROBLEMS_PANEL_H

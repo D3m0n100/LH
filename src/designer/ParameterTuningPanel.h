@@ -5,7 +5,7 @@
 #include <QMap>
 #include <QList>
 
-#include "common/ConfigTypes.h"
+#include "../common/ConfigTypes.h"
 
 struct ParameterStateInfo;
 class InspectorPanel;

@@ -8,6 +8,9 @@
 #include "ProjectController.h"
 #include "ProjectExplorerWidget.h"
 #include "TextEncoding.h"
+#include "DslScriptEditor.h"
+#include "RuntimeSessionController.h"
+#include "ui/ProblemsPanel.h"
 
 #include <QDir>
 #include <QFile>
@@ -22,6 +25,72 @@
 #include <QTextBlock>
 #include <QTextCursor>
 #include <QTextDocument>
+
+void MainWindow::deleteProjectDocumentPath(const QString& path)
+{
+    if (!m_projectController || !m_projectController->hasOpenProject()) return;
+    if ((m_buildController && m_buildController->isBusy())
+            || (m_sessionController && (m_sessionController->isRunning()
+                || m_sessionController->state() == RuntimeSessionState::Downloading
+                || m_sessionController->state() == RuntimeSessionState::Connecting))) {
+        showMessageBox(QStringLiteral("无法删除"), QStringLiteral("请等待当前构建或运行操作结束后再删除文件"));
+        return;
+    }
+    const QString target = QDir::cleanPath(QFileInfo(path).absoluteFilePath());
+    const bool directory = QFileInfo(target).isDir();
+    const auto affected = [&](const QString& document) {
+        if (document.isEmpty()) return false;
+        const QString full = QDir::cleanPath(QFileInfo(document).absoluteFilePath());
+        return full.compare(target, Qt::CaseInsensitive) == 0
+                || (directory && full.startsWith(target + QLatin1Char('/'), Qt::CaseInsensitive));
+    };
+    const bool mainAffected = m_dslEditor && affected(m_dslEditor->currentFilePath());
+    QList<QPointer<QMdiSubWindow>> documents;
+    if (m_mdiArea) for (auto* sub : m_mdiArea->subWindowList())
+        if (sub != m_editorSubWindow && affected(sub->property("filePath").toString())) documents.append(sub);
+    if (mainAffected && m_dslEditor->isModified()) {
+        const auto choice = showMessageBox(QStringLiteral("删除前处理修改"),
+                QStringLiteral("即将删除的脚本有未保存修改，是否先保存？"),
+                QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel, QMessageBox::Cancel);
+        if (choice == QMessageBox::Cancel || (choice == QMessageBox::Save && !m_projectController->saveProject())) return;
+    }
+    for (const auto& sub : documents) {
+        if (!sub) continue;
+        auto* editor = qobject_cast<QPlainTextEdit*>(sub->widget());
+        if (!sub->property("modified").toBool() && (!editor || !editor->document()->isModified())) continue;
+        const auto choice = showMessageBox(QStringLiteral("删除前处理修改"),
+                QStringLiteral("文件 %1 有未保存修改，是否先保存？").arg(sub->property("filePath").toString()),
+                QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel, QMessageBox::Cancel);
+        if (choice == QMessageBox::Cancel || (choice == QMessageBox::Save && !saveAuxiliarySubWindow(sub))) return;
+    }
+    QString error;
+    if (!m_projectController->removeProjectPath(target, &error)) {
+        showMessageBox(QStringLiteral("删除失败"), error); return;
+    }
+    if (m_sessionController) m_sessionController->invalidateCompiledArtifact();
+    if (mainAffected) {
+        m_dslEditor->setCurrentFilePath(QString());
+        m_dslEditor->setScript(QString());
+        m_dslEditor->setModified(false);
+        m_dslEditor->editor()->setReadOnly(true);
+    }
+    for (const auto& sub : documents) if (sub) {
+        sub->setProperty("modified", false); sub->setProperty("filePath", QString());
+        if (auto* editor = qobject_cast<QPlainTextEdit*>(sub->widget())) editor->document()->setModified(false);
+        sub->close();
+    }
+    for (const QString& key : m_documentVersions.keys()) if (affected(key)) m_documentVersions.remove(key);
+    if (m_problemsPanel) {
+        QList<DiagnosticItem> remaining;
+        for (int row = 0; row < m_problemsPanel->problemCount(); ++row) {
+            const auto item = m_problemsPanel->itemAtRow(row);
+            if (!affected(item.filePath)) remaining.append(item);
+        }
+        m_problemsPanel->setDiagnostics(remaining);
+    }
+    refreshInspectorPanel();
+    updateStatusBar(QStringLiteral("已删除：%1").arg(QFileInfo(target).fileName()));
+}
 
 QString MainWindow::normalizeDocumentIdentity(const QString& path)
 {

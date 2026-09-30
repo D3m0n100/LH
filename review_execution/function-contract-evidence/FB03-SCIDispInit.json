@@ -1,0 +1,159 @@
+{
+  "calls": [
+    {
+      "sha256": "da1b3179f34e8e0c966b2ebfda6f28f1fe21c9aa643c16acbaa1336af6243a6b",
+      "entry": "265C8I/VC102/DSub/Page/KeyStart.inva",
+      "instance": "SCIInit",
+      "source": "_SCIDispInit[SCIInit] Port::#PortA,BitSped::7,RxAdd=:DwinSci100.Int1,End=:ConstInt.Int1;",
+      "orderedParameters": [
+        {
+          "direction": null,
+          "syntacticKind": "legacy-enum-token",
+          "name": "Port",
+          "lhOperandEncoding": null,
+          "rawValue": "#PortA",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "integer-literal",
+          "name": "BitSped",
+          "lhOperandEncoding": null,
+          "rawValue": "7",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "RxAdd",
+          "lhOperandEncoding": null,
+          "rawValue": "DwinSci100.Int1",
+          "operator": "=:"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "End",
+          "lhOperandEncoding": null,
+          "rawValue": "ConstInt.Int1",
+          "operator": "=:"
+        }
+      ],
+      "line": 23
+    }
+  ],
+  "scope": "offline lexical LM evidence; production LH contract unverified",
+  "extractionLimits": [
+    "First 24 call excerpts retained; total count includes all matches",
+    "Lexical operator/value classification is not semantic direction or type proof",
+    "No unaddressed marker opcode is inferred from an empty parameter list"
+  ],
+  "externalPrerequisites": [
+    "用于生产编码的 LH 目标指令/操作数/数值版本支持证据",
+    "可完成契约取证表，完整启用仍缺波特率枚举、接收终止规则、缓冲区与错误时序说明。"
+  ],
+  "planScope": "仅处理 SCIDispInit。根据 KeyStart.inva:23；SECD.typ:1392–1397 建立 Port/BitSped/RxAdd/End；Reset/Enable/Error/BuffClear/Busy/EndLength 的 LH 契约，输出名称/参数类别/方向/范围/初值/字段/布局/指令形式与来源映射。可完成契约取证表，完整启用仍缺波特率枚举、接收终止规则、缓冲区与错误时序说明。",
+  "fields": [
+    {
+      "sha256": "f464a5f185449d0dd99f6f0ba436c0aaddbfd0b20ab291e371d02f54e4bf332c",
+      "entry": "265C8I/VC102/SECD/SECD.typ",
+      "lhOffset": null,
+      "line": 1392,
+      "instance": "SCIInit",
+      "direction": null,
+      "field": "Reset",
+      "lhType": null,
+      "legacyAddress": 1385,
+      "legacyTypeCode": 2
+    },
+    {
+      "sha256": "f464a5f185449d0dd99f6f0ba436c0aaddbfd0b20ab291e371d02f54e4bf332c",
+      "entry": "265C8I/VC102/SECD/SECD.typ",
+      "lhOffset": null,
+      "line": 1393,
+      "instance": "SCIInit",
+      "direction": null,
+      "field": "Enable",
+      "lhType": null,
+      "legacyAddress": 1386,
+      "legacyTypeCode": 2
+    },
+    {
+      "sha256": "f464a5f185449d0dd99f6f0ba436c0aaddbfd0b20ab291e371d02f54e4bf332c",
+      "entry": "265C8I/VC102/SECD/SECD.typ",
+      "lhOffset": null,
+      "line": 1394,
+      "instance": "SCIInit",
+      "direction": null,
+      "field": "Error",
+      "lhType": null,
+      "legacyAddress": 1387,
+      "legacyTypeCode": 2
+    },
+    {
+      "sha256": "f464a5f185449d0dd99f6f0ba436c0aaddbfd0b20ab291e371d02f54e4bf332c",
+      "entry": "265C8I/VC102/SECD/SECD.typ",
+      "lhOffset": null,
+      "line": 1395,
+      "instance": "SCIInit",
+      "direction": null,
+      "field": "BuffClear",
+      "lhType": null,
+      "legacyAddress": 1388,
+      "legacyTypeCode": 2
+    },
+    {
+      "sha256": "f464a5f185449d0dd99f6f0ba436c0aaddbfd0b20ab291e371d02f54e4bf332c",
+      "entry": "265C8I/VC102/SECD/SECD.typ",
+      "lhOffset": null,
+      "line": 1396,
+      "instance": "SCIInit",
+      "direction": null,
+      "field": "Busy",
+      "lhType": null,
+      "legacyAddress": 1389,
+      "legacyTypeCode": 2
+    },
+    {
+      "sha256": "f464a5f185449d0dd99f6f0ba436c0aaddbfd0b20ab291e371d02f54e4bf332c",
+      "entry": "265C8I/VC102/SECD/SECD.typ",
+      "lhOffset": null,
+      "line": 1397,
+      "instance": "SCIInit",
+      "direction": null,
+      "field": "EndLength",
+      "lhType": null,
+      "legacyAddress": 1390,
+      "legacyTypeCode": 2
+    }
+  ],
+  "archive": "D:/Table/LM/程序.zip",
+  "missing": [
+    "LH firmware version, opcode and operand table",
+    "LH address unit, alignment, field width/direction",
+    "Named legacy operators/enums are not translated into LH values"
+  ],
+  "taskId": "FB03",
+  "candidateCodeRows": [
+    {
+      "sha256": "521c52a07d11014405c4ee1b25f2a2e26746ef7c250778fc5eb1606b2e71e695",
+      "entry": "265C8I/VC102/SECD/SECD.code",
+      "source": "41195\t41195\t1385\t1\t7\t210\t252\t",
+      "correlation": "candidate matching first legacy field address; no LH ABI translation",
+      "instance": "SCIInit",
+      "line": 277
+    }
+  ],
+  "lhNameMappingCertified": false,
+  "legacyCandidate": "_SCIDispInit",
+  "downloadableTargetCertified": false,
+  "callCount": 1,
+  "block": "SCIDispInit",
+  "observedLegacyName": "SCIDispInit",
+  "schemaVersion": 1,
+  "mappingStatus": "同名",
+  "manualPages": [],
+  "reviewCandidateContract": "Port/BitSped/RxAdd/End；Reset/Enable/Error/BuffClear/Busy/EndLength",
+  "reviewAssessment": "可完成契约取证表，完整启用仍缺波特率枚举、接收终止规则、缓冲区与错误时序说明。",
+  "manualExtractionScope": "Physical PDF pages, copied as evidence; legacy numeric tables do not certify LH operand encodings"
+}

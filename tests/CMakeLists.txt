@@ -1,6 +1,28 @@
 # tests/CMakeLists.txt
 
+add_executable(runtime_session_service_test runtime_session_service_test.cpp)
+target_link_libraries(runtime_session_service_test PRIVATE runtime_session_service Qt5::Test)
+add_test(NAME RuntimeSessionServiceTest COMMAND runtime_session_service_test)
+
+add_executable(classic_poll_plan_test classic_poll_plan_test.cpp)
+target_link_libraries(classic_poll_plan_test PRIVATE ServoValveComm Qt5::Test)
+target_include_directories(classic_poll_plan_test PRIVATE ${CMAKE_SOURCE_DIR}/src)
+add_test(NAME ClassicPollPlanTest COMMAND classic_poll_plan_test)
+
+find_package(Python3 COMPONENTS Interpreter QUIET)
+if(Python3_Interpreter_FOUND)
+    add_test(NAME ModuleBoundaryCheck
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/check_module_boundaries.py)
+else()
+    message(WARNING "ModuleBoundaryCheck requires a Python3 interpreter for acceptance")
+endif()
+
+add_executable(project_command_coordinator_test project_command_coordinator_test.cpp)
+target_link_libraries(project_command_coordinator_test PRIVATE project_command_coordinator Qt5::Test)
+add_test(NAME ProjectCommandCoordinatorTest COMMAND project_command_coordinator_test)
+
 set(LH_TEST_DEFAULT_INCLUDE_DIRS
+    ${LX_PRIVATE_INCLUDE_DIRS}
     ${LX_PUBLIC_INCLUDE_DIRS}
 )
 
@@ -336,13 +358,12 @@ configure_lh_test(virtual_device_backend_test)
 # 只链接需要的源文件，避免拉入 designer_module 全部依赖
 add_executable(parameter_controller_test
     parameter_controller_test.cpp
-    ${CMAKE_SOURCE_DIR}/src/designer/ParameterController.cpp
 )
 target_link_libraries(parameter_controller_test
+    runtime_session_service
     Qt5::Core
     Qt5::Test
     ServoValveComm
-    monitor
     core_module
 )
 configure_lh_test(parameter_controller_test

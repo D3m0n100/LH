@@ -14,6 +14,7 @@ public:
 
     static void applyModernTheme(QApplication* app);
     static void applyTheme(QApplication* app, ThemeMode mode);
+    static QString groupBoxStyleSheet(bool muted = false);
 
 private:
     static void applyLightPalette(QApplication* app);

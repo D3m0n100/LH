@@ -1,6 +1,8 @@
 // File: src/communication/VirtualDeviceBackend.cpp
 
 #include "VirtualDeviceBackend.h"
+#include <QTimer>
+#include <QPointer>
 #include "Common.h"
 
 #include <QDateTime>
@@ -82,6 +84,12 @@ bool VirtualDeviceBackend::readPoints(const QStringList& pointIds,
                                       QString* errorMessage,
                                       QHash<QString, CommError>* pointErrors)
 {
+    return readPointsImpl(pointIds, values, errorMessage, pointErrors, true);
+}
+
+bool VirtualDeviceBackend::readPointsImpl(const QStringList& pointIds, QHash<QString, QVariant>& values,
+                                        QString* errorMessage, QHash<QString, CommError>* pointErrors, bool wait)
+{
     values.clear();
     if (pointErrors) {
         pointErrors->clear();
@@ -109,7 +117,7 @@ bool VirtualDeviceBackend::readPoints(const QStringList& pointIds,
         return false;
     }
 
-    if (m_simulatedLatencyMs > 0) {
+    if (wait && m_simulatedLatencyMs > 0) {
         QThread::msleep(static_cast<unsigned long>(m_simulatedLatencyMs));
     }
 
@@ -164,6 +172,12 @@ bool VirtualDeviceBackend::writePoints(const QHash<QString, QVariant>& writes,
                                        QString* errorMessage,
                                        QHash<QString, CommError>* pointErrors)
 {
+    return writePointsImpl(writes, errorMessage, pointErrors, true);
+}
+
+bool VirtualDeviceBackend::writePointsImpl(const QHash<QString, QVariant>& writes, QString* errorMessage,
+                                         QHash<QString, CommError>* pointErrors, bool wait)
+{
     if (pointErrors) {
         pointErrors->clear();
     }
@@ -190,7 +204,7 @@ bool VirtualDeviceBackend::writePoints(const QHash<QString, QVariant>& writes,
         return false;
     }
 
-    if (m_simulatedLatencyMs > 0) {
+    if (wait && m_simulatedLatencyMs > 0) {
         QThread::msleep(static_cast<unsigned long>(m_simulatedLatencyMs));
     }
 
@@ -255,6 +269,37 @@ bool VirtualDeviceBackend::writePoints(const QHash<QString, QVariant>& writes,
     }
     clearError();
     return true;
+}
+
+void VirtualDeviceBackend::readPointsAsync(const QStringList& ids, int budgetMs,
+    std::shared_ptr<std::atomic_bool> cancelled, QObject* context, ReadCompletion completion)
+{
+    const QPointer<QObject> guard(context);
+    const int delay = qMax(0, m_simulatedLatencyMs);
+    QTimer::singleShot(qMin(delay, qMax(0, budgetMs)), this, [=] {
+        if (!guard) return;
+        QHash<QString, QVariant> values; QHash<QString, CommError> errors; QString message;
+        const bool ready = budgetMs > 0 && delay <= budgetMs && (!cancelled || !cancelled->load());
+        const bool ok = ready && readPointsImpl(ids, values, &message, &errors, false);
+        if (!ready) message = QStringLiteral("Virtual read cancelled or deadline expired");
+        const auto snapshot = statusSnapshot();
+        QMetaObject::invokeMethod(guard, [=] { completion(ok, values, message, errors, snapshot); }, Qt::QueuedConnection);
+    });
+}
+
+void VirtualDeviceBackend::writePointsAsync(const QHash<QString, QVariant>& writes, int budgetMs,
+    std::shared_ptr<std::atomic_bool> cancelled, QObject* context, WriteCompletion completion)
+{
+    const QPointer<QObject> guard(context);
+    const int delay = qMax(0, m_simulatedLatencyMs);
+    QTimer::singleShot(qMin(delay, qMax(0, budgetMs)), this, [=] {
+        if (!guard) return;
+        QHash<QString, CommError> errors; QString message;
+        const bool ready = budgetMs > 0 && delay <= budgetMs && (!cancelled || !cancelled->load());
+        const bool ok = ready && writePointsImpl(writes, &message, &errors, false);
+        if (!ready) message = QStringLiteral("Virtual write cancelled or deadline expired");
+        QMetaObject::invokeMethod(guard, [=] { completion(ok, message, errors); }, Qt::QueuedConnection);
+    });
 }
 
 bool VirtualDeviceBackend::downloadArtifact(const QString& artifactPath,

@@ -7,6 +7,7 @@
 """
 
 import json
+import argparse
 from pathlib import Path
 from typing import List, Dict, Tuple
 
@@ -260,7 +261,7 @@ from ..registry import FunctionBlockMeta
     print(f"✓ 更新 {file_path.name}")
 
 
-def generate_manifest():
+def generate_manifest(output_dir):
     """生成功能块清单JSON"""
     manifest = []
     total_count = 0
@@ -276,7 +277,7 @@ def generate_manifest():
             })
             total_count += 1
     
-    manifest_path = Path("function_blocks_manifest.json")
+    manifest_path = output_dir / "function_blocks_manifest.json"
     manifest_path.write_text(json.dumps(manifest, indent=2, ensure_ascii=False), encoding='utf-8')
     print(f"\n✓ 生成功能块清单: {manifest_path} ({total_count} 个功能块)")
     
@@ -289,8 +290,16 @@ def main():
     print("功能块定义批量生成工具")
     print("=" * 60)
     
-    # 创建输出目录
-    output_dir = Path("src/lh_compiler/function_blocks/definitions")
+    parser = argparse.ArgumentParser(description="Legacy evidence export only; not a production definition generator")
+    parser.add_argument("--output", type=Path, default=Path(__file__).resolve().parent / "legacy_exports")
+    args = parser.parse_args()
+    output_dir = args.output.resolve()
+    active = (Path(__file__).resolve().parent / "src/lh_compiler/function_blocks/definitions").resolve()
+    if output_dir == active or active in output_dir.parents or output_dir in active.parents:
+        parser.error("output must be isolated from the active definitions tree")
+    # A nonempty destination is never overwritten, even when explicitly selected.
+    if output_dir.exists() and any(output_dir.iterdir()):
+        parser.error("output directory is nonempty; choose a new export directory")
     output_dir.mkdir(parents=True, exist_ok=True)
     
     print(f"\n输出目录: {output_dir}\n")
@@ -315,7 +324,7 @@ def main():
     generate_init_file(output_dir)
     
     # 生成清单
-    total_count = generate_manifest()
+    total_count = generate_manifest(output_dir)
     
     print("\n" + "=" * 60)
     print(f"✅ 完成! 共生成 {total_count} 个功能块定义")
@@ -324,8 +333,7 @@ def main():
     print("\n下一步:")
     print("  1. 检查生成的文件")
     print("  2. 根据需要添加参数定义")
-    print("  3. 在编译器中注册这些功能块")
-    print("     registry.load_defaults()  # 自动加载所有定义")
+    print("  3. 仅作历史证据对比；禁止直接覆盖当前 definitions 或据此启用目标编码")
 
 
 if __name__ == '__main__':

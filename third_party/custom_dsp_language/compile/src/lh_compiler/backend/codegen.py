@@ -68,6 +68,7 @@ try:
     )
     from lh_compiler.function_blocks.registry import FunctionBlockRegistry
     from lh_compiler.backend.memory import MemoryAllocator
+    from lh_compiler.backend.operands import Immediate, encode_immediate
 except ImportError:
     from src.lh_compiler.frontend.ast_nodes import (
         Program, Variable, Assignment, FunctionBlockCall, Parameter,
@@ -80,6 +81,7 @@ except ImportError:
     )
     from src.lh_compiler.function_blocks.registry import FunctionBlockRegistry
     from src.lh_compiler.backend.memory import MemoryAllocator
+    from src.lh_compiler.backend.operands import Immediate, encode_immediate
 
 
 @dataclass
@@ -160,13 +162,16 @@ class CodeGenerator:
     ) -> Optional[int]:
         """
         严格校验功能块参数契约并编码为 32 位整型表示:
-        - REAL/LREAL: IEEE-754 32位单精度浮点数
+        - REAL: IEEE-754 32位单精度浮点数；LREAL 无双精度目标契约，拒绝
         - BOOL: 严格只接受布尔值或 0/1, 拒绝其他整数或浮点数
         - INT/整型: 严格拒绝浮点数 (如 2.5), 严格校验范围 [-32768, 32767]
         """
         dt_upper = str(data_type.value if hasattr(data_type, 'value') else data_type).upper().strip()
 
-        if dt_upper in ("REAL", "LREAL"):
+        if dt_upper == "LREAL":
+            self.errors.append(f"{line_str}功能块 '{fb_name}' 参数 '{param_name}': LREAL 双精度目标编码未定义")
+            return None
+        if dt_upper == "REAL":
             encoded, err = encode_float32(val)
             if err:
                 self.errors.append(
@@ -287,6 +292,9 @@ class CodeGenerator:
             call = system_calls[0]
             line = getattr(call, 'line', 0)
             line_str = f"第 {line} 行: " if line else ""
+            if any(getattr(parameter, "is_output", False) for parameter in call.parameters):
+                self.errors.append(f"{line_str}System 不接受输出绑定，输出引用目标契约未定义")
+                return
 
             # 检查重复参数
             has_duplicate = False
@@ -359,12 +367,24 @@ class CodeGenerator:
                 meta = self.registry.get(var.data_type)
                 line = getattr(var, 'line', 0)
                 line_str = f"第 {line} 行: " if line else ""
+                if getattr(var, "read_only", False):
+                    self.errors.append(f"{line_str}VAR_CONSTANT 不支持功能块实例: {var.name}")
+                    continue
+                if var.initial_value is not None:
+                    self.errors.append(f"{line_str}功能块实例 '{var.name}' 初始化写回的目标指令契约未定义")
+                    continue
 
                 if meta.status == "incomplete":
                     reason = meta.incomplete_reason or "缺少参数契约与协议定义 (TODO)"
                     self.errors.append(
                         f"{line_str}功能块 '{meta.name}' 尚未完善契约定义 ({reason})，禁止生成控制代码"
                     )
+                    continue
+
+                try:
+                    meta.runtime_field_layout()
+                except ValueError as error:
+                    self.errors.append(f"{line_str}功能块 '{meta.name}' 运行时字段契约非法: {error}")
                     continue
 
                 if meta.name == "System":
@@ -396,7 +416,10 @@ class CodeGenerator:
                 if dt_str in ("TIME", "DATE", "DT", "TOD", "POINTER"):
                     self.errors.append(f"{line_str}暂不支持数据类型 '{var.data_type}'，禁止生成控制代码")
                     continue
-                if dt_str not in ("BOOL", "BYTE", "INT", "UINT", "SINT", "USINT", "DINT", "UDINT", "WORD", "DWORD", "REAL", "LREAL"):
+                if dt_str == "LREAL":
+                    self.errors.append(f"{line_str}LREAL 双精度布局/目标编码未定义，禁止生成控制代码")
+                    continue
+                if dt_str not in ("BOOL", "BYTE", "INT", "UINT", "SINT", "USINT", "DINT", "UDINT", "WORD", "DWORD", "REAL"):
                     self.errors.append(f"{line_str}未支持的数据类型: '{var.data_type}'")
                     continue
 
@@ -408,6 +431,7 @@ class CodeGenerator:
                     "type": var.data_type,
                     "address": address,
                     "is_fb": False,
+                    "read_only": getattr(var, "read_only", False),
                     "meta": None
                 }
                 if var.initial_value is not None:
@@ -417,6 +441,9 @@ class CodeGenerator:
                     else:
                         self._validate_and_encode_param(
                             "变量初始化", var.name, dt_str, init_val, line_str)
+                        self.errors.append(
+                            f"{line_str}变量 '{var.name}' 初始化写回的目标指令契约未定义，禁止生成无效果的初始化"
+                        )
 
     def _process_statement(self, stmt: Statement):
         """处理一条语句"""
@@ -450,6 +477,9 @@ class CodeGenerator:
         line_str = f"第 {line} 行: " if line else ""
 
         # 如果直接以未完善契约的功能块名称进行调用，例如 FilterBW()
+        if any(getattr(parameter, "is_output", False) for parameter in call.parameters):
+            self.errors.append(f"{line_str}功能块输出绑定目标契约未定义，不能将输出引用按输入常量编码")
+            return
         direct_meta = self.registry.get(instance_name)
         if direct_meta and direct_meta.status == "incomplete":
             reason = direct_meta.incomplete_reason or "缺少参数契约与协议定义 (TODO)"
@@ -519,6 +549,9 @@ class CodeGenerator:
         # 构建参数值列表
         param_values = []
         for p_def in meta.parameters:
+            if p_def.direction != "IN":
+                self.errors.append(f"{line_str}功能块 '{meta.name}' 参数 '{p_def.name}' 引用/输出方向契约未定义")
+                return
             # 查找调用中是否提供了这个参数
             provided = None
             found = False
@@ -544,8 +577,10 @@ class CodeGenerator:
                 )
                 return
 
-            encoded = self._validate_and_encode_param(
-                meta.name, p_def.name, p_def.data_type, val, line_str
+            encoded = encode_immediate(
+                Immediate(p_def.data_type, val),
+                lambda data_type, value: self._validate_and_encode_param(
+                    meta.name, p_def.name, data_type, value, line_str)
             )
             if encoded is None:
                 return
@@ -583,12 +618,15 @@ class CodeGenerator:
         if not sym:
             self.errors.append(f"{line_str}未声明的变量: {target_name}")
             return
+        if sym.get("read_only", False):
+            self.errors.append(f"{line_str}禁止写入 VAR_CONSTANT 常量: {target_name}")
+            return
 
         initial_errors_count = len(self.errors)
         value = self._eval_expression(assign.value)
 
         if value is not None:
-            # 简单字面量或可常量折叠表达式 -> 生成常量构建指令
+            # Preserve type/range diagnostics, then reject unproven writeback.
             self._emit_const_build(target_name, sym["type"], value, line=line)
         elif len(self.errors) > initial_errors_count:
             # 表达式求值过程中已产生具体错误（例如除零），直接返回
@@ -633,7 +671,10 @@ class CodeGenerator:
         line_str = f"第 {line} 行: " if line else ""
         dt_upper = str(data_type.value).upper() if hasattr(data_type, 'value') else str(data_type).upper()
 
-        if dt_upper in ("REAL", "LREAL"):
+        if dt_upper == "LREAL":
+            self.errors.append(f"{line_str}变量 '{var_name}': LREAL 双精度目标编码未定义")
+            return
+        if dt_upper == "REAL":
             fb_name = "RealConstBuild"
             encoded, err = encode_float32(value)
             if err:
@@ -692,20 +733,10 @@ class CodeGenerator:
             self.errors.append(f"{line_str}不支持用于常量构建的数据类型: {data_type}")
             return
 
-        meta = self.registry.get(fb_name)
-        if not meta:
-            self.errors.append(f"{line_str}未找到功能块: {fb_name}")
-            return
-
-        alloc_name = f"_const_{var_name}"
-        address = self.memory.allocate(alloc_name, fb_name, meta.memory_size)
-
-        self.instructions.append(Instruction(
-            type_id=meta.type_id,
-            address=address,
-            params=[param_val],
-            comment=f"{var_name} := {value} ({fb_name})"
-        ))
+        self.errors.append(
+            f"{line_str}变量 '{var_name}' 赋值写回的目标指令契约未定义，"
+            "不能用独立 ConstBuild 内存块代替变量地址写入"
+        )
 
     def _eval_expression(self, expr: Expression) -> Any:
         """
@@ -791,7 +822,11 @@ class CodeGenerator:
                     return int(val)
                 except (ValueError, TypeError):
                     return None
-            elif dt in ("REAL", "LREAL"):
+            elif dt == "LREAL":
+                line = getattr(lit, 'line', 0)
+                self.errors.append(f"第 {line} 行: LREAL 双精度字面量编码未定义")
+                return None
+            elif dt == "REAL":
                 encoded, err = encode_float32(val)
                 if err:
                     line = getattr(lit, 'line', 0)

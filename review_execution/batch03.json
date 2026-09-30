@@ -1,0 +1,92 @@
+[
+  {
+    "id": "T21",
+    "status": "已实现待总控验收",
+    "files": [
+      "src/compiler/DSLCompilerInput.cpp",
+      "src/compiler/DSLCompilerAsync.cpp",
+      "tests/dsl_compiler_semantics_test.cpp"
+    ],
+    "behavior": [
+      "每行携带 canonical 文件/原始行/列可信度，随旧语法转换、包装、VAR 段搬移、辅助脚本合并流转",
+      "合成行不伪造来源；转换行保留行定位但撤回精确列；重复文本不再用子串猜来源",
+      "VAR_CONSTANT 分段合并保留只读语义；旧语法单行调用保留同一行参数及结束括号",
+      "源与映射原子落盘；映射绑定规范化输入 SHA256，不匹配时拒绝映射"
+    ],
+    "compatibility": "诊断来源更精确；不能可靠映射的生成行仍只显示编译输入位置",
+    "checks": [
+      "ctest --test-dir build_current_mingw -R DSLCompilerSemanticsTest --output-on-failure",
+      "总控覆盖重复文本、多辅助脚本、VAR_CONSTANT、生成声明和旧语法精确行/列"
+    ],
+    "remainingQuestions": [
+      "新增无编译器进程的组装映射用例未执行；完整异步诊断代次/导航验收由总控完成"
+    ]
+  },
+  {
+    "id": "T24",
+    "files": [
+      "src/common/RuntimeHistoryTypes.h",
+      "src/core/HistoryQuery.h",
+      "src/core/HistoryQuery.cpp",
+      "src/core/CMakeLists.txt",
+      "src/core/AsyncDatabaseWorker.cpp",
+      "src/core/DataManager.cpp",
+      "src/monitor/AsyncHistoryStoreAdapter.cpp"
+    ],
+    "behavior": [
+      "共享 HistoryQuery 实现普通/最近 keyset 页、count、UTC、maxId 和错误边界；DataManager/AsyncWorker 委托同一实现",
+      "页大小1..10000、最近条数必须正数；空页保留快照游标；连接仍在各自原线程",
+      "异步库旧同步列表误用明确 warning，状态式 API 返回错误",
+      "请求查询异常转 HISTORY_REQUEST_EXCEPTION 并完成；完成回调异常隔离"
+    ],
+    "remainingQuestions": [
+      "T25 使用同一查询实现；总控验收两 adapter 查询矩阵和连接所有权，不共享连接跨线程"
+    ]
+  },
+  {
+    "id": "T25",
+    "status": "已实现待总控验收",
+    "files": [
+      "src/monitor/ReadOnlyHistorySnapshot.h",
+      "src/monitor/ReadOnlyHistorySnapshot.cpp",
+      "src/monitor/MonitorWidget.cpp",
+      "src/monitor/MonitorExportHelper.h",
+      "src/monitor/MonitorExportHelper.cpp",
+      "src/monitor/CMakeLists.txt",
+      "src/core/HistoryQuery.h",
+      "src/core/HistoryQuery.cpp",
+      "tests/monitor_history_export_integration_test.cpp",
+      "tests/monitor_export_test.cpp"
+    ],
+    "behavior": [
+      "专用导出线程创建、使用、销毁自己的 read-only SQLite 连接",
+      "既有提交屏障后启动；最多3秒启动交接固定 WAL read transaction，然后释放写线程；每页/计数不占用写线程",
+      "WAL 事务固定数据视图，cursor maxId 不纳入屏障后的新记录，并发清理不删除快照中的可见行",
+      "应用同时最多一个数据库导出；每页取消检查与最终 QSaveFile commit 取消检查，原目标文件保持原子语义",
+      "异常完成不会穿透导出线程；连接/事务 RAII 清理"
+    ],
+    "compatibility": "并发数据库导出要求 WAL；非 WAL 明确拒绝，内存来源导出仍保留原接口",
+    "checks": [
+      "ctest --test-dir build_current_mingw -R \"MonitorHistoryExportIntegrationTest|MonitorExportTest|AsyncDatabaseWorkerTest\" --output-on-failure",
+      "总控持续写入+慢大导出，验证队列有界、提交持续、快照/清理/取消/退出"
+    ],
+    "remainingQuestions": [
+      "新增快照插入/清理和提交取消回归未执行；启动交接之外的真实持续吞吐、退出生命周期仍需总控专项验收"
+    ]
+  },
+  {
+    "id": "T02",
+    "files": [
+      "src/monitor/MonitorSample.h",
+      "src/monitor/MonitorManager.cpp",
+      "src/monitor/MonitorChannel.cpp",
+      "src/monitor/MonitorHistoryService.cpp",
+      "tests/monitor_manager_backend_test.cpp"
+    ],
+    "behavior": [
+      "构造和 manager 单/批边界统一非有限值 Bad/valueValid=false/errorCode",
+      "channel 不把无效/非有限样本加入有效缓冲或发 sampleAdded，最后无效样本不清阈值",
+      "历史记录转 Sample 也归一化有效性，保留 logger 对 Bad/NULL 历史的契约"
+    ]
+  }
+]

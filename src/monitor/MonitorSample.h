@@ -2,7 +2,8 @@
 #include <QPointF>
 #include <QDateTime>
 #include <QVariantMap>
-#include "common/RuntimePointTypes.h"
+#include <cmath>
+#include "../common/RuntimePointTypes.h"
 namespace Monitor {
 struct Sample {
     QString channelName;
@@ -28,7 +29,19 @@ struct Sample {
                       : RuntimePointQuality::Good)
         , valueValid(meta.value(QStringLiteral("valueValid"), true).toBool())
         , metadata(meta)
-    {}
+    { normalizeValidity(); }
+
+    void normalizeValidity() {
+        if (!std::isfinite(value)) {
+            valueValid = false;
+            quality = RuntimePointQuality::Bad;
+            metadata.insert(QStringLiteral("errorCode"), QStringLiteral("NON_FINITE_SAMPLE"));
+            if (metadata.value(QStringLiteral("error")).toString().isEmpty())
+                metadata.insert(QStringLiteral("error"), QStringLiteral("Sample value is not finite"));
+        }
+        metadata.insert(QStringLiteral("quality"), runtimePointQualityToString(quality));
+        metadata.insert(QStringLiteral("valueValid"), valueValid);
+    }
     
     QPointF toPoint() const {
         return QPointF(static_cast<double>(timestamp.toMSecsSinceEpoch()), value);

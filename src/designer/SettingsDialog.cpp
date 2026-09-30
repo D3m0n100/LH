@@ -1,3 +1,4 @@
+#include "ui/ThemeManager.h"
 #include "SettingsDialog.h"
 
 #include <QCheckBox>
@@ -42,23 +43,8 @@ SettingsDialog::~SettingsDialog() = default;
 void SettingsDialog::createUi()
 {
     setObjectName(QStringLiteral("SettingsDialog"));
-    setStyleSheet(R"(
+    setStyleSheet(ThemeManager::groupBoxStyleSheet(true) + R"(
 QDialog#SettingsDialog {
-    background: #ffffff;
-}
-QGroupBox {
-    margin-top: 12px;
-    padding: 12px 10px 10px 10px;
-    border: 1px solid #d0d7de;
-    border-radius: 6px;
-    background: #f6f8fa;
-    font-weight: 600;
-    color: #24292f;
-}
-QGroupBox::title {
-    subcontrol-origin: margin;
-    left: 8px;
-    padding: 0 4px;
     background: #ffffff;
 }
 QLabel {

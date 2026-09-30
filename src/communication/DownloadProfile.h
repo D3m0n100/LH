@@ -19,6 +19,7 @@
 class DownloadProfile
 {
 public:
+    enum class Executor { Bridge, Controller };
     enum class StepType {
         Enter,      // 进入下载模式（写寄存器/线圈等）
         SendChunk,  // 发送数据块
@@ -41,6 +42,8 @@ public:
 
     QVariantMap resolvedParams(const Step& step) const;
     bool validate(QStringList* errors = nullptr) const;
+    bool validateForExecutor(Executor executor, QStringList* errors = nullptr,
+                             const QString& addressingMode = QString()) const;
 
     static QString stepTypeToString(StepType t);
     static StepType stepTypeFromString(const QString& s, bool* ok = nullptr);

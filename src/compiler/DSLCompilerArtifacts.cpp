@@ -2,6 +2,8 @@
 #include "DSLCompilerInternal.h"
 
 #include "common/PathSecurityUtils.h"
+#include "common/ArtifactSnapshot.h"
+#include "DownloadProfile.h"
 #include <QDateTime>
 #include <QDir>
 #include <QFile>
@@ -166,75 +168,17 @@ QString profileSourcePath(const QString& projectPath, const ProjectRuntimeConfig
 
 namespace {
 
-bool validateProfileJson(const QByteArray& bytes, QString* errorMessage)
+bool validateProfileJson(const QByteArray& bytes, QString* errorMessage, const QString& addressingMode)
 {
-    QJsonParseError parseError;
-    const QJsonDocument document = QJsonDocument::fromJson(bytes, &parseError);
-    if (parseError.error != QJsonParseError::NoError || !document.isObject()) {
-        if (errorMessage) {
-            *errorMessage = QStringLiteral("下载 Profile 不是有效 JSON 对象：%1")
-                    .arg(parseError.error == QJsonParseError::NoError
-                             ? QStringLiteral("根节点必须是对象")
-                             : parseError.errorString());
-        }
-        return false;
-    }
-
-    const QJsonObject object = document.object();
-    const QJsonValue slaveId = object.value(QStringLiteral("slaveId"));
-    if (!slaveId.isUndefined() && (!slaveId.isDouble() || slaveId.toInt() < 1 || slaveId.toInt() > 63)) {
-        if (errorMessage)
-            *errorMessage = QStringLiteral("下载 Profile 的 slaveId 必须为 1..63。");
-        return false;
-    }
-    const QJsonValue steps = object.value(QStringLiteral("steps"));
-    if (!steps.isArray() || steps.toArray().isEmpty()) {
-        if (errorMessage)
-            *errorMessage = QStringLiteral("下载 Profile 必须包含非空 steps 数组。");
-        return false;
-    }
-    bool hasSendChunk = false;
-    for (const QJsonValue& step : steps.toArray()) {
-        const QString type = step.isObject()
-                ? step.toObject().value(QStringLiteral("type")).toString().trimmed().toLower()
-                : QString();
-        if (type == QStringLiteral("sendchunk"))
-            hasSendChunk = true;
-        if (!step.isObject()
-                || !step.toObject().value(QStringLiteral("params")).isObject()
-                || (type != QStringLiteral("enter")
-                && type != QStringLiteral("sendchunk")
-                && type != QStringLiteral("poll")
-                && type != QStringLiteral("finalize")
-                && type != QStringLiteral("queryresult"))) {
-            if (errorMessage)
-                *errorMessage = QStringLiteral("下载 Profile 含有未知或缺失的 step.type。");
-            return false;
-        }
-    }
-    if (!hasSendChunk) {
-        if (errorMessage)
-            *errorMessage = QStringLiteral("下载 Profile 至少需要一个 sendChunk step。");
-        return false;
-    }
-    return true;
+    DownloadProfile profile;
+    if (!DownloadProfile::fromJson(bytes, profile, errorMessage)) return false;
+    QStringList errors;
+    const bool valid = profile.validateForExecutor(DownloadProfile::Executor::Controller, &errors, addressingMode);
+    if (!valid && errorMessage) *errorMessage = errors.join(QStringLiteral("; "));
+    return valid;
 }
-
-bool copyFileAtomically(const QString& sourcePath, const QString& destinationPath, QString* errorMessage)
+bool publishProfileSnapshot(const QByteArray& bytes, const QString& destinationPath, QString* errorMessage)
 {
-    QFile source(sourcePath);
-    if (!source.open(QIODevice::ReadOnly)) {
-        if (errorMessage)
-            *errorMessage = QStringLiteral("无法读取下载 Profile：%1").arg(sourcePath);
-        return false;
-    }
-    const QByteArray bytes = source.readAll();
-    if (source.error() != QFileDevice::NoError) {
-        if (errorMessage)
-            *errorMessage = QStringLiteral("读取下载 Profile 失败：%1").arg(sourcePath);
-        return false;
-    }
-
     QSaveFile destination(destinationPath);
     if (!destination.open(QIODevice::WriteOnly) || destination.write(bytes) != bytes.size()
             || !destination.commit()) {
@@ -330,6 +274,7 @@ QString createProjectGeneration(const QString& projectPath,
     }
 
     const QString profile = profileSourcePath(root, config);
+    QByteArray profileBytes;
     // A missing profile permits offline compilation; configured profiles remain strict.
     if (!profile.isEmpty()) {
         QString pathError;
@@ -347,18 +292,11 @@ QString createProjectGeneration(const QString& projectPath,
             return QString();
         }
 
-        QFile profileFile(profile);
-        if (!profileFile.open(QIODevice::ReadOnly)) {
-            if (errorMessage)
-                *errorMessage = QStringLiteral("无法读取下载 Profile：%1").arg(profile);
-            return QString();
-        }
-        const QByteArray profileBytes = profileFile.readAll();
-        if (!validateProfileJson(profileBytes, errorMessage))
-            return QString();
-
+        if (!ArtifactSnapshot::read(profile, &profileBytes, errorMessage)) return QString();
+        const QString addressingMode = config.bridge.parameters.value(QStringLiteral("addressing"))
+                .toMap().value(QStringLiteral("mode")).toString();
+        if (!validateProfileJson(profileBytes, errorMessage, addressingMode)) return QString();
     }
-
     const QString id = QUuid::createUuid().toString(QUuid::WithoutBraces);
     const QString generationDir = QDir(absoluteBaseOutputDir).absoluteFilePath(
             QStringLiteral("generations/%1").arg(id));
@@ -374,7 +312,7 @@ QString createProjectGeneration(const QString& projectPath,
     }
 
     const QString generationProfile = QDir(generationDir).filePath(QStringLiteral("download_profile.json"));
-    if (!profile.isEmpty() && !copyFileAtomically(profile, generationProfile, errorMessage))
+    if (!profile.isEmpty() && !publishProfileSnapshot(profileBytes, generationProfile, errorMessage))
         return QString();
     if (generationId)
         *generationId = id;

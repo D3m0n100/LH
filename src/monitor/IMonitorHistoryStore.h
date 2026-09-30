@@ -9,7 +9,7 @@
 #include <QObject>
 #include <QTimer>
 
-#include "common/RuntimeHistoryTypes.h"
+#include "../common/RuntimeHistoryTypes.h"
 
 namespace Monitor {
 

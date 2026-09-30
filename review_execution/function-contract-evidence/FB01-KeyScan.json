@@ -1,0 +1,133 @@
+{
+  "calls": [
+    {
+      "sha256": "da1b3179f34e8e0c966b2ebfda6f28f1fe21c9aa643c16acbaa1336af6243a6b",
+      "entry": "265C8I/VC102/DSub/Page/KeyStart.inva",
+      "instance": "Key",
+      "source": "_KeyScan[Key] CloumnPort::#PortB,CloumnMask::0x3800,RowPort::#PortF,RowMask::0x3500;",
+      "orderedParameters": [
+        {
+          "direction": null,
+          "syntacticKind": "legacy-enum-token",
+          "name": "CloumnPort",
+          "lhOperandEncoding": null,
+          "rawValue": "#PortB",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "CloumnMask",
+          "lhOperandEncoding": null,
+          "rawValue": "0x3800",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "legacy-enum-token",
+          "name": "RowPort",
+          "lhOperandEncoding": null,
+          "rawValue": "#PortF",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "RowMask",
+          "lhOperandEncoding": null,
+          "rawValue": "0x3500",
+          "operator": "::"
+        }
+      ],
+      "line": 12
+    }
+  ],
+  "scope": "offline lexical LM evidence; production LH contract unverified",
+  "extractionLimits": [
+    "First 24 call excerpts retained; total count includes all matches",
+    "Lexical operator/value classification is not semantic direction or type proof",
+    "No unaddressed marker opcode is inferred from an empty parameter list"
+  ],
+  "externalPrerequisites": [
+    "用于生产编码的 LH 目标指令/操作数/数值版本支持证据"
+  ],
+  "planScope": "仅处理 KeyScan。根据 指南 PDF 第 64–65 页；KeyStart.inva:12；SECD.typ:1386–1387 建立 CloumnPort/CloumnMask/RowPort/RowMask；KeyCode/KeyState 的 LH 契约，输出名称/参数类别/方向/范围/初值/字段/布局/指令形式与来源映射。按键状态表和样例足以建立编译侧参数/字段契约；端口枚举、扫描时序与硬件执行仍需目标契约。",
+  "fields": [
+    {
+      "sha256": "f464a5f185449d0dd99f6f0ba436c0aaddbfd0b20ab291e371d02f54e4bf332c",
+      "entry": "265C8I/VC102/SECD/SECD.typ",
+      "lhOffset": null,
+      "line": 1386,
+      "instance": "Key",
+      "direction": null,
+      "field": "KeyCode",
+      "lhType": null,
+      "legacyAddress": 1379,
+      "legacyTypeCode": 2
+    },
+    {
+      "sha256": "f464a5f185449d0dd99f6f0ba436c0aaddbfd0b20ab291e371d02f54e4bf332c",
+      "entry": "265C8I/VC102/SECD/SECD.typ",
+      "lhOffset": null,
+      "line": 1387,
+      "instance": "Key",
+      "direction": null,
+      "field": "KeyState",
+      "lhType": null,
+      "legacyAddress": 1380,
+      "legacyTypeCode": 2
+    }
+  ],
+  "archive": "D:/Table/LM/程序.zip",
+  "missing": [
+    "LH firmware version, opcode and operand table",
+    "LH address unit, alignment, field width/direction",
+    "Named legacy operators/enums are not translated into LH values"
+  ],
+  "taskId": "FB01",
+  "candidateCodeRows": [
+    {
+      "sha256": "521c52a07d11014405c4ee1b25f2a2e26746ef7c250778fc5eb1606b2e71e695",
+      "entry": "265C8I/VC102/SECD/SECD.code",
+      "source": "41194\t41194\t1379\t2\t14336\t5\t13568\t",
+      "correlation": "candidate matching first legacy field address; no LH ABI translation",
+      "instance": "Key",
+      "line": 268
+    },
+    {
+      "sha256": "521c52a07d11014405c4ee1b25f2a2e26746ef7c250778fc5eb1606b2e71e695",
+      "entry": "265C8I/VC102/SECD/SECD.code",
+      "source": "41077\t41077\t1379\t172\t0\t",
+      "correlation": "candidate matching first legacy field address; no LH ABI translation",
+      "instance": "Key",
+      "line": 272
+    }
+  ],
+  "lhNameMappingCertified": false,
+  "legacyCandidate": "_KeyScan",
+  "downloadableTargetCertified": false,
+  "callCount": 1,
+  "block": "KeyScan",
+  "observedLegacyName": "KeyScan",
+  "schemaVersion": 1,
+  "mappingStatus": "同名",
+  "manualPages": [
+    {
+      "path": "D:\\Table\\LM\\高质量LM编程指南V1.05.pdf",
+      "sha256": "5a8f7e95ff9632750a76d06bbebb8aa1ae3056fc8a503f4a468e57118c0819d4",
+      "physicalPage": 64,
+      "extractedText": "manual-evidence/guide-page-64.txt",
+      "typeDirectionAndLayoutCertifiedForLH": false
+    },
+    {
+      "path": "D:\\Table\\LM\\高质量LM编程指南V1.05.pdf",
+      "sha256": "5a8f7e95ff9632750a76d06bbebb8aa1ae3056fc8a503f4a468e57118c0819d4",
+      "physicalPage": 65,
+      "extractedText": "manual-evidence/guide-page-65.txt",
+      "typeDirectionAndLayoutCertifiedForLH": false
+    }
+  ],
+  "reviewCandidateContract": "CloumnPort/CloumnMask/RowPort/RowMask；KeyCode/KeyState",
+  "reviewAssessment": "按键状态表和样例足以建立编译侧参数/字段契约；端口枚举、扫描时序与硬件执行仍需目标契约。",
+  "manualExtractionScope": "Physical PDF pages, copied as evidence; legacy numeric tables do not certify LH operand encodings"
+}

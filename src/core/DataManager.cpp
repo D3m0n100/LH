@@ -1,3 +1,4 @@
+#include "HistoryQuery.h"
 /**
  * @file DataManager.cpp
  * @brief 数据管理器实现
@@ -564,9 +565,48 @@ bool DataManager::migrateLegacyDatabase(const QString& legacyDbPath,
 
     const QString stagingPath = targetPath + QStringLiteral(".migrating.")
                                + QUuid::createUuid().toString(QUuid::WithoutBraces);
-    if (!QFile::copy(sourcePath, stagingPath)) {
-        errorText = QStringLiteral("旧数据库迁移失败，无法复制 '%1' 到 '%2'")
-                        .arg(sourcePath, targetPath);
+    // VACUUM INTO takes a SQLite-consistent snapshot, including committed WAL
+    // pages. Never fall back to copying the main file on older SQLite drivers.
+    const QString snapshotConnection = QStringLiteral("LegacySnapshot_%1")
+            .arg(QUuid::createUuid().toString(QUuid::WithoutBraces));
+    bool snapshotOk = false;
+    {
+        QSqlDatabase source = QSqlDatabase::addDatabase(QStringLiteral("QSQLITE"), snapshotConnection);
+        source.setDatabaseName(sourcePath);
+        source.setConnectOptions(QStringLiteral("QSQLITE_OPEN_READONLY;QSQLITE_BUSY_TIMEOUT=5000"));
+        if (!source.open()) {
+            errorText = QStringLiteral("无法打开旧数据库快照: %1").arg(source.lastError().text());
+        } else {
+            QSqlQuery backup(source);
+            backup.prepare(QStringLiteral("VACUUM INTO ?"));
+            backup.addBindValue(stagingPath);
+            snapshotOk = backup.exec();
+            if (!snapshotOk) errorText = QStringLiteral("SQLite 一致快照失败（需要 SQLite >= 3.27）: %1").arg(backup.lastError().text());
+            backup.finish();
+            source.close();
+        }
+    }
+    QSqlDatabase::removeDatabase(snapshotConnection);
+    if (snapshotOk) {
+        const QString checkConnection = snapshotConnection + QStringLiteral("_check");
+        {
+            QSqlDatabase check = QSqlDatabase::addDatabase(QStringLiteral("QSQLITE"), checkConnection);
+            check.setDatabaseName(stagingPath);
+            check.setConnectOptions(QStringLiteral("QSQLITE_OPEN_READONLY"));
+            snapshotOk = check.open();
+            if (snapshotOk) {
+                QSqlQuery integrity(check);
+                snapshotOk = integrity.exec(QStringLiteral("PRAGMA integrity_check"))
+                        && integrity.next() && integrity.value(0).toString() == QStringLiteral("ok")
+                        && !integrity.next();
+                integrity.finish();
+            }
+            if (!snapshotOk) errorText = QStringLiteral("旧数据库快照完整性校验失败: %1").arg(check.lastError().text());
+            check.close();
+        }
+        QSqlDatabase::removeDatabase(checkConnection);
+    }
+    if (!snapshotOk) {
         QFile::remove(stagingPath);
         return false;
     }
@@ -1265,8 +1305,8 @@ QList<RuntimeRecord> DataManager::queryHistory(const QString& varName,
 
     QMutexLocker dbLocker(&m_dbMutex);
 
-    const QDateTime startUtc = start.isValid() ? start.toUTC() : start;
-    const QDateTime endUtc = end.isValid() ? end.toUTC() : end;
+    const QDateTime startUtc = RuntimeHistoryContract::startUtc(start);
+    const QDateTime endUtc = RuntimeHistoryContract::endUtc(end);
 
     QSqlQuery query(m_db);
     query.prepare(R"(
@@ -1292,366 +1332,54 @@ QList<RuntimeRecord> DataManager::queryHistory(const QString& varName,
     return results;
 }
 
-RuntimeHistoryPage DataManager::queryHistoryPage(const QString& varName,
-                                                  const QDateTime& start,
-                                                  const QDateTime& end,
-                                                  int pageSize,
-                                                  const RuntimeHistoryCursor& cursor)
+RuntimeHistoryPage DataManager::queryHistoryPage(const QString& channel, const QDateTime& start,
+    const QDateTime& end, int pageSize, const RuntimeHistoryCursor& cursor)
 {
-    RuntimeHistoryPage page;
-
+    RuntimeHistoryPage unavailable;
     if (!checkThreadOwnership()) {
-        page.status = RuntimeHistoryPageStatus::NotInitialized;
-        page.errorCode = "CrossThreadAccess";
-        page.errorText = "DataManager 跨线程访问被拒绝";
-        return page;
+        unavailable.status = RuntimeHistoryPageStatus::SqlError;
+        unavailable.errorCode = QStringLiteral("CROSS_THREAD_ACCESS"); return unavailable;
     }
-
-    if (!m_initialized) {
-        LOG_WARN("DataManager 未初始化，无法分页查询历史数据");
-        page.status = RuntimeHistoryPageStatus::NotInitialized;
-        page.errorCode = "NotInitialized";
-        page.errorText = "DataManager 未初始化";
-        return page;
-    }
-
-    if (pageSize <= 0) {
-        page.status = RuntimeHistoryPageStatus::SqlError;
-        page.errorCode = "InvalidPageSize";
-        page.errorText = "分页大小必须大于 0";
-        return page;
-    }
-
-    const QDateTime startUtc = start.toUTC();
-    const QDateTime endUtc = end.toUTC();
-    QMutexLocker dbLocker(&m_dbMutex);
-
-    QSqlQuery query(m_db);
-    query.prepare(R"(
-        SELECT id, timestamp, variable_name, value, unit, value_valid, quality,
-               origin, error_code, error_text
-        FROM runtime_data
-        WHERE variable_name = :name
-          AND timestamp >= :start
-          AND timestamp <= :end
-          AND (:hasMaxId = 0 OR id <= :maxId)
-          AND (:hasCursor = 0
-               OR timestamp > :cursorTimestamp
-               OR (timestamp = :cursorTimestamp AND id > :cursorId))
-        ORDER BY timestamp ASC, id ASC
-        LIMIT :limit
-    )");
-    query.bindValue(":name", varName);
-    query.bindValue(":start", startUtc.toString(Qt::ISODateWithMs));
-    query.bindValue(":end", endUtc.toString(Qt::ISODateWithMs));
-    query.bindValue(":hasMaxId", cursor.maxId >= 0 ? 1 : 0);
-    query.bindValue(":maxId", cursor.maxId >= 0 ? cursor.maxId : 0);
-    query.bindValue(":hasCursor", cursor.isValid() ? 1 : 0);
-    query.bindValue(":cursorTimestamp", cursor.timestamp.toUTC().toString(Qt::ISODateWithMs));
-    query.bindValue(":cursorId", cursor.id);
-    query.bindValue(":limit", pageSize);
-
-    if (!query.exec()) {
-        page.status = RuntimeHistoryPageStatus::SqlError;
-        page.errorCode = query.lastError().nativeErrorCode();
-        page.errorText = query.lastError().text();
-        logSqlError(query, "分页查询历史数据");
-        return page;
-    }
-
-    while (query.next()) {
-        page.records.append(runtimeRecordFromSql(query));
-    }
-
-    page.status = RuntimeHistoryPageStatus::Success;
-    if (!page.records.isEmpty()) {
-        page.nextCursor.timestamp = page.records.constLast().timestamp.toUTC();
-        page.nextCursor.id = page.records.constLast().id;
-        page.nextCursor.maxId = cursor.maxId;
-    } else {
-        page.nextCursor = cursor;
-    }
-
-    // 不使用 LIMIT pageSize + 1，保证每次数据请求都不超过调用方指定的页大小。
-    // 仅在整页时做一次 EXISTS 检查来判断是否还有下一页。
-    if (page.records.size() == pageSize) {
-        QSqlQuery moreQuery(m_db);
-        moreQuery.prepare(R"(
-            SELECT 1
-            FROM runtime_data
-            WHERE variable_name = :name
-              AND timestamp >= :start
-              AND timestamp <= :end
-              AND (:hasMaxId = 0 OR id <= :maxId)
-              AND (:hasCursor = 0
-                   OR timestamp > :cursorTimestamp
-                   OR (timestamp = :cursorTimestamp AND id > :cursorId))
-            LIMIT 1
-        )");
-        moreQuery.bindValue(":name", varName);
-        moreQuery.bindValue(":start", startUtc.toString(Qt::ISODateWithMs));
-        moreQuery.bindValue(":end", endUtc.toString(Qt::ISODateWithMs));
-        moreQuery.bindValue(":hasMaxId", page.nextCursor.maxId >= 0 ? 1 : 0);
-        moreQuery.bindValue(":maxId", page.nextCursor.maxId >= 0 ? page.nextCursor.maxId : 0);
-        moreQuery.bindValue(":hasCursor", page.nextCursor.isValid() ? 1 : 0);
-        moreQuery.bindValue(":cursorTimestamp", page.nextCursor.timestamp.toUTC().toString(Qt::ISODateWithMs));
-        moreQuery.bindValue(":cursorId", page.nextCursor.id);
-        if (!moreQuery.exec()) {
-            page.status = RuntimeHistoryPageStatus::SqlError;
-            page.errorCode = moreQuery.lastError().nativeErrorCode();
-            page.errorText = moreQuery.lastError().text();
-            logSqlError(moreQuery, "判断历史分页末页");
-            page.records.clear();
-            page.hasMore = false;
-            return page;
-        }
-        page.hasMore = moreQuery.next();
-    }
-
-    return page;
+    if (!m_initialized) { unavailable.errorCode = QStringLiteral("NOT_INITIALIZED"); return unavailable; }
+    QMutexLocker lock(&m_dbMutex);
+    return HistoryQuery(m_db).queryHistoryPage(channel, start, end, pageSize, cursor);
 }
-
-RuntimeHistoryPage DataManager::queryLatestHistoryPage(const QString& varName,
-                                                        int maxCount,
-                                                        int pageSize,
-                                                        const RuntimeHistoryCursor& cursor,
-                                                        const QDateTime& end)
+RuntimeHistoryPage DataManager::queryLatestHistoryPage(const QString& channel, int maxCount, int pageSize,
+    const RuntimeHistoryCursor& cursor, const QDateTime& end)
 {
-    RuntimeHistoryPage page;
-
+    RuntimeHistoryPage unavailable;
     if (!checkThreadOwnership()) {
-        page.status = RuntimeHistoryPageStatus::NotInitialized;
-        page.errorCode = "CrossThreadAccess";
-        page.errorText = "DataManager 跨线程访问被拒绝";
-        return page;
+        unavailable.status = RuntimeHistoryPageStatus::SqlError;
+        unavailable.errorCode = QStringLiteral("CROSS_THREAD_ACCESS"); return unavailable;
     }
-
-    if (!m_initialized) {
-        LOG_WARN("DataManager 未初始化，无法分页查询最近历史数据");
-        page.status = RuntimeHistoryPageStatus::NotInitialized;
-        page.errorCode = "NotInitialized";
-        page.errorText = "DataManager 未初始化";
-        return page;
-    }
-
-    if (maxCount <= 0 || pageSize <= 0) {
-        page.status = RuntimeHistoryPageStatus::SqlError;
-        page.errorCode = "InvalidPageSize";
-        page.errorText = "最近记录数和分页大小必须大于 0";
-        return page;
-    }
-
-    QMutexLocker dbLocker(&m_dbMutex);
-
-    const bool hasEnd = end.isValid();
-    const QDateTime endUtc = hasEnd ? end.toUTC() : end;
-
-    // 子查询只选最近 maxCount 个 id；外层按升序分页，避免把回退数据一次
-    // 读入内存，同时保持与普通历史分页完全相同的游标语义。
-    const QString latestIds = R"(
-        SELECT id
-        FROM runtime_data
-        WHERE variable_name = :latestName
-          AND (:hasEnd = 0 OR timestamp <= :end)
-          AND (:hasMaxId = 0 OR id <= :maxId)
-        ORDER BY timestamp DESC, id DESC
-        LIMIT :maxCount
-    )";
-    QSqlQuery query(m_db);
-    query.prepare(QStringLiteral(
-        "SELECT id, timestamp, variable_name, value, unit, value_valid, quality, "
-        "origin, error_code, error_text "
-        "FROM runtime_data WHERE id IN (") + latestIds + QStringLiteral(
-        ") AND (:hasEnd = 0 OR timestamp <= :end) "
-        "AND (:hasMaxId = 0 OR id <= :maxId) "
-        "AND (:hasCursor = 0 "
-        "OR timestamp > :cursorTimestamp "
-        "OR (timestamp = :cursorTimestamp AND id > :cursorId)) "
-        "ORDER BY timestamp ASC, id ASC LIMIT :limit"));
-    query.bindValue(":latestName", varName);
-    query.bindValue(":hasEnd", hasEnd ? 1 : 0);
-    query.bindValue(":end", endUtc.toString(Qt::ISODateWithMs));
-    query.bindValue(":hasMaxId", cursor.maxId >= 0 ? 1 : 0);
-    query.bindValue(":maxId", cursor.maxId >= 0 ? cursor.maxId : 0);
-    query.bindValue(":maxCount", maxCount);
-    query.bindValue(":hasCursor", cursor.isValid() ? 1 : 0);
-    query.bindValue(":cursorTimestamp", cursor.timestamp.toUTC().toString(Qt::ISODateWithMs));
-    query.bindValue(":cursorId", cursor.id);
-    query.bindValue(":limit", pageSize);
-
-    if (!query.exec()) {
-        page.status = RuntimeHistoryPageStatus::SqlError;
-        page.errorCode = query.lastError().nativeErrorCode();
-        page.errorText = query.lastError().text();
-        logSqlError(query, "分页查询最近历史数据");
-        return page;
-    }
-
-    while (query.next()) {
-        page.records.append(runtimeRecordFromSql(query));
-    }
-
-    page.status = RuntimeHistoryPageStatus::Success;
-    if (!page.records.isEmpty()) {
-        page.nextCursor.timestamp = page.records.constLast().timestamp.toUTC();
-        page.nextCursor.id = page.records.constLast().id;
-        page.nextCursor.maxId = cursor.maxId;
-    } else {
-        page.nextCursor = cursor;
-    }
-
-    if (page.records.size() == pageSize) {
-        QSqlQuery moreQuery(m_db);
-        moreQuery.prepare(QStringLiteral(
-            "SELECT 1 FROM runtime_data WHERE id IN (") + latestIds + QStringLiteral(
-            ") AND (:hasEnd = 0 OR timestamp <= :end) "
-            "AND (:hasMaxId = 0 OR id <= :maxId) "
-            "AND (:hasCursor = 0 "
-            "OR timestamp > :cursorTimestamp "
-            "OR (timestamp = :cursorTimestamp AND id > :cursorId)) LIMIT 1"));
-        moreQuery.bindValue(":latestName", varName);
-        moreQuery.bindValue(":hasEnd", hasEnd ? 1 : 0);
-        moreQuery.bindValue(":end", endUtc.toString(Qt::ISODateWithMs));
-        moreQuery.bindValue(":hasMaxId", page.nextCursor.maxId >= 0 ? 1 : 0);
-        moreQuery.bindValue(":maxId", page.nextCursor.maxId >= 0 ? page.nextCursor.maxId : 0);
-        moreQuery.bindValue(":maxCount", maxCount);
-        moreQuery.bindValue(":hasCursor", page.nextCursor.isValid() ? 1 : 0);
-        moreQuery.bindValue(":cursorTimestamp", page.nextCursor.timestamp.toUTC().toString(Qt::ISODateWithMs));
-        moreQuery.bindValue(":cursorId", page.nextCursor.id);
-        if (!moreQuery.exec()) {
-            page.status = RuntimeHistoryPageStatus::SqlError;
-            page.errorCode = moreQuery.lastError().nativeErrorCode();
-            page.errorText = moreQuery.lastError().text();
-            logSqlError(moreQuery, "判断最近历史分页末页");
-            page.records.clear();
-            page.hasMore = false;
-            return page;
-        }
-        page.hasMore = moreQuery.next();
-    }
-
-    return page;
+    if (!m_initialized) { unavailable.errorCode = QStringLiteral("NOT_INITIALIZED"); return unavailable; }
+    QMutexLocker lock(&m_dbMutex);
+    return HistoryQuery(m_db).queryLatestHistoryPage(channel, maxCount, pageSize, cursor, end);
 }
-
-RuntimeHistoryCount DataManager::countHistory(const QString& varName,
-                                               const QDateTime& start,
-                                               const QDateTime& end,
-                                               qint64 maxRecordId)
+RuntimeHistoryCount DataManager::countHistory(const QString& channel, const QDateTime& start,
+    const QDateTime& end, qint64 maxRecordId)
 {
-    RuntimeHistoryCount result;
-
+    RuntimeHistoryCount unavailable;
     if (!checkThreadOwnership()) {
-        result.status = RuntimeHistoryPageStatus::NotInitialized;
-        result.errorCode = "CrossThreadAccess";
-        result.errorText = "DataManager 跨线程访问被拒绝";
-        return result;
+        unavailable.status = RuntimeHistoryPageStatus::SqlError;
+        unavailable.errorCode = QStringLiteral("CROSS_THREAD_ACCESS"); return unavailable;
     }
-
-    if (!m_initialized) {
-        LOG_WARN("DataManager 未初始化，无法统计历史数据");
-        result.status = RuntimeHistoryPageStatus::NotInitialized;
-        result.errorCode = "NotInitialized";
-        result.errorText = "DataManager 未初始化";
-        return result;
-    }
-
-    const QDateTime startUtc = start.isValid() ? start.toUTC() : start;
-    const QDateTime endUtc = end.isValid() ? end.toUTC() : end;
-    QMutexLocker dbLocker(&m_dbMutex);
-
-    QSqlQuery query(m_db);
-    query.prepare(R"(
-        SELECT COUNT(*)
-        FROM runtime_data
-        WHERE variable_name = :name
-          AND timestamp >= :start
-          AND timestamp <= :end
-          AND (:hasMaxId = 0 OR id <= :maxId)
-    )");
-    query.bindValue(":name", varName);
-    query.bindValue(":start", startUtc.toString(Qt::ISODateWithMs));
-    query.bindValue(":end", endUtc.toString(Qt::ISODateWithMs));
-    query.bindValue(":hasMaxId", maxRecordId >= 0 ? 1 : 0);
-    query.bindValue(":maxId", maxRecordId >= 0 ? maxRecordId : 0);
-
-    if (!query.exec() || !query.next()) {
-        result.status = RuntimeHistoryPageStatus::SqlError;
-        result.errorCode = query.lastError().nativeErrorCode();
-        result.errorText = query.lastError().text();
-        logSqlError(query, "统计历史数据");
-        return result;
-    }
-
-    result.status = RuntimeHistoryPageStatus::Success;
-    result.count = query.value(0).toLongLong();
-    return result;
+    if (!m_initialized) { unavailable.errorCode = QStringLiteral("NOT_INITIALIZED"); return unavailable; }
+    QMutexLocker lock(&m_dbMutex);
+    return HistoryQuery(m_db).countHistory(channel, start, end, maxRecordId);
 }
-
-RuntimeHistoryCount DataManager::countLatestHistory(const QString& varName,
-                                                     int maxCount,
-                                                     const QDateTime& end,
-                                                     qint64 maxRecordId)
+RuntimeHistoryCount DataManager::countLatestHistory(const QString& channel, int maxCount,
+    const QDateTime& end, qint64 maxRecordId)
 {
-    RuntimeHistoryCount result;
-
+    RuntimeHistoryCount unavailable;
     if (!checkThreadOwnership()) {
-        result.status = RuntimeHistoryPageStatus::NotInitialized;
-        result.errorCode = "CrossThreadAccess";
-        result.errorText = "DataManager 跨线程访问被拒绝";
-        return result;
+        unavailable.status = RuntimeHistoryPageStatus::SqlError;
+        unavailable.errorCode = QStringLiteral("CROSS_THREAD_ACCESS"); return unavailable;
     }
-
-    if (!m_initialized) {
-        LOG_WARN("DataManager 未初始化，无法统计最近历史数据");
-        result.status = RuntimeHistoryPageStatus::NotInitialized;
-        result.errorCode = "NotInitialized";
-        result.errorText = "DataManager 未初始化";
-        return result;
-    }
-
-    if (maxCount <= 0) {
-        result.status = RuntimeHistoryPageStatus::SqlError;
-        result.errorCode = "InvalidMaxCount";
-        result.errorText = "最近记录数必须大于 0";
-        return result;
-    }
-
-    QMutexLocker dbLocker(&m_dbMutex);
-    const bool hasEnd = end.isValid();
-    const QDateTime endUtc = hasEnd ? end.toUTC() : end;
-    QSqlQuery query(m_db);
-    query.prepare(R"(
-        SELECT COUNT(*)
-        FROM (
-            SELECT id
-            FROM runtime_data
-            WHERE variable_name = :name
-              AND (:hasEnd = 0 OR timestamp <= :end)
-              AND (:hasMaxId = 0 OR id <= :maxId)
-            ORDER BY timestamp DESC, id DESC
-            LIMIT :limit
-        )
-    )");
-    query.bindValue(":name", varName);
-    query.bindValue(":hasEnd", hasEnd ? 1 : 0);
-    query.bindValue(":end", endUtc.toString(Qt::ISODateWithMs));
-    query.bindValue(":hasMaxId", maxRecordId >= 0 ? 1 : 0);
-    query.bindValue(":maxId", maxRecordId >= 0 ? maxRecordId : 0);
-    query.bindValue(":limit", maxCount);
-
-    if (!query.exec() || !query.next()) {
-        result.status = RuntimeHistoryPageStatus::SqlError;
-        result.errorCode = query.lastError().nativeErrorCode();
-        result.errorText = query.lastError().text();
-        logSqlError(query, "统计最近历史数据");
-        return result;
-    }
-
-    result.status = RuntimeHistoryPageStatus::Success;
-    result.count = query.value(0).toLongLong();
-    return result;
+    if (!m_initialized) { unavailable.errorCode = QStringLiteral("NOT_INITIALIZED"); return unavailable; }
+    QMutexLocker lock(&m_dbMutex);
+    return HistoryQuery(m_db).countLatestHistory(channel, maxCount, end, maxRecordId);
 }
-
 qint64 DataManager::latestRecordId()
 {
     if (!checkThreadOwnership() || !m_initialized) {

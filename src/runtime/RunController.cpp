@@ -1,3 +1,4 @@
+#include "communication/DownloadProfile.h"
 #include "RunController.h"
 
 #include "common/RuntimePointTypes.h"
@@ -478,37 +479,15 @@ bool loadPublishedBundle(const QString& projectPath,
         }
     }
 
-    QJsonDocument profileDocument;
-    bool profileValid = readJsonDocument(manifestProfile, &profileDocument, &error)
-            && profileDocument.isObject()
-            && profileDocument.object().value(QStringLiteral("steps")).isArray()
-            && !profileDocument.object().value(QStringLiteral("steps")).toArray().isEmpty();
-    if (profileValid) {
-        const QJsonArray profileSteps = profileDocument.object()
-                .value(QStringLiteral("steps")).toArray();
-        bool hasSendChunk = false;
-        for (const QJsonValue& step : profileSteps) {
-            const QString type = step.isObject()
-                    ? step.toObject().value(QStringLiteral("type")).toString().trimmed().toLower()
-                    : QString();
-            if (type == QStringLiteral("sendchunk"))
-                hasSendChunk = true;
-            if (!step.isObject()
-                    || !step.toObject().value(QStringLiteral("params")).isObject()
-                    || (type != QStringLiteral("enter")
-                    && type != QStringLiteral("sendchunk")
-                    && type != QStringLiteral("poll")
-                    && type != QStringLiteral("finalize")
-                    && type != QStringLiteral("queryresult"))) {
-                profileValid = false;
-                break;
-            }
-        }
-        profileValid = profileValid && hasSendChunk;
-    }
-    if (!profileValid) {
+    DownloadProfile profile;
+    QStringList profileErrors;
+    const QString addressingMode = config.bridge.parameters.value(QStringLiteral("addressing"))
+            .toMap().value(QStringLiteral("mode")).toString();
+    if (!DownloadProfile::fromJsonFile(manifestProfile, profile, &error)
+            || !profile.validateForExecutor(DownloadProfile::Executor::Controller, &profileErrors, addressingMode)) {
         if (errors)
-            errors->append(QStringLiteral("generation download_profile.json 无效。"));
+            errors->append(QStringLiteral("generation download_profile.json 无效：%1")
+                           .arg(profileErrors.isEmpty() ? error : profileErrors.join(QStringLiteral("; "))));
         return false;
     }
     QJsonDocument pointsDocument;

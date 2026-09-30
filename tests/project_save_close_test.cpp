@@ -127,6 +127,63 @@ private:
     }
 
 private slots:
+    void deletingDirtyMainScriptHonorsCancelAndDoesNotResurrectAfterDiscard()
+    {
+        QTemporaryDir temp;
+        const QString project = createProject(temp.path(), QStringLiteral("delete-main"), QStringLiteral("PROGRAM P\nEND_PROGRAM\n"));
+        QVERIFY(!project.isEmpty());
+        MainWindow window;
+        auto* controller = window.findChild<ProjectController*>();
+        auto* editor = window.findChild<DslScriptEditor*>();
+        QVERIFY(controller && editor);
+        QVERIFY(controller->openProjectFromPath(project));
+        const QString mainPath = QDir(project).filePath(QStringLiteral("main.lh"));
+        setDirtyScript(*controller, *editor, QStringLiteral("PROGRAM Dirty\nEND_PROGRAM\n"));
+        window.setMessageBoxHook([](const QString&, const QString&, QMessageBox::StandardButtons, QMessageBox::StandardButton) { return QMessageBox::Cancel; });
+        window.deleteProjectDocumentPath(mainPath);
+        QVERIFY(QFile::exists(mainPath));
+        QVERIFY(editor->isModified());
+        window.setMessageBoxHook([](const QString&, const QString&, QMessageBox::StandardButtons, QMessageBox::StandardButton) { return QMessageBox::Discard; });
+        window.deleteProjectDocumentPath(mainPath);
+        QVERIFY(!QFile::exists(mainPath));
+        QVERIFY(editor->currentFilePath().isEmpty());
+        QVERIFY(controller->currentScriptFile().isEmpty());
+        QVERIFY(controller->currentMainScriptFile().isEmpty());
+        QVERIFY(controller->projectScriptFiles().isEmpty());
+        QVERIFY(controller->saveProject());
+        QVERIFY(!QFile::exists(mainPath));
+    }
+
+    void auxiliaryNavigationPreservesEntryAndSavesOwnFile()
+    {
+        QTemporaryDir dir;
+        const QString project = createProject(dir.path(), QStringLiteral("navigation"), QStringLiteral("PROGRAM Main\nEND_PROGRAM\n"));
+        QVERIFY(!project.isEmpty());
+        const QString helper = QDir(project).filePath(QStringLiteral("helper.lh"));
+        QVERIFY(writeFile(helper, "PROGRAM Helper\nEND_PROGRAM\n"));
+        ProjectController controller;
+        DslScriptEditor editor;
+        bindEditor(controller, editor);
+        QVERIFY(controller.openProjectFromPath(project));
+        const QString entry = controller.currentMainScriptFile();
+        const auto order = controller.projectScriptFiles();
+        controller.setCurrentScriptFile(helper);
+        editor.setCurrentFilePath(helper);
+        setDirtyScript(controller, editor, QStringLiteral("PROGRAM ChangedHelper\nEND_PROGRAM\n"));
+        QCOMPARE(controller.currentMainScriptFile(), entry);
+        QCOMPARE(controller.projectScriptFiles(), order);
+        QVERIFY(controller.saveProject());
+        QCOMPARE(controller.currentMainScriptFile(), entry);
+        QCOMPARE(controller.projectScriptFiles(), order);
+        QVERIFY(readFile(helper).contains(QStringLiteral("ChangedHelper")));
+        QVERIFY(readFile(QDir(project).filePath(QStringLiteral("main.lh"))).contains(QStringLiteral("PROGRAM Main")));
+        QVERIFY(controller.setMainScriptFile(helper));
+        QVERIFY(controller.saveProject());
+        QVERIFY(controller.closeProject());
+        QVERIFY(controller.openProjectFromPath(project));
+        QVERIFY(controller.currentMainScriptFile().endsWith(QStringLiteral("helper.lh")));
+    }
+
     void initTestCase()
     {
         QVERIFY(m_settingsDir.isValid());

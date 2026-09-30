@@ -24,6 +24,8 @@ set(MONITOR_SOURCES
     DataManagerHistoryStoreAdapter.cpp
     AsyncHistoryStoreAdapter.h
     AsyncHistoryStoreAdapter.cpp
+    ReadOnlyHistorySnapshot.h
+    ReadOnlyHistorySnapshot.cpp
 
     # 监控采样落库（新增）
     MonitorDataLogger.h
@@ -84,3 +86,7 @@ target_link_libraries(monitor_history PUBLIC Qt5::Core)
 target_include_directories(monitor_history PUBLIC ${LX_PUBLIC_INCLUDE_DIRS} ${CMAKE_CURRENT_SOURCE_DIR})
 target_compile_features(monitor_history PUBLIC cxx_std_17)
 target_link_libraries(monitor PUBLIC monitor_history)
+
+target_include_directories(monitor PRIVATE ${LX_PRIVATE_INCLUDE_DIRS})
+
+target_include_directories(monitor_history PRIVATE ${LX_PRIVATE_INCLUDE_DIRS})

@@ -101,6 +101,24 @@ private:
     }
 
 private slots:
+    void cancellationBeforeAtomicCommitPreservesExistingDestination()
+    {
+        QTemporaryDir dir;
+        const QString path = dir.filePath(QStringLiteral("cancelled.csv"));
+        { QFile original(path); QVERIFY(original.open(QIODevice::WriteOnly)); QCOMPARE(original.write("original"), qint64(8)); }
+        MonitorExportHelper helper;
+        ExportConfig config = helper.config(); config.overwriteExisting = true; helper.setConfig(config);
+        helper.setCancellationPredicate([] { return true; });
+        Monitor::Sample sample;
+        sample.channelName = QStringLiteral("v"); sample.value = 1.0;
+        sample.valueValid = true; sample.quality = RuntimePointQuality::Good;
+        sample.timestamp = QDateTime::currentDateTimeUtc();
+        const auto result = helper.exportDataAsCsvToFile(QStringLiteral("v"), {sample}, path);
+        QVERIFY(!result.success);
+        QFile original(path); QVERIFY(original.open(QIODevice::ReadOnly));
+        QCOMPARE(original.readAll(), QByteArray("original"));
+    }
+
     void initTestCase()
     {
         qInfo() << "========================================";

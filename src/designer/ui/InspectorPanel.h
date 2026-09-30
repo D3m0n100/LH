@@ -4,7 +4,7 @@
 #include <QWidget>
 #include <QMap>
 
-#include "common/ConfigTypes.h"
+#include "../../common/ConfigTypes.h"
 
 struct ParameterStateInfo;
 

@@ -16,6 +16,20 @@ class DiagnosticSnapshotTest : public QObject
     Q_OBJECT
 
 private slots:
+    void repeatedExportsHaveIndependentFiles()
+    {
+        QTemporaryDir dir;
+        ProjectRuntimeConfig config;
+        QString first, second, error;
+        QVERIFY(DiagnosticSnapshotService::exportSnapshot(dir.path(), config, false, "first", {}, &first, &error));
+        QFile original(first); QVERIFY(original.open(QIODevice::ReadOnly));
+        const QByteArray bytes = original.readAll(); original.close();
+        QVERIFY(DiagnosticSnapshotService::exportSnapshot(dir.path(), config, false, "second", {}, &second, &error));
+        QVERIFY(first != second);
+        QVERIFY(original.open(QIODevice::ReadOnly));
+        QCOMPARE(original.readAll(), bytes);
+    }
+
     void redactsNestedConfigurationWithoutMutatingInputs()
     {
         QTemporaryDir tempDir;

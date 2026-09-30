@@ -1,0 +1,3394 @@
+{
+  "calls": [
+    {
+      "sha256": "46ff7a2217b788404e8c9ff8a1a37950552255ff948edd48df037c23c859388c",
+      "entry": "265C8I/VC102/DSub/Page/AutoDemaFig.inva",
+      "instance": "Pg9DataDis",
+      "source": "_M600TextDisp[Pg9DataDis] Xo::0x0140,Yo::0x0089,DeltaX::0x0000,DeltaY::0x0056,LibID::0x0000,\r\n\t\t\t\t\t\t\t\t       ModeDots::0xC104,Color::0xFFFF,BColor::0x0000,ModeAdd=:PubBuf1.Int1,\r\n\t\t\t\t\t\t\t\t\t\t Input=:GradFmLim.Output,Input=:DUCtrI.Int6,Input=:DUCtrI.Int4,Input=:DUCtrI.Int8,\r\n\t\t\t\t\t\t\t\t\t\t Input=:DUCtrI.Int7,\r\n                               Item::#ItemEnd;",
+      "orderedParameters": [
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "Xo",
+          "lhOperandEncoding": null,
+          "rawValue": "0x0140",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "Yo",
+          "lhOperandEncoding": null,
+          "rawValue": "0x0089",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "DeltaX",
+          "lhOperandEncoding": null,
+          "rawValue": "0x0000",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "DeltaY",
+          "lhOperandEncoding": null,
+          "rawValue": "0x0056",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "LibID",
+          "lhOperandEncoding": null,
+          "rawValue": "0x0000",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "ModeDots",
+          "lhOperandEncoding": null,
+          "rawValue": "0xC104",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "Color",
+          "lhOperandEncoding": null,
+          "rawValue": "0xFFFF",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "BColor",
+          "lhOperandEncoding": null,
+          "rawValue": "0x0000",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "ModeAdd",
+          "lhOperandEncoding": null,
+          "rawValue": "PubBuf1.Int1",
+          "operator": "=:"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "Input",
+          "lhOperandEncoding": null,
+          "rawValue": "GradFmLim.Output",
+          "operator": "=:"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "Input",
+          "lhOperandEncoding": null,
+          "rawValue": "DUCtrI.Int6",
+          "operator": "=:"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "Input",
+          "lhOperandEncoding": null,
+          "rawValue": "DUCtrI.Int4",
+          "operator": "=:"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "Input",
+          "lhOperandEncoding": null,
+          "rawValue": "DUCtrI.Int8",
+          "operator": "=:"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "Input",
+          "lhOperandEncoding": null,
+          "rawValue": "DUCtrI.Int7",
+          "operator": "=:"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "legacy-enum-token",
+          "name": "Item",
+          "lhOperandEncoding": null,
+          "rawValue": "#ItemEnd",
+          "operator": "::"
+        }
+      ],
+      "line": 16
+    },
+    {
+      "sha256": "46ff7a2217b788404e8c9ff8a1a37950552255ff948edd48df037c23c859388c",
+      "entry": "265C8I/VC102/DSub/Page/AutoDemaFig.inva",
+      "instance": "Pg9SignDis",
+      "source": "_M600TextDisp[Pg9SignDis] Xo::0x0190,Yo::0x0130,DeltaX::0x0000,DeltaY::0x0000,LibID::0x0023,\r\n\t\t\t\t\t\t\t\t       ModeDots::0xC105,Color::0xF800,BColor::0x0000,ModeAdd=:PubBuf1.Int6,\r\n\t\t\t\t\t\t\t\t\t\t Input=:PubBuf1.Int8,\r\n                               Item::#ItemEnd;",
+      "orderedParameters": [
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "Xo",
+          "lhOperandEncoding": null,
+          "rawValue": "0x0190",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "Yo",
+          "lhOperandEncoding": null,
+          "rawValue": "0x0130",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "DeltaX",
+          "lhOperandEncoding": null,
+          "rawValue": "0x0000",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "DeltaY",
+          "lhOperandEncoding": null,
+          "rawValue": "0x0000",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "LibID",
+          "lhOperandEncoding": null,
+          "rawValue": "0x0023",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "ModeDots",
+          "lhOperandEncoding": null,
+          "rawValue": "0xC105",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "Color",
+          "lhOperandEncoding": null,
+          "rawValue": "0xF800",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "BColor",
+          "lhOperandEncoding": null,
+          "rawValue": "0x0000",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "ModeAdd",
+          "lhOperandEncoding": null,
+          "rawValue": "PubBuf1.Int6",
+          "operator": "=:"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "Input",
+          "lhOperandEncoding": null,
+          "rawValue": "PubBuf1.Int8",
+          "operator": "=:"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "legacy-enum-token",
+          "name": "Item",
+          "lhOperandEncoding": null,
+          "rawValue": "#ItemEnd",
+          "operator": "::"
+        }
+      ],
+      "line": 46
+    },
+    {
+      "sha256": "169123193277a91b6e2352399984d316b4dbc7a5ddce2728a967808563b74ac1",
+      "entry": "265C8I/VC102/DSub/Page/CallServFig.inva",
+      "instance": "Pg13CSDis",
+      "source": "_M600TextDisp[Pg13CSDis] Xo::245,Yo::120,DeltaX::0x0030,DeltaY::0x0000,LibID::0x0022,\r\n\t\t\t\tModeDots::0xC104,Color::0xFFE0,BColor::0x0000,ModeAdd=:PubBuf1.Int1,\r\n\t\t\t\tInput=:CallInfoSave.Int1,\r\n\t\t\t\tItem::#ItemEnd;",
+      "orderedParameters": [
+        {
+          "direction": null,
+          "syntacticKind": "integer-literal",
+          "name": "Xo",
+          "lhOperandEncoding": null,
+          "rawValue": "245",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "integer-literal",
+          "name": "Yo",
+          "lhOperandEncoding": null,
+          "rawValue": "120",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "DeltaX",
+          "lhOperandEncoding": null,
+          "rawValue": "0x0030",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "DeltaY",
+          "lhOperandEncoding": null,
+          "rawValue": "0x0000",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "LibID",
+          "lhOperandEncoding": null,
+          "rawValue": "0x0022",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "ModeDots",
+          "lhOperandEncoding": null,
+          "rawValue": "0xC104",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "Color",
+          "lhOperandEncoding": null,
+          "rawValue": "0xFFE0",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "BColor",
+          "lhOperandEncoding": null,
+          "rawValue": "0x0000",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "ModeAdd",
+          "lhOperandEncoding": null,
+          "rawValue": "PubBuf1.Int1",
+          "operator": "=:"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "Input",
+          "lhOperandEncoding": null,
+          "rawValue": "CallInfoSave.Int1",
+          "operator": "=:"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "legacy-enum-token",
+          "name": "Item",
+          "lhOperandEncoding": null,
+          "rawValue": "#ItemEnd",
+          "operator": "::"
+        }
+      ],
+      "line": 21
+    },
+    {
+      "sha256": "169123193277a91b6e2352399984d316b4dbc7a5ddce2728a967808563b74ac1",
+      "entry": "265C8I/VC102/DSub/Page/CallServFig.inva",
+      "instance": "Pg13CSDis1",
+      "source": "_M600TextDisp[Pg13CSDis1] Xo::210,Yo::425,DeltaX::0x0059,DeltaY::0x0000,LibID::0x0022,\r\n\t\t\t\tModeDots::0xC104,Color::0xFFE0,BColor::0x0000,ModeAdd=:PubBuf1.Int2,\r\n\t\t\t\tInput=:CallInfoSave.Int2,Input=:CallInfoSave.Int3,Input=:CallInfoSave.Int4,\r\n\t\t\t\tItem::#ItemEnd;",
+      "orderedParameters": [
+        {
+          "direction": null,
+          "syntacticKind": "integer-literal",
+          "name": "Xo",
+          "lhOperandEncoding": null,
+          "rawValue": "210",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "integer-literal",
+          "name": "Yo",
+          "lhOperandEncoding": null,
+          "rawValue": "425",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "DeltaX",
+          "lhOperandEncoding": null,
+          "rawValue": "0x0059",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "DeltaY",
+          "lhOperandEncoding": null,
+          "rawValue": "0x0000",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "LibID",
+          "lhOperandEncoding": null,
+          "rawValue": "0x0022",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "ModeDots",
+          "lhOperandEncoding": null,
+          "rawValue": "0xC104",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "Color",
+          "lhOperandEncoding": null,
+          "rawValue": "0xFFE0",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "BColor",
+          "lhOperandEncoding": null,
+          "rawValue": "0x0000",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "ModeAdd",
+          "lhOperandEncoding": null,
+          "rawValue": "PubBuf1.Int2",
+          "operator": "=:"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "Input",
+          "lhOperandEncoding": null,
+          "rawValue": "CallInfoSave.Int2",
+          "operator": "=:"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "Input",
+          "lhOperandEncoding": null,
+          "rawValue": "CallInfoSave.Int3",
+          "operator": "=:"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "Input",
+          "lhOperandEncoding": null,
+          "rawValue": "CallInfoSave.Int4",
+          "operator": "=:"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "legacy-enum-token",
+          "name": "Item",
+          "lhOperandEncoding": null,
+          "rawValue": "#ItemEnd",
+          "operator": "::"
+        }
+      ],
+      "line": 25
+    },
+    {
+      "sha256": "d60f2505555af4632eae7ab74b16c2d2f87c4c80c1f564b32402150d362f18c3",
+      "entry": "265C8I/VC102/DSub/Page/ClockDemaFig.inva",
+      "instance": "Pg21YearDis",
+      "source": "_M600TextDisp[Pg21YearDis] Xo::0x000D,Yo::0x00FF,DeltaX::0x0000,DeltaY::0x0000,LibID::0x0000,\r\n\t\t\t\t\t\t\t\t\t\t\t\tModeDots::0xC104,Color::0xFFFF,BColor::0x0000,ModeAdd=:PubBuf1.Int1,\t\t\t\t\t\t\t\t\t\t \r\n\t\t\t\t\t\t\t\t\t\t\t\tInput=:DispPg21.Int7,\r\n\t\t\t\t\t\t\t\t\t\t\t\tItem::#ItemEnd;",
+      "orderedParameters": [
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "Xo",
+          "lhOperandEncoding": null,
+          "rawValue": "0x000D",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "Yo",
+          "lhOperandEncoding": null,
+          "rawValue": "0x00FF",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "DeltaX",
+          "lhOperandEncoding": null,
+          "rawValue": "0x0000",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "DeltaY",
+          "lhOperandEncoding": null,
+          "rawValue": "0x0000",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "LibID",
+          "lhOperandEncoding": null,
+          "rawValue": "0x0000",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "ModeDots",
+          "lhOperandEncoding": null,
+          "rawValue": "0xC104",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "Color",
+          "lhOperandEncoding": null,
+          "rawValue": "0xFFFF",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "BColor",
+          "lhOperandEncoding": null,
+          "rawValue": "0x0000",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "ModeAdd",
+          "lhOperandEncoding": null,
+          "rawValue": "PubBuf1.Int1",
+          "operator": "=:"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "Input",
+          "lhOperandEncoding": null,
+          "rawValue": "DispPg21.Int7",
+          "operator": "=:"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "legacy-enum-token",
+          "name": "Item",
+          "lhOperandEncoding": null,
+          "rawValue": "#ItemEnd",
+          "operator": "::"
+        }
+      ],
+      "line": 59
+    },
+    {
+      "sha256": "d60f2505555af4632eae7ab74b16c2d2f87c4c80c1f564b32402150d362f18c3",
+      "entry": "265C8I/VC102/DSub/Page/ClockDemaFig.inva",
+      "instance": "Pg21DemaDis",
+      "source": "_M600TextDisp[Pg21DemaDis] Xo::0x0068,Yo::0x00FF,DeltaX::0x0036,DeltaY::0x0000,LibID::0x0000,\r\n\t\t\t\t\t\t\t\t\t\t\t\tModeDots::0xC104,Color::0xFFFF,BColor::0x0000,ModeAdd=:PubBuf1.Int2,\t\t\t\t\t\t\t\t\t\t \r\n\t\t\t\t\t\t\t\t\t\t\t\tInput=:TimeDema.Int2,Input=:TimeDema.Int3,Input=:TimeDema.Int4,\r\n\t\t\t\t\t\t\t\t\t\t\t\tInput=:TimeDema.Int5,Input=:TimeDema.Int6,Input=:TimeDema.Int7,Input=:TimeDema.Int8,\r\n\t\t\t\t\t\t\t\t\t\t\t\tItem::#ItemEnd;",
+      "orderedParameters": [
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "Xo",
+          "lhOperandEncoding": null,
+          "rawValue": "0x0068",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "Yo",
+          "lhOperandEncoding": null,
+          "rawValue": "0x00FF",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "DeltaX",
+          "lhOperandEncoding": null,
+          "rawValue": "0x0036",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "DeltaY",
+          "lhOperandEncoding": null,
+          "rawValue": "0x0000",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "LibID",
+          "lhOperandEncoding": null,
+          "rawValue": "0x0000",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "ModeDots",
+          "lhOperandEncoding": null,
+          "rawValue": "0xC104",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "Color",
+          "lhOperandEncoding": null,
+          "rawValue": "0xFFFF",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "BColor",
+          "lhOperandEncoding": null,
+          "rawValue": "0x0000",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "ModeAdd",
+          "lhOperandEncoding": null,
+          "rawValue": "PubBuf1.Int2",
+          "operator": "=:"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "Input",
+          "lhOperandEncoding": null,
+          "rawValue": "TimeDema.Int2",
+          "operator": "=:"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "Input",
+          "lhOperandEncoding": null,
+          "rawValue": "TimeDema.Int3",
+          "operator": "=:"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "Input",
+          "lhOperandEncoding": null,
+          "rawValue": "TimeDema.Int4",
+          "operator": "=:"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "Input",
+          "lhOperandEncoding": null,
+          "rawValue": "TimeDema.Int5",
+          "operator": "=:"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "Input",
+          "lhOperandEncoding": null,
+          "rawValue": "TimeDema.Int6",
+          "operator": "=:"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "Input",
+          "lhOperandEncoding": null,
+          "rawValue": "TimeDema.Int7",
+          "operator": "=:"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "Input",
+          "lhOperandEncoding": null,
+          "rawValue": "TimeDema.Int8",
+          "operator": "=:"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "legacy-enum-token",
+          "name": "Item",
+          "lhOperandEncoding": null,
+          "rawValue": "#ItemEnd",
+          "operator": "::"
+        }
+      ],
+      "line": 63
+    },
+    {
+      "sha256": "5428c17787cf781d54db078d53ec1aef3cc0671b206185541b59373b3d8b5ca0",
+      "entry": "265C8I/VC102/DSub/Page/ErrCodeFig.inva",
+      "instance": "Pg6Display",
+      "source": "_M600TextDisp[Pg6Display] Xo::0x017C,Yo::0x005A,DeltaX::0x0000,DeltaY::0x0025,LibID::0x0000,\r\n\t\t\t\t\t\t\t\t       ModeDots::0xC104,Color::0xFFE0,BColor::0x0000,ModeAdd=:PubBuf1.Int1,\r\n\t\t\t\t\t\t\t\t\t\t Input=:FaultCdFm.Int9,Input=:DUCtrI.Int48,\r\n                               Item::#ItemEnd;",
+      "orderedParameters": [
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "Xo",
+          "lhOperandEncoding": null,
+          "rawValue": "0x017C",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "Yo",
+          "lhOperandEncoding": null,
+          "rawValue": "0x005A",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "DeltaX",
+          "lhOperandEncoding": null,
+          "rawValue": "0x0000",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "DeltaY",
+          "lhOperandEncoding": null,
+          "rawValue": "0x0025",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "LibID",
+          "lhOperandEncoding": null,
+          "rawValue": "0x0000",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "ModeDots",
+          "lhOperandEncoding": null,
+          "rawValue": "0xC104",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "Color",
+          "lhOperandEncoding": null,
+          "rawValue": "0xFFE0",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "BColor",
+          "lhOperandEncoding": null,
+          "rawValue": "0x0000",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "ModeAdd",
+          "lhOperandEncoding": null,
+          "rawValue": "PubBuf1.Int1",
+          "operator": "=:"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "Input",
+          "lhOperandEncoding": null,
+          "rawValue": "FaultCdFm.Int9",
+          "operator": "=:"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "Input",
+          "lhOperandEncoding": null,
+          "rawValue": "DUCtrI.Int48",
+          "operator": "=:"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "legacy-enum-token",
+          "name": "Item",
+          "lhOperandEncoding": null,
+          "rawValue": "#ItemEnd",
+          "operator": "::"
+        }
+      ],
+      "line": 18
+    },
+    {
+      "sha256": "cf7b1aff92b60f1a45ad3fd2402c5f252e135a6ad954f9ef9bbc8680ac2bcb37",
+      "entry": "265C8I/VC102/DSub/Page/GpsFig.inva",
+      "instance": "Pg8Display",
+      "source": "_M600TextDisp[Pg8Display] Xo::0x0154,Yo::0x0061,DeltaX::0x0000,DeltaY::0x002E,LibID::0x0000,\r\n\t\t\t\t\t\t\t\t\t\t  ModeDots::0xC104,Color::0xFFFF,BColor::0x0000,ModeAdd=:PubBuf1.Int1,\r\n\t\t\t\t\t\t\t\t\t\t  Input:=LongAbs.Output,Input:=LatiAbs.Output,Input:=AltiAbs.Output,\r\n\t\t\t\t\t\t\t\t\t\t  Input:=GPRS.Velocity,Input=:GPRS.StlltCnt,Input=:DUCtrI.Int5,\r\n                                Item::#ItemEnd;",
+      "orderedParameters": [
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "Xo",
+          "lhOperandEncoding": null,
+          "rawValue": "0x0154",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "Yo",
+          "lhOperandEncoding": null,
+          "rawValue": "0x0061",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "DeltaX",
+          "lhOperandEncoding": null,
+          "rawValue": "0x0000",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "DeltaY",
+          "lhOperandEncoding": null,
+          "rawValue": "0x002E",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "LibID",
+          "lhOperandEncoding": null,
+          "rawValue": "0x0000",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "ModeDots",
+          "lhOperandEncoding": null,
+          "rawValue": "0xC104",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "Color",
+          "lhOperandEncoding": null,
+          "rawValue": "0xFFFF",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "BColor",
+          "lhOperandEncoding": null,
+          "rawValue": "0x0000",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "ModeAdd",
+          "lhOperandEncoding": null,
+          "rawValue": "PubBuf1.Int1",
+          "operator": "=:"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "Input",
+          "lhOperandEncoding": null,
+          "rawValue": "LongAbs.Output",
+          "operator": ":="
+        },
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "Input",
+          "lhOperandEncoding": null,
+          "rawValue": "LatiAbs.Output",
+          "operator": ":="
+        },
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "Input",
+          "lhOperandEncoding": null,
+          "rawValue": "AltiAbs.Output",
+          "operator": ":="
+        },
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "Input",
+          "lhOperandEncoding": null,
+          "rawValue": "GPRS.Velocity",
+          "operator": ":="
+        },
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "Input",
+          "lhOperandEncoding": null,
+          "rawValue": "GPRS.StlltCnt",
+          "operator": "=:"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "Input",
+          "lhOperandEncoding": null,
+          "rawValue": "DUCtrI.Int5",
+          "operator": "=:"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "legacy-enum-token",
+          "name": "Item",
+          "lhOperandEncoding": null,
+          "rawValue": "#ItemEnd",
+          "operator": "::"
+        }
+      ],
+      "line": 28
+    },
+    {
+      "sha256": "cf7b1aff92b60f1a45ad3fd2402c5f252e135a6ad954f9ef9bbc8680ac2bcb37",
+      "entry": "265C8I/VC102/DSub/Page/GpsFig.inva",
+      "instance": "Pg8SigDis",
+      "source": "_M600TextDisp[Pg8SigDis] Xo::0x01C2,Yo::0x0061,DeltaX::0x0000,DeltaY::0x002E,LibID::0x0000,\r\n\t\t\t\t\t\t\t\t       ModeDots::0xC104,Color::0xFFFF,BColor::0x0000,ModeAdd=:PubBuf1.Int7,\r\n\t\t\t\t\t\t\t\t\t\t Input=:PubBuf15.Int1,Input=:PubBuf15.Int2,Input=:PubBuf15.Int3,\r\n                               Item::#ItemEnd;",
+      "orderedParameters": [
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "Xo",
+          "lhOperandEncoding": null,
+          "rawValue": "0x01C2",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "Yo",
+          "lhOperandEncoding": null,
+          "rawValue": "0x0061",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "DeltaX",
+          "lhOperandEncoding": null,
+          "rawValue": "0x0000",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "DeltaY",
+          "lhOperandEncoding": null,
+          "rawValue": "0x002E",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "LibID",
+          "lhOperandEncoding": null,
+          "rawValue": "0x0000",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "ModeDots",
+          "lhOperandEncoding": null,
+          "rawValue": "0xC104",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "Color",
+          "lhOperandEncoding": null,
+          "rawValue": "0xFFFF",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "BColor",
+          "lhOperandEncoding": null,
+          "rawValue": "0x0000",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "ModeAdd",
+          "lhOperandEncoding": null,
+          "rawValue": "PubBuf1.Int7",
+          "operator": "=:"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "Input",
+          "lhOperandEncoding": null,
+          "rawValue": "PubBuf15.Int1",
+          "operator": "=:"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "Input",
+          "lhOperandEncoding": null,
+          "rawValue": "PubBuf15.Int2",
+          "operator": "=:"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "Input",
+          "lhOperandEncoding": null,
+          "rawValue": "PubBuf15.Int3",
+          "operator": "=:"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "legacy-enum-token",
+          "name": "Item",
+          "lhOperandEncoding": null,
+          "rawValue": "#ItemEnd",
+          "operator": "::"
+        }
+      ],
+      "line": 76
+    },
+    {
+      "sha256": "cf7b1aff92b60f1a45ad3fd2402c5f252e135a6ad954f9ef9bbc8680ac2bcb37",
+      "entry": "265C8I/VC102/DSub/Page/GpsFig.inva",
+      "instance": "Pg8SNDisplay",
+      "source": "_M600TextDisp[Pg8SNDisplay] Xo::0x019E,Yo::0x0185,DeltaX::0x0000,DeltaY::0x002E,LibID::0x0000,  \r\n\t\t\t\t\t\t\t\t            ModeDots::0xC102,Color::0xFFFF,BColor::0x0000,ModeAdd=:PubBuf1.Int14,\r\n\t\t\t\t\t\t\t\t\t         Input=:GPRSSgm1.Output,Input=:GPRSSgm2.Output,Input=:GPRSSgm3.Output,Input=:GPRSSgm4.Output,\r\n\t\t\t\t\t\t\t\t\t\t\t\tItem::#ItemEnd;",
+      "orderedParameters": [
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "Xo",
+          "lhOperandEncoding": null,
+          "rawValue": "0x019E",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "Yo",
+          "lhOperandEncoding": null,
+          "rawValue": "0x0185",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "DeltaX",
+          "lhOperandEncoding": null,
+          "rawValue": "0x0000",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "DeltaY",
+          "lhOperandEncoding": null,
+          "rawValue": "0x002E",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "LibID",
+          "lhOperandEncoding": null,
+          "rawValue": "0x0000",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "ModeDots",
+          "lhOperandEncoding": null,
+          "rawValue": "0xC102",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "Color",
+          "lhOperandEncoding": null,
+          "rawValue": "0xFFFF",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "BColor",
+          "lhOperandEncoding": null,
+          "rawValue": "0x0000",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "ModeAdd",
+          "lhOperandEncoding": null,
+          "rawValue": "PubBuf1.Int14",
+          "operator": "=:"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "Input",
+          "lhOperandEncoding": null,
+          "rawValue": "GPRSSgm1.Output",
+          "operator": "=:"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "Input",
+          "lhOperandEncoding": null,
+          "rawValue": "GPRSSgm2.Output",
+          "operator": "=:"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "Input",
+          "lhOperandEncoding": null,
+          "rawValue": "GPRSSgm3.Output",
+          "operator": "=:"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "Input",
+          "lhOperandEncoding": null,
+          "rawValue": "GPRSSgm4.Output",
+          "operator": "=:"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "legacy-enum-token",
+          "name": "Item",
+          "lhOperandEncoding": null,
+          "rawValue": "#ItemEnd",
+          "operator": "::"
+        }
+      ],
+      "line": 94
+    },
+    {
+      "sha256": "2de29197d3fca68ff4510858a4695b5bb75061ff867de862b6619522dd906b3a",
+      "entry": "265C8I/VC102/DSub/Page/HisDataFig.inva",
+      "instance": "HistoryData",
+      "source": "_M600TextDisp[HistoryData] Xo::0x00F5,Yo::0x00A3,DeltaX::0x0000,DeltaY::0x0046,LibID::0x0000,\r\n\t\t\t\t\t\t\t            ModeDots::0xC104,Color::0xFFFF,BColor::0x0000,ModeAdd=:PubBuf1.Int1,\t\t\t\t\t\t\t\t\t\t \r\n\t\t\t\t\t\t\t\t\t      Input=:HDataLim.Output,Input=:DisParaI.Int21,Input=:HisDataI.Int1,Input=:HisTimeI.Int1,\r\n\t\t\t\t\t\t\t\t\t\t\tInput=:HisDataOut.Int1,Item::#ItemEnd;",
+      "orderedParameters": [
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "Xo",
+          "lhOperandEncoding": null,
+          "rawValue": "0x00F5",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "Yo",
+          "lhOperandEncoding": null,
+          "rawValue": "0x00A3",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "DeltaX",
+          "lhOperandEncoding": null,
+          "rawValue": "0x0000",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "DeltaY",
+          "lhOperandEncoding": null,
+          "rawValue": "0x0046",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "LibID",
+          "lhOperandEncoding": null,
+          "rawValue": "0x0000",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "ModeDots",
+          "lhOperandEncoding": null,
+          "rawValue": "0xC104",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "Color",
+          "lhOperandEncoding": null,
+          "rawValue": "0xFFFF",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "BColor",
+          "lhOperandEncoding": null,
+          "rawValue": "0x0000",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "ModeAdd",
+          "lhOperandEncoding": null,
+          "rawValue": "PubBuf1.Int1",
+          "operator": "=:"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "Input",
+          "lhOperandEncoding": null,
+          "rawValue": "HDataLim.Output",
+          "operator": "=:"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "Input",
+          "lhOperandEncoding": null,
+          "rawValue": "DisParaI.Int21",
+          "operator": "=:"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "Input",
+          "lhOperandEncoding": null,
+          "rawValue": "HisDataI.Int1",
+          "operator": "=:"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "Input",
+          "lhOperandEncoding": null,
+          "rawValue": "HisTimeI.Int1",
+          "operator": "=:"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "Input",
+          "lhOperandEncoding": null,
+          "rawValue": "HisDataOut.Int1",
+          "operator": "=:"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "legacy-enum-token",
+          "name": "Item",
+          "lhOperandEncoding": null,
+          "rawValue": "#ItemEnd",
+          "operator": "::"
+        }
+      ],
+      "line": 51
+    },
+    {
+      "sha256": "f5ed804eecb72fb703e014d2df873d30c621258acd835d1bae125e5e6e8c048e",
+      "entry": "265C8I/VC102/DSub/Page/LockFig.inva",
+      "instance": "Pg7Display",
+      "source": "_M600TextDisp[Pg7Display] Xo::0x00F4,Yo::0x0083,DeltaX::0x0000,DeltaY::0x005C,LibID::0x0000,\r\n\t\t\t\t\t\t\t\t       ModeDots::0xC104,Color::0xFFFF,BColor::0x0000,ModeAdd=:PubBuf6.Int1,\t\t\t\t\t\t\t\t\t\t \r\n\t\t\t\t\t\t\t\t\t\t Input=:PubBuf25.Int1,Input:=GPSID.F1,\r\n                               Item::#ItemEnd;",
+      "orderedParameters": [
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "Xo",
+          "lhOperandEncoding": null,
+          "rawValue": "0x00F4",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "Yo",
+          "lhOperandEncoding": null,
+          "rawValue": "0x0083",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "DeltaX",
+          "lhOperandEncoding": null,
+          "rawValue": "0x0000",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "DeltaY",
+          "lhOperandEncoding": null,
+          "rawValue": "0x005C",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "LibID",
+          "lhOperandEncoding": null,
+          "rawValue": "0x0000",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "ModeDots",
+          "lhOperandEncoding": null,
+          "rawValue": "0xC104",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "Color",
+          "lhOperandEncoding": null,
+          "rawValue": "0xFFFF",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "BColor",
+          "lhOperandEncoding": null,
+          "rawValue": "0x0000",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "ModeAdd",
+          "lhOperandEncoding": null,
+          "rawValue": "PubBuf6.Int1",
+          "operator": "=:"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "Input",
+          "lhOperandEncoding": null,
+          "rawValue": "PubBuf25.Int1",
+          "operator": "=:"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "Input",
+          "lhOperandEncoding": null,
+          "rawValue": "GPSID.F1",
+          "operator": ":="
+        },
+        {
+          "direction": null,
+          "syntacticKind": "legacy-enum-token",
+          "name": "Item",
+          "lhOperandEncoding": null,
+          "rawValue": "#ItemEnd",
+          "operator": "::"
+        }
+      ],
+      "line": 17
+    },
+    {
+      "sha256": "4aff7080444f3c3c4061498123d6cf1232dbdf85c33bd3e279d6996c03181409",
+      "entry": "265C8I/VC102/DSub/Page/MachCfgFig.inva",
+      "instance": "Pg5Display",
+      "source": "_M600TextDisp[Pg5Display] Xo::0x00D3,Yo::0x0089,DeltaX::0x0000,DeltaY::0x0056,LibID::0x0000,\r\n\t\t\tModeDots::0xC104,Color::0xFFFF,BColor::0x0000,ModeAdd=:PubBuf1.Int1,\t\t\t\t\t\t\t\t\t\t \r\n\t\t\tInput=:PubBuf25.Int1,Input:=GPSID.F1,Input=:PubBuf19.Int1,Input=:PubBuf18.Int10,Input=:PubBuf17.Int10,\r\n         Item::#ItemEnd;",
+      "orderedParameters": [
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "Xo",
+          "lhOperandEncoding": null,
+          "rawValue": "0x00D3",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "Yo",
+          "lhOperandEncoding": null,
+          "rawValue": "0x0089",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "DeltaX",
+          "lhOperandEncoding": null,
+          "rawValue": "0x0000",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "DeltaY",
+          "lhOperandEncoding": null,
+          "rawValue": "0x0056",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "LibID",
+          "lhOperandEncoding": null,
+          "rawValue": "0x0000",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "ModeDots",
+          "lhOperandEncoding": null,
+          "rawValue": "0xC104",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "Color",
+          "lhOperandEncoding": null,
+          "rawValue": "0xFFFF",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "BColor",
+          "lhOperandEncoding": null,
+          "rawValue": "0x0000",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "ModeAdd",
+          "lhOperandEncoding": null,
+          "rawValue": "PubBuf1.Int1",
+          "operator": "=:"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "Input",
+          "lhOperandEncoding": null,
+          "rawValue": "PubBuf25.Int1",
+          "operator": "=:"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "Input",
+          "lhOperandEncoding": null,
+          "rawValue": "GPSID.F1",
+          "operator": ":="
+        },
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "Input",
+          "lhOperandEncoding": null,
+          "rawValue": "PubBuf19.Int1",
+          "operator": "=:"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "Input",
+          "lhOperandEncoding": null,
+          "rawValue": "PubBuf18.Int10",
+          "operator": "=:"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "Input",
+          "lhOperandEncoding": null,
+          "rawValue": "PubBuf17.Int10",
+          "operator": "=:"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "legacy-enum-token",
+          "name": "Item",
+          "lhOperandEncoding": null,
+          "rawValue": "#ItemEnd",
+          "operator": "::"
+        }
+      ],
+      "line": 17
+    },
+    {
+      "sha256": "361105a6ccaf0fa89275eb149862f68bda7911b329748bef9f52194b6a8c65aa",
+      "entry": "265C8I/VC102/DSub/Page/MachDemaFig.inva",
+      "instance": "Pg23Display",
+      "source": "_M600TextDisp[Pg23Display] Xo::0x0110,Yo::0x00DF,DeltaX::0,DeltaY::70,LibID::0x0023,\r\n\t\t\tModeDots::0xC103,Color::0xFFE0,BColor::0x0000,ModeAdd=:PubBuf1.Int1,\r\n\t\t\tInput:=GPSID.F1,\r\n\t\t\tInput:=WrkTDMRF.F1,\r\n\t\t\tItem::#ItemEnd;",
+      "orderedParameters": [
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "Xo",
+          "lhOperandEncoding": null,
+          "rawValue": "0x0110",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "Yo",
+          "lhOperandEncoding": null,
+          "rawValue": "0x00DF",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "integer-literal",
+          "name": "DeltaX",
+          "lhOperandEncoding": null,
+          "rawValue": "0",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "integer-literal",
+          "name": "DeltaY",
+          "lhOperandEncoding": null,
+          "rawValue": "70",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "LibID",
+          "lhOperandEncoding": null,
+          "rawValue": "0x0023",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "ModeDots",
+          "lhOperandEncoding": null,
+          "rawValue": "0xC103",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "Color",
+          "lhOperandEncoding": null,
+          "rawValue": "0xFFE0",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "BColor",
+          "lhOperandEncoding": null,
+          "rawValue": "0x0000",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "ModeAdd",
+          "lhOperandEncoding": null,
+          "rawValue": "PubBuf1.Int1",
+          "operator": "=:"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "Input",
+          "lhOperandEncoding": null,
+          "rawValue": "GPSID.F1",
+          "operator": ":="
+        },
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "Input",
+          "lhOperandEncoding": null,
+          "rawValue": "WrkTDMRF.F1",
+          "operator": ":="
+        },
+        {
+          "direction": null,
+          "syntacticKind": "legacy-enum-token",
+          "name": "Item",
+          "lhOperandEncoding": null,
+          "rawValue": "#ItemEnd",
+          "operator": "::"
+        }
+      ],
+      "line": 21
+    },
+    {
+      "sha256": "bbc3261baeb116f626a3bb469a1687f1207e28df5b579510815e7077056f3604",
+      "entry": "265C8I/VC102/DSub/Page/MainFig.inva",
+      "instance": "Pg1WorkHM",
+      "source": "_M600TextDisp[Pg1WorkHM] Xo::0x0005,Yo::0x0212,DeltaX::0x0067,DeltaY::0x0000,LibID::0x0000,     \r\n\t\t\t\t\t\t\t\t       ModeDots::0xC103,Color::0xFFE0,BColor::0x0000,ModeAdd=:PubBuf1.Int1,\r\n\t\t\t\t\t\t\t\t\t\t Input::DUCtrI.Int10,Input::DUCtrI.Int9,\r\n                               Item::#ItemEnd;",
+      "orderedParameters": [
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "Xo",
+          "lhOperandEncoding": null,
+          "rawValue": "0x0005",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "Yo",
+          "lhOperandEncoding": null,
+          "rawValue": "0x0212",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "DeltaX",
+          "lhOperandEncoding": null,
+          "rawValue": "0x0067",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "DeltaY",
+          "lhOperandEncoding": null,
+          "rawValue": "0x0000",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "LibID",
+          "lhOperandEncoding": null,
+          "rawValue": "0x0000",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "ModeDots",
+          "lhOperandEncoding": null,
+          "rawValue": "0xC103",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "Color",
+          "lhOperandEncoding": null,
+          "rawValue": "0xFFE0",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "BColor",
+          "lhOperandEncoding": null,
+          "rawValue": "0x0000",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "ModeAdd",
+          "lhOperandEncoding": null,
+          "rawValue": "PubBuf1.Int1",
+          "operator": "=:"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "Input",
+          "lhOperandEncoding": null,
+          "rawValue": "DUCtrI.Int10",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "Input",
+          "lhOperandEncoding": null,
+          "rawValue": "DUCtrI.Int9",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "legacy-enum-token",
+          "name": "Item",
+          "lhOperandEncoding": null,
+          "rawValue": "#ItemEnd",
+          "operator": "::"
+        }
+      ],
+      "line": 23
+    },
+    {
+      "sha256": "bbc3261baeb116f626a3bb469a1687f1207e28df5b579510815e7077056f3604",
+      "entry": "265C8I/VC102/DSub/Page/MainFig.inva",
+      "instance": "Pg1DataTime",
+      "source": "_M600TextDisp[Pg1DataTime] Xo::0x0154,Yo::0x01F4,DeltaX::0x0000,DeltaY::0x001E,LibID::0x0000,   \r\n\t\t\t\t\t\t\t\t       ModeDots::0xC103,Color::0xFFE0,BColor::0x0000,ModeAdd=:PubBuf1.Int3,\t\t\t\t\t\t\t\t\t\t \r\n\t\t\t\t\t\t\t\t\t\t Input=:DateFm.Int1,Input=:TimeFm.Int1,\r\n                               Item::#ItemEnd;",
+      "orderedParameters": [
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "Xo",
+          "lhOperandEncoding": null,
+          "rawValue": "0x0154",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "Yo",
+          "lhOperandEncoding": null,
+          "rawValue": "0x01F4",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "DeltaX",
+          "lhOperandEncoding": null,
+          "rawValue": "0x0000",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "DeltaY",
+          "lhOperandEncoding": null,
+          "rawValue": "0x001E",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "LibID",
+          "lhOperandEncoding": null,
+          "rawValue": "0x0000",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "ModeDots",
+          "lhOperandEncoding": null,
+          "rawValue": "0xC103",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "Color",
+          "lhOperandEncoding": null,
+          "rawValue": "0xFFE0",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "BColor",
+          "lhOperandEncoding": null,
+          "rawValue": "0x0000",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "ModeAdd",
+          "lhOperandEncoding": null,
+          "rawValue": "PubBuf1.Int3",
+          "operator": "=:"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "Input",
+          "lhOperandEncoding": null,
+          "rawValue": "DateFm.Int1",
+          "operator": "=:"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "Input",
+          "lhOperandEncoding": null,
+          "rawValue": "TimeFm.Int1",
+          "operator": "=:"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "legacy-enum-token",
+          "name": "Item",
+          "lhOperandEncoding": null,
+          "rawValue": "#ItemEnd",
+          "operator": "::"
+        }
+      ],
+      "line": 28
+    },
+    {
+      "sha256": "bbc3261baeb116f626a3bb469a1687f1207e28df5b579510815e7077056f3604",
+      "entry": "265C8I/VC102/DSub/Page/MainFig.inva",
+      "instance": "Pg1ModeGrad",
+      "source": "_M600TextDisp[Pg1ModeGrad] Xo::0x0015,Yo::0x0067,DeltaX::0x017B,DeltaY::0x0000,LibID::0x0003,   \r\n\t\t\t\t\t\t\t\t       ModeDots::0xC107,Color::0xFFE0,BColor::0x0000,ModeAdd=:PubBuf1.Int5,\t\t\t\t\t\t\t\t\t\t \r\n\t\t\t\t\t\t\t\t\t\t Input=:ModeChoose.Output,Input=:GradFmLim.Output,\r\n                               Item::#ItemEnd;",
+      "orderedParameters": [
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "Xo",
+          "lhOperandEncoding": null,
+          "rawValue": "0x0015",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "Yo",
+          "lhOperandEncoding": null,
+          "rawValue": "0x0067",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "DeltaX",
+          "lhOperandEncoding": null,
+          "rawValue": "0x017B",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "DeltaY",
+          "lhOperandEncoding": null,
+          "rawValue": "0x0000",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "LibID",
+          "lhOperandEncoding": null,
+          "rawValue": "0x0003",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "ModeDots",
+          "lhOperandEncoding": null,
+          "rawValue": "0xC107",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "Color",
+          "lhOperandEncoding": null,
+          "rawValue": "0xFFE0",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "BColor",
+          "lhOperandEncoding": null,
+          "rawValue": "0x0000",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "ModeAdd",
+          "lhOperandEncoding": null,
+          "rawValue": "PubBuf1.Int5",
+          "operator": "=:"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "Input",
+          "lhOperandEncoding": null,
+          "rawValue": "ModeChoose.Output",
+          "operator": "=:"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "Input",
+          "lhOperandEncoding": null,
+          "rawValue": "GradFmLim.Output",
+          "operator": "=:"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "legacy-enum-token",
+          "name": "Item",
+          "lhOperandEncoding": null,
+          "rawValue": "#ItemEnd",
+          "operator": "::"
+        }
+      ],
+      "line": 33
+    },
+    {
+      "sha256": "bbc3261baeb116f626a3bb469a1687f1207e28df5b579510815e7077056f3604",
+      "entry": "265C8I/VC102/DSub/Page/MainFig.inva",
+      "instance": "Pg1ModeDown",
+      "source": "_M600TextDisp[Pg1ModeDown] Xo::0x0025,Yo::0x024E,DeltaX::0x0000,DeltaY::0x0000,LibID::0x0003,   \r\n\t\t\t\t\t\t\t\t       ModeDots::0xC00C,Color::0xFFFF,BColor::0x001F,ModeAdd=:PubBuf1.Int7,\t\t\t\t\t\t\t\t\t\t \r\n\t\t\t\t\t\t\t\t\t\t Input=:ModeChoose.Output,\r\n                               Item::#ItemEnd;",
+      "orderedParameters": [
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "Xo",
+          "lhOperandEncoding": null,
+          "rawValue": "0x0025",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "Yo",
+          "lhOperandEncoding": null,
+          "rawValue": "0x024E",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "DeltaX",
+          "lhOperandEncoding": null,
+          "rawValue": "0x0000",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "DeltaY",
+          "lhOperandEncoding": null,
+          "rawValue": "0x0000",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "LibID",
+          "lhOperandEncoding": null,
+          "rawValue": "0x0003",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "ModeDots",
+          "lhOperandEncoding": null,
+          "rawValue": "0xC00C",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "Color",
+          "lhOperandEncoding": null,
+          "rawValue": "0xFFFF",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "BColor",
+          "lhOperandEncoding": null,
+          "rawValue": "0x001F",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "ModeAdd",
+          "lhOperandEncoding": null,
+          "rawValue": "PubBuf1.Int7",
+          "operator": "=:"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "Input",
+          "lhOperandEncoding": null,
+          "rawValue": "ModeChoose.Output",
+          "operator": "=:"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "legacy-enum-token",
+          "name": "Item",
+          "lhOperandEncoding": null,
+          "rawValue": "#ItemEnd",
+          "operator": "::"
+        }
+      ],
+      "line": 38
+    },
+    {
+      "sha256": "6def61a497f6bae4b0ad79410d963a6e190277c16ea0d73e95fda382164e4940",
+      "entry": "265C8I/VC102/DSub/Page/OperatingInfo.inva",
+      "instance": "Pg4Display",
+      "source": "_M600TextDisp[Pg4Display] Xo::0x014A,Yo::0x006B,DeltaX::0x0000,DeltaY::0x003A,LibID::0x0000,\r\n\t\t\tModeDots::0xC104,Color::0xFFFF,BColor::0x0000,ModeAdd=:PubBuf1.Int1,\r\n\t\t\tInput=:DUCtrI.Int2,Input=:DUCtrI.Int3,Input=:DUCtrI.Int31,Input=:DUCtrI.Int27,\r\n\t\t\tInput=:GradFmLim.Output,Input=:DUCtrI.Int4,Input:=DUCtrF.F1,Input:=DUCtrF.F2,\r\n      Item::#ItemEnd;",
+      "orderedParameters": [
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "Xo",
+          "lhOperandEncoding": null,
+          "rawValue": "0x014A",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "Yo",
+          "lhOperandEncoding": null,
+          "rawValue": "0x006B",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "DeltaX",
+          "lhOperandEncoding": null,
+          "rawValue": "0x0000",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "DeltaY",
+          "lhOperandEncoding": null,
+          "rawValue": "0x003A",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "LibID",
+          "lhOperandEncoding": null,
+          "rawValue": "0x0000",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "ModeDots",
+          "lhOperandEncoding": null,
+          "rawValue": "0xC104",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "Color",
+          "lhOperandEncoding": null,
+          "rawValue": "0xFFFF",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "BColor",
+          "lhOperandEncoding": null,
+          "rawValue": "0x0000",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "ModeAdd",
+          "lhOperandEncoding": null,
+          "rawValue": "PubBuf1.Int1",
+          "operator": "=:"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "Input",
+          "lhOperandEncoding": null,
+          "rawValue": "DUCtrI.Int2",
+          "operator": "=:"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "Input",
+          "lhOperandEncoding": null,
+          "rawValue": "DUCtrI.Int3",
+          "operator": "=:"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "Input",
+          "lhOperandEncoding": null,
+          "rawValue": "DUCtrI.Int31",
+          "operator": "=:"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "Input",
+          "lhOperandEncoding": null,
+          "rawValue": "DUCtrI.Int27",
+          "operator": "=:"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "Input",
+          "lhOperandEncoding": null,
+          "rawValue": "GradFmLim.Output",
+          "operator": "=:"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "Input",
+          "lhOperandEncoding": null,
+          "rawValue": "DUCtrI.Int4",
+          "operator": "=:"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "Input",
+          "lhOperandEncoding": null,
+          "rawValue": "DUCtrF.F1",
+          "operator": ":="
+        },
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "Input",
+          "lhOperandEncoding": null,
+          "rawValue": "DUCtrF.F2",
+          "operator": ":="
+        },
+        {
+          "direction": null,
+          "syntacticKind": "legacy-enum-token",
+          "name": "Item",
+          "lhOperandEncoding": null,
+          "rawValue": "#ItemEnd",
+          "operator": "::"
+        }
+      ],
+      "line": 24
+    },
+    {
+      "sha256": "6def61a497f6bae4b0ad79410d963a6e190277c16ea0d73e95fda382164e4940",
+      "entry": "265C8I/VC102/DSub/Page/OperatingInfo.inva",
+      "instance": "Pg11Display",
+      "source": "_M600TextDisp[Pg11Display] Xo::0x014A,Yo::0x0067,DeltaX::0x0000,DeltaY::0x0033,LibID::0x0000,\r\n\t\t\tModeDots::0xC104,Color::0xFFFF,BColor::0x0000,ModeAdd=:PubBuf1.Int1,\r\n\t\t\tInput=:DUCtrI.Int14,Input=:DUCtrI.Int15,Input=:DUCtrI.Int16,Input=:DUCtrI.Int17,\r\n\t\t\tInput=:DUCtrI.Int18,Input=:DUCtrI.Int19,Input=:DUCtrI.Int20,Input=:DUCtrI.Int21,Input=:DUCtrI.Int22,\r\n      Item::#ItemEnd;",
+      "orderedParameters": [
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "Xo",
+          "lhOperandEncoding": null,
+          "rawValue": "0x014A",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "Yo",
+          "lhOperandEncoding": null,
+          "rawValue": "0x0067",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "DeltaX",
+          "lhOperandEncoding": null,
+          "rawValue": "0x0000",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "DeltaY",
+          "lhOperandEncoding": null,
+          "rawValue": "0x0033",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "LibID",
+          "lhOperandEncoding": null,
+          "rawValue": "0x0000",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "ModeDots",
+          "lhOperandEncoding": null,
+          "rawValue": "0xC104",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "Color",
+          "lhOperandEncoding": null,
+          "rawValue": "0xFFFF",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "BColor",
+          "lhOperandEncoding": null,
+          "rawValue": "0x0000",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "ModeAdd",
+          "lhOperandEncoding": null,
+          "rawValue": "PubBuf1.Int1",
+          "operator": "=:"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "Input",
+          "lhOperandEncoding": null,
+          "rawValue": "DUCtrI.Int14",
+          "operator": "=:"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "Input",
+          "lhOperandEncoding": null,
+          "rawValue": "DUCtrI.Int15",
+          "operator": "=:"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "Input",
+          "lhOperandEncoding": null,
+          "rawValue": "DUCtrI.Int16",
+          "operator": "=:"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "Input",
+          "lhOperandEncoding": null,
+          "rawValue": "DUCtrI.Int17",
+          "operator": "=:"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "Input",
+          "lhOperandEncoding": null,
+          "rawValue": "DUCtrI.Int18",
+          "operator": "=:"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "Input",
+          "lhOperandEncoding": null,
+          "rawValue": "DUCtrI.Int19",
+          "operator": "=:"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "Input",
+          "lhOperandEncoding": null,
+          "rawValue": "DUCtrI.Int20",
+          "operator": "=:"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "Input",
+          "lhOperandEncoding": null,
+          "rawValue": "DUCtrI.Int21",
+          "operator": "=:"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "Input",
+          "lhOperandEncoding": null,
+          "rawValue": "DUCtrI.Int22",
+          "operator": "=:"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "legacy-enum-token",
+          "name": "Item",
+          "lhOperandEncoding": null,
+          "rawValue": "#ItemEnd",
+          "operator": "::"
+        }
+      ],
+      "line": 42
+    },
+    {
+      "sha256": "6def61a497f6bae4b0ad79410d963a6e190277c16ea0d73e95fda382164e4940",
+      "entry": "265C8I/VC102/DSub/Page/OperatingInfo.inva",
+      "instance": "Pg13Display",
+      "source": "_M600TextDisp[Pg13Display] Xo::0x0162,Yo::0x006B,DeltaX::0x0000,DeltaY::0x0038,LibID::0x0000,\r\n\t\t\tModeDots::0xC104,Color::0xFFFF,BColor::0x0000,ModeAdd=:PubBuf1.Int1,\r\n\t\t\tInput=:DUCtrI.Int23,Input=:DUCtrI.Int24,Input=:DUCtrI.Int25,Input=:DUCtrI.Int26,\r\n     Item::#ItemEnd;",
+      "orderedParameters": [
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "Xo",
+          "lhOperandEncoding": null,
+          "rawValue": "0x0162",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "Yo",
+          "lhOperandEncoding": null,
+          "rawValue": "0x006B",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "DeltaX",
+          "lhOperandEncoding": null,
+          "rawValue": "0x0000",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "DeltaY",
+          "lhOperandEncoding": null,
+          "rawValue": "0x0038",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "LibID",
+          "lhOperandEncoding": null,
+          "rawValue": "0x0000",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "ModeDots",
+          "lhOperandEncoding": null,
+          "rawValue": "0xC104",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "Color",
+          "lhOperandEncoding": null,
+          "rawValue": "0xFFFF",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "BColor",
+          "lhOperandEncoding": null,
+          "rawValue": "0x0000",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "ModeAdd",
+          "lhOperandEncoding": null,
+          "rawValue": "PubBuf1.Int1",
+          "operator": "=:"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "Input",
+          "lhOperandEncoding": null,
+          "rawValue": "DUCtrI.Int23",
+          "operator": "=:"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "Input",
+          "lhOperandEncoding": null,
+          "rawValue": "DUCtrI.Int24",
+          "operator": "=:"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "Input",
+          "lhOperandEncoding": null,
+          "rawValue": "DUCtrI.Int25",
+          "operator": "=:"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "Input",
+          "lhOperandEncoding": null,
+          "rawValue": "DUCtrI.Int26",
+          "operator": "=:"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "legacy-enum-token",
+          "name": "Item",
+          "lhOperandEncoding": null,
+          "rawValue": "#ItemEnd",
+          "operator": "::"
+        }
+      ],
+      "line": 61
+    },
+    {
+      "sha256": "6def61a497f6bae4b0ad79410d963a6e190277c16ea0d73e95fda382164e4940",
+      "entry": "265C8I/VC102/DSub/Page/OperatingInfo.inva",
+      "instance": "Pg13LeftLight",
+      "source": "_M600TextDisp[Pg13LeftLight] Xo::0x00CC,Yo::0x0154,DeltaX::0x0000,DeltaY::0x0038,LibID::0x0023,\r\n\t\t\tModeDots::0xC103,Color::0xF800,BColor::0x0000,ModeAdd=:PubBuf1.Int5,\r\n\t\t\tInput=:PubBuf15.Int1,Input=:PubBuf15.Int2,Input=:PubBuf15.Int3,Input=:PubBuf15.Int4,\r\n         Item::#ItemEnd;",
+      "orderedParameters": [
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "Xo",
+          "lhOperandEncoding": null,
+          "rawValue": "0x00CC",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "Yo",
+          "lhOperandEncoding": null,
+          "rawValue": "0x0154",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "DeltaX",
+          "lhOperandEncoding": null,
+          "rawValue": "0x0000",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "DeltaY",
+          "lhOperandEncoding": null,
+          "rawValue": "0x0038",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "LibID",
+          "lhOperandEncoding": null,
+          "rawValue": "0x0023",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "ModeDots",
+          "lhOperandEncoding": null,
+          "rawValue": "0xC103",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "Color",
+          "lhOperandEncoding": null,
+          "rawValue": "0xF800",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "BColor",
+          "lhOperandEncoding": null,
+          "rawValue": "0x0000",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "ModeAdd",
+          "lhOperandEncoding": null,
+          "rawValue": "PubBuf1.Int5",
+          "operator": "=:"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "Input",
+          "lhOperandEncoding": null,
+          "rawValue": "PubBuf15.Int1",
+          "operator": "=:"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "Input",
+          "lhOperandEncoding": null,
+          "rawValue": "PubBuf15.Int2",
+          "operator": "=:"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "Input",
+          "lhOperandEncoding": null,
+          "rawValue": "PubBuf15.Int3",
+          "operator": "=:"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "Input",
+          "lhOperandEncoding": null,
+          "rawValue": "PubBuf15.Int4",
+          "operator": "=:"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "legacy-enum-token",
+          "name": "Item",
+          "lhOperandEncoding": null,
+          "rawValue": "#ItemEnd",
+          "operator": "::"
+        }
+      ],
+      "line": 72
+    },
+    {
+      "sha256": "6def61a497f6bae4b0ad79410d963a6e190277c16ea0d73e95fda382164e4940",
+      "entry": "265C8I/VC102/DSub/Page/OperatingInfo.inva",
+      "instance": "Pg13RightLight",
+      "source": "_M600TextDisp[Pg13RightLight] Xo::0x01BD,Yo::0x0154,DeltaX::0x0000,DeltaY::0x0038,LibID::0x0023,\r\n\t\t\tModeDots::0xC103,Color::0xF800,BColor::0x0000,ModeAdd=:PubBuf1.Int9,\r\n\t\t\tInput=:PubBuf15.Int5,Input=:PubBuf15.Int6,Input=:PubBuf15.Int7,Input=:PubBuf15.Int8,\r\n         Item::#ItemEnd;",
+      "orderedParameters": [
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "Xo",
+          "lhOperandEncoding": null,
+          "rawValue": "0x01BD",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "Yo",
+          "lhOperandEncoding": null,
+          "rawValue": "0x0154",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "DeltaX",
+          "lhOperandEncoding": null,
+          "rawValue": "0x0000",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "DeltaY",
+          "lhOperandEncoding": null,
+          "rawValue": "0x0038",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "LibID",
+          "lhOperandEncoding": null,
+          "rawValue": "0x0023",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "ModeDots",
+          "lhOperandEncoding": null,
+          "rawValue": "0xC103",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "Color",
+          "lhOperandEncoding": null,
+          "rawValue": "0xF800",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "BColor",
+          "lhOperandEncoding": null,
+          "rawValue": "0x0000",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "ModeAdd",
+          "lhOperandEncoding": null,
+          "rawValue": "PubBuf1.Int9",
+          "operator": "=:"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "Input",
+          "lhOperandEncoding": null,
+          "rawValue": "PubBuf15.Int5",
+          "operator": "=:"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "Input",
+          "lhOperandEncoding": null,
+          "rawValue": "PubBuf15.Int6",
+          "operator": "=:"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "Input",
+          "lhOperandEncoding": null,
+          "rawValue": "PubBuf15.Int7",
+          "operator": "=:"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "Input",
+          "lhOperandEncoding": null,
+          "rawValue": "PubBuf15.Int8",
+          "operator": "=:"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "legacy-enum-token",
+          "name": "Item",
+          "lhOperandEncoding": null,
+          "rawValue": "#ItemEnd",
+          "operator": "::"
+        }
+      ],
+      "line": 76
+    },
+    {
+      "sha256": "0fd47a88e29d19e0d6d20eec7b9c2983478e86889557a6c0b1cd501514855c7f",
+      "entry": "265C8I/VC102/DSub/Page/UnlockFig.inva",
+      "instance": "Pg24PasswUp",
+      "source": "_M600TextDisp[Pg24PasswUp] Xo::0x005E,Yo::0x00B0,DeltaX::0x0038,DeltaY::0x0000,LibID::0x0000,\r\n\t\t\t\t\t\t\tModeDots::0xC103,Color::0xFFFF,BColor::0x0000,ModeAdd=:PubBuf1.Int1,\t\r\n\t\t\t\t\t\t\tInput=:Password.Int1,Input=:Password.Int2,Input=:Password.Int3,\r\n\t\t\t\t\t\t\tInput=:Password.Int4,Input=:Password.Int5,Input=:Password.Int6,\r\n                     Item::#ItemEnd;",
+      "orderedParameters": [
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "Xo",
+          "lhOperandEncoding": null,
+          "rawValue": "0x005E",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "Yo",
+          "lhOperandEncoding": null,
+          "rawValue": "0x00B0",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "DeltaX",
+          "lhOperandEncoding": null,
+          "rawValue": "0x0038",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "DeltaY",
+          "lhOperandEncoding": null,
+          "rawValue": "0x0000",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "LibID",
+          "lhOperandEncoding": null,
+          "rawValue": "0x0000",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "ModeDots",
+          "lhOperandEncoding": null,
+          "rawValue": "0xC103",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "Color",
+          "lhOperandEncoding": null,
+          "rawValue": "0xFFFF",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "hex-literal",
+          "name": "BColor",
+          "lhOperandEncoding": null,
+          "rawValue": "0x0000",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "ModeAdd",
+          "lhOperandEncoding": null,
+          "rawValue": "PubBuf1.Int1",
+          "operator": "=:"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "Input",
+          "lhOperandEncoding": null,
+          "rawValue": "Password.Int1",
+          "operator": "=:"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "Input",
+          "lhOperandEncoding": null,
+          "rawValue": "Password.Int2",
+          "operator": "=:"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "Input",
+          "lhOperandEncoding": null,
+          "rawValue": "Password.Int3",
+          "operator": "=:"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "Input",
+          "lhOperandEncoding": null,
+          "rawValue": "Password.Int4",
+          "operator": "=:"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "Input",
+          "lhOperandEncoding": null,
+          "rawValue": "Password.Int5",
+          "operator": "=:"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "Input",
+          "lhOperandEncoding": null,
+          "rawValue": "Password.Int6",
+          "operator": "=:"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "legacy-enum-token",
+          "name": "Item",
+          "lhOperandEncoding": null,
+          "rawValue": "#ItemEnd",
+          "operator": "::"
+        }
+      ],
+      "line": 37
+    }
+  ],
+  "scope": "offline lexical LM evidence; production LH contract unverified",
+  "extractionLimits": [
+    "First 24 call excerpts retained; total count includes all matches",
+    "Lexical operator/value classification is not semantic direction or type proof",
+    "No unaddressed marker opcode is inferred from an empty parameter list"
+  ],
+  "externalPrerequisites": [
+    "用于生产编码的 LH 目标指令/操作数/数值版本支持证据",
+    "需有序重复参数和字符串/整数/浮点格式契约；指南明确转引 HMI 指令集与 LM 工程机械软件专题，现有材料不足以声称全协议完整。"
+  ],
+  "planScope": "仅处理 M600TextDisp。根据 指南 PDF 第 67 页；26 处源调用 建立 几何/字体/颜色常量；ModeAdd 地址；重复 Input 列表与 ItemEnd 的 LH 契约，输出名称/参数类别/方向/范围/初值/字段/布局/指令形式与来源映射。需有序重复参数和字符串/整数/浮点格式契约；指南明确转引 HMI 指令集与 LM 工程机械软件专题，现有材料不足以声称全协议完整。",
+  "fields": [
+    {
+      "sha256": "f464a5f185449d0dd99f6f0ba436c0aaddbfd0b20ab291e371d02f54e4bf332c",
+      "entry": "265C8I/VC102/SECD/SECD.typ",
+      "lhOffset": null,
+      "line": 1657,
+      "instance": "Pg1WorkHM",
+      "direction": null,
+      "field": "DataNumb",
+      "lhType": null,
+      "legacyAddress": 1650,
+      "legacyTypeCode": 2
+    },
+    {
+      "sha256": "f464a5f185449d0dd99f6f0ba436c0aaddbfd0b20ab291e371d02f54e4bf332c",
+      "entry": "265C8I/VC102/SECD/SECD.typ",
+      "lhOffset": null,
+      "line": 1658,
+      "instance": "Pg1DataTime",
+      "direction": null,
+      "field": "DataNumb",
+      "lhType": null,
+      "legacyAddress": 1651,
+      "legacyTypeCode": 2
+    },
+    {
+      "sha256": "f464a5f185449d0dd99f6f0ba436c0aaddbfd0b20ab291e371d02f54e4bf332c",
+      "entry": "265C8I/VC102/SECD/SECD.typ",
+      "lhOffset": null,
+      "line": 1659,
+      "instance": "Pg1ModeGrad",
+      "direction": null,
+      "field": "DataNumb",
+      "lhType": null,
+      "legacyAddress": 1652,
+      "legacyTypeCode": 2
+    },
+    {
+      "sha256": "f464a5f185449d0dd99f6f0ba436c0aaddbfd0b20ab291e371d02f54e4bf332c",
+      "entry": "265C8I/VC102/SECD/SECD.typ",
+      "lhOffset": null,
+      "line": 1660,
+      "instance": "Pg1ModeDown",
+      "direction": null,
+      "field": "DataNumb",
+      "lhType": null,
+      "legacyAddress": 1653,
+      "legacyTypeCode": 2
+    },
+    {
+      "sha256": "f464a5f185449d0dd99f6f0ba436c0aaddbfd0b20ab291e371d02f54e4bf332c",
+      "entry": "265C8I/VC102/SECD/SECD.typ",
+      "lhOffset": null,
+      "line": 1681,
+      "instance": "Pg5Display",
+      "direction": null,
+      "field": "DataNumb",
+      "lhType": null,
+      "legacyAddress": 1674,
+      "legacyTypeCode": 2
+    },
+    {
+      "sha256": "f464a5f185449d0dd99f6f0ba436c0aaddbfd0b20ab291e371d02f54e4bf332c",
+      "entry": "265C8I/VC102/SECD/SECD.typ",
+      "lhOffset": null,
+      "line": 1682,
+      "instance": "Pg6Display",
+      "direction": null,
+      "field": "DataNumb",
+      "lhType": null,
+      "legacyAddress": 1675,
+      "legacyTypeCode": 2
+    },
+    {
+      "sha256": "f464a5f185449d0dd99f6f0ba436c0aaddbfd0b20ab291e371d02f54e4bf332c",
+      "entry": "265C8I/VC102/SECD/SECD.typ",
+      "lhOffset": null,
+      "line": 1683,
+      "instance": "Pg9DataDis",
+      "direction": null,
+      "field": "DataNumb",
+      "lhType": null,
+      "legacyAddress": 1676,
+      "legacyTypeCode": 2
+    },
+    {
+      "sha256": "f464a5f185449d0dd99f6f0ba436c0aaddbfd0b20ab291e371d02f54e4bf332c",
+      "entry": "265C8I/VC102/SECD/SECD.typ",
+      "lhOffset": null,
+      "line": 1684,
+      "instance": "Pg9SignDis",
+      "direction": null,
+      "field": "DataNumb",
+      "lhType": null,
+      "legacyAddress": 1677,
+      "legacyTypeCode": 2
+    },
+    {
+      "sha256": "f464a5f185449d0dd99f6f0ba436c0aaddbfd0b20ab291e371d02f54e4bf332c",
+      "entry": "265C8I/VC102/SECD/SECD.typ",
+      "lhOffset": null,
+      "line": 1689,
+      "instance": "Pg8Display",
+      "direction": null,
+      "field": "DataNumb",
+      "lhType": null,
+      "legacyAddress": 1682,
+      "legacyTypeCode": 2
+    },
+    {
+      "sha256": "f464a5f185449d0dd99f6f0ba436c0aaddbfd0b20ab291e371d02f54e4bf332c",
+      "entry": "265C8I/VC102/SECD/SECD.typ",
+      "lhOffset": null,
+      "line": 1693,
+      "instance": "Pg8SigDis",
+      "direction": null,
+      "field": "DataNumb",
+      "lhType": null,
+      "legacyAddress": 1686,
+      "legacyTypeCode": 2
+    },
+    {
+      "sha256": "f464a5f185449d0dd99f6f0ba436c0aaddbfd0b20ab291e371d02f54e4bf332c",
+      "entry": "265C8I/VC102/SECD/SECD.typ",
+      "lhOffset": null,
+      "line": 1711,
+      "instance": "Pg8SNDisplay",
+      "direction": null,
+      "field": "DataNumb",
+      "lhType": null,
+      "legacyAddress": 1704,
+      "legacyTypeCode": 2
+    },
+    {
+      "sha256": "f464a5f185449d0dd99f6f0ba436c0aaddbfd0b20ab291e371d02f54e4bf332c",
+      "entry": "265C8I/VC102/SECD/SECD.typ",
+      "lhOffset": null,
+      "line": 1716,
+      "instance": "Pg23Display",
+      "direction": null,
+      "field": "DataNumb",
+      "lhType": null,
+      "legacyAddress": 1709,
+      "legacyTypeCode": 2
+    },
+    {
+      "sha256": "f464a5f185449d0dd99f6f0ba436c0aaddbfd0b20ab291e371d02f54e4bf332c",
+      "entry": "265C8I/VC102/SECD/SECD.typ",
+      "lhOffset": null,
+      "line": 1717,
+      "instance": "Pg7Display",
+      "direction": null,
+      "field": "DataNumb",
+      "lhType": null,
+      "legacyAddress": 1710,
+      "legacyTypeCode": 2
+    },
+    {
+      "sha256": "f464a5f185449d0dd99f6f0ba436c0aaddbfd0b20ab291e371d02f54e4bf332c",
+      "entry": "265C8I/VC102/SECD/SECD.typ",
+      "lhOffset": null,
+      "line": 1718,
+      "instance": "Pg4Display",
+      "direction": null,
+      "field": "DataNumb",
+      "lhType": null,
+      "legacyAddress": 1711,
+      "legacyTypeCode": 2
+    },
+    {
+      "sha256": "f464a5f185449d0dd99f6f0ba436c0aaddbfd0b20ab291e371d02f54e4bf332c",
+      "entry": "265C8I/VC102/SECD/SECD.typ",
+      "lhOffset": null,
+      "line": 1719,
+      "instance": "Pg11Display",
+      "direction": null,
+      "field": "DataNumb",
+      "lhType": null,
+      "legacyAddress": 1712,
+      "legacyTypeCode": 2
+    },
+    {
+      "sha256": "f464a5f185449d0dd99f6f0ba436c0aaddbfd0b20ab291e371d02f54e4bf332c",
+      "entry": "265C8I/VC102/SECD/SECD.typ",
+      "lhOffset": null,
+      "line": 1720,
+      "instance": "Pg13Display",
+      "direction": null,
+      "field": "DataNumb",
+      "lhType": null,
+      "legacyAddress": 1713,
+      "legacyTypeCode": 2
+    },
+    {
+      "sha256": "f464a5f185449d0dd99f6f0ba436c0aaddbfd0b20ab291e371d02f54e4bf332c",
+      "entry": "265C8I/VC102/SECD/SECD.typ",
+      "lhOffset": null,
+      "line": 1727,
+      "instance": "Pg13LeftLight",
+      "direction": null,
+      "field": "DataNumb",
+      "lhType": null,
+      "legacyAddress": 1720,
+      "legacyTypeCode": 2
+    },
+    {
+      "sha256": "f464a5f185449d0dd99f6f0ba436c0aaddbfd0b20ab291e371d02f54e4bf332c",
+      "entry": "265C8I/VC102/SECD/SECD.typ",
+      "lhOffset": null,
+      "line": 1728,
+      "instance": "Pg13RightLight",
+      "direction": null,
+      "field": "DataNumb",
+      "lhType": null,
+      "legacyAddress": 1721,
+      "legacyTypeCode": 2
+    },
+    {
+      "sha256": "f464a5f185449d0dd99f6f0ba436c0aaddbfd0b20ab291e371d02f54e4bf332c",
+      "entry": "265C8I/VC102/SECD/SECD.typ",
+      "lhOffset": null,
+      "line": 1742,
+      "instance": "Pg21YearDis",
+      "direction": null,
+      "field": "DataNumb",
+      "lhType": null,
+      "legacyAddress": 1735,
+      "legacyTypeCode": 2
+    },
+    {
+      "sha256": "f464a5f185449d0dd99f6f0ba436c0aaddbfd0b20ab291e371d02f54e4bf332c",
+      "entry": "265C8I/VC102/SECD/SECD.typ",
+      "lhOffset": null,
+      "line": 1743,
+      "instance": "Pg21DemaDis",
+      "direction": null,
+      "field": "DataNumb",
+      "lhType": null,
+      "legacyAddress": 1736,
+      "legacyTypeCode": 2
+    },
+    {
+      "sha256": "f464a5f185449d0dd99f6f0ba436c0aaddbfd0b20ab291e371d02f54e4bf332c",
+      "entry": "265C8I/VC102/SECD/SECD.typ",
+      "lhOffset": null,
+      "line": 1750,
+      "instance": "Pg24PasswUp",
+      "direction": null,
+      "field": "DataNumb",
+      "lhType": null,
+      "legacyAddress": 1743,
+      "legacyTypeCode": 2
+    },
+    {
+      "sha256": "f464a5f185449d0dd99f6f0ba436c0aaddbfd0b20ab291e371d02f54e4bf332c",
+      "entry": "265C8I/VC102/SECD/SECD.typ",
+      "lhOffset": null,
+      "line": 1751,
+      "instance": "Pg24PasswDown",
+      "direction": null,
+      "field": "DataNumb",
+      "lhType": null,
+      "legacyAddress": 1744,
+      "legacyTypeCode": 2
+    },
+    {
+      "sha256": "f464a5f185449d0dd99f6f0ba436c0aaddbfd0b20ab291e371d02f54e4bf332c",
+      "entry": "265C8I/VC102/SECD/SECD.typ",
+      "lhOffset": null,
+      "line": 1752,
+      "instance": "Pg24ID",
+      "direction": null,
+      "field": "DataNumb",
+      "lhType": null,
+      "legacyAddress": 1745,
+      "legacyTypeCode": 2
+    },
+    {
+      "sha256": "f464a5f185449d0dd99f6f0ba436c0aaddbfd0b20ab291e371d02f54e4bf332c",
+      "entry": "265C8I/VC102/SECD/SECD.typ",
+      "lhOffset": null,
+      "line": 1753,
+      "instance": "Pg13CSDis",
+      "direction": null,
+      "field": "DataNumb",
+      "lhType": null,
+      "legacyAddress": 1746,
+      "legacyTypeCode": 2
+    },
+    {
+      "sha256": "f464a5f185449d0dd99f6f0ba436c0aaddbfd0b20ab291e371d02f54e4bf332c",
+      "entry": "265C8I/VC102/SECD/SECD.typ",
+      "lhOffset": null,
+      "line": 1754,
+      "instance": "Pg13CSDis1",
+      "direction": null,
+      "field": "DataNumb",
+      "lhType": null,
+      "legacyAddress": 1747,
+      "legacyTypeCode": 2
+    }
+  ],
+  "archive": "D:/Table/LM/程序.zip",
+  "missing": [
+    "LH firmware version, opcode and operand table",
+    "LH address unit, alignment, field width/direction",
+    "Named legacy operators/enums are not translated into LH values"
+  ],
+  "taskId": "FB04",
+  "candidateCodeRows": [
+    {
+      "sha256": "521c52a07d11014405c4ee1b25f2a2e26746ef7c250778fc5eb1606b2e71e695",
+      "entry": "265C8I/VC102/SECD/SECD.code",
+      "source": "41202\t41202\t1712\t330\t103\t0\t51\t0\t49412\t65535\t0\t514\t102\t103\t104\t105\t106\t107\t108\t109\t110\t0\t",
+      "correlation": "candidate matching first legacy field address; no LH ABI translation",
+      "instance": "Pg11Display",
+      "line": 1030
+    },
+    {
+      "sha256": "521c52a07d11014405c4ee1b25f2a2e26746ef7c250778fc5eb1606b2e71e695",
+      "entry": "265C8I/VC102/SECD/SECD.code",
+      "source": "41202\t41202\t1746\t245\t120\t48\t0\t34\t49412\t65504\t0\t514\t719\t0\t",
+      "correlation": "candidate matching first legacy field address; no LH ABI translation",
+      "instance": "Pg13CSDis",
+      "line": 1113
+    },
+    {
+      "sha256": "521c52a07d11014405c4ee1b25f2a2e26746ef7c250778fc5eb1606b2e71e695",
+      "entry": "265C8I/VC102/SECD/SECD.code",
+      "source": "41202\t41202\t1747\t210\t425\t89\t0\t34\t49412\t65504\t0\t515\t720\t721\t722\t0\t",
+      "correlation": "candidate matching first legacy field address; no LH ABI translation",
+      "instance": "Pg13CSDis1",
+      "line": 1114
+    },
+    {
+      "sha256": "521c52a07d11014405c4ee1b25f2a2e26746ef7c250778fc5eb1606b2e71e695",
+      "entry": "265C8I/VC102/SECD/SECD.code",
+      "source": "41202\t41202\t1713\t354\t107\t0\t56\t0\t49412\t65535\t0\t514\t111\t112\t113\t114\t0\t",
+      "correlation": "candidate matching first legacy field address; no LH ABI translation",
+      "instance": "Pg13Display",
+      "line": 1034
+    },
+    {
+      "sha256": "521c52a07d11014405c4ee1b25f2a2e26746ef7c250778fc5eb1606b2e71e695",
+      "entry": "265C8I/VC102/SECD/SECD.code",
+      "source": "41202\t41202\t1720\t204\t340\t0\t56\t35\t49411\t63488\t0\t518\t581\t582\t583\t584\t0\t",
+      "correlation": "candidate matching first legacy field address; no LH ABI translation",
+      "instance": "Pg13LeftLight",
+      "line": 1040
+    },
+    {
+      "sha256": "521c52a07d11014405c4ee1b25f2a2e26746ef7c250778fc5eb1606b2e71e695",
+      "entry": "265C8I/VC102/SECD/SECD.code",
+      "source": "41202\t41202\t1721\t445\t340\t0\t56\t35\t49411\t63488\t0\t522\t585\t586\t587\t588\t0\t",
+      "correlation": "candidate matching first legacy field address; no LH ABI translation",
+      "instance": "Pg13RightLight",
+      "line": 1041
+    },
+    {
+      "sha256": "521c52a07d11014405c4ee1b25f2a2e26746ef7c250778fc5eb1606b2e71e695",
+      "entry": "265C8I/VC102/SECD/SECD.code",
+      "source": "41202\t41202\t1651\t340\t500\t0\t30\t0\t49411\t65504\t0\t516\t435\t507\t0\t",
+      "correlation": "candidate matching first legacy field address; no LH ABI translation",
+      "instance": "Pg1DataTime",
+      "line": 896
+    },
+    {
+      "sha256": "521c52a07d11014405c4ee1b25f2a2e26746ef7c250778fc5eb1606b2e71e695",
+      "entry": "265C8I/VC102/SECD/SECD.code",
+      "source": "41202\t41202\t1653\t37\t590\t0\t0\t3\t49164\t65535\t31\t520\t1626\t0\t",
+      "correlation": "candidate matching first legacy field address; no LH ABI translation",
+      "instance": "Pg1ModeDown",
+      "line": 898
+    },
+    {
+      "sha256": "521c52a07d11014405c4ee1b25f2a2e26746ef7c250778fc5eb1606b2e71e695",
+      "entry": "265C8I/VC102/SECD/SECD.code",
+      "source": "41202\t41202\t1652\t21\t103\t379\t0\t3\t49415\t65504\t0\t518\t1626\t1620\t0\t",
+      "correlation": "candidate matching first legacy field address; no LH ABI translation",
+      "instance": "Pg1ModeGrad",
+      "line": 897
+    },
+    {
+      "sha256": "521c52a07d11014405c4ee1b25f2a2e26746ef7c250778fc5eb1606b2e71e695",
+      "entry": "265C8I/VC102/SECD/SECD.code",
+      "source": "41202\t41202\t1650\t5\t530\t103\t0\t0\t49411\t65504\t0\t514\t98\t97\t0\t",
+      "correlation": "candidate matching first legacy field address; no LH ABI translation",
+      "instance": "Pg1WorkHM",
+      "line": 895
+    },
+    {
+      "sha256": "521c52a07d11014405c4ee1b25f2a2e26746ef7c250778fc5eb1606b2e71e695",
+      "entry": "265C8I/VC102/SECD/SECD.code",
+      "source": "41202\t41202\t1736\t104\t255\t54\t0\t0\t49412\t65535\t0\t515\t473\t474\t475\t476\t477\t478\t479\t0\t",
+      "correlation": "candidate matching first legacy field address; no LH ABI translation",
+      "instance": "Pg21DemaDis",
+      "line": 1090
+    },
+    {
+      "sha256": "521c52a07d11014405c4ee1b25f2a2e26746ef7c250778fc5eb1606b2e71e695",
+      "entry": "265C8I/VC102/SECD/SECD.code",
+      "source": "41202\t41202\t1735\t13\t255\t0\t0\t0\t49412\t65535\t0\t514\t267\t0\t",
+      "correlation": "candidate matching first legacy field address; no LH ABI translation",
+      "instance": "Pg21YearDis",
+      "line": 1089
+    },
+    {
+      "sha256": "521c52a07d11014405c4ee1b25f2a2e26746ef7c250778fc5eb1606b2e71e695",
+      "entry": "265C8I/VC102/SECD/SECD.code",
+      "source": "41202\t41202\t1709\t272\t223\t0\t70\t35\t49411\t65504\t0\t514\t903\t949\t0\t",
+      "correlation": "candidate matching first legacy field address; no LH ABI translation",
+      "instance": "Pg23Display",
+      "line": 1011
+    },
+    {
+      "sha256": "521c52a07d11014405c4ee1b25f2a2e26746ef7c250778fc5eb1606b2e71e695",
+      "entry": "265C8I/VC102/SECD/SECD.code",
+      "source": "41202\t41202\t1745\t239\t265\t0\t48\t0\t49411\t65504\t0\t526\t698\t903\t1859\t1853\t870\t814\t0\t",
+      "correlation": "candidate matching first legacy field address; no LH ABI translation",
+      "instance": "Pg24ID",
+      "line": 1107
+    },
+    {
+      "sha256": "521c52a07d11014405c4ee1b25f2a2e26746ef7c250778fc5eb1606b2e71e695",
+      "entry": "265C8I/VC102/SECD/SECD.code",
+      "source": "41202\t41202\t1744\t94\t221\t56\t0\t0\t49411\t65535\t0\t520\t278\t279\t280\t281\t282\t283\t0\t",
+      "correlation": "candidate matching first legacy field address; no LH ABI translation",
+      "instance": "Pg24PasswDown",
+      "line": 1106
+    },
+    {
+      "sha256": "521c52a07d11014405c4ee1b25f2a2e26746ef7c250778fc5eb1606b2e71e695",
+      "entry": "265C8I/VC102/SECD/SECD.code",
+      "source": "41202\t41202\t1743\t94\t176\t56\t0\t0\t49411\t65535\t0\t514\t272\t273\t274\t275\t276\t277\t0\t",
+      "correlation": "candidate matching first legacy field address; no LH ABI translation",
+      "instance": "Pg24PasswUp",
+      "line": 1105
+    },
+    {
+      "sha256": "521c52a07d11014405c4ee1b25f2a2e26746ef7c250778fc5eb1606b2e71e695",
+      "entry": "265C8I/VC102/SECD/SECD.code",
+      "source": "41202\t41202\t1711\t330\t107\t0\t58\t0\t49412\t65535\t0\t514\t90\t91\t119\t115\t1620\t92\t192\t193\t0\t",
+      "correlation": "candidate matching first legacy field address; no LH ABI translation",
+      "instance": "Pg4Display",
+      "line": 1026
+    },
+    {
+      "sha256": "521c52a07d11014405c4ee1b25f2a2e26746ef7c250778fc5eb1606b2e71e695",
+      "entry": "265C8I/VC102/SECD/SECD.code",
+      "source": "41202\t41202\t1674\t211\t137\t0\t86\t0\t49412\t65535\t0\t514\t698\t903\t647\t639\t622\t0\t",
+      "correlation": "candidate matching first legacy field address; no LH ABI translation",
+      "instance": "Pg5Display",
+      "line": 957
+    },
+    {
+      "sha256": "521c52a07d11014405c4ee1b25f2a2e26746ef7c250778fc5eb1606b2e71e695",
+      "entry": "265C8I/VC102/SECD/SECD.code",
+      "source": "41202\t41202\t1675\t380\t90\t0\t37\t0\t49412\t65504\t0\t514\t434\t136\t0\t",
+      "correlation": "candidate matching first legacy field address; no LH ABI translation",
+      "instance": "Pg6Display",
+      "line": 962
+    },
+    {
+      "sha256": "521c52a07d11014405c4ee1b25f2a2e26746ef7c250778fc5eb1606b2e71e695",
+      "entry": "265C8I/VC102/SECD/SECD.code",
+      "source": "41202\t41202\t1710\t244\t131\t0\t92\t0\t49412\t65535\t0\t579\t698\t903\t0\t",
+      "correlation": "candidate matching first legacy field address; no LH ABI translation",
+      "instance": "Pg7Display",
+      "line": 1021
+    },
+    {
+      "sha256": "521c52a07d11014405c4ee1b25f2a2e26746ef7c250778fc5eb1606b2e71e695",
+      "entry": "265C8I/VC102/SECD/SECD.code",
+      "source": "41202\t41202\t1682\t340\t97\t0\t46\t0\t49412\t65535\t0\t514\t1679\t1680\t1681\t1783\t1798\t93\t0\t",
+      "correlation": "candidate matching first legacy field address; no LH ABI translation",
+      "instance": "Pg8Display",
+      "line": 992
+    },
+    {
+      "sha256": "521c52a07d11014405c4ee1b25f2a2e26746ef7c250778fc5eb1606b2e71e695",
+      "entry": "265C8I/VC102/SECD/SECD.code",
+      "source": "41202\t41202\t1686\t450\t97\t0\t46\t0\t49412\t65535\t0\t520\t581\t582\t583\t0\t",
+      "correlation": "candidate matching first legacy field address; no LH ABI translation",
+      "instance": "Pg8SigDis",
+      "line": 999
+    },
+    {
+      "sha256": "521c52a07d11014405c4ee1b25f2a2e26746ef7c250778fc5eb1606b2e71e695",
+      "entry": "265C8I/VC102/SECD/SECD.code",
+      "source": "41202\t41202\t1704\t414\t389\t0\t46\t0\t49410\t65535\t0\t527\t1687\t1691\t1695\t1699\t0\t",
+      "correlation": "candidate matching first legacy field address; no LH ABI translation",
+      "instance": "Pg8SNDisplay",
+      "line": 1005
+    },
+    {
+      "sha256": "521c52a07d11014405c4ee1b25f2a2e26746ef7c250778fc5eb1606b2e71e695",
+      "entry": "265C8I/VC102/SECD/SECD.code",
+      "source": "41202\t41202\t1676\t320\t137\t0\t86\t0\t49412\t65535\t0\t514\t1620\t94\t92\t96\t95\t0\t",
+      "correlation": "candidate matching first legacy field address; no LH ABI translation",
+      "instance": "Pg9DataDis",
+      "line": 966
+    },
+    {
+      "sha256": "521c52a07d11014405c4ee1b25f2a2e26746ef7c250778fc5eb1606b2e71e695",
+      "entry": "265C8I/VC102/SECD/SECD.code",
+      "source": "41202\t41202\t1677\t400\t304\t0\t0\t35\t49413\t63488\t0\t519\t521\t0\t",
+      "correlation": "candidate matching first legacy field address; no LH ABI translation",
+      "instance": "Pg9SignDis",
+      "line": 968
+    }
+  ],
+  "lhNameMappingCertified": false,
+  "legacyCandidate": "_M600TextDisp",
+  "downloadableTargetCertified": false,
+  "callCount": 26,
+  "block": "M600TextDisp",
+  "observedLegacyName": "M600TextDisp",
+  "schemaVersion": 1,
+  "mappingStatus": "同名",
+  "manualPages": [
+    {
+      "path": "D:\\Table\\LM\\高质量LM编程指南V1.05.pdf",
+      "sha256": "5a8f7e95ff9632750a76d06bbebb8aa1ae3056fc8a503f4a468e57118c0819d4",
+      "physicalPage": 67,
+      "extractedText": "manual-evidence/guide-page-67.txt",
+      "typeDirectionAndLayoutCertifiedForLH": false
+    }
+  ],
+  "reviewCandidateContract": "几何/字体/颜色常量；ModeAdd 地址；重复 Input 列表与 ItemEnd",
+  "reviewAssessment": "需有序重复参数和字符串/整数/浮点格式契约；指南明确转引 HMI 指令集与 LM 工程机械软件专题，现有材料不足以声称全协议完整。",
+  "manualExtractionScope": "Physical PDF pages, copied as evidence; legacy numeric tables do not certify LH operand encodings"
+}

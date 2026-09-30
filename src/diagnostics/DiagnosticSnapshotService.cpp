@@ -1,4 +1,6 @@
 #include "DiagnosticSnapshotService.h"
+#include "common/LogSafety.h"
+#include "core/AppLogging.h"
 
 #include <QDateTime>
 #include <QDir>
@@ -8,96 +10,14 @@
 #include <QJsonValue>
 #include <QSaveFile>
 #include <QSet>
+#include <QUuid>
 
 namespace {
-
-const QString kRedactedValue = QStringLiteral("[REDACTED]");
-
-QString normalizedKey(const QString& key)
-{
-    QString normalized;
-    normalized.reserve(key.size());
-    for (const QChar character : key) {
-        if (character.isLetterOrNumber()) {
-            normalized.append(character.toLower());
-        }
-    }
-    return normalized;
-}
-
-bool isSensitiveKey(const QString& key)
-{
-    static const QSet<QString> sensitiveNames = {
-        QStringLiteral("password"),
-        QStringLiteral("passwd"),
-        QStringLiteral("pwd"),
-        QStringLiteral("secret"),
-        QStringLiteral("token"),
-        QStringLiteral("accesstoken"),
-        QStringLiteral("refreshtoken"),
-        QStringLiteral("apikey"),
-        QStringLiteral("accesskey"),
-        QStringLiteral("secretkey"),
-        QStringLiteral("privatekey"),
-        QStringLiteral("credential"),
-        QStringLiteral("credentials"),
-        QStringLiteral("authorization"),
-        QStringLiteral("cookie"),
-        QStringLiteral("sessioncookie"),
-        QStringLiteral("connectionstring"),
-        QStringLiteral("passphrase")
-    };
-
-    const QString normalized = normalizedKey(key);
-    if (sensitiveNames.contains(normalized)) {
-        return true;
-    }
-
-    // Also cover common qualified names such as databasePassword or clientSecret.
-    // Do not use a substring match: tokenCount is a diagnostic counter, not a token.
-    for (const QString& sensitiveName : sensitiveNames) {
-        if (normalized.size() > sensitiveName.size()
-                && normalized.endsWith(sensitiveName)) {
-            return true;
-        }
-    }
-    return false;
-}
-
-QJsonValue redactJsonValue(const QJsonValue& value)
-{
-    if (value.isObject()) {
-        QJsonObject redacted;
-        const QJsonObject object = value.toObject();
-        for (auto it = object.constBegin(); it != object.constEnd(); ++it) {
-            if (isSensitiveKey(it.key())) {
-                redacted.insert(it.key(), kRedactedValue);
-            } else {
-                redacted.insert(it.key(), redactJsonValue(it.value()));
-            }
-        }
-        return redacted;
-    }
-
-    if (value.isArray()) {
-        QJsonArray redacted;
-        const QJsonArray array = value.toArray();
-        for (const QJsonValue& item : array) {
-            redacted.append(redactJsonValue(item));
-        }
-        return redacted;
-    }
-
-    return value;
-}
-
 QJsonObject redactJsonObject(const QJsonObject& object)
 {
-    return redactJsonValue(object).toObject();
+    return LogSafety::redact(object).toObject();
 }
-
 }
-
 bool DiagnosticSnapshotService::exportSnapshot(const QString& baseDir,
                                                const ProjectRuntimeConfig& config,
                                                bool opcRunning,
@@ -114,18 +34,20 @@ bool DiagnosticSnapshotService::exportSnapshot(const QString& baseDir,
         return false;
     }
 
-    const QString timestamp = QDateTime::currentDateTime().toString(QStringLiteral("yyyyMMdd_HHmmss"));
-    const QString filePath = dir.filePath(QStringLiteral("diagnostic_snapshot_%1.json").arg(timestamp));
+    const QString timestamp = QDateTime::currentDateTimeUtc().toString(QStringLiteral("yyyyMMdd_HHmmss_zzz"));
+    const QString operationId = QUuid::createUuid().toString(QUuid::WithoutBraces);
+    const QString filePath = dir.filePath(QStringLiteral("diagnostic_snapshot_%1_%2.json").arg(timestamp, operationId));
 
     QJsonObject root;
     root.insert(QStringLiteral("generatedAt"), QDateTime::currentDateTimeUtc().toString(Qt::ISODate));
     root.insert(QStringLiteral("projectName"), config.projectName);
+    root.insert(QStringLiteral("logging"), QJsonObject::fromVariantMap(AppLogging::overloadStatus()));
     root.insert(QStringLiteral("projectConfig"), redactJsonObject(config.toJson()));
 
     QJsonObject opc;
     opc.insert(QStringLiteral("enabled"), config.opcServer.enabled);
     opc.insert(QStringLiteral("running"), opcRunning);
-    opc.insert(QStringLiteral("lastError"), opcLastError);
+    opc.insert(QStringLiteral("lastError"), LogSafety::redactText(opcLastError));
     opc.insert(QStringLiteral("config"), redactJsonObject(config.opcServer.toJson()));
     opc.insert(QStringLiteral("status"), redactJsonObject(QJsonObject::fromVariantMap(opcExtras)));
     root.insert(QStringLiteral("opc"), opc);

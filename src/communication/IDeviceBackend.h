@@ -72,6 +72,14 @@ public:
                              QString* errorMessage = nullptr,
                              QHash<QString, CommError>* pointErrors = nullptr) = 0;
 
+    using WriteCompletion = std::function<void(bool, QString, QHash<QString, CommError>)>;
+    virtual bool supportsAsyncWrite() const { return false; }
+    virtual void writePointsAsync(const QHash<QString, QVariant>&, int,
+                                 std::shared_ptr<std::atomic_bool>, QObject*, WriteCompletion completed)
+    {
+        completed(false, QStringLiteral("Asynchronous writes are unsupported"), {});
+    }
+
     /**
      * Download the compiled artifact to the device.
      */

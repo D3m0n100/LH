@@ -31,8 +31,8 @@
 #include <functional>
 #include <atomic>
 #include "Common.h"
-#include "common/RuntimePointTypes.h"
-#include "common/RuntimeHistoryTypes.h"
+#include "../common/RuntimePointTypes.h"
+#include "../common/RuntimeHistoryTypes.h"
 
 // ============================================================================
 // 前向声明和类型定义

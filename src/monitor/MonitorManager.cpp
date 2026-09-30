@@ -552,8 +552,10 @@ void MonitorManager::recordSample(const QString& channelName,
     recordSample(sample);
 }
 
-void MonitorManager::recordSample(const Sample& sample)
+void MonitorManager::recordSample(const Sample& inputSample)
 {
+    Sample sample = inputSample;
+    sample.normalizeValidity();
     std::shared_ptr<MonitorChannel> ch;
 
     {
@@ -599,6 +601,7 @@ void MonitorManager::recordSamples(const QString& channelName,
 
     QList<Sample> normalizedSamples = samples;
     for (Sample& s : normalizedSamples) {
+        s.normalizeValidity();
         if (s.channelName.isEmpty() || s.channelName != channelName) {
             s.channelName = channelName;
         }

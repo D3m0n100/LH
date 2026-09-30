@@ -17,6 +17,8 @@
 #include "MonitorExportHelper.h"
 #include "MonitorManager.h"
 #include "MonitorTypes.h"
+#include "monitor/ReadOnlyHistorySnapshot.h"
+#include <QUuid>
 
 using namespace Monitor;
 
@@ -345,6 +347,42 @@ private:
     }
 
 private slots:
+    void readOnlySnapshotSurvivesConcurrentInsertAndCleanup()
+    {
+        const QString path = m_tempDir->filePath(QStringLiteral("snapshot.db"));
+        auto& writer = DataManager::instance();
+        QVERIFY(writer.initialize(path));
+        const auto timestamp = QDateTime::currentDateTimeUtc();
+        QList<QVariantMap> first{{{QStringLiteral("varName"), QStringLiteral("v")},
+                                  {QStringLiteral("value"), 1.0}, {QStringLiteral("timestamp"), timestamp}}};
+        QVERIFY(writer.logRuntimeDataBatch(first).success);
+        const auto cancelled = std::make_shared<std::atomic_bool>(false);
+        ReadOnlyHistorySnapshot snapshot(path, cancelled);
+        QString error;
+        QVERIFY2(snapshot.open(&error), qPrintable(error));
+        const qint64 maxId = snapshot.maxRecordId();
+        first[0][QStringLiteral("value")] = 2.0;
+        QVERIFY(writer.logRuntimeDataBatch(first).success);
+        const QString cleanupName = QUuid::createUuid().toString();
+        {
+            auto cleanup = QSqlDatabase::addDatabase(QStringLiteral("QSQLITE"), cleanupName);
+            cleanup.setDatabaseName(path); QVERIFY(cleanup.open());
+            { QSqlQuery query(cleanup); QVERIFY(query.exec(QStringLiteral("DELETE FROM runtime_data"))); }
+            cleanup.close();
+        }
+        QSqlDatabase::removeDatabase(cleanupName);
+        RuntimeHistoryCursor cursor; cursor.maxId = maxId;
+        const auto page = snapshot.queryHistoryPage(QStringLiteral("v"), timestamp.addSecs(-1), timestamp.addSecs(1), 10, cursor);
+        QVERIFY(page.succeeded());
+        QCOMPARE(page.records.size(), 1);
+        QCOMPARE(page.records.first().value, 1.0);
+        const auto count = snapshot.countHistory(QStringLiteral("v"), timestamp.addSecs(-1), timestamp.addSecs(1), maxId);
+        QVERIFY(count.succeeded());
+        QCOMPARE(count.count, qint64(1));
+        cancelled->store(true);
+        QCOMPARE(snapshot.queryHistoryPage(QStringLiteral("v"), {}, {}, 10, cursor).status, RuntimeHistoryPageStatus::Cancelled);
+    }
+
     void init()
     {
         MonitorManager& monitor = MonitorManager::instance();

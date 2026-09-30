@@ -584,6 +584,12 @@ void MainWindow::createDockWidgets()
 
     connect(m_projectExplorerWidget, &ProjectExplorerWidget::fileOpenRequested,
             this, &MainWindow::onExplorerFileOpenRequested);
+    connect(m_projectExplorerWidget, &ProjectExplorerWidget::mainScriptRequested,
+            this, [this](const QString& path) {
+        if (m_projectController) m_projectController->setMainScriptFile(path);
+    });
+    connect(m_projectExplorerWidget, &ProjectExplorerWidget::deleteRequested,
+            this, &MainWindow::deleteProjectDocumentPath);
     connect(m_projectExplorerWidget, &ProjectExplorerWidget::fileSelected,
             this, &MainWindow::onFileSelectedInExplorer);
     connect(m_projectExplorerWidget, &ProjectExplorerWidget::locateCurrentFileRequested,
@@ -592,7 +598,7 @@ void MainWindow::createDockWidgets()
     connect(m_programBlocksWidget, &ProgramBlocksWidget::snippetDoubleClicked,
             this, [this](const FunctionSnippet& snippet) {
         if (m_dslEditor) {
-            m_dslEditor->insertSnippet(snippet.templateCode);
+            if (snippet.canInsert()) m_dslEditor->insertSnippet(snippet.templateCode);
         }
     });
     connect(m_programBlocksWidget, &ProgramBlocksWidget::snippetSelected,

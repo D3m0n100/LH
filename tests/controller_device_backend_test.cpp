@@ -18,6 +18,8 @@
 
 #include "communication/Communication.h"
 #include "communication/ControllerDeviceBackend.h"
+#include "communication/DownloadProfile.h"
+#include "common/ArtifactSnapshot.h"
 
 namespace {
 QByteArray fixtureChecksum(const QByteArray& bytes)
@@ -223,6 +225,36 @@ class ControllerDeviceBackendTest : public QObject
     Q_OBJECT
 
 private slots:
+    void profileContractRejectsFractionalIdsAndUnsupportedExecutor()
+    {
+        DownloadProfile profile;
+        QString error;
+        QVERIFY(!DownloadProfile::fromJson(R"({"slaveId":1.5,"steps":[{"type":"sendChunk","params":{"dataAddress":10}}]})", profile, &error));
+        QVERIFY(DownloadProfile::fromJson(R"({"steps":[{"type":"enter","params":{"op":"writeCoils","address":0,"values":[1]}},{"type":"sendChunk","params":{"dataAddress":10}}]})", profile, &error));
+        QStringList errors;
+        QVERIFY(profile.validateForExecutor(DownloadProfile::Executor::Bridge, &errors));
+        QVERIFY(!profile.validateForExecutor(DownloadProfile::Executor::Controller, &errors));
+        QVERIFY(!DownloadProfile::fromJson(R"({"steps":[{"type":"sendChunk","params":{"dataAddress":10,"needResponse":"false"}}]})", profile, &error));
+    }
+
+    void artifactSnapshotRetainsVerifiedBytesAfterReplacement()
+    {
+        QTemporaryDir dir;
+        const QString path = dir.filePath(QStringLiteral("payload.code"));
+        QVERIFY(writeFixtureFile(path, "original"));
+        QByteArray snapshot; QString error;
+        QVERIFY(ArtifactSnapshot::read(path, &snapshot, &error));
+        const QString digest = ArtifactSnapshot::checksum(snapshot);
+        QVERIFY(writeFixtureFile(path, "replacement"));
+        QCOMPARE(snapshot, QByteArray("original"));
+        QCOMPARE(ArtifactSnapshot::checksum(snapshot), digest);
+        QFile oversized(path);
+        QVERIFY(oversized.open(QIODevice::WriteOnly));
+        QVERIFY(oversized.resize(ArtifactSnapshot::MaxFileBytes + 1));
+        oversized.close();
+        QVERIFY(!ArtifactSnapshot::read(path, &snapshot, &error));
+    }
+
     void rtuPortClaimRejectsWrongOwnerRelease()
     {
         const QString port = QStringLiteral("LH-claim-isolation");

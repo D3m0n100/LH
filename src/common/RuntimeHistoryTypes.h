@@ -35,6 +35,19 @@ enum class RuntimeHistoryPageStatus
     Cancelled
 };
 
+namespace RuntimeHistoryContract {
+constexpr int MaxPageSize = 10000;
+inline bool validPageSize(int size) { return size > 0 && size <= MaxPageSize; }
+inline QDateTime startUtc(const QDateTime& value)
+{
+    return value.isValid() ? value.toUTC() : QDateTime::fromMSecsSinceEpoch(0, Qt::UTC);
+}
+inline QDateTime endUtc(const QDateTime& value)
+{
+    return value.isValid() ? value.toUTC() : QDateTime::currentDateTimeUtc();
+}
+} // namespace RuntimeHistoryContract
+
 /**
  * @brief 一页历史记录及其状态
  *

@@ -226,17 +226,41 @@ void ControllerDeviceBackend::readPointsAsync(const QStringList& pointIds, int b
         QHash<QString, CommError> errors;
         QString message;
         bool ok = false;
-        if (!cancelled || !cancelled->load()) {
+        if (budgetMs > 0 && (!cancelled || !cancelled->load())) {
             // One deadline covers status, all batches and individual fallback reads.
             m_client->setRequestBudget(qMax(1, budgetMs), cancelled.get());
-            ok = readPoints(pointIds, values, &message, &errors);
+            try { ok = readPoints(pointIds, values, &message, &errors); }
+            catch (...) { message = QStringLiteral("Controller read failed with an unexpected exception"); }
             m_client->setRequestBudget(-1, nullptr);
-        }
+        } else message = QStringLiteral("Controller read cancelled or deadline expired");
         const auto snapshot = statusSnapshot();
         m_asyncReadActive = false;
         if (guard) QMetaObject::invokeMethod(guard, [=]() {
             completed(ok, values, message, errors, snapshot);
         }, Qt::QueuedConnection);
+    });
+}
+
+void ControllerDeviceBackend::writePointsAsync(const QHash<QString, QVariant>& writes, int budgetMs,
+    std::shared_ptr<std::atomic_bool> cancelled, QObject* context, WriteCompletion completed)
+{
+    if (!supportsAsyncWrite() || m_asyncDownloadActive || m_asyncReadActive.exchange(true)) {
+        completed(false, QStringLiteral("Controller write admission rejected"), {});
+        return;
+    }
+    const QPointer<QObject> guard(context);
+    m_client->runAsync([this, writes, budgetMs, cancelled, guard, completed] {
+        QHash<QString, CommError> errors;
+        QString message;
+        bool ok = false;
+        if (budgetMs > 0 && (!cancelled || !cancelled->load())) {
+            m_client->setRequestBudget(qMax(1, budgetMs), cancelled.get());
+            try { ok = writePoints(writes, &message, &errors); }
+            catch (...) { message = QStringLiteral("Controller write failed with an unexpected exception"); }
+            m_client->setRequestBudget(-1, nullptr);
+        } else message = QStringLiteral("Controller write cancelled or deadline expired");
+        m_asyncReadActive = false;
+        if (guard) QMetaObject::invokeMethod(guard, [=] { completed(ok, message, errors); }, Qt::QueuedConnection);
     });
 }
 

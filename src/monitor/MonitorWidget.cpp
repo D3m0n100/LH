@@ -1,3 +1,21 @@
+#include "ReadOnlyHistorySnapshot.h"
+#include <QThread>
+#include <QSemaphore>
+#include <atomic>
+#include <memory>
+
+namespace {
+std::atomic_bool historyExportActive{false};
+struct HistoryExportAdmission {
+    ~HistoryExportAdmission() { historyExportActive.store(false); }
+};
+std::shared_ptr<HistoryExportAdmission> acquireHistoryExport()
+{
+    bool expected = false;
+    if (!historyExportActive.compare_exchange_strong(expected, true)) return {};
+    return std::make_shared<HistoryExportAdmission>();
+}
+}
 #include "core/AsyncDatabaseWorker.h"
 #include <QProgressDialog>
 #include <QPointer>
@@ -814,7 +832,12 @@ void MonitorWidget::onExportData()
             QMessageBox::critical(this, tr("导出失败"), tr("历史数据库服务不可用"));
             return;
         }
-        auto store = manager.historyStore();
+        const QString exportDatabasePath = worker->databasePath();
+        const auto admission = acquireHistoryExport();
+        if (!admission) {
+            QMessageBox::warning(this, tr("导出繁忙"), tr("已有历史导出正在进行，请等待完成或取消后再试"));
+            return;
+        }
         auto cancelled = std::make_shared<std::atomic_bool>(false);
         auto* progress = new QProgressDialog(tr("正在导出历史数据…"), tr("取消"), 0, 0, this);
         progress->setAttribute(Qt::WA_DeleteOnClose);
@@ -854,10 +877,24 @@ void MonitorWidget::onExportData()
             };
             const auto fail = [=](const QString& error) { ExportResult result; result.errorMessage = error; deliver(result); };
             if (cancelled->load()) return;
-            const qint64 snapshotMaxId = worker->latestRecordId();
-            if (snapshotMaxId < 0) { fail(QStringLiteral("Cannot acquire history snapshot")); return; }
+            const qint64 barrierMaxId = worker->latestRecordId();
+            if (barrierMaxId < 0) { fail(QStringLiteral("Cannot acquire history snapshot")); return; }
+            const auto pinned = std::make_shared<QSemaphore>();
+            auto* exportThread = QThread::create([=]() mutable {
+                (void)admission;
+                bool startupSignalled = false;
+                try {
+                auto store = std::make_shared<Monitor::ReadOnlyHistorySnapshot>(exportDatabasePath, cancelled);
+                QString snapshotError;
+                const bool opened = store->open(&snapshotError);
+                pinned->release();
+                startupSignalled = true;
+                if (!opened) { fail(snapshotError); return; }
+                if (cancelled->load()) return;
+                const qint64 snapshotMaxId = qMin(barrierMaxId, store->maxRecordId());
             Monitor::MonitorHistoryService history(store);
             MonitorExportHelper helper;
+            helper.setCancellationPredicate([cancelled] { return cancelled->load(); });
         struct DatabaseProviderState {
             bool fallback = false;
         };
@@ -955,6 +992,21 @@ void MonitorWidget::onExportData()
             channelInfos, metadata, provider, filePath, pageSize);
 
             deliver(result);
+                } catch (...) {
+                    if (!startupSignalled) pinned->release();
+                    fail(QStringLiteral("History export failed with an unexpected exception"));
+                }
+            });
+            connect(exportThread, &QThread::finished, exportThread, &QObject::deleteLater);
+            exportThread->start();
+            // One bounded startup handoff pins the snapshot; bulk queries/file IO never occupy the writer.
+            if (!pinned->tryAcquire(1, 3000)) {
+                cancelled->store(true);
+                if (guard) QMetaObject::invokeMethod(guard, [=] {
+                    if (progressGuard) progressGuard->close();
+                    if (guard) QMessageBox::critical(guard, tr("导出失败"), tr("无法及时固定历史快照；导出已取消"));
+                }, Qt::QueuedConnection);
+            }
         });
         if (!accepted) {
             progress->close();

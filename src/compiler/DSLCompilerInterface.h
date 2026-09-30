@@ -14,8 +14,8 @@ struct CompileResult;
 #include <QTimer>
 #include <QVariantMap>
 #include <functional>
-#include "common/ConfigTypes.h"
-#include "common/RuntimePointTypes.h"
+#include "../common/ConfigTypes.h"
+#include "../common/RuntimePointTypes.h"
 #include "Common.h"
 
 // DSL 编译接口封装：调用 Python main.py compile

@@ -136,7 +136,7 @@ END_PROGRAM
 
 
 def test_golden_valid_instructions(tmp_path, compiler):
-    """Valid program with constants and literal folding generates exact golden .code bytecode"""
+    """Literal assignment must not use an unrelated constant block as writeback."""
     valid_code = """PROGRAM P
 VAR
   system : System;
@@ -153,16 +153,9 @@ END_PROGRAM
     out_path = tmp_path / "valid.code"
 
     res = compiler.compile_file(str(src_path), str(out_path))
-    assert res.success, f"Compilation failed: {res.errors}"
-    assert out_path.exists()
-
-    lines = [l.strip() for l in out_path.read_text(encoding='utf-8').splitlines() if l.strip()]
-    # System: 101 101 0 1 100 2601 1 1000
-    assert lines[0] == "101 101 0 1 100 2601 1 1000"
-    # val1 := 42 -> IntConstBuild (type_id 121)
-    assert lines[1].startswith("121 121") and lines[1].endswith("42")
-    # val2 := 10 + 20 -> folded to 30 -> IntConstBuild (type_id 121)
-    assert lines[2].startswith("121 121") and lines[2].endswith("30")
+    assert not res.success
+    assert any("赋值写回" in error for error in res.errors)
+    assert not out_path.exists()
 
 
 def test_array_type_declaration_fails_closed(tmp_path, compiler):
@@ -234,7 +227,6 @@ VAR
   val : INT;
 END_VAR
 system(Author := 1, Config := 100, Date := 2601);
-val := 100;
 END_PROGRAM
 """
     src_path = tmp_path / "prog.lh"
@@ -345,7 +337,7 @@ END_PROGRAM
 
 
 def test_constant_int_division_not_float(tmp_path, compiler):
-    """INT constant division 5 / 2 must evaluate to 2 (integer), NOT IEEE float pattern 1075838976"""
+    """Constant folding must not bypass the missing variable writeback contract."""
     code = """PROGRAM P
 VAR
   system : System;
@@ -360,16 +352,13 @@ END_PROGRAM
     out_code = tmp_path / "int_div.code"
 
     res = compiler.compile_file(str(src_path), str(out_code))
-    assert res.success, f"Failed: {res.errors}"
-    lines = [l.strip() for l in out_code.read_text(encoding='utf-8').splitlines() if l.strip()]
-    # IntConstBuild type_id 121, value must be 2, NOT 1075838976
-    assert lines[1].startswith("121 121")
-    assert lines[1].endswith(" 2")
-    assert "1075838976" not in lines[1]
+    assert not res.success
+    assert any("赋值写回" in error for error in res.errors)
+    assert not out_code.exists()
 
 
 def test_constant_real_float_encoding(tmp_path, compiler):
-    """REAL constant 3 must be encoded as IEEE 754 float32 bit pattern 1077936128, NOT integer 3"""
+    """REAL assignments require writeback even when the float encoding is known."""
     code = """PROGRAM P
 VAR
   system : System;
@@ -384,11 +373,9 @@ END_PROGRAM
     out_code = tmp_path / "real_const.code"
 
     res = compiler.compile_file(str(src_path), str(out_code))
-    assert res.success, f"Failed: {res.errors}"
-    lines = [l.strip() for l in out_code.read_text(encoding='utf-8').splitlines() if l.strip()]
-    # RealConstBuild type_id 122, value 3.0 packed as float32 is 1077936128
-    assert lines[1].startswith("122 122")
-    assert lines[1].endswith(" 1077936128")
+    assert not res.success
+    assert any("赋值写回" in error for error in res.errors)
+    assert not out_code.exists()
 
 
 def test_division_by_zero_rejected(tmp_path, compiler):
@@ -634,9 +621,11 @@ END_PROGRAM
 
     res1 = compiler.compile_file(str(src_float), str(out_float))
     res2 = compiler.compile_file(str(src_int), str(out_int))
-    assert res1.success, f"Failed: {res1.errors}"
-    assert res2.success, f"Failed: {res2.errors}"
-    assert out_float.read_text(encoding='utf-8') == out_int.read_text(encoding='utf-8'), "REAL 1 and 1.0 must encode identically"
+    assert not res1.success and not res2.success
+    assert all(any("赋值写回" in error for error in result.errors) for result in (res1, res2))
+    assert not out_float.exists() and not out_int.exists()
+    from lh_compiler.backend.codegen import encode_float32
+    assert encode_float32(1) == encode_float32(1.0) == (1065353216, None)
 
 
 def test_ast_builder_records_errors_on_injected_context_exceptions():
@@ -745,7 +734,6 @@ VAR
   val : INT;
 END_VAR
 system(Author := 1, Config := 100, Date := 2601);
-val := 42;
 END_PROGRAM
 """
     src = tmp_path / "app.lh"
@@ -903,10 +891,10 @@ def test_t15_supported_zero_parameter_fb_compiles_successfully(tmp_path, compile
     code = """PROGRAM P
 VAR
   system : System;
-  val : INT;
+  no_op : Nop;
 END_VAR
 system(Author := 1, Config := 100, Date := 2601);
-val := 123;
+no_op();
 END_PROGRAM
 """
     out_code = tmp_path / "valid_std.code"

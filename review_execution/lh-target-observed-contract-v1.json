@@ -1,0 +1,196 @@
+{
+  "schemaVersion": 1,
+  "contractId": "lh-current-generator-observed-v1",
+  "scope": "offline source observations; not a certified controller ABI",
+  "downloadableTargetCertified": false,
+  "firmwareVersion": null,
+  "byteOrder": null,
+  "alignment": null,
+  "observedSource": {
+    "taskId": 751,
+    "systemId": 101,
+    "filterBwId": 851,
+    "variableInitializationWriteContract": null,
+    "parameterOffsetConsumptionMismatch": true,
+    "parametersCurrentlyConstantOnly": true,
+    "variableSizes": {
+      "REAL": 4,
+      "INT": 2,
+      "LREAL": 8,
+      "DINT": 4,
+      "BOOL": 1
+    },
+    "linearAllocation": true,
+    "realImmediate": "IEEE754 float32 bits"
+  },
+  "sources": [
+    "backend/codegen.py",
+    "backend/memory.py",
+    "backend/emitter.py",
+    "function_blocks/definitions/_system.py",
+    "function_blocks/definitions/_task.py",
+    "function_blocks/definitions/_filter.py"
+  ],
+  "unknown": [
+    "firmware instruction support by version",
+    "memory address unit and alignment on controller",
+    "reference operand encoding and field writeback",
+    "initialization and variable write target operation",
+    "IQ target scale",
+    "task scheduler markers and event protocol"
+  ],
+  "policy": [
+    "retain no-Profile compileOnly",
+    "reject incomplete block contracts",
+    "do not copy LM instruction IDs or absolute addresses",
+    "do not enable branch or loop expansion without a target contract"
+  ],
+  "legacyEvidence": [
+    {
+      "archive": "D:/Table/LM/程序.zip",
+      "entry": "265C8I/VC102/SEHC/SEHC.rep",
+      "sha256": "a865d0a269db56921a8b07b52663f8f953623afa8d4dda6108171d442a1ab35e",
+      "extracts": [
+        {
+          "line": 15,
+          "text": "第一遍错误：\t0\t\t第二遍错误：\t0"
+        }
+      ]
+    },
+    {
+      "archive": "D:/Table/LM/程序.zip",
+      "entry": "265C8I/VC102/SEHC/SEHC.code",
+      "sha256": "56c712ad9f683bc78b92cd7e74e64b3b7fcd1f7a8f782c8d75f8b957a9074c36",
+      "extracts": [
+        {
+          "line": 79,
+          "text": "40967\t40967\t307\t8\t0\t0\t8\t"
+        },
+        {
+          "line": 120,
+          "text": "41148\t41148\t543\t473\t"
+        },
+        {
+          "line": 547,
+          "text": "40967\t40967\t1646\t6\t0\t0\t50\t"
+        },
+        {
+          "line": 552,
+          "text": "40967\t40967\t1649\t5\t0\t0\t500\t"
+        },
+        {
+          "line": 630,
+          "text": "40967\t40967\t1832\t4\t0\t1\t1\t"
+        }
+      ]
+    },
+    {
+      "archive": "D:/Table/LM/程序.zip",
+      "entry": "265C8I/VC102/SEHC/SEHC.typ",
+      "sha256": "28ed832b790612a2d39619d720ed0c26ef94b6c131e85ae93103a19e18eb4833",
+      "extracts": [
+        {
+          "line": 314,
+          "text": "307\t2\tCtrlTask.TaskTime"
+        },
+        {
+          "line": 315,
+          "text": "308\t2\tCtrlTask.Count"
+        },
+        {
+          "line": 550,
+          "text": "543\t3\tBucketDig.Input"
+        },
+        {
+          "line": 551,
+          "text": "544\t3\tBucketDig.Output"
+        },
+        {
+          "line": 552,
+          "text": "545\t2\tBucketDig.Order"
+        },
+        {
+          "line": 553,
+          "text": "546\t3\tBucketDig.CutOffFreqc"
+        }
+      ]
+    },
+    {
+      "archive": "D:/Table/LM/程序.zip",
+      "entry": "265C8I/VC102/SEHC/SEHC.list",
+      "sha256": "cd9771d7711d85063bb446740b9e279063a7616c17cba4b7d538198620d83e56",
+      "extracts": [
+        {
+          "line": 505,
+          "text": "  //D:\\LM\\EX\\265C8I\\VC102\\SEHC\\SEHC.inva(45) _Task[CtrlTask] //任务定义"
+        },
+        {
+          "line": 507,
+          "text": "CtrlTask.TaskTime=:1;\t//任务执行时间，整型量，ModeOpt，1～TimeLeng"
+        },
+        {
+          "line": 508,
+          "text": "CtrlTask.Count=:0;\t//任务切换次数，整型量，次"
+        },
+        {
+          "line": 837,
+          "text": "  //D:\\LM\\EX\\265C8I\\VC102\\HSub\\Port\\PortIn.inva(53) _FilterBW[BucketDig] //巴特沃斯滤波器"
+        },
+        {
+          "line": 839,
+          "text": "BucketDig.Input:=0.0;\t//输入数据，浮点数"
+        },
+        {
+          "line": 840,
+          "text": "BucketDig.Output:=0.0;\t//输出数据，浮点数"
+        },
+        {
+          "line": 841,
+          "text": "BucketDig.Order=:2;\t//阶次，整型量，0～3"
+        },
+        {
+          "line": 842,
+          "text": "BucketDig.CutOffFreqc:=1.0;\t//截止频率，浮点数，Hz，0.001～9999"
+        }
+      ]
+    },
+    {
+      "archive": "D:/Table/LM/程序.zip",
+      "entry": "265C8I/VC102/HSub/Port/PortIn.inva",
+      "sha256": "c166d9884e52abf161005feef5fe73c8e352759baad34859733dc6d85c918a4e",
+      "extracts": [
+        {
+          "line": 53,
+          "text": "\t\t_FilterBW[BucketDig]     \"Src\":=BucketDigRF.Output;                                //铲斗挖掘"
+        }
+      ]
+    },
+    {
+      "archive": "D:/Table/LM/程序.zip",
+      "entry": "265C8I/VC102/SEHC/SEHC.inva",
+      "sha256": "027a1d55037c276648b9d4740f9a711e00457d5f5fd2584cd8bc965456d587e8",
+      "extracts": [
+        {
+          "line": 45,
+          "text": "\t_Task[CtrlTask] \"TaskNum\"::CtrID,\"Msg\"::#TimeMesg,\"Unit\"::#MSec,\"TimeLeng\"::CtrTs;"
+        },
+        {
+          "line": 55,
+          "text": "\t_TaskEnd;"
+        },
+        {
+          "line": 63,
+          "text": "\t_TaskEnd;"
+        },
+        {
+          "line": 72,
+          "text": "\t_TaskEnd;"
+        },
+        {
+          "line": 80,
+          "text": "\t_TaskEnd;"
+        }
+      ]
+    }
+  ]
+}

@@ -1,3 +1,4 @@
+#include "HistoryQuery.h"
 #include "AsyncDatabaseWorker.h"
 
 #include <QDateTime>
@@ -11,6 +12,8 @@
 #include <algorithm>
 #include <QTimer>
 #include <cmath>
+#include <exception>
+#include <QScopeGuard>
 
 namespace Core {
 
@@ -376,8 +379,15 @@ void AsyncDatabaseWorker::scheduleHistoryTask(QObject* context, std::function<vo
         });
         return;
     }
-    task();
-    --m_pendingHistoryTasks;
+    const auto restorePending = qScopeGuard([this] { --m_pendingHistoryTasks; });
+    // Extension callbacks must never unwind into the Qt event loop.
+    try {
+        task();
+    } catch (const std::exception& e) {
+        emit workerError(QStringLiteral("historyCallback"), QStringLiteral("History callback failed: %1").arg(QString::fromUtf8(e.what())));
+    } catch (...) {
+        emit workerError(QStringLiteral("historyCallback"), QStringLiteral("History callback failed: unknown exception"));
+    }
 }
 
 bool AsyncDatabaseWorker::executeBatchInsert(const QList<QVariantMap>& records, QString& errorText)
@@ -541,328 +551,54 @@ AsyncDatabaseWorker::CleanupResult AsyncDatabaseWorker::doCleanupInThread(int re
     return result;
 }
 
-RuntimeHistoryPage AsyncDatabaseWorker::queryHistoryPage(
-    const QString& channelName,
-    const QDateTime& start,
-    const QDateTime& end,
-    int pageSize,
-    const RuntimeHistoryCursor& cursor,
-    const std::atomic_bool* cancelToken)
+RuntimeHistoryPage AsyncDatabaseWorker::queryHistoryPage(const QString& channel, const QDateTime& start,
+    const QDateTime& end, int pageSize, const RuntimeHistoryCursor& cursor, const std::atomic_bool* cancelToken)
 {
     if (QThread::currentThread() != m_workerThread) {
-        RuntimeHistoryPage page;
-        page.status = RuntimeHistoryPageStatus::SqlError;
+        RuntimeHistoryPage page; page.status = RuntimeHistoryPageStatus::SqlError;
         page.errorCode = QStringLiteral("ASYNC_REQUEST_REQUIRED");
-        page.errorText = QStringLiteral("Use the asynchronous history request API from the caller thread");
-        return page;
+        page.errorText = QStringLiteral("Use requestPage from the caller thread"); return page;
     }
-
-    RuntimeHistoryPage page;
-    if (cancelToken && cancelToken->load(std::memory_order_relaxed)) {
-        page.status = RuntimeHistoryPageStatus::Cancelled;
-        page.errorCode = QStringLiteral("CANCELLED");
-        page.errorText = QStringLiteral("Query was cancelled");
-        return page;
-    }
-
-    if (!m_db.isOpen()) {
-        page.status = RuntimeHistoryPageStatus::NotInitialized;
-        page.errorCode = QStringLiteral("NOT_INITIALIZED");
-        page.errorText = QStringLiteral("Worker database is not open");
-        return page;
-    }
-
-    if (pageSize <= 0 || pageSize > 10000) {
-        page.status = RuntimeHistoryPageStatus::SqlError;
-        page.errorCode = QStringLiteral("INVALID_PAGE_SIZE");
-        return page;
-    }
-
-    const QString startText = formatIsoUtc(start.isValid() ? start.toUTC() : QDateTime::fromMSecsSinceEpoch(0, Qt::UTC));
-    const QString endText = formatIsoUtc(end.isValid() ? end.toUTC() : QDateTime::currentDateTimeUtc());
-
-    QString sql = QStringLiteral("SELECT ") + RUNTIME_RECORD_SELECT_COLUMNS + QStringLiteral(
-        " FROM runtime_data "
-        "WHERE variable_name = :varName AND timestamp >= :start AND timestamp <= :end ");
-
-    if (cursor.isValid()) {
-        sql += QStringLiteral("AND (timestamp > :cursorTime OR (timestamp = :cursorTime AND id > :cursorId)) ");
-    }
-    if (cursor.maxId >= 0) {
-        sql += QStringLiteral("AND id <= :maxId ");
-    }
-
-    sql += QStringLiteral("ORDER BY timestamp ASC, id ASC LIMIT :limit");
-
-    QSqlQuery query(m_db);
-    query.prepare(sql);
-    query.bindValue(QStringLiteral(":varName"), channelName);
-    query.bindValue(QStringLiteral(":start"), startText);
-    query.bindValue(QStringLiteral(":end"), endText);
-    if (cursor.isValid()) {
-        query.bindValue(QStringLiteral(":cursorTime"), formatIsoUtc(cursor.timestamp.toUTC()));
-        query.bindValue(QStringLiteral(":cursorId"), cursor.id);
-    }
-    if (cursor.maxId >= 0) {
-        query.bindValue(QStringLiteral(":maxId"), cursor.maxId);
-    }
-    query.bindValue(QStringLiteral(":limit"), pageSize + 1);
-
-    if (!query.exec()) {
-        page.status = RuntimeHistoryPageStatus::SqlError;
-        page.errorCode = query.lastError().nativeErrorCode();
-        page.errorText = query.lastError().text();
-        return page;
-    }
-
-    QList<RuntimeRecord> records;
-    while (query.next()) {
-        if (m_stopRequested || (cancelToken && cancelToken->load())) {
-            page.status = RuntimeHistoryPageStatus::Cancelled; return page;
-        }
-        records.append(runtimeRecordFromSql(query));
-    }
-
-    page.hasMore = records.size() > pageSize;
-    if (page.hasMore) {
-        records.removeLast();
-    }
-
-    page.records = records;
-    page.status = RuntimeHistoryPageStatus::Success;
-
-    if (!page.records.isEmpty()) {
-        page.nextCursor.timestamp = page.records.last().timestamp;
-        page.nextCursor.id = page.records.last().id;
-        page.nextCursor.maxId = cursor.maxId;
-    }
-
-    return page;
+    return HistoryQuery(m_db, &m_stopRequested).queryHistoryPage(channel, start, end, pageSize, cursor, cancelToken);
 }
-
-RuntimeHistoryPage AsyncDatabaseWorker::queryLatestHistoryPage(
-    const QString& channelName,
-    int maxCount,
-    int pageSize,
-    const RuntimeHistoryCursor& cursor,
-    const QDateTime& end,
-    const std::atomic_bool* cancelToken)
+RuntimeHistoryPage AsyncDatabaseWorker::queryLatestHistoryPage(const QString& channel, int count, int pageSize,
+    const RuntimeHistoryCursor& cursor, const QDateTime& end, const std::atomic_bool* cancelToken)
 {
     if (QThread::currentThread() != m_workerThread) {
-        RuntimeHistoryPage page;
-        page.status = RuntimeHistoryPageStatus::SqlError;
+        RuntimeHistoryPage page; page.status = RuntimeHistoryPageStatus::SqlError;
         page.errorCode = QStringLiteral("ASYNC_REQUEST_REQUIRED");
-        page.errorText = QStringLiteral("Use the asynchronous history request API from the caller thread");
-        return page;
+        page.errorText = QStringLiteral("Use requestPage from the caller thread"); return page;
     }
-
-    RuntimeHistoryPage page;
-    if (cancelToken && cancelToken->load(std::memory_order_relaxed)) {
-        page.status = RuntimeHistoryPageStatus::Cancelled;
-        page.errorCode = QStringLiteral("CANCELLED");
-        page.errorText = QStringLiteral("Query was cancelled");
-        return page;
-    }
-
-    if (!m_db.isOpen()) {
-        page.status = RuntimeHistoryPageStatus::NotInitialized;
-        page.errorCode = QStringLiteral("NOT_INITIALIZED");
-        page.errorText = QStringLiteral("Worker database is not open");
-        return page;
-    }
-
-    if (pageSize <= 0 || pageSize > 10000 || maxCount <= 0) {
-        page.status = RuntimeHistoryPageStatus::SqlError;
-        page.errorCode = QStringLiteral("INVALID_PARAM");
-        return page;
-    }
-
-    const QString endText = end.isValid() ? formatIsoUtc(end.toUTC()) : QString();
-
-    QString subquery = QStringLiteral("SELECT ") + RUNTIME_RECORD_SELECT_COLUMNS + QStringLiteral(
-        " FROM runtime_data WHERE variable_name = :varName ");
-    if (!endText.isEmpty()) {
-        subquery += QStringLiteral("AND timestamp <= :end ");
-    }
-    if (cursor.maxId >= 0) {
-        subquery += QStringLiteral("AND id <= :maxId ");
-    }
-    subquery += QStringLiteral("ORDER BY timestamp DESC, id DESC LIMIT :maxCount");
-
-    QString sql = QStringLiteral("SELECT * FROM (") + subquery + QStringLiteral(") WHERE 1=1 ");
-    if (cursor.isValid()) {
-        sql += QStringLiteral("AND (timestamp > :cursorTime OR (timestamp = :cursorTime AND id > :cursorId)) ");
-    }
-    if (cursor.maxId >= 0) {
-        sql += QStringLiteral("AND id <= :maxId ");
-    }
-    sql += QStringLiteral("ORDER BY timestamp ASC, id ASC LIMIT :limit");
-
-    QSqlQuery query(m_db);
-    query.prepare(sql);
-    query.bindValue(QStringLiteral(":varName"), channelName);
-    if (!endText.isEmpty()) {
-        query.bindValue(QStringLiteral(":end"), endText);
-    }
-    query.bindValue(QStringLiteral(":maxCount"), maxCount);
-    if (cursor.isValid()) {
-        query.bindValue(QStringLiteral(":cursorTime"), formatIsoUtc(cursor.timestamp.toUTC()));
-        query.bindValue(QStringLiteral(":cursorId"), cursor.id);
-    }
-    if (cursor.maxId >= 0) {
-        query.bindValue(QStringLiteral(":maxId"), cursor.maxId);
-    }
-    query.bindValue(QStringLiteral(":limit"), pageSize + 1);
-
-    if (!query.exec()) {
-        page.status = RuntimeHistoryPageStatus::SqlError;
-        page.errorCode = query.lastError().nativeErrorCode();
-        page.errorText = query.lastError().text();
-        return page;
-    }
-
-    QList<RuntimeRecord> records;
-    while (query.next()) {
-        if (m_stopRequested || (cancelToken && cancelToken->load())) {
-            page.status = RuntimeHistoryPageStatus::Cancelled; return page;
-        }
-        records.append(runtimeRecordFromSql(query));
-    }
-
-    page.hasMore = records.size() > pageSize;
-    if (page.hasMore) {
-        records.removeLast();
-    }
-
-    page.records = records;
-    page.status = RuntimeHistoryPageStatus::Success;
-
-    if (!page.records.isEmpty()) {
-        page.nextCursor.timestamp = page.records.last().timestamp;
-        page.nextCursor.id = page.records.last().id;
-        page.nextCursor.maxId = cursor.maxId;
-    }
-
-    return page;
+    return HistoryQuery(m_db, &m_stopRequested).queryLatestHistoryPage(channel, count, pageSize, cursor, end, cancelToken);
 }
-
 qint64 AsyncDatabaseWorker::latestRecordId()
 {
-    if (QThread::currentThread() != m_workerThread || !m_dbOpen) return -1;
-    QSqlQuery query(m_db);
-    if (!query.exec(QStringLiteral("SELECT COALESCE(MAX(id), 0) FROM runtime_data")) || !query.next()) return -1;
-    return query.value(0).toLongLong();
+    if (QThread::currentThread() != m_workerThread) return -1;
+    return HistoryQuery(m_db, &m_stopRequested).latestRecordId();
 }
-
-RuntimeHistoryCount AsyncDatabaseWorker::countHistory(
-    const QString& channelName,
-    const QDateTime& start,
-    const QDateTime& end,
-    qint64 maxRecordId)
+RuntimeHistoryCount AsyncDatabaseWorker::countHistory(const QString& channel, const QDateTime& start,
+    const QDateTime& end, qint64 maxRecordId)
 {
     if (QThread::currentThread() != m_workerThread) {
-        RuntimeHistoryCount count;
-        count.status = RuntimeHistoryPageStatus::SqlError;
+        RuntimeHistoryCount count; count.status = RuntimeHistoryPageStatus::SqlError;
         count.errorCode = QStringLiteral("ASYNC_REQUEST_REQUIRED");
-        count.errorText = QStringLiteral("Use the asynchronous history request API from the caller thread");
-        return count;
+        count.errorText = QStringLiteral("Use the asynchronous history request API"); return count;
     }
-
-    RuntimeHistoryCount count;
-    if (!m_db.isOpen()) {
-        count.status = RuntimeHistoryPageStatus::NotInitialized;
-        count.errorCode = QStringLiteral("NOT_INITIALIZED");
-        return count;
-    }
-
-    const QString startText = formatIsoUtc(start.isValid() ? start.toUTC() : QDateTime::fromMSecsSinceEpoch(0, Qt::UTC));
-    const QString endText = formatIsoUtc(end.isValid() ? end.toUTC() : QDateTime::currentDateTimeUtc());
-
-    QString sql = QStringLiteral(
-        "SELECT COUNT(*) FROM runtime_data "
-        "WHERE variable_name = :varName AND timestamp >= :start AND timestamp <= :end ");
-    if (maxRecordId >= 0) {
-        sql += QStringLiteral("AND id <= :maxId");
-    }
-
-    QSqlQuery query(m_db);
-    query.prepare(sql);
-    query.bindValue(QStringLiteral(":varName"), channelName);
-    query.bindValue(QStringLiteral(":start"), startText);
-    query.bindValue(QStringLiteral(":end"), endText);
-    if (maxRecordId >= 0) {
-        query.bindValue(QStringLiteral(":maxId"), maxRecordId);
-    }
-
-    if (!query.exec() || !query.next()) {
-        count.status = RuntimeHistoryPageStatus::SqlError;
-        count.errorCode = query.lastError().nativeErrorCode();
-        count.errorText = query.lastError().text();
-        return count;
-    }
-
-    count.status = RuntimeHistoryPageStatus::Success;
-    count.count = query.value(0).toLongLong();
-    return count;
+    return HistoryQuery(m_db, &m_stopRequested).countHistory(channel, start, end, maxRecordId);
 }
-
-RuntimeHistoryCount AsyncDatabaseWorker::countLatestHistory(
-    const QString& channelName,
-    int maxCount,
-    const QDateTime& end,
-    qint64 maxRecordId)
+RuntimeHistoryCount AsyncDatabaseWorker::countLatestHistory(const QString& channel, int maxCount,
+    const QDateTime& end, qint64 maxRecordId)
 {
     if (QThread::currentThread() != m_workerThread) {
-        RuntimeHistoryCount count;
-        count.status = RuntimeHistoryPageStatus::SqlError;
+        RuntimeHistoryCount count; count.status = RuntimeHistoryPageStatus::SqlError;
         count.errorCode = QStringLiteral("ASYNC_REQUEST_REQUIRED");
-        count.errorText = QStringLiteral("Use the asynchronous history request API from the caller thread");
-        return count;
+        count.errorText = QStringLiteral("Use the asynchronous history request API"); return count;
     }
-
-    RuntimeHistoryCount count;
-    if (!m_db.isOpen()) {
-        count.status = RuntimeHistoryPageStatus::NotInitialized;
-        count.errorCode = QStringLiteral("NOT_INITIALIZED");
-        return count;
-    }
-
-    const QString endText = end.isValid() ? formatIsoUtc(end.toUTC()) : QString();
-
-    QString sql = QStringLiteral("SELECT COUNT(*) FROM runtime_data WHERE variable_name = :varName ");
-    if (!endText.isEmpty()) {
-        sql += QStringLiteral("AND timestamp <= :end ");
-    }
-    if (maxRecordId >= 0) {
-        sql += QStringLiteral("AND id <= :maxId ");
-    }
-
-    QSqlQuery query(m_db);
-    query.prepare(sql);
-    query.bindValue(QStringLiteral(":varName"), channelName);
-    if (!endText.isEmpty()) {
-        query.bindValue(QStringLiteral(":end"), endText);
-    }
-    if (maxRecordId >= 0) {
-        query.bindValue(QStringLiteral(":maxId"), maxRecordId);
-    }
-
-    if (!query.exec() || !query.next()) {
-        count.status = RuntimeHistoryPageStatus::SqlError;
-        count.errorCode = query.lastError().nativeErrorCode();
-        count.errorText = query.lastError().text();
-        return count;
-    }
-
-    const qint64 total = query.value(0).toLongLong();
-    count.status = RuntimeHistoryPageStatus::Success;
-    count.count = (maxCount > 0) ? qMin(static_cast<qint64>(maxCount), total) : total;
-    return count;
+    return HistoryQuery(m_db, &m_stopRequested).countLatestHistory(channel, maxCount, end, maxRecordId);
 }
-
 QList<RuntimeRecord> AsyncDatabaseWorker::getLatestRecords(const QString& channelName, int count)
 {
-    if (QThread::currentThread() != m_workerThread) return {};
+    if (QThread::currentThread() != m_workerThread) { qWarning("ASYNC_REQUEST_REQUIRED: use requestPage from the caller thread"); return {}; }
 
     if (!m_db.isOpen() || count <= 0) {
         return {};
@@ -890,14 +626,14 @@ QList<RuntimeRecord> AsyncDatabaseWorker::queryHistory(
     const QDateTime& start,
     const QDateTime& end)
 {
-    if (QThread::currentThread() != m_workerThread) return {};
+    if (QThread::currentThread() != m_workerThread) { qWarning("ASYNC_REQUEST_REQUIRED: use requestPage from the caller thread"); return {}; }
 
     if (!m_db.isOpen()) {
         return {};
     }
 
-    const QString startText = formatIsoUtc(start.isValid() ? start.toUTC() : QDateTime::fromMSecsSinceEpoch(0, Qt::UTC));
-    const QString endText = formatIsoUtc(end.isValid() ? end.toUTC() : QDateTime::currentDateTimeUtc());
+    const QString startText = formatIsoUtc(RuntimeHistoryContract::startUtc(start));
+    const QString endText = formatIsoUtc(RuntimeHistoryContract::endUtc(end));
 
     QSqlQuery query(m_db);
     query.prepare(QStringLiteral("SELECT ") + RUNTIME_RECORD_SELECT_COLUMNS + QStringLiteral(

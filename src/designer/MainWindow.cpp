@@ -21,6 +21,7 @@
 #include "ProjectExplorerWidget.h"
 #include "ProgramBlocksWidget.h"
 #include "MonitorManager.h"
+#include "RuntimeMonitorAdapter.h"
 #include "../communication/IDeviceBackend.h"
 #include "../communication/IOpcServer.h"
 #include "../communication/DownloadProfile.h"
@@ -393,7 +394,14 @@ void MainWindow::createControllers()
 
     m_parameterController = new ParameterController(this);
 
-    m_sessionController = new RuntimeSessionController(this);
+    auto& runtimeMonitor = Monitor::MonitorManager::instance();
+    auto* runtimeService = new RuntimeSessionService(
+        makeRuntimeMonitorPort(runtimeMonitor), runtimeMonitor.historyStore(), this);
+    connect(&runtimeMonitor, &Monitor::MonitorManager::databaseServiceStarted, runtimeService,
+            [runtimeService, &runtimeMonitor](bool success, const QString&) {
+                if (success) runtimeService->setHistory(runtimeMonitor.historyStore());
+            });
+    m_sessionController = new RuntimeSessionController(this, runtimeService);
     m_sessionController->setProjectController(m_projectController);
     m_sessionController->setBuildController(m_buildController);
     m_sessionController->setParameterController(m_parameterController);
@@ -962,14 +970,18 @@ void MainWindow::onOpenProject()
 
 void MainWindow::onSaveProject()
 {
-    if (!saveAuxiliaryFiles(false)) return;
-    m_projectController->saveProject();
+    m_projectCommands.save(false, {
+        [this](bool all) { return saveAuxiliaryFiles(all); },
+        [this] { return m_projectController->saveProject(); }
+    });
 }
 
 void MainWindow::onSaveAll()
 {
-    if (!saveAuxiliaryFiles(true)) return;
-    m_projectController->saveProject();
+    m_projectCommands.save(true, {
+        [this](bool all) { return saveAuxiliaryFiles(all); },
+        [this] { return m_projectController->saveProject(); }
+    });
 }
 
 void MainWindow::onCloseProject()
@@ -2036,12 +2048,6 @@ void MainWindow::onFontSizeChanged(int pointSize)
 void MainWindow::onLogMessage(const QString& message)
 {
     appendOutput(message);
-    const QString lower = message.toLower();
-    if (lower.contains("error") || lower.contains("失败")) {
-        addProblem("error", "系统", message);
-    } else if (lower.contains("warn") || lower.contains("alarm")) {
-        addProblem("warning", "系统", message);
-    }
 }
 
 void MainWindow::onErrorOccurred(const QString& title, const QString& message)

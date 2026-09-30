@@ -2,7 +2,7 @@
 #define RUNTIME_POINT_QUALITY_MAPPER_H
 
 #include "CommTypes.h"
-#include "common/RuntimePointTypes.h"
+#include "../common/RuntimePointTypes.h"
 
 inline RuntimePointQuality runtimePointQualityFromBackendError(const CommError& error,
                                                                bool backendOnline)

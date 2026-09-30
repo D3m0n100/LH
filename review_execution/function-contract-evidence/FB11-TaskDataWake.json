@@ -1,0 +1,56 @@
+{
+  "calls": [],
+  "scope": "offline lexical LM evidence; production LH contract unverified",
+  "extractionLimits": [
+    "First 24 call excerpts retained; total count includes all matches",
+    "Lexical operator/value classification is not semantic direction or type proof",
+    "No unaddressed marker opcode is inferred from an empty parameter list"
+  ],
+  "externalPrerequisites": [
+    "用于生产编码的 LH 目标指令/操作数/数值版本支持证据"
+  ],
+  "planScope": "仅处理 TaskDataWake。根据 用户手册 PDF 第 32、36–37 页；程序包无对应调用 建立 TaskNum/Data；Data 为具有唤醒特征的数据项 的 LH 契约，输出名称/参数类别/方向/范围/初值/字段/布局/指令形式与来源映射。文档足以建参数与引用类型规则；唤醒事件执行属于控制器，别名和目标操作数布局仍需验证。",
+  "fields": [],
+  "archive": "D:/Table/LM/程序.zip",
+  "missing": [
+    "LH firmware version, opcode and operand table",
+    "LH address unit, alignment, field width/direction",
+    "Named legacy operators/enums are not translated into LH values"
+  ],
+  "taskId": "FB11",
+  "candidateCodeRows": [],
+  "lhNameMappingCertified": false,
+  "legacyCandidate": "_TaskParamt",
+  "downloadableTargetCertified": false,
+  "callCount": 0,
+  "block": "TaskDataWake",
+  "observedLegacyName": "TaskParamt",
+  "schemaVersion": 1,
+  "mappingStatus": "名称映射候选",
+  "manualPages": [
+    {
+      "path": "D:\\Table\\LM\\LM2007用户手册(1).pdf",
+      "sha256": "99d42e57db22fe0107fd3bde810a61267392196bd4612469e1256dcc77c3f706",
+      "physicalPage": 32,
+      "extractedText": "manual-evidence/manual-page-32.txt",
+      "typeDirectionAndLayoutCertifiedForLH": false
+    },
+    {
+      "path": "D:\\Table\\LM\\LM2007用户手册(1).pdf",
+      "sha256": "99d42e57db22fe0107fd3bde810a61267392196bd4612469e1256dcc77c3f706",
+      "physicalPage": 36,
+      "extractedText": "manual-evidence/manual-page-36.txt",
+      "typeDirectionAndLayoutCertifiedForLH": false
+    },
+    {
+      "path": "D:\\Table\\LM\\LM2007用户手册(1).pdf",
+      "sha256": "99d42e57db22fe0107fd3bde810a61267392196bd4612469e1256dcc77c3f706",
+      "physicalPage": 37,
+      "extractedText": "manual-evidence/manual-page-37.txt",
+      "typeDirectionAndLayoutCertifiedForLH": false
+    }
+  ],
+  "reviewCandidateContract": "TaskNum/Data；Data 为具有唤醒特征的数据项",
+  "reviewAssessment": "文档足以建参数与引用类型规则；唤醒事件执行属于控制器，别名和目标操作数布局仍需验证。",
+  "manualExtractionScope": "Physical PDF pages, copied as evidence; legacy numeric tables do not certify LH operand encodings"
+}

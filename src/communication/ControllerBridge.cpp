@@ -1,6 +1,7 @@
 // File: src/communication/ControllerBridge.cpp
 
 #include "ControllerBridge.h"
+#include "ModbusLimits.h"
 
 #include "DownloadProfile.h"
 #include "ModbusInterface.h"
@@ -393,7 +394,7 @@ bool ControllerBridge::stepEnterOrFinalize(const QVariantMap& params)
             for (const auto& v : vs) {
                 regs.push_back(static_cast<quint16>(v.toUInt()));
             }
-            if (addr < 0 || addr > 65535 || addr + regs.size() > 65536) {
+            if (addr < 0 || addr > 65535 || regs.size() > ModbusLimits::WriteRegisters || addr + regs.size() > 65536) {
                 m_modbus->reportCommError(CommErrorCode::InvalidConfig,
                                           "Write registers address range invalid");
                 return false;
@@ -516,7 +517,7 @@ bool ControllerBridge::stepSendChunk(const QVariantMap& params, const QByteArray
     const int packetOffsetAddr = params.value("packetOffsetAddress", -1).toInt();
     const int packetIndexBase = params.value("packetIndexBase", 0).toInt();
 
-    if (dataAddr < 0 || chunkWords <= 0 || chunkWords > 125) {
+    if (dataAddr < 0 || chunkWords <= 0 || chunkWords > ModbusLimits::WriteRegisters) {
         m_modbus->reportCommError(CommErrorCode::InvalidConfig,
                                   "SendChunk config invalid: dataAddress/chunkWords",
                                   QString("dataAddress=%1 chunkWords=%2").arg(dataAddr).arg(chunkWords));
@@ -682,7 +683,7 @@ bool ControllerBridge::download(const DownloadProfile& profile, const QByteArray
     }
 
     QStringList validationErrors;
-    if (!profile.validate(&validationErrors)) {
+    if (!profile.validateForExecutor(DownloadProfile::Executor::Bridge, &validationErrors)) {
         m_modbus->reportCommError(CommErrorCode::InvalidConfig,
                                   "Download profile invalid",
                                   validationErrors.join(QStringLiteral("; ")));

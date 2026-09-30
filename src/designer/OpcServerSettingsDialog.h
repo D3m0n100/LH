@@ -3,7 +3,7 @@
 
 #include <QDialog>
 
-#include "common/ConfigTypes.h"
+#include "../common/ConfigTypes.h"
 
 class QCheckBox;
 class QLineEdit;

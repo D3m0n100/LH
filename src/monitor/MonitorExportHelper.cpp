@@ -74,6 +74,7 @@ MonitorExportHelper::~MonitorExportHelper()
 
 bool MonitorExportHelper::commitSaveFile(QSaveFile& file)
 {
+    if (m_cancelled && m_cancelled()) { file.cancelWriting(); return false; }
     return file.commit();
 }
 

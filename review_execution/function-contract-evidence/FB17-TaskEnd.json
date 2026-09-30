@@ -1,0 +1,120 @@
+{
+  "calls": [
+    {
+      "sha256": "3ac9f41a252546393eb5ada373208af6a7203966bdfd7903c1150fcdf62f094e",
+      "entry": "265C8I/VC102/SECD/SECD.inva",
+      "instance": "",
+      "source": "_TaskEnd;",
+      "orderedParameters": [],
+      "line": 88
+    },
+    {
+      "sha256": "3ac9f41a252546393eb5ada373208af6a7203966bdfd7903c1150fcdf62f094e",
+      "entry": "265C8I/VC102/SECD/SECD.inva",
+      "instance": "",
+      "source": "_TaskEnd;",
+      "orderedParameters": [],
+      "line": 126
+    },
+    {
+      "sha256": "3ac9f41a252546393eb5ada373208af6a7203966bdfd7903c1150fcdf62f094e",
+      "entry": "265C8I/VC102/SECD/SECD.inva",
+      "instance": "",
+      "source": "_TaskEnd;",
+      "orderedParameters": [],
+      "line": 137
+    },
+    {
+      "sha256": "027a1d55037c276648b9d4740f9a711e00457d5f5fd2584cd8bc965456d587e8",
+      "entry": "265C8I/VC102/SEHC/SEHC.inva",
+      "instance": "",
+      "source": "_TaskEnd;",
+      "orderedParameters": [],
+      "line": 55
+    },
+    {
+      "sha256": "027a1d55037c276648b9d4740f9a711e00457d5f5fd2584cd8bc965456d587e8",
+      "entry": "265C8I/VC102/SEHC/SEHC.inva",
+      "instance": "",
+      "source": "_TaskEnd;",
+      "orderedParameters": [],
+      "line": 63
+    },
+    {
+      "sha256": "027a1d55037c276648b9d4740f9a711e00457d5f5fd2584cd8bc965456d587e8",
+      "entry": "265C8I/VC102/SEHC/SEHC.inva",
+      "instance": "",
+      "source": "_TaskEnd;",
+      "orderedParameters": [],
+      "line": 72
+    },
+    {
+      "sha256": "027a1d55037c276648b9d4740f9a711e00457d5f5fd2584cd8bc965456d587e8",
+      "entry": "265C8I/VC102/SEHC/SEHC.inva",
+      "instance": "",
+      "source": "_TaskEnd;",
+      "orderedParameters": [],
+      "line": 80
+    }
+  ],
+  "scope": "offline lexical LM evidence; production LH contract unverified",
+  "extractionLimits": [
+    "First 24 call excerpts retained; total count includes all matches",
+    "Lexical operator/value classification is not semantic direction or type proof",
+    "No unaddressed marker opcode is inferred from an empty parameter list"
+  ],
+  "externalPrerequisites": [
+    "用于生产编码的 LH 目标指令/操作数/数值版本支持证据"
+  ],
+  "planScope": "仅处理 TaskEnd。根据 用户手册 PDF 第 32–35 页；SEHC 4 组 Task/TaskEnd；SEHC.code:546 等 建立 无参数结束标记；任务体结构边界 的 LH 契约，输出名称/参数类别/方向/范围/初值/字段/布局/指令形式与来源映射。可实现任务结构验证与无实例标记；旧 40968 行没有地址，不能直接套入当前固定带地址 Instruction。",
+  "fields": [],
+  "archive": "D:/Table/LM/程序.zip",
+  "missing": [
+    "LH firmware version, opcode and operand table",
+    "LH address unit, alignment, field width/direction",
+    "Named legacy operators/enums are not translated into LH values"
+  ],
+  "taskId": "FB17",
+  "candidateCodeRows": [],
+  "lhNameMappingCertified": false,
+  "legacyCandidate": "_TaskEnd",
+  "downloadableTargetCertified": false,
+  "callCount": 7,
+  "block": "TaskEnd",
+  "observedLegacyName": "TaskEnd",
+  "schemaVersion": 1,
+  "mappingStatus": "同名",
+  "manualPages": [
+    {
+      "path": "D:\\Table\\LM\\LM2007用户手册(1).pdf",
+      "sha256": "99d42e57db22fe0107fd3bde810a61267392196bd4612469e1256dcc77c3f706",
+      "physicalPage": 32,
+      "extractedText": "manual-evidence/manual-page-32.txt",
+      "typeDirectionAndLayoutCertifiedForLH": false
+    },
+    {
+      "path": "D:\\Table\\LM\\LM2007用户手册(1).pdf",
+      "sha256": "99d42e57db22fe0107fd3bde810a61267392196bd4612469e1256dcc77c3f706",
+      "physicalPage": 33,
+      "extractedText": "manual-evidence/manual-page-33.txt",
+      "typeDirectionAndLayoutCertifiedForLH": false
+    },
+    {
+      "path": "D:\\Table\\LM\\LM2007用户手册(1).pdf",
+      "sha256": "99d42e57db22fe0107fd3bde810a61267392196bd4612469e1256dcc77c3f706",
+      "physicalPage": 34,
+      "extractedText": "manual-evidence/manual-page-34.txt",
+      "typeDirectionAndLayoutCertifiedForLH": false
+    },
+    {
+      "path": "D:\\Table\\LM\\LM2007用户手册(1).pdf",
+      "sha256": "99d42e57db22fe0107fd3bde810a61267392196bd4612469e1256dcc77c3f706",
+      "physicalPage": 35,
+      "extractedText": "manual-evidence/manual-page-35.txt",
+      "typeDirectionAndLayoutCertifiedForLH": false
+    }
+  ],
+  "reviewCandidateContract": "无参数结束标记；任务体结构边界",
+  "reviewAssessment": "可实现任务结构验证与无实例标记；旧 40968 行没有地址，不能直接套入当前固定带地址 Instruction。",
+  "manualExtractionScope": "Physical PDF pages, copied as evidence; legacy numeric tables do not certify LH operand encodings"
+}

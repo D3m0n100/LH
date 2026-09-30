@@ -33,7 +33,7 @@
 #include <QProcess>
 #include <QString>
 #include <functional>
-#include "common/ConfigTypes.h"
+#include "../common/ConfigTypes.h"
 #include "DSLCompilerInterface.h"
 #include "ui/DiagnosticItem.h"
 

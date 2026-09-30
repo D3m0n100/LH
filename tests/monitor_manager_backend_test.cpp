@@ -14,6 +14,7 @@
 #include "communication/VirtualDeviceBackend.h"
 #include "monitor/MonitorDataProcessor.h"
 #include "monitor/MonitorManager.h"
+#include "monitor/MonitorChannel.h"
 #include "monitor/IMonitorHistoryStore.h"
 
 using namespace Monitor;
@@ -400,6 +401,40 @@ private:
     }
 
 private slots:
+    void nonFiniteSamplesPreserveAlarmAndDoNotEnterCurves()
+    {
+        ChannelConfig config;
+        config.name = QStringLiteral("finite");
+        Threshold threshold;
+        threshold.name = QStringLiteral("high"); threshold.value = 5.0;
+        threshold.mode = ThresholdMode::Above; threshold.enabled = true;
+        config.thresholds.append(threshold);
+        MonitorChannel channel(config);
+        QSignalSpy cleared(&channel, &MonitorChannel::thresholdCleared);
+        QSignalSpy added(&channel, &MonitorChannel::sampleAdded);
+        channel.appendSample(Sample(config.name, 10.0, {}, QDateTime::currentDateTimeUtc()));
+        for (double value : {std::numeric_limits<double>::quiet_NaN(),
+                             std::numeric_limits<double>::infinity(), -std::numeric_limits<double>::infinity()}) {
+            Sample bad(config.name, value, {}, QDateTime::currentDateTimeUtc());
+            QVERIFY(!bad.valueValid);
+            QCOMPARE(bad.quality, RuntimePointQuality::Bad);
+            QVERIFY(!bad.metadata.value(QStringLiteral("error")).toString().isEmpty());
+            channel.appendSample(bad);
+        }
+        QCOMPARE(cleared.count(), 0);
+        QCOMPARE(added.count(), 1);
+        MonitorManager manager;
+        manager.setDatabaseLoggingEnabled(false);
+        QSignalSpy recorded(&manager, &MonitorManager::sampleRecorded);
+        QSignalSpy batchRecorded(&manager, &MonitorManager::samplesRecorded);
+        Sample mutated(config.name, 1.0, {}, QDateTime::currentDateTimeUtc());
+        mutated.value = std::numeric_limits<double>::quiet_NaN();
+        manager.recordSample(mutated);
+        manager.recordSamples(config.name, {mutated, Sample(config.name, 2.0, {}, QDateTime::currentDateTimeUtc())});
+        QCOMPARE(recorded.count(), 0);
+        QCOMPARE(batchRecorded.count(), 1);
+    }
+
     void init()
     {
         auto& manager = MonitorManager::instance();

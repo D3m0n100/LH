@@ -4,7 +4,7 @@
 #include <QString>
 #include <QStringList>
 
-#include "common/ConfigTypes.h"
+#include "../common/ConfigTypes.h"
 
 namespace DSLCompilerInternal {
 

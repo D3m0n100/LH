@@ -1,0 +1,44 @@
+控制系统应用功能块 176
+3、两位继电控制 
+¾ 功能描述： 
+完成一次两位继电控制的计算 
+¾ 数学模型 
+PosiOut=1, NegOut=0 ( Input≥A1 ,PosiOut=0 ,NegOut=0 ) 
+PosiOut=0, NegOut=0 ( Input＜A0 ,PosiOut=1 ,NegOut=0 ) 
+PosiOut=0, NegOut=1 ( Input≤-A1 ,PosiOut=0 ,NegOut=0 ) 
+PosiOut=0, NegOut=0 ( Input＞-A0 ,PosiOut=0 ,NegOut=1 ) 
+两位继电控制输入输出如下图所示： 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+Y 
+0  A0  A 1    X  
+PosiOut=0 
+NegOut=0 
+PosiOut=0 
+NegOut=1 
+PosiOut=1 
+NegOut=0 
+¾ 装配格式： 
+_RelayCtrl[.] Input:=Memb; 
+其中： 
+① RelayCtrl 表示两位继电控制功能 
+② Input 为函数输入数据项 
+¾ 参数特征： 
+编号 名 称 定 义 类型 单位 取值范围 初始值 被初始化 注释
+1 Input 输入数据 浮点数
+或I Q数
+  0.0 上电复位  
+2 PosiOut 正饱和输出 整型量  0,1 0 上电复位  
+3 NegOut 负饱和输出 整型量  0,1 0 上电复位  
+4 NonActive 死区A1 浮点数
+或I Q数
+ 0～9999 0.01 下载装配 1 
+ - 176 -

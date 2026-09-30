@@ -4,6 +4,7 @@
 #include "MonitorChannel.h"
 #include <QMutexLocker>
 #include <algorithm>
+#include <cmath>
 
 namespace Monitor {
 
@@ -54,6 +55,7 @@ void MonitorChannel::updateConfig(const ChannelConfig& config)
 
 void MonitorChannel::appendSample(const Sample& sample)
 {
+    if (!sample.valueValid || !std::isfinite(sample.value)) return;
     {
         QMutexLocker locker(&m_mutex);
         m_samples.push_back(sample);
@@ -73,12 +75,13 @@ void MonitorChannel::appendSamples(const QList<Sample>& samples)
     {
         QMutexLocker locker(&m_mutex);
         for (const Sample& sample : samples) {
-            m_samples.push_back(sample);
+            if (sample.valueValid && std::isfinite(sample.value)) m_samples.push_back(sample);
         }
         enforceMaxSamples();
     }
     
     // 检查最后一个样本的阈值
+      if (!samples.last().valueValid || !std::isfinite(samples.last().value)) return;
     checkThresholds(samples.last());
     emit sampleAdded(samples.last());
 }
@@ -170,6 +173,7 @@ QList<Threshold> MonitorChannel::thresholds() const
 
 void MonitorChannel::checkThresholds(const Sample& sample)
 {
+    if (!sample.valueValid || !std::isfinite(sample.value)) return;
     ChannelConfig configSnapshot;
     {
         QMutexLocker locker(&m_mutex);

@@ -122,8 +122,8 @@ int main(int argc, char* argv[])
         !decodedBizLine.contains(QStringLiteral("event=download_test")) ||
         !decodedBizLine.contains(QStringLiteral("attempt=2")) ||
         !decodedBizLine.contains(QStringLiteral("target=target-device\\nwith\\nnewlines")) ||
-        !decodedBizLine.contains(QStringLiteral("password=******")) ||
-        !decodedBizLine.contains(QStringLiteral("token=******")) ||
+        !decodedBizLine.contains(QStringLiteral("password=[REDACTED]")) ||
+        !decodedBizLine.contains(QStringLiteral("token=[REDACTED]")) ||
         !decodedBizLine.contains(QStringLiteral("multiline_field=row1\\r\\nrow2\\trow3")) ||
         decodedBizLine.contains(QStringLiteral("SuperSecret123"))) {
         AppLogging::shutdown();

@@ -1,0 +1,15 @@
+ 
+_M600ProgressBar[.] Xo::Const,Yo::Const,D eltaX::Const,DeltaY::Const,Length::Const, 
+Width::Const,Color::Const,BColor::Cons t,ModeAdd=:Const,LimitAdd:=Memb, 
+Input::Memb, …,Item::#ItemEnd; 
+比如GPS信息监控界面显示信噪比柱状图：  
+ 
+具体参见《 LM工程机械软件专题》 
+ 
+ 
+ 
+ 
+ 
+  
+2011 Page 71 of 176 
+ 

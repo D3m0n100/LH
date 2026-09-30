@@ -12,6 +12,7 @@
 #include <QtTest/QtTest>
 
 #include "compiler/DSLCompilerInterface.h"
+#include "compiler/DSLCompilerInternal.h"
 
 namespace {
 
@@ -149,12 +150,45 @@ class DslCompilerSemanticsTest : public QObject
     Q_OBJECT
 
 private slots:
+    void assembledSourceMapTracksIdenticalLinesAndLegacyInlineCalls()
+    {
+        QTemporaryDir dir;
+        const QString main = dir.filePath(QStringLiteral("main.lh"));
+        const QString helper = dir.filePath(QStringLiteral("helper.lh"));
+        QVERIFY(writeTextFile(main, QStringLiteral("PROGRAM Main\nVAR\n x : INT;\nEND_VAR\n// repeated\nEND_PROGRAM\n")));
+        QVERIFY(writeTextFile(helper, QStringLiteral("// repeated\nhelper = _Nop();\n")));
+        QString error;
+        const QString input = DSLCompilerInternal::assembleProjectCompilerInput(dir.path(), dir.filePath("output"), main, {main, helper}, &error);
+        QVERIFY2(!input.isEmpty(), qPrintable(error));
+        const QStringList lines = readTextFile(input).split(QLatin1Char('\n'));
+        QFile mapFile(input + QStringLiteral(".source-map.json"));
+        QVERIFY(mapFile.open(QIODevice::ReadOnly));
+        const auto locations = QJsonDocument::fromJson(mapFile.readAll()).object().value("locations").toObject();
+        int repeated = 0;
+        for (int i = 0; i < lines.size(); ++i) {
+            const auto location = locations.value(QString::number(i + 1)).toObject();
+            if (lines.at(i) == QStringLiteral("// repeated")) {
+                ++repeated;
+                QVERIFY(location.value("exactColumn").toBool());
+                const bool fromMain = location.value("filePath").toString() == QFileInfo(main).canonicalFilePath();
+                QCOMPARE(location.value("line").toInt(), fromMain ? 5 : 1);
+            }
+            if (lines.at(i) == QStringLiteral("helper();")) {
+                QCOMPARE(location.value("filePath").toString(), QFileInfo(helper).canonicalFilePath());
+                QCOMPARE(location.value("line").toInt(), 2);
+                QVERIFY(!location.value("exactColumn").toBool());
+            }
+        }
+        QCOMPARE(repeated, 2);
+        QVERIFY(lines.contains(QStringLiteral("helper();")));
+    }
+
     void missingProfileAllowsOfflineCompileButInvalidProfileStillFails()
     {
         QTemporaryDir project;
         QVERIFY(project.isValid());
         QVERIFY(writeTextFile(QDir(project.path()).filePath("main.lh"),
-                              "PROGRAM Main\nVAR\n x : REAL;\nEND_VAR\nx := 1.0;\nEND_PROGRAM\n"));
+                              "PROGRAM Main\nVAR\n no_op : Nop;\nEND_VAR\nno_op();\nEND_PROGRAM\n"));
         ProjectRuntimeConfig config;
         config.projectName = QStringLiteral("offline");
         config.mainScriptPath = QStringLiteral("main.lh");

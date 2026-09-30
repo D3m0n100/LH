@@ -87,7 +87,7 @@ QString currentTimeLabel()
 
 bool RuntimeSessionController::requestDownload(const QString& artifactPath, const QVariantMap& options)
 {
-    if (m_backendDownloadInProgress || m_state == RuntimeSessionState::Downloading) return false;
+    if (m_backendDownloadInProgress || state() == RuntimeSessionState::Downloading) return false;
     m_downloadCancelled = false;
     if (m_backend) {
         m_backend->resetDownloadCancellation();
@@ -103,7 +103,7 @@ bool RuntimeSessionController::requestDownload(const QString& artifactPath, cons
     emit downloadProgressChanged(0);
 
     const QString trimmedArtifactPath = artifactPath.trimmed();
-    const RuntimeSessionState prevState = m_state;
+    const RuntimeSessionState prevState = state();
     ProjectRuntimeConfig runtimeConfig;
     QString projectPath;
     if (m_projectController) {
@@ -114,7 +114,7 @@ bool RuntimeSessionController::requestDownload(const QString& artifactPath, cons
     const int maxAttempts = qMax(1, effectiveOptions.value(QStringLiteral("retryCount"), 1).toInt());
 
     const auto restoreStateAfterDownload = [this, prevState]() {
-        if (m_state == RuntimeSessionState::Idle || m_state == RuntimeSessionState::Fault)
+        if (state() == RuntimeSessionState::Idle || state() == RuntimeSessionState::Fault)
             return;
 
         if (!m_backend || !m_backend->isOnline()) {
@@ -142,7 +142,7 @@ bool RuntimeSessionController::requestDownload(const QString& artifactPath, cons
                             {QStringLiteral("retryCount"), maxAttempts}});
 
     auto failPrecheck = [&](const QString& message, bool diagnosticAlreadyEmitted = false) {
-        if (m_downloadCancelled || m_state == RuntimeSessionState::Idle)
+        if (m_downloadCancelled || state() == RuntimeSessionState::Idle)
             return false;
 
         setDownloadState(DownloadState::PrecheckFailed);
@@ -177,7 +177,7 @@ bool RuntimeSessionController::requestDownload(const QString& artifactPath, cons
     auto finishFailure = [&](DownloadState failureState,
                              const QString& rawMessage,
                              int attemptsUsed) {
-        if (m_downloadCancelled || m_state == RuntimeSessionState::Idle)
+        if (m_downloadCancelled || state() == RuntimeSessionState::Idle)
             return false;
 
         setDownloadState(failureState);
@@ -212,7 +212,7 @@ bool RuntimeSessionController::requestDownload(const QString& artifactPath, cons
         return false;
     };
 
-    if (m_state != RuntimeSessionState::Running && m_state != RuntimeSessionState::Connected) {
+    if (state() != RuntimeSessionState::Running && state() != RuntimeSessionState::Connected) {
         return failPrecheck(QStringLiteral("当前状态不允许下载。"));
     }
 
@@ -255,7 +255,7 @@ bool RuntimeSessionController::requestDownload(const QString& artifactPath, cons
     int attemptsUsed = 0;
 
     for (int attempt = 1; attempt <= maxAttempts; ++attempt) {
-        if (m_downloadCancelled || m_state == RuntimeSessionState::Idle) {
+        if (m_downloadCancelled || state() == RuntimeSessionState::Idle) {
             AppLogging::writeBusinessEvent(QStringLiteral("download_canceled"),
                                            QtWarningMsg,
                                            m_currentDownloadOperationId,
@@ -289,7 +289,7 @@ bool RuntimeSessionController::requestDownload(const QString& artifactPath, cons
                                        attempt);
 
         setState(RuntimeSessionState::Downloading);
-        if (m_downloadCancelled || m_state == RuntimeSessionState::Idle) {
+        if (m_downloadCancelled || state() == RuntimeSessionState::Idle) {
             AppLogging::writeBusinessEvent(QStringLiteral("download_canceled"),
                                            QtWarningMsg,
                                            m_currentDownloadOperationId,
@@ -304,7 +304,7 @@ bool RuntimeSessionController::requestDownload(const QString& artifactPath, cons
         setDownloadState(DownloadState::Downloading);
         emit downloadProgressChanged(25);
 
-        if (m_downloadCancelled || m_state == RuntimeSessionState::Idle) {
+        if (m_downloadCancelled || state() == RuntimeSessionState::Idle) {
             AppLogging::writeBusinessEvent(QStringLiteral("download_canceled"),
                                            QtWarningMsg,
                                            m_currentDownloadOperationId,
@@ -333,7 +333,7 @@ bool RuntimeSessionController::requestDownload(const QString& artifactPath, cons
             m_backend->disconnectBackend();
         }
 
-        if (m_downloadCancelled || m_state == RuntimeSessionState::Idle) {
+        if (m_downloadCancelled || state() == RuntimeSessionState::Idle) {
             AppLogging::writeBusinessEvent(QStringLiteral("download_canceled"),
                                            QtWarningMsg,
                                            m_currentDownloadOperationId,
@@ -347,7 +347,7 @@ bool RuntimeSessionController::requestDownload(const QString& artifactPath, cons
         }
 
         if (ok) {
-            if (m_state == RuntimeSessionState::Fault) {
+            if (state() == RuntimeSessionState::Fault) {
                 return finishFailure(DownloadState::TransportFailed,
                                      QStringLiteral("设备后端在下载期间断开。"),
                                      attemptsUsed);
@@ -355,7 +355,7 @@ bool RuntimeSessionController::requestDownload(const QString& artifactPath, cons
             setDownloadState(DownloadState::Verifying);
             emit downloadProgressChanged(75);
 
-            if (m_downloadCancelled || m_state == RuntimeSessionState::Idle) {
+            if (m_downloadCancelled || state() == RuntimeSessionState::Idle) {
                 AppLogging::writeBusinessEvent(QStringLiteral("download_canceled"),
                                                QtWarningMsg,
                                                m_currentDownloadOperationId,
@@ -433,7 +433,7 @@ bool RuntimeSessionController::requestDownload(const QString& artifactPath, cons
         const bool ownedTransportRetry = attempt < maxAttempts
                 && lastFailureState == DownloadState::TransportFailed
                 && m_backend == m_ownedControllerBackend;
-        if (m_state == RuntimeSessionState::Fault && !ownedTransportRetry) {
+        if (state() == RuntimeSessionState::Fault && !ownedTransportRetry) {
             return finishFailure(DownloadState::TransportFailed,
                                  QStringLiteral("设备后端在下载期间断开。"),
                                  attemptsUsed);
@@ -478,7 +478,7 @@ void RuntimeSessionController::requestControllerDownloadAttempt(ControllerDevice
     const QString& path, const QVariantMap& options, RuntimeSessionState previousState,
     int attempt, int maxAttempts, const QString& operationId)
 {
-    if (m_backend != controller || m_downloadCancelled || m_state == RuntimeSessionState::Idle) return;
+    if (m_backend != controller || m_downloadCancelled || state() == RuntimeSessionState::Idle) return;
     m_backendDownloadInProgress = true;
     setState(RuntimeSessionState::Downloading);
     setDownloadState(attempt > 1 ? DownloadState::Retrying : DownloadState::Downloading);
@@ -493,7 +493,7 @@ void RuntimeSessionController::requestControllerDownloadAttempt(ControllerDevice
         m_backendDownloadInProgress = false;
         m_internalReconnect = false;
         if (!backendGuard || m_backendGeneration != generation || m_backend != backendGuard || m_currentDownloadOperationId != operationId) return;
-        if (m_downloadCancelled || m_state == RuntimeSessionState::Idle) {
+        if (m_downloadCancelled || state() == RuntimeSessionState::Idle) {
             if (m_backend == m_ownedControllerBackend) m_backend->disconnectBackend();
             return; // requestStop already emitted the cancellation terminal event.
         }
@@ -545,7 +545,7 @@ void RuntimeSessionController::emitDownloadDiagnostic(const QString& severity,
     diagnostic.insert(QStringLiteral("severity"), severity);
     diagnostic.insert(QStringLiteral("stage"), stage);
     diagnostic.insert(QStringLiteral("message"), message);
-    diagnostic.insert(QStringLiteral("state"), downloadStateLabel(m_downloadState));
+    diagnostic.insert(QStringLiteral("state"), downloadStateLabel(downloadState()));
     diagnostic.insert(QStringLiteral("timestamp"), QDateTime::currentDateTime().toString(Qt::ISODate));
     emit downloadDiagnosticChanged(diagnostic);
 }
@@ -570,7 +570,7 @@ bool RuntimeSessionController::runDownloadPrecheck(const QString& artifactPath,
     }
 
     auto* controller = qobject_cast<ControllerDeviceBackend*>(m_backend);
-    const auto report = RunController::validateDownloadArtifact(
+    const auto report = m_runtimeService->precheck(
             config, projectPath, artifactPath, controller != nullptr);
     const QVariantMap details = report.details;
     emitDownloadDiagnostic(QStringLiteral("info"),

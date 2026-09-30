@@ -43,7 +43,7 @@
 #include <QLabel>
 #include <functional>
 
-#include "common/ConfigTypes.h"
+#include "../common/ConfigTypes.h"
 
 // 包含模块头文件
 #include "DslCompletionEngine.h"  // 包含 FunctionSnippet 和 DslInsertRecord 定义

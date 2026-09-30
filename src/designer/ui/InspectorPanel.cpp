@@ -1,3 +1,4 @@
+#include "ThemeManager.h"
 #include "InspectorPanel.h"
 #include "ParameterController.h"
 #include "StatusTextHelper.h"
@@ -159,25 +160,10 @@ InspectorPanel::InspectorPanel(QWidget* parent)
     : QWidget(parent)
 {
     setObjectName(QStringLiteral("InspectorPanel"));
-    setStyleSheet(R"(
+    setStyleSheet(ThemeManager::groupBoxStyleSheet(true) + R"(
 QWidget#InspectorPanel {
     background: #ffffff;
     border: 1px solid #d0d7de;
-}
-QGroupBox {
-    margin-top: 12px;
-    padding: 12px 10px 10px 10px;
-    border: 1px solid #d0d7de;
-    border-radius: 6px;
-    background: #f6f8fa;
-    font-weight: 600;
-    color: #24292f;
-}
-QGroupBox::title {
-    subcontrol-origin: margin;
-    left: 8px;
-    padding: 0 4px;
-    background: #ffffff;
 }
 QLabel[state="neutral"] {
     color: #57606a;

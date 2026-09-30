@@ -1,6 +1,7 @@
 // 文件：src/communication/DownloadProfile.cpp
 
 #include "DownloadProfile.h"
+#include "ModbusLimits.h"
 
 #include <QFile>
 #include <QJsonArray>
@@ -114,10 +115,24 @@ bool DownloadProfile::fromJson(const QByteArray& json, DownloadProfile& out, QSt
     const QJsonObject root = doc.object();
     DownloadProfile parsed;
     parsed.name = root.value("name").toString();
-    parsed.slaveId = root.value("slaveId").toInt(parsed.slaveId);
+    if (root.contains(QStringLiteral("slaveId"))) {
+        const QJsonValue value = root.value(QStringLiteral("slaveId"));
+        if (!value.isDouble() || !strictInt(value.toVariant(), 0, 247, &parsed.slaveId)) {
+            if (err) *err = QStringLiteral("profile.slaveId 必须为 0..247 的整数");
+            return false;
+        }
+    }
+    if (!root.value(QStringLiteral("steps")).isArray()) {
+        if (err) *err = QStringLiteral("profile.steps 必须为数组");
+        return false;
+    }
 
     const QJsonArray steps = root.value("steps").toArray();
     for (const auto& v : steps) {
+        if (!v.isObject() || !v.toObject().value(QStringLiteral("params")).isObject()) {
+            if (err) *err = QStringLiteral("step 及其 params 必须为对象");
+            return false;
+        }
         const QJsonObject o = v.toObject();
         bool ok = false;
         const StepType type = stepTypeFromString(o.value("type").toString(), &ok);
@@ -202,6 +217,7 @@ QVariantMap DownloadProfile::resolvedParams(const DownloadProfile::Step& step) c
 bool DownloadProfile::validate(QStringList* errors) const
 {
     QStringList localErrors;
+    if (slaveId < 0 || slaveId > 247) localErrors << QStringLiteral("profile.slaveId 必须为 0..247");
     if (steps.isEmpty()) {
         localErrors << QStringLiteral("profile.steps 为空");
     }
@@ -212,6 +228,16 @@ bool DownloadProfile::validate(QStringList* errors) const
         const Step& step = steps.at(i);
         const QVariantMap params = resolvedParams(step);
         QStringList stepErrors;
+        if (params.contains(QStringLiteral("slaveId"))
+                && !strictInt(params.value(QStringLiteral("slaveId")), 0, 247, nullptr))
+            stepErrors << QStringLiteral("slaveId 必须为 0..247 的整数");
+        if (params.contains(QStringLiteral("slaveId")) && params.value(QStringLiteral("slaveId")).toInt() == 0
+                && (step.type == StepType::Poll || step.type == StepType::QueryResult
+                    || params.value(QStringLiteral("needResponse"), true).toBool()))
+            stepErrors << QStringLiteral("广播 slaveId=0 仅允许不需要响应的写步骤");
+        if (params.contains(QStringLiteral("needResponse"))
+                && params.value(QStringLiteral("needResponse")).type() != QVariant::Bool)
+            stepErrors << QStringLiteral("needResponse 必须为布尔值");
         int address = -1;
         const bool hasAddress = strictInt(params.value(QStringLiteral("address")), 0, 65535, &address);
 
@@ -239,6 +265,23 @@ bool DownloadProfile::validate(QStringList* errors) const
             int valueCount = 0;
             if (!validateRegisterValues(values, &valueCount)) {
                 stepErrors << QStringLiteral("values 必须为 0..65535 的整数且不能为空");
+            }
+            if (op.compare(QStringLiteral("writeCoils"), Qt::CaseInsensitive) == 0) {
+                QVariantList coils = values.toList();
+                if (values.type() == QVariant::StringList) {
+                    for (const QString& value : values.toStringList()) coils.append(value);
+                } else if (values.type() != QVariant::List) coils = {values};
+                for (const QVariant& coil : coils) {
+                    if (!strictInt(coil, 0, 1, nullptr)) {
+                        stepErrors << QStringLiteral("writeCoils.values 必须为 0 或 1");
+                        break;
+                    }
+                }
+            }
+            const int limit = op.compare(QStringLiteral("writeCoils"), Qt::CaseInsensitive) == 0
+                    ? ModbusLimits::WriteCoils : ModbusLimits::WriteRegisters;
+            if (valueCount > limit) {
+                stepErrors << QStringLiteral("values 长度超出操作上限 %1").arg(limit);
             }
             if (hasAddress && valueCount > 0 && address + valueCount > 65536) {
                 stepErrors << QStringLiteral("address 与 values 长度超出 16 位地址空间");
@@ -278,8 +321,8 @@ bool DownloadProfile::validate(QStringList* errors) const
             if (!strictInt(params.value(QStringLiteral("dataAddress"), -1), 0, 65535, &dataAddress)) {
                 stepErrors << QStringLiteral("缺少 dataAddress");
             }
-            if (!strictInt(params.value(QStringLiteral("chunkWords"), 60), 1, 125, &chunkWords)) {
-                stepErrors << QStringLiteral("chunkWords 必须为 1..125");
+            if (!strictInt(params.value(QStringLiteral("chunkWords"), 60), 1, ModbusLimits::WriteRegisters, &chunkWords)) {
+                stepErrors << QStringLiteral("chunkWords 必须为 1..123");
             }
             if (dataAddress >= 0 && chunkWords > 0 && dataAddress + chunkWords > 65536) {
                 stepErrors << QStringLiteral("dataAddress 与 chunkWords 超出 16 位地址空间");
@@ -343,4 +386,35 @@ bool DownloadProfile::validate(QStringList* errors) const
         *errors = localErrors;
     }
     return localErrors.isEmpty();
+}
+
+bool DownloadProfile::validateForExecutor(Executor executor, QStringList* errors,
+                                          const QString& addressingMode) const
+{
+    QStringList result;
+    validate(&result);
+    if (executor == Executor::Controller) {
+        if (slaveId < 1 || slaveId > 63) result << QStringLiteral("控制器 profile.slaveId 必须为 1..63");
+        for (int i = 0; i < steps.size(); ++i) {
+            const Step& step = steps.at(i);
+            const QVariantMap params = resolvedParams(step);
+            QStringList problems;
+            if (params.contains(QStringLiteral("slaveId"))
+                    && !strictInt(params.value(QStringLiteral("slaveId")), 1, 63, nullptr))
+                problems << QStringLiteral("控制器 slaveId 必须为 1..63");
+            if (!params.value(QStringLiteral("needResponse"), true).toBool())
+                problems << QStringLiteral("控制器后端不支持 needResponse=false");
+            if ((step.type == StepType::Enter || step.type == StepType::Finalize)
+                    && params.value(QStringLiteral("op"), QStringLiteral("writeRegs")).toString()
+                       .compare(QStringLiteral("writeRegs"), Qt::CaseInsensitive) != 0)
+                problems << QStringLiteral("控制器后端仅支持 op=writeRegs");
+            const QString layer = params.value(QStringLiteral("layer"), QStringLiteral("target")).toString();
+            if (layer.compare(QStringLiteral("target"), Qt::CaseInsensitive) == 0
+                    && addressingMode.compare(QStringLiteral("ControllerOnlyWithTargetSelectReg"), Qt::CaseInsensitive) == 0)
+                problems << QStringLiteral("控制器后端不支持目标选择寄存器寻址，请使用 Bridge 下载入口");
+            if (!problems.isEmpty()) result << QStringLiteral("step %1：%2").arg(i + 1).arg(problems.join(QStringLiteral("; ")));
+        }
+    }
+    if (errors) *errors = result;
+    return result.isEmpty();
 }

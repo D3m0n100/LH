@@ -5,8 +5,8 @@
 #define VIRTUALDEVICEBACKEND_H
 
 #include "IDeviceBackend.h"
-#include "common/RuntimePointTypes.h"
-#include "common/RuntimePointTable.h"
+#include "../common/RuntimePointTypes.h"
+#include "../common/RuntimePointTable.h"
 
 #include <QHash>
 #include <QMutex>
@@ -30,6 +30,10 @@ public:
     bool connectBackend() override;
     void disconnectBackend() override;
     bool isOnline() const override;
+    bool supportsAsyncRead() const override { return true; }
+    bool supportsAsyncWrite() const override { return true; }
+    void readPointsAsync(const QStringList&, int, std::shared_ptr<std::atomic_bool>, QObject*, ReadCompletion) override;
+    void writePointsAsync(const QHash<QString, QVariant>&, int, std::shared_ptr<std::atomic_bool>, QObject*, WriteCompletion) override;
 
     bool readPoints(const QStringList& pointIds,
                     QHash<QString, QVariant>& values,
@@ -57,6 +61,8 @@ public:
     void clearDownloadFaultInjection();
 
 private:
+    bool readPointsImpl(const QStringList&, QHash<QString, QVariant>&, QString*, QHash<QString, CommError>*, bool wait);
+    bool writePointsImpl(const QHash<QString, QVariant>&, QString*, QHash<QString, CommError>*, bool wait);
     bool checkOnline(QString* errorMessage) const;
     bool checkReadFault(QString* errorMessage) const;
     bool checkWriteFault(QString* errorMessage) const;

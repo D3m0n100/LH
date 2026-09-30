@@ -6,6 +6,8 @@
 #include <QtTest/QtTest>
 #include <QCoreApplication>
 #include <QEventLoop>
+#include <QTimer>
+#include <QPointer>
 
 #include "designer/ParameterController.h"
 #include "communication/VirtualDeviceBackend.h"
@@ -14,6 +16,18 @@ class ScriptedReadbackBackend : public VirtualDeviceBackend
 {
 public:
     using VirtualDeviceBackend::VirtualDeviceBackend;
+    void readPointsAsync(const QStringList& ids, int budget, std::shared_ptr<std::atomic_bool> cancelled,
+                         QObject* context, ReadCompletion completion) override
+    {
+        if (!scripted) { VirtualDeviceBackend::readPointsAsync(ids, budget, cancelled, context, completion); return; }
+          QPointer<ScriptedReadbackBackend> safe(this);
+          QTimer::singleShot(0, context, [=] {
+              if (!safe) return;
+            QHash<QString, QVariant> values; QHash<QString, CommError> errors; QString message;
+              const bool ok = (!cancelled || !cancelled->load()) && safe->readPoints(ids, values, &message, &errors);
+              completion(ok, values, message, errors, safe->statusSnapshot());
+        });
+    }
 
     bool readPoints(const QStringList& pointIds,
                     QHash<QString, QVariant>& values,
@@ -62,6 +76,33 @@ private:
     }
 
 private slots:
+    void asyncWriteKeepsEventLoopResponsiveAndCancellationPreventsLateWrite()
+    {
+        ParameterController controller;
+        controller.loadDefinitions({makeParam("Kp", true, "0", "param.kp")});
+        QVERIFY(controller.editParameter("Kp", "2.0"));
+        VirtualDeviceBackend backend;
+        RuntimePointDefinition point;
+        point.id = QStringLiteral("param.kp"); point.name = QStringLiteral("Kp");
+        point.kind = RuntimePointKind::Parameter; point.dataType = QStringLiteral("REAL");
+        point.access = RuntimePointAccess::ReadWrite;
+        backend.loadPointDefinitions({point});
+        QVERIFY(backend.connectBackend());
+        backend.setSimulatedLatencyMs(250);
+        QSignalSpy finished(&controller, &ParameterController::readbackFinished);
+        bool heartbeat = false;
+        QTimer::singleShot(0, &controller, [&] { heartbeat = true; });
+        QVERIFY(controller.applyModifiedParametersWithReadbackAsync(&backend, 2, 0));
+        QCOMPARE(controller.parameterState("Kp").state, ParameterState::Applying);
+        QTRY_VERIFY(heartbeat);
+        QCOMPARE(finished.count(), 0);
+        controller.cancelPendingReadback(QStringLiteral("cancel during write"));
+        QCOMPARE(finished.count(), 1);
+        QTest::qWait(300);
+        QCOMPARE(finished.count(), 1);
+        QVERIFY(controller.parameterState("Kp").appliedValue != QStringLiteral("2.0"));
+    }
+
     void init()
     {
         qRegisterMetaType<ParameterState>("ParameterState");
@@ -793,5 +834,5 @@ private slots:
     }
 };
 
-QTEST_MAIN(ParameterControllerTest)
+QTEST_GUILESS_MAIN(ParameterControllerTest)
 #include "parameter_controller_test.moc"

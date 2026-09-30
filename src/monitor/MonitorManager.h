@@ -18,7 +18,7 @@
 
 #include "MonitorTypes.h"
 #include "IMonitorHistoryStore.h"
-#include "core/DataManager.h"
+#include "../core/DataManager.h"
 #include "MonitorHistoryService.h"
 
 namespace Core { class AsyncDatabaseWorker; }

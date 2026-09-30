@@ -37,6 +37,33 @@ class DesignerP1RobustnessTest : public QObject
     Q_OBJECT
 
 private slots:
+    void problemRetentionAndDetailsAreBounded()
+    {
+        ProblemsPanel panel;
+        DiagnosticItem item; item.source = QStringLiteral("构建"); item.severity = "error";
+        item.message = QString(10000, QLatin1Char('x'));
+        panel.addStructuredProblem(item);
+        QVERIFY(panel.itemAtRow(0).message.size() < item.message.size());
+        QFile details(panel.diagnosticDetailsPath()); QVERIFY(details.open(QIODevice::ReadOnly));
+        QVERIFY(details.readAll().contains(item.message.toUtf8()));
+        for (int i = 0; i < ProblemsPanel::MaxRowsPerSource + 10; ++i) {
+            item.message = QString::number(i); panel.addStructuredProblem(item);
+        }
+        QCOMPARE(panel.problemCount(), ProblemsPanel::MaxRowsPerSource);
+        QCOMPARE(panel.errorCount(), panel.problemCount());
+        QCOMPARE(panel.itemAtRow(panel.problemCount() - 1).message, QString::number(ProblemsPanel::MaxRowsPerSource + 9));
+    }
+
+    void logWordsDoNotCreateDiagnostics()
+    {
+        MainWindow window;
+        auto* panel = window.findChild<ProblemsPanel*>(); QVERIFY(panel);
+        const int before = panel->problemCount();
+        QVERIFY(QMetaObject::invokeMethod(&window, "onLogMessage", Qt::DirectConnection,
+            Q_ARG(QString, QStringLiteral("0 errors; saved to C:/error/project.lh"))));
+        QCOMPARE(panel->problemCount(), before);
+    }
+
     void initTestCase()
     {
     }

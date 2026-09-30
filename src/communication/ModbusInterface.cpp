@@ -68,6 +68,11 @@ bool ModbusInterface::open(const QVariantMap& config)
 
 bool ModbusInterface::open(const ModbusConfig& config)
 {
+    if (m_requestDeadline.hasExpired() || (m_requestCancelled && m_requestCancelled->load())) {
+        reportError(m_requestCancelled && m_requestCancelled->load() ? CommErrorCode::OperationCancelled : CommErrorCode::ConnectionTimeout,
+                    QStringLiteral("Connection cancelled or operation budget expired"));
+        return false;
+    }
     if (!config.isValid()) {
         reportError(CommErrorCode::InvalidConfig, "Modbus 配置无效");
         return false;
@@ -120,15 +125,18 @@ bool ModbusInterface::open(const ModbusConfig& config)
     }
 
     // 等待进入 ConnectedState 或回到 UnconnectedState（失败）
-    const int waitMs = qMax(500, m_config.responseTimeout);
+    const int waitMs = m_requestDeadline.isForever() ? qMax(500, m_config.responseTimeout)
+        : static_cast<int>(qMin<qint64>(qMax(500, m_config.responseTimeout), qMax<qint64>(1, m_requestDeadline.remainingTime())));
     const bool done = waitForCondition([this]() {
+        if (m_requestDeadline.hasExpired() || (m_requestCancelled && m_requestCancelled->load())) return true;
         if (!m_client) return true;
         const auto st = m_client->state();
         return st == QModbusDevice::ConnectedState || st == QModbusDevice::UnconnectedState;
     }, waitMs);
 
-    if (!done || !m_client || m_client->state() != QModbusDevice::ConnectedState) {
-        reportError(CommErrorCode::ConnectionTimeout,
+    if (!done || !m_client || m_client->state() != QModbusDevice::ConnectedState ||
+            m_requestDeadline.hasExpired() || (m_requestCancelled && m_requestCancelled->load())) {
+        reportError(m_requestCancelled && m_requestCancelled->load() ? CommErrorCode::OperationCancelled : CommErrorCode::ConnectionTimeout,
                     "Modbus 连接超时（串口可能未打开/参数错误/设备未上电）",
                     m_client ? m_client->errorString() : "client=null");
         if (m_client) m_client->disconnectDevice();
@@ -273,7 +281,7 @@ bool ModbusInterface::writeMultipleRegisters(int address, const QVector<quint16>
         reportError(CommErrorCode::ConnectionLost, "Modbus 未连接");
         return false;
     }
-    if (values.isEmpty() || values.size() > MAX_REGISTERS) {
+    if (values.isEmpty() || values.size() > ModbusLimits::WriteRegisters) {
         reportError(CommErrorCode::InvalidParameter, "writeMultipleRegisters: values 数量非法");
         return false;
     }

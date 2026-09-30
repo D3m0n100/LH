@@ -54,7 +54,7 @@ protected:
 
         const QTreeWidgetItem* item = items.first();
         // 一级分类节点不允许拖拽
-        if (!item || item->childCount() > 0) {
+        if (!item || item->childCount() > 0 || !item->data(0, Qt::UserRole + 3).toBool()) {
             return nullptr;
         }
 
@@ -287,7 +287,7 @@ void ProgramBlocksWidget::onTreeItemDoubleClicked(QTreeWidgetItem* item, int col
     }
     const QString id = item->data(0, Qt::UserRole).toString();
     FunctionSnippet sn = findSnippetById(id);
-    if (sn.isValid()) {
+    if (sn.isValid() && sn.canInsert()) {
         emit snippetDoubleClicked(sn);
     }
 }
@@ -364,7 +364,14 @@ void ProgramBlocksWidget::rebuildTree(const QList<FunctionSnippet>& snippets)
         leaf->setData(0, Qt::UserRole, sn.id);
         leaf->setData(0, Qt::UserRole + 1, sn.templateCode);
         leaf->setData(0, Qt::UserRole + 2, sn.description);
-        leaf->setToolTip(0, makeSnippetTooltip(sn));
+        leaf->setData(0, Qt::UserRole + 3, sn.canInsert());
+        leaf->setToolTip(0, makeSnippetTooltip(sn)
+                        + (sn.canInsert() ? QStringLiteral("<br/>编译契约状态：supported；硬件支持需目标契约确认")
+                                          : QStringLiteral("<br/>暂不可插入：%1").arg(sn.capabilityReason().toHtmlEscaped())));
+        if (!sn.canInsert()) {
+            leaf->setText(0, sn.name + QStringLiteral("（未完成）"));
+            leaf->setFlags(leaf->flags() & ~Qt::ItemIsDragEnabled);
+        }
 
         // 简单分类配色
         if (sn.category == "input") {

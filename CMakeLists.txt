@@ -83,8 +83,9 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 # ============ 包含目录 ============
 set(LX_PUBLIC_INCLUDE_DIRS
     ${CMAKE_SOURCE_DIR}/include
-    ${CMAKE_SOURCE_DIR}/src
 )
+
+set(LX_PRIVATE_INCLUDE_DIRS ${CMAKE_SOURCE_DIR}/src)
 
 # ============ 编译选项 ============
 if(MSVC)
@@ -97,6 +98,7 @@ endif()
 add_subdirectory(src/core)
 add_subdirectory(src/communication)
 add_subdirectory(src/compiler)
+add_subdirectory(src/runtime)
 # add_subdirectory(src/components)  # 图形化逻辑组件模块已移除
 add_subdirectory(src/designer)
 add_subdirectory(src/monitor)
@@ -108,6 +110,7 @@ add_executable(${PROJECT_NAME} WIN32
 )
 
 target_include_directories(${PROJECT_NAME} PRIVATE
+    ${LX_PRIVATE_INCLUDE_DIRS}
     ${LX_PUBLIC_INCLUDE_DIRS}
 )
 
@@ -165,6 +168,7 @@ install(FILES
 
 install(FILES
     "${LH_DSL_RUNTIME_SOURCE}/grammar/LHLexer.py"
+    "${LH_DSL_RUNTIME_SOURCE}/grammar/__init__.py"
     "${LH_DSL_RUNTIME_SOURCE}/grammar/LHParser.py"
     "${LH_DSL_RUNTIME_SOURCE}/grammar/LHListener.py"
     "${LH_DSL_RUNTIME_SOURCE}/grammar/LHVisitor.py"

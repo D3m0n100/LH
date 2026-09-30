@@ -1,0 +1,56 @@
+{
+  "calls": [],
+  "scope": "offline lexical LM evidence; production LH contract unverified",
+  "extractionLimits": [
+    "First 24 call excerpts retained; total count includes all matches",
+    "Lexical operator/value classification is not semantic direction or type proof",
+    "No unaddressed marker opcode is inferred from an empty parameter list"
+  ],
+  "externalPrerequisites": [
+    "用于生产编码的 LH 目标指令/操作数/数值版本支持证据"
+  ],
+  "planScope": "仅处理 TSO。根据 用户手册 PDF 第 169–171 页；程序包无 TSOCtrl 同名调用 建立 PV/SP/OP/Bias、模式、KT/KS/KO、限幅等 21 个运行时字段 的 LH 契约，输出名称/参数类别/方向/范围/初值/字段/布局/指令形式与来源映射。参数资料较全，可建立完整编译侧契约；当前 TSO=891/memory_size=64 是占位值，映射与布局需验证。",
+  "fields": [],
+  "archive": "D:/Table/LM/程序.zip",
+  "missing": [
+    "LH firmware version, opcode and operand table",
+    "LH address unit, alignment, field width/direction",
+    "Named legacy operators/enums are not translated into LH values"
+  ],
+  "taskId": "FB18",
+  "candidateCodeRows": [],
+  "lhNameMappingCertified": false,
+  "legacyCandidate": "_TSOCtrl",
+  "downloadableTargetCertified": false,
+  "callCount": 0,
+  "block": "TSO",
+  "observedLegacyName": "TSOCtrl",
+  "schemaVersion": 1,
+  "mappingStatus": "名称映射候选",
+  "manualPages": [
+    {
+      "path": "D:\\Table\\LM\\LM2007用户手册(1).pdf",
+      "sha256": "99d42e57db22fe0107fd3bde810a61267392196bd4612469e1256dcc77c3f706",
+      "physicalPage": 169,
+      "extractedText": "manual-evidence/manual-page-169.txt",
+      "typeDirectionAndLayoutCertifiedForLH": false
+    },
+    {
+      "path": "D:\\Table\\LM\\LM2007用户手册(1).pdf",
+      "sha256": "99d42e57db22fe0107fd3bde810a61267392196bd4612469e1256dcc77c3f706",
+      "physicalPage": 170,
+      "extractedText": "manual-evidence/manual-page-170.txt",
+      "typeDirectionAndLayoutCertifiedForLH": false
+    },
+    {
+      "path": "D:\\Table\\LM\\LM2007用户手册(1).pdf",
+      "sha256": "99d42e57db22fe0107fd3bde810a61267392196bd4612469e1256dcc77c3f706",
+      "physicalPage": 171,
+      "extractedText": "manual-evidence/manual-page-171.txt",
+      "typeDirectionAndLayoutCertifiedForLH": false
+    }
+  ],
+  "reviewCandidateContract": "PV/SP/OP/Bias、模式、KT/KS/KO、限幅等 21 个运行时字段",
+  "reviewAssessment": "参数资料较全，可建立完整编译侧契约；当前 TSO=891/memory_size=64 是占位值，映射与布局需验证。",
+  "manualExtractionScope": "Physical PDF pages, copied as evidence; legacy numeric tables do not certify LH operand encodings"
+}

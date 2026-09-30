@@ -1,0 +1,191 @@
+[
+  {
+    "block": "TaskLock",
+    "productionEnabled": false,
+    "callCount": 1,
+    "id": "FB12",
+    "candidateCodeRows": 0,
+    "fieldCount": 0,
+    "file": "function-contract-evidence/FB12-TaskLock.json"
+  },
+  {
+    "block": "TaskUnlock",
+    "productionEnabled": false,
+    "callCount": 1,
+    "id": "FB13",
+    "candidateCodeRows": 0,
+    "fieldCount": 0,
+    "file": "function-contract-evidence/FB13-TaskUnlock.json"
+  },
+  {
+    "block": "TaskEnd",
+    "productionEnabled": false,
+    "callCount": 7,
+    "id": "FB17",
+    "candidateCodeRows": 0,
+    "fieldCount": 0,
+    "file": "function-contract-evidence/FB17-TaskEnd.json"
+  },
+  {
+    "block": "KeyScan",
+    "productionEnabled": false,
+    "callCount": 1,
+    "id": "FB01",
+    "candidateCodeRows": 2,
+    "fieldCount": 2,
+    "file": "function-contract-evidence/FB01-KeyScan.json"
+  },
+  {
+    "block": "SCIDispTrans",
+    "productionEnabled": false,
+    "callCount": 35,
+    "id": "FB02",
+    "candidateCodeRows": 0,
+    "fieldCount": 0,
+    "file": "function-contract-evidence/FB02-SCIDispTrans.json"
+  },
+  {
+    "block": "FilterBW",
+    "productionEnabled": false,
+    "callCount": 24,
+    "id": "FB07",
+    "candidateCodeRows": 24,
+    "fieldCount": 96,
+    "file": "function-contract-evidence/FB07-FilterBW.json"
+  },
+  {
+    "block": "Task",
+    "productionEnabled": false,
+    "callCount": 7,
+    "id": "FB08",
+    "candidateCodeRows": 7,
+    "fieldCount": 14,
+    "file": "function-contract-evidence/FB08-Task.json"
+  },
+  {
+    "block": "TaskPeriodic",
+    "productionEnabled": false,
+    "callCount": 7,
+    "id": "FB09",
+    "candidateCodeRows": 7,
+    "fieldCount": 14,
+    "file": "function-contract-evidence/FB09-TaskPeriodic.json"
+  },
+  {
+    "block": "TaskWake",
+    "productionEnabled": false,
+    "callCount": 0,
+    "id": "FB10",
+    "candidateCodeRows": 0,
+    "fieldCount": 0,
+    "file": "function-contract-evidence/FB10-TaskWake.json"
+  },
+  {
+    "block": "TaskDataWake",
+    "productionEnabled": false,
+    "callCount": 0,
+    "id": "FB11",
+    "candidateCodeRows": 0,
+    "fieldCount": 0,
+    "file": "function-contract-evidence/FB11-TaskDataWake.json"
+  },
+  {
+    "block": "TaskSemDef",
+    "productionEnabled": false,
+    "callCount": 0,
+    "id": "FB14",
+    "candidateCodeRows": 0,
+    "fieldCount": 0,
+    "file": "function-contract-evidence/FB14-TaskSemDef.json"
+  },
+  {
+    "block": "TaskSemWait",
+    "productionEnabled": false,
+    "callCount": 0,
+    "id": "FB15",
+    "candidateCodeRows": 0,
+    "fieldCount": 0,
+    "file": "function-contract-evidence/FB15-TaskSemWait.json"
+  },
+  {
+    "block": "TaskSemPost",
+    "productionEnabled": false,
+    "callCount": 0,
+    "id": "FB16",
+    "candidateCodeRows": 0,
+    "fieldCount": 0,
+    "file": "function-contract-evidence/FB16-TaskSemPost.json"
+  },
+  {
+    "block": "TwoPosition",
+    "productionEnabled": false,
+    "callCount": 0,
+    "id": "FB20",
+    "candidateCodeRows": 0,
+    "fieldCount": 0,
+    "file": "function-contract-evidence/FB20-TwoPosition.json"
+  },
+  {
+    "block": "TSO",
+    "productionEnabled": false,
+    "callCount": 0,
+    "id": "FB18",
+    "candidateCodeRows": 0,
+    "fieldCount": 0,
+    "file": "function-contract-evidence/FB18-TSO.json"
+  },
+  {
+    "block": "TSOAutoTune",
+    "productionEnabled": false,
+    "callCount": 5,
+    "id": "FB19",
+    "candidateCodeRows": 6,
+    "fieldCount": 185,
+    "file": "function-contract-evidence/FB19-TSOAutoTune.json"
+  },
+  {
+    "block": "SCIDispInit",
+    "productionEnabled": false,
+    "callCount": 1,
+    "id": "FB03",
+    "candidateCodeRows": 1,
+    "fieldCount": 6,
+    "file": "function-contract-evidence/FB03-SCIDispInit.json"
+  },
+  {
+    "block": "M600TextDisp",
+    "productionEnabled": false,
+    "callCount": 26,
+    "id": "FB04",
+    "candidateCodeRows": 25,
+    "fieldCount": 25,
+    "file": "function-contract-evidence/FB04-M600TextDisp.json"
+  },
+  {
+    "block": "M600ProgressBar",
+    "productionEnabled": false,
+    "callCount": 1,
+    "id": "FB05",
+    "candidateCodeRows": 1,
+    "fieldCount": 1,
+    "file": "function-contract-evidence/FB05-M600ProgressBar.json"
+  },
+  {
+    "block": "EXCACycDisp",
+    "productionEnabled": false,
+    "callCount": 2,
+    "id": "FB06",
+    "candidateCodeRows": 2,
+    "fieldCount": 63,
+    "file": "function-contract-evidence/FB06-EXCACycDisp.json"
+  },
+  {
+    "block": "RelayCtrl2",
+    "productionEnabled": false,
+    "callCount": 1,
+    "id": "FB21",
+    "candidateCodeRows": 1,
+    "fieldCount": 7,
+    "file": "function-contract-evidence/FB21-RelayCtrl2.json"
+  }
+]

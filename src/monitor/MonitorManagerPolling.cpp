@@ -487,7 +487,13 @@ void MonitorManager::onProviderTimeout()
         recordSample(sample);
 
         if (config.errorHandler) {
-            config.errorHandler(error);
+            try {
+                config.errorHandler(error);
+            } catch (const std::exception& e) {
+                qWarning() << "[MonitorManager] provider error handler failed:" << providerId << e.what();
+            } catch (...) {
+                qWarning() << "[MonitorManager] provider error handler failed:" << providerId;
+            }
         }
     };
 

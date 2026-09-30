@@ -1,0 +1,35 @@
+ 
+_TaskEnd
+按键扫描
+_KeyScan[Key]
+按键任务开始
+_Task[KeysetTask]
+串口空闲
+SCIInit.Busy==0
+有键长按
+Key.KeyState==3
+有键弹起
+Key.KeyState==2
+处理按键
+_Switch2[PageKeyProc]
+No
+Yes
+处理按键长按
+_Switch2[PgKeyHold]
+Yes
+Yes
+No
+页面刷新标志
+DisParaI.Int12==1
+No
+根据页面号DisParaI.Int1和
+中英文标志ConstInt.Int4
+计算对应的界面
+发送界面刷新指领
+_SCIDispTrans 
+Yes
+ 
+4.4 显示屏画面切换  
+1、显示屏画面的切换，基本上是由按键程序中触发的，实际为先将页面刷新标志（ DisParaI.Int12 ）置1满足刷屏条件，向显示
+2011 Page 65 of 176 
+ 

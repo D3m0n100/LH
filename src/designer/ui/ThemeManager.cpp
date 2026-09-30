@@ -42,6 +42,29 @@ void ThemeManager::applyLightPalette(QApplication* app)
     app->setPalette(palette);
 }
 
+QString ThemeManager::groupBoxStyleSheet(bool muted)
+{
+    return QStringLiteral(R"(
+QGroupBox {
+    border: 1px solid #d0d7de;
+    border-radius: 6px;
+    margin-top: %1px;
+    padding: 12px 10px 10px 10px;
+    background: %2;
+    font-weight: 600;
+    color: #24292f;
+}
+QGroupBox::title {
+    subcontrol-origin: margin;
+    subcontrol-position: top left;
+    left: 8px;
+    padding: 0 4px;
+    background: #ffffff;
+    color: #24292f;
+}
+)").arg(muted ? 12 : 10).arg(muted ? QStringLiteral("#f6f8fa") : QStringLiteral("#ffffff"));
+}
+
 QString ThemeManager::buildLightStyleSheet()
 {
     return QString::fromUtf8(R"(
@@ -257,23 +280,6 @@ QMenu::item:selected {
     background: #e8f3ff;
     color: #1f1f1f;
 }
-QGroupBox {
-    border: 1px solid #d0d7de;
-    border-radius: 6px;
-    margin-top: 10px;
-    padding: 12px 10px 10px 10px;
-    background: #ffffff;
-    font-weight: 600;
-    color: #24292f;
-}
-QGroupBox::title {
-    subcontrol-origin: margin;
-    subcontrol-position: top left;
-    left: 8px;
-    padding: 0 4px;
-    background: #ffffff;
-    color: #24292f;
-}
 QPushButton:focus, QToolButton:focus {
     border-color: #007acc;
 }
@@ -335,5 +341,5 @@ QScrollBar::handle:horizontal {
 QScrollBar::handle:horizontal:hover {
     background: #a0a0a0;
 }
-)");
+)") + groupBoxStyleSheet();
 }

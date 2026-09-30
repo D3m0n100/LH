@@ -27,6 +27,7 @@ void shutdown();
 // Wait for all admitted messages to reach the sink; critical/fatal messages do this automatically.
 void flush();
 quint64 droppedMessageCount();
+QVariantMap overloadStatus();
 
 // Reports the current sink state without emitting a Qt log message.
 bool isAvailable();

@@ -26,7 +26,7 @@ classifiers = [
 ]
 
 dependencies = [
-    "antlr4-python3-runtime>=4.13.0",
+    "antlr4-python3-runtime==4.13.2",
     "click>=8.0.0",
     "colorama>=0.4.0",
     "pyyaml>=6.0",
@@ -62,10 +62,11 @@ Repository = "https://github.com/yourusername/lh-compiler"
 "Bug Tracker" = "https://github.com/yourusername/lh-compiler/issues"
 
 [tool.setuptools]
-package-dir = {"" = "src"}
+package-dir = {"" = "src", "grammar" = "grammar"}
+packages = ["lh_compiler", "lh_compiler.backend", "lh_compiler.cli", "lh_compiler.frontend", "lh_compiler.function_blocks", "lh_compiler.function_blocks.definitions", "lh_compiler.ir", "lh_compiler.runtime", "lh_compiler.utils", "grammar"]
 
-[tool.setuptools.packages.find]
-where = ["src"]
+[tool.setuptools.package-data]
+grammar = ["LH.g4"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

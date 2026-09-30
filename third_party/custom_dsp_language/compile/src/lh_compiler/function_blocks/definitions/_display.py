@@ -30,7 +30,7 @@ def _define_keyscan() -> FunctionBlockMeta:
         category="display",
         description="按键扫描",
         status="incomplete",
-        incomplete_reason="缺少参数契约与协议定义 (TODO)",
+        incomplete_reason="已保存 LM 功能候选证据；LH 固件版本对应的指令、引用和字段布局尚未核实",
         parameters=[
             # TODO: 根据实际需求添加参数定义
         ]
@@ -48,7 +48,7 @@ def _define_scidisptrans() -> FunctionBlockMeta:
         category="display",
         description="串口显示发送",
         status="incomplete",
-        incomplete_reason="缺少参数契约与协议定义 (TODO)",
+        incomplete_reason="已保存 LM 功能候选证据；LH 固件版本对应的指令、引用和字段布局尚未核实",
         parameters=[
             # TODO: 根据实际需求添加参数定义
         ]
@@ -66,7 +66,7 @@ def _define_scidispinit() -> FunctionBlockMeta:
         category="display",
         description="串口显示初始化",
         status="incomplete",
-        incomplete_reason="缺少参数契约与协议定义 (TODO)",
+        incomplete_reason="已保存 LM 功能候选证据；LH 固件版本对应的指令、引用和字段布局尚未核实",
         parameters=[
             # TODO: 根据实际需求添加参数定义
         ]
@@ -84,7 +84,7 @@ def _define_m600textdisp() -> FunctionBlockMeta:
         category="display",
         description="M600文本显示",
         status="incomplete",
-        incomplete_reason="缺少参数契约与协议定义 (TODO)",
+        incomplete_reason="已保存 LM 功能候选证据；LH 固件版本对应的指令、引用和字段布局尚未核实",
         parameters=[
             # TODO: 根据实际需求添加参数定义
         ]
@@ -102,7 +102,7 @@ def _define_m600progressbar() -> FunctionBlockMeta:
         category="display",
         description="M600进度条",
         status="incomplete",
-        incomplete_reason="缺少参数契约与协议定义 (TODO)",
+        incomplete_reason="已保存 LM 功能候选证据；LH 固件版本对应的指令、引用和字段布局尚未核实",
         parameters=[
             # TODO: 根据实际需求添加参数定义
         ]
@@ -120,7 +120,7 @@ def _define_excacycdisp() -> FunctionBlockMeta:
         category="display",
         description="EXCA循环显示",
         status="incomplete",
-        incomplete_reason="缺少参数契约与协议定义 (TODO)",
+        incomplete_reason="已保存 LM 功能候选证据；LH 固件版本对应的指令、引用和字段布局尚未核实",
         parameters=[
             # TODO: 根据实际需求添加参数定义
         ]

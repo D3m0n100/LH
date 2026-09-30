@@ -1,0 +1,584 @@
+{
+  "calls": [
+    {
+      "sha256": "3ac9f41a252546393eb5ada373208af6a7203966bdfd7903c1150fcdf62f094e",
+      "entry": "265C8I/VC102/SECD/SECD.inva",
+      "instance": "CtrlTask",
+      "source": "_Task[CtrlTask] \"任务号\"::CtrlID,\"唤醒消息\"::#TimeMesg,\"时间单位\"::#MSec,\"周期长度\"::CtrlTs;",
+      "orderedParameters": [
+        {
+          "direction": null,
+          "syntacticKind": "unresolved-symbol-or-expression",
+          "name": "任务号",
+          "lhOperandEncoding": null,
+          "rawValue": "CtrlID",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "legacy-enum-token",
+          "name": "唤醒消息",
+          "lhOperandEncoding": null,
+          "rawValue": "#TimeMesg",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "legacy-enum-token",
+          "name": "时间单位",
+          "lhOperandEncoding": null,
+          "rawValue": "#MSec",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "unresolved-symbol-or-expression",
+          "name": "周期长度",
+          "lhOperandEncoding": null,
+          "rawValue": "CtrlTs",
+          "operator": "::"
+        }
+      ],
+      "line": 40
+    },
+    {
+      "sha256": "3ac9f41a252546393eb5ada373208af6a7203966bdfd7903c1150fcdf62f094e",
+      "entry": "265C8I/VC102/SECD/SECD.inva",
+      "instance": "DisTask",
+      "source": "_Task[DisTask] \"任务号\"::DisID,\"唤醒消息\"::#TimeMesg,\"时间单位\"::#MSec,\"周期长度\"::DisTs;",
+      "orderedParameters": [
+        {
+          "direction": null,
+          "syntacticKind": "unresolved-symbol-or-expression",
+          "name": "任务号",
+          "lhOperandEncoding": null,
+          "rawValue": "DisID",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "legacy-enum-token",
+          "name": "唤醒消息",
+          "lhOperandEncoding": null,
+          "rawValue": "#TimeMesg",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "legacy-enum-token",
+          "name": "时间单位",
+          "lhOperandEncoding": null,
+          "rawValue": "#MSec",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "unresolved-symbol-or-expression",
+          "name": "周期长度",
+          "lhOperandEncoding": null,
+          "rawValue": "DisTs",
+          "operator": "::"
+        }
+      ],
+      "line": 94
+    },
+    {
+      "sha256": "3ac9f41a252546393eb5ada373208af6a7203966bdfd7903c1150fcdf62f094e",
+      "entry": "265C8I/VC102/SECD/SECD.inva",
+      "instance": "ManageTask",
+      "source": "_Task[ManageTask] \"任务号\"::ManageID,\"唤醒消息\"::#TimeMesg,\"时间单位\"::#Sec,\"周期长度\"::ManageTs;",
+      "orderedParameters": [
+        {
+          "direction": null,
+          "syntacticKind": "unresolved-symbol-or-expression",
+          "name": "任务号",
+          "lhOperandEncoding": null,
+          "rawValue": "ManageID",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "legacy-enum-token",
+          "name": "唤醒消息",
+          "lhOperandEncoding": null,
+          "rawValue": "#TimeMesg",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "legacy-enum-token",
+          "name": "时间单位",
+          "lhOperandEncoding": null,
+          "rawValue": "#Sec",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "unresolved-symbol-or-expression",
+          "name": "周期长度",
+          "lhOperandEncoding": null,
+          "rawValue": "ManageTs",
+          "operator": "::"
+        }
+      ],
+      "line": 132
+    },
+    {
+      "sha256": "027a1d55037c276648b9d4740f9a711e00457d5f5fd2584cd8bc965456d587e8",
+      "entry": "265C8I/VC102/SEHC/SEHC.inva",
+      "instance": "CtrlTask",
+      "source": "_Task[CtrlTask] \"TaskNum\"::CtrID,\"Msg\"::#TimeMesg,\"Unit\"::#MSec,\"TimeLeng\"::CtrTs;",
+      "orderedParameters": [
+        {
+          "direction": null,
+          "syntacticKind": "unresolved-symbol-or-expression",
+          "name": "TaskNum",
+          "lhOperandEncoding": null,
+          "rawValue": "CtrID",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "legacy-enum-token",
+          "name": "Msg",
+          "lhOperandEncoding": null,
+          "rawValue": "#TimeMesg",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "legacy-enum-token",
+          "name": "Unit",
+          "lhOperandEncoding": null,
+          "rawValue": "#MSec",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "unresolved-symbol-or-expression",
+          "name": "TimeLeng",
+          "lhOperandEncoding": null,
+          "rawValue": "CtrTs",
+          "operator": "::"
+        }
+      ],
+      "line": 45
+    },
+    {
+      "sha256": "027a1d55037c276648b9d4740f9a711e00457d5f5fd2584cd8bc965456d587e8",
+      "entry": "265C8I/VC102/SEHC/SEHC.inva",
+      "instance": "FstComm",
+      "source": "_Task[FstComm] \"任务号\"::FstCommID,\"唤醒消息\"::#TimeMesg,\"时间单位\"::#MSec,\"周期长度\"::FstCommTs;",
+      "orderedParameters": [
+        {
+          "direction": null,
+          "syntacticKind": "unresolved-symbol-or-expression",
+          "name": "任务号",
+          "lhOperandEncoding": null,
+          "rawValue": "FstCommID",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "legacy-enum-token",
+          "name": "唤醒消息",
+          "lhOperandEncoding": null,
+          "rawValue": "#TimeMesg",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "legacy-enum-token",
+          "name": "时间单位",
+          "lhOperandEncoding": null,
+          "rawValue": "#MSec",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "unresolved-symbol-or-expression",
+          "name": "周期长度",
+          "lhOperandEncoding": null,
+          "rawValue": "FstCommTs",
+          "operator": "::"
+        }
+      ],
+      "line": 61
+    },
+    {
+      "sha256": "027a1d55037c276648b9d4740f9a711e00457d5f5fd2584cd8bc965456d587e8",
+      "entry": "265C8I/VC102/SEHC/SEHC.inva",
+      "instance": "SlowTask",
+      "source": "_Task[SlowTask] \"任务号\"::SlowID,\"唤醒消息\"::#TimeMesg,\"时间单位\"::#MSec,\"周期长度\"::SlowTs;",
+      "orderedParameters": [
+        {
+          "direction": null,
+          "syntacticKind": "unresolved-symbol-or-expression",
+          "name": "任务号",
+          "lhOperandEncoding": null,
+          "rawValue": "SlowID",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "legacy-enum-token",
+          "name": "唤醒消息",
+          "lhOperandEncoding": null,
+          "rawValue": "#TimeMesg",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "legacy-enum-token",
+          "name": "时间单位",
+          "lhOperandEncoding": null,
+          "rawValue": "#MSec",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "unresolved-symbol-or-expression",
+          "name": "周期长度",
+          "lhOperandEncoding": null,
+          "rawValue": "SlowTs",
+          "operator": "::"
+        }
+      ],
+      "line": 69
+    },
+    {
+      "sha256": "027a1d55037c276648b9d4740f9a711e00457d5f5fd2584cd8bc965456d587e8",
+      "entry": "265C8I/VC102/SEHC/SEHC.inva",
+      "instance": "ManageTask",
+      "source": "_Task[ManageTask] \"任务号\"::ManageID,\"唤醒消息\"::#TimeMesg,\"时间单位\"::#Sec,\"周期长度\"::ManageTs;",
+      "orderedParameters": [
+        {
+          "direction": null,
+          "syntacticKind": "unresolved-symbol-or-expression",
+          "name": "任务号",
+          "lhOperandEncoding": null,
+          "rawValue": "ManageID",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "legacy-enum-token",
+          "name": "唤醒消息",
+          "lhOperandEncoding": null,
+          "rawValue": "#TimeMesg",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "legacy-enum-token",
+          "name": "时间单位",
+          "lhOperandEncoding": null,
+          "rawValue": "#Sec",
+          "operator": "::"
+        },
+        {
+          "direction": null,
+          "syntacticKind": "unresolved-symbol-or-expression",
+          "name": "周期长度",
+          "lhOperandEncoding": null,
+          "rawValue": "ManageTs",
+          "operator": "::"
+        }
+      ],
+      "line": 78
+    }
+  ],
+  "scope": "offline lexical LM evidence; production LH contract unverified",
+  "extractionLimits": [
+    "First 24 call excerpts retained; total count includes all matches",
+    "Lexical operator/value classification is not semantic direction or type proof",
+    "No unaddressed marker opcode is inferred from an empty parameter list"
+  ],
+  "externalPrerequisites": [
+    "用于生产编码的 LH 目标指令/操作数/数值版本支持证据"
+  ],
+  "planScope": "仅处理 Task。根据 用户手册 PDF 第 32–36 页；SEHC.inva:45、61 等 4 组成功任务 建立 TaskNum/VirtMesgOpt/ModeOpt/TimeLeng；TaskTime/Count 的 LH 契约，输出名称/参数类别/方向/范围/初值/字段/布局/指令形式与来源映射。可实现任务参数、枚举、唯一性与结构校验；手册 1–16 的限制和枚举表序号须映射到所选目标，不能将表序号当作机器编码。",
+  "fields": [
+    {
+      "sha256": "f464a5f185449d0dd99f6f0ba436c0aaddbfd0b20ab291e371d02f54e4bf332c",
+      "entry": "265C8I/VC102/SECD/SECD.typ",
+      "lhOffset": null,
+      "line": 981,
+      "instance": "CtrlTask",
+      "direction": null,
+      "field": "TaskTime",
+      "lhType": null,
+      "legacyAddress": 974,
+      "legacyTypeCode": 2
+    },
+    {
+      "sha256": "f464a5f185449d0dd99f6f0ba436c0aaddbfd0b20ab291e371d02f54e4bf332c",
+      "entry": "265C8I/VC102/SECD/SECD.typ",
+      "lhOffset": null,
+      "line": 982,
+      "instance": "CtrlTask",
+      "direction": null,
+      "field": "Count",
+      "lhType": null,
+      "legacyAddress": 975,
+      "legacyTypeCode": 2
+    },
+    {
+      "sha256": "f464a5f185449d0dd99f6f0ba436c0aaddbfd0b20ab291e371d02f54e4bf332c",
+      "entry": "265C8I/VC102/SECD/SECD.typ",
+      "lhOffset": null,
+      "line": 1583,
+      "instance": "DisTask",
+      "direction": null,
+      "field": "TaskTime",
+      "lhType": null,
+      "legacyAddress": 1576,
+      "legacyTypeCode": 2
+    },
+    {
+      "sha256": "f464a5f185449d0dd99f6f0ba436c0aaddbfd0b20ab291e371d02f54e4bf332c",
+      "entry": "265C8I/VC102/SECD/SECD.typ",
+      "lhOffset": null,
+      "line": 1584,
+      "instance": "DisTask",
+      "direction": null,
+      "field": "Count",
+      "lhType": null,
+      "legacyAddress": 1577,
+      "legacyTypeCode": 2
+    },
+    {
+      "sha256": "f464a5f185449d0dd99f6f0ba436c0aaddbfd0b20ab291e371d02f54e4bf332c",
+      "entry": "265C8I/VC102/SECD/SECD.typ",
+      "lhOffset": null,
+      "line": 1767,
+      "instance": "ManageTask",
+      "direction": null,
+      "field": "TaskTime",
+      "lhType": null,
+      "legacyAddress": 1760,
+      "legacyTypeCode": 2
+    },
+    {
+      "sha256": "f464a5f185449d0dd99f6f0ba436c0aaddbfd0b20ab291e371d02f54e4bf332c",
+      "entry": "265C8I/VC102/SECD/SECD.typ",
+      "lhOffset": null,
+      "line": 1768,
+      "instance": "ManageTask",
+      "direction": null,
+      "field": "Count",
+      "lhType": null,
+      "legacyAddress": 1761,
+      "legacyTypeCode": 2
+    },
+    {
+      "sha256": "28ed832b790612a2d39619d720ed0c26ef94b6c131e85ae93103a19e18eb4833",
+      "entry": "265C8I/VC102/SEHC/SEHC.typ",
+      "lhOffset": null,
+      "line": 314,
+      "instance": "CtrlTask",
+      "direction": null,
+      "field": "TaskTime",
+      "lhType": null,
+      "legacyAddress": 307,
+      "legacyTypeCode": 2
+    },
+    {
+      "sha256": "28ed832b790612a2d39619d720ed0c26ef94b6c131e85ae93103a19e18eb4833",
+      "entry": "265C8I/VC102/SEHC/SEHC.typ",
+      "lhOffset": null,
+      "line": 315,
+      "instance": "CtrlTask",
+      "direction": null,
+      "field": "Count",
+      "lhType": null,
+      "legacyAddress": 308,
+      "legacyTypeCode": 2
+    },
+    {
+      "sha256": "28ed832b790612a2d39619d720ed0c26ef94b6c131e85ae93103a19e18eb4833",
+      "entry": "265C8I/VC102/SEHC/SEHC.typ",
+      "lhOffset": null,
+      "line": 1653,
+      "instance": "FstComm",
+      "direction": null,
+      "field": "TaskTime",
+      "lhType": null,
+      "legacyAddress": 1646,
+      "legacyTypeCode": 2
+    },
+    {
+      "sha256": "28ed832b790612a2d39619d720ed0c26ef94b6c131e85ae93103a19e18eb4833",
+      "entry": "265C8I/VC102/SEHC/SEHC.typ",
+      "lhOffset": null,
+      "line": 1654,
+      "instance": "FstComm",
+      "direction": null,
+      "field": "Count",
+      "lhType": null,
+      "legacyAddress": 1647,
+      "legacyTypeCode": 2
+    },
+    {
+      "sha256": "28ed832b790612a2d39619d720ed0c26ef94b6c131e85ae93103a19e18eb4833",
+      "entry": "265C8I/VC102/SEHC/SEHC.typ",
+      "lhOffset": null,
+      "line": 1656,
+      "instance": "SlowTask",
+      "direction": null,
+      "field": "TaskTime",
+      "lhType": null,
+      "legacyAddress": 1649,
+      "legacyTypeCode": 2
+    },
+    {
+      "sha256": "28ed832b790612a2d39619d720ed0c26ef94b6c131e85ae93103a19e18eb4833",
+      "entry": "265C8I/VC102/SEHC/SEHC.typ",
+      "lhOffset": null,
+      "line": 1657,
+      "instance": "SlowTask",
+      "direction": null,
+      "field": "Count",
+      "lhType": null,
+      "legacyAddress": 1650,
+      "legacyTypeCode": 2
+    },
+    {
+      "sha256": "28ed832b790612a2d39619d720ed0c26ef94b6c131e85ae93103a19e18eb4833",
+      "entry": "265C8I/VC102/SEHC/SEHC.typ",
+      "lhOffset": null,
+      "line": 1839,
+      "instance": "ManageTask",
+      "direction": null,
+      "field": "TaskTime",
+      "lhType": null,
+      "legacyAddress": 1832,
+      "legacyTypeCode": 2
+    },
+    {
+      "sha256": "28ed832b790612a2d39619d720ed0c26ef94b6c131e85ae93103a19e18eb4833",
+      "entry": "265C8I/VC102/SEHC/SEHC.typ",
+      "lhOffset": null,
+      "line": 1840,
+      "instance": "ManageTask",
+      "direction": null,
+      "field": "Count",
+      "lhType": null,
+      "legacyAddress": 1833,
+      "legacyTypeCode": 2
+    }
+  ],
+  "archive": "D:/Table/LM/程序.zip",
+  "missing": [
+    "LH firmware version, opcode and operand table",
+    "LH address unit, alignment, field width/direction",
+    "Named legacy operators/enums are not translated into LH values"
+  ],
+  "taskId": "FB08",
+  "candidateCodeRows": [
+    {
+      "sha256": "521c52a07d11014405c4ee1b25f2a2e26746ef7c250778fc5eb1606b2e71e695",
+      "entry": "265C8I/VC102/SECD/SECD.code",
+      "source": "40967\t40967\t974\t10\t0\t0\t15\t",
+      "correlation": "candidate matching first legacy field address; no LH ABI translation",
+      "instance": "CtrlTask",
+      "line": 110
+    },
+    {
+      "sha256": "521c52a07d11014405c4ee1b25f2a2e26746ef7c250778fc5eb1606b2e71e695",
+      "entry": "265C8I/VC102/SECD/SECD.code",
+      "source": "40967\t40967\t1576\t8\t0\t0\t300\t",
+      "correlation": "candidate matching first legacy field address; no LH ABI translation",
+      "instance": "DisTask",
+      "line": 829
+    },
+    {
+      "sha256": "521c52a07d11014405c4ee1b25f2a2e26746ef7c250778fc5eb1606b2e71e695",
+      "entry": "265C8I/VC102/SECD/SECD.code",
+      "source": "40967\t40967\t1760\t3\t0\t1\t1\t",
+      "correlation": "candidate matching first legacy field address; no LH ABI translation",
+      "instance": "ManageTask",
+      "line": 1147
+    },
+    {
+      "sha256": "56c712ad9f683bc78b92cd7e74e64b3b7fcd1f7a8f782c8d75f8b957a9074c36",
+      "entry": "265C8I/VC102/SEHC/SEHC.code",
+      "source": "40967\t40967\t307\t8\t0\t0\t8\t",
+      "correlation": "candidate matching first legacy field address; no LH ABI translation",
+      "instance": "CtrlTask",
+      "line": 79
+    },
+    {
+      "sha256": "56c712ad9f683bc78b92cd7e74e64b3b7fcd1f7a8f782c8d75f8b957a9074c36",
+      "entry": "265C8I/VC102/SEHC/SEHC.code",
+      "source": "40967\t40967\t1646\t6\t0\t0\t50\t",
+      "correlation": "candidate matching first legacy field address; no LH ABI translation",
+      "instance": "FstComm",
+      "line": 547
+    },
+    {
+      "sha256": "56c712ad9f683bc78b92cd7e74e64b3b7fcd1f7a8f782c8d75f8b957a9074c36",
+      "entry": "265C8I/VC102/SEHC/SEHC.code",
+      "source": "40967\t40967\t1832\t4\t0\t1\t1\t",
+      "correlation": "candidate matching first legacy field address; no LH ABI translation",
+      "instance": "ManageTask",
+      "line": 630
+    },
+    {
+      "sha256": "56c712ad9f683bc78b92cd7e74e64b3b7fcd1f7a8f782c8d75f8b957a9074c36",
+      "entry": "265C8I/VC102/SEHC/SEHC.code",
+      "source": "40967\t40967\t1649\t5\t0\t0\t500\t",
+      "correlation": "candidate matching first legacy field address; no LH ABI translation",
+      "instance": "SlowTask",
+      "line": 552
+    }
+  ],
+  "lhNameMappingCertified": false,
+  "legacyCandidate": "_Task",
+  "downloadableTargetCertified": false,
+  "callCount": 7,
+  "block": "Task",
+  "observedLegacyName": "Task",
+  "schemaVersion": 1,
+  "mappingStatus": "同名",
+  "manualPages": [
+    {
+      "path": "D:\\Table\\LM\\LM2007用户手册(1).pdf",
+      "sha256": "99d42e57db22fe0107fd3bde810a61267392196bd4612469e1256dcc77c3f706",
+      "physicalPage": 32,
+      "extractedText": "manual-evidence/manual-page-32.txt",
+      "typeDirectionAndLayoutCertifiedForLH": false
+    },
+    {
+      "path": "D:\\Table\\LM\\LM2007用户手册(1).pdf",
+      "sha256": "99d42e57db22fe0107fd3bde810a61267392196bd4612469e1256dcc77c3f706",
+      "physicalPage": 33,
+      "extractedText": "manual-evidence/manual-page-33.txt",
+      "typeDirectionAndLayoutCertifiedForLH": false
+    },
+    {
+      "path": "D:\\Table\\LM\\LM2007用户手册(1).pdf",
+      "sha256": "99d42e57db22fe0107fd3bde810a61267392196bd4612469e1256dcc77c3f706",
+      "physicalPage": 34,
+      "extractedText": "manual-evidence/manual-page-34.txt",
+      "typeDirectionAndLayoutCertifiedForLH": false
+    },
+    {
+      "path": "D:\\Table\\LM\\LM2007用户手册(1).pdf",
+      "sha256": "99d42e57db22fe0107fd3bde810a61267392196bd4612469e1256dcc77c3f706",
+      "physicalPage": 35,
+      "extractedText": "manual-evidence/manual-page-35.txt",
+      "typeDirectionAndLayoutCertifiedForLH": false
+    },
+    {
+      "path": "D:\\Table\\LM\\LM2007用户手册(1).pdf",
+      "sha256": "99d42e57db22fe0107fd3bde810a61267392196bd4612469e1256dcc77c3f706",
+      "physicalPage": 36,
+      "extractedText": "manual-evidence/manual-page-36.txt",
+      "typeDirectionAndLayoutCertifiedForLH": false
+    }
+  ],
+  "reviewCandidateContract": "TaskNum/VirtMesgOpt/ModeOpt/TimeLeng；TaskTime/Count",
+  "reviewAssessment": "可实现任务参数、枚举、唯一性与结构校验；手册 1–16 的限制和枚举表序号须映射到所选目标，不能将表序号当作机器编码。",
+  "manualExtractionScope": "Physical PDF pages, copied as evidence; legacy numeric tables do not certify LH operand encodings"
+}

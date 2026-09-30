@@ -1,0 +1,30 @@
+LM 基础设施与公共服务 
+7 信号量定义 _SemaDef[.] SemaIni::SelectNum; 
+8 信号量 P 操作 _SemaPOper SemaVal=:Memb; 
+9 信号量 V 操作 _SemaVOper SemaVal=:Memb; 
+1、创建任务（2） 
+¾ 功能描述： 
+创建一个任务 
+¾ 装配格式： 
+_Task[.] TaskNum::SelectNum,VirtMesgOpt::Opt,ModeOpt::Opt,TimeLeng::Const; 
+功能块序列; 
+_TaskEnd; 
+其中： 
+① Task 表示任务体的开始；TaskEnd表示任务体的结束 
+② TaskNum 为任务号（1≤TaskNum≤16） 
+③ VirtMesgOpt为唤醒本任务所定义的虚拟消息，VirtMesgOpt可取如下选择： 
+编号 选择定义 选择名称 选 择 含 义 
+1 定时消息 #TimeMesg 系统内部定时时间到后，唤醒任务 
+2 事件消息 #EventMesg 系统内部定义的事件发生时,唤醒任务 
+3 数据消息 #DataMesg 系统外部修改参数时，唤醒任务 
+④ 虚拟消息为 TimeMesg 时，ModeOpt 为任务工作周期的时间单位，ModeOpt 可取如下选
+择： 
+编号 选择定义 选择名称 选 择 含 义 
+1 毫秒 #MSec 定时器的时间单位为毫秒 
+2 秒 #Sec 定时器的时间单位为秒 
+3 分 #Min 定时器的时间单位为分 
+4 时 #Hour 定时器的时间单位为小时 
+5 日 #Day 定时器的时间单位为日 
+当任务需要比“毫秒”更小的工作周期时，可以通过“事件消息”的“高频消息” 
+FreqtTime来唤醒任务。“高频消息”的时间单位为“微秒”。 
+- 28 - 

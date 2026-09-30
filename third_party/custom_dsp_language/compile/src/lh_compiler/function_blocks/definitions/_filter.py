@@ -25,7 +25,7 @@ def _define_filterbw() -> FunctionBlockMeta:
         category="filter",
         description="巴特沃斯滤波器",
         status="incomplete",
-        incomplete_reason="缺少参数契约与协议定义 (TODO)",
+        incomplete_reason="已保存 LM 功能候选证据；LH 固件版本对应的指令、引用和字段布局尚未核实",
         parameters=[
             # TODO: 根据实际需求添加参数定义
         ]

@@ -25,7 +25,6 @@ add_library(designer_module STATIC
     ProjectController.cpp
     ProjectConfigValidation.cpp
     BuildController.cpp
-    RunController.cpp
     SettingsController.cpp
     ../diagnostics/DiagnosticSnapshotService.cpp
     ui/ThemeManager.cpp
@@ -33,8 +32,8 @@ add_library(designer_module STATIC
     ui/InspectorPanel.cpp
     ParameterTuningPanel.cpp
     ParameterTuningWindow.cpp
-    ParameterController.cpp
     RuntimeSessionController.cpp
+    RuntimeMonitorAdapter.cpp
     RuntimeSessionDownload.cpp
     ProfileResolution.cpp
     RuntimeSessionDebug.cpp
@@ -52,10 +51,13 @@ target_link_libraries(designer_module
     compiler_module
     monitor
     ServoValveComm
+    project_command_coordinator
+    runtime_session_service
 )
 
 target_include_directories(designer_module PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}
-    ${CMAKE_SOURCE_DIR}/src/monitor
     ${LX_PUBLIC_INCLUDE_DIRS}
 )
+
+target_include_directories(designer_module PRIVATE ${LX_PRIVATE_INCLUDE_DIRS})

@@ -192,18 +192,21 @@ class CompileSupportEmitter:
             if not meta:
                 continue
             call_values = calls.get(block.name, {})
-            param_address = int(block.address)
             for param in getattr(meta, "parameters", []):
                 value = call_values.get(param.name.upper(), param.default_value)
                 lines.append("\t".join([
                     block.name,
                     param.name,
                     str(param.data_type),
-                    str(param_address),
+                    "",  # Encoded constructor values have no proven runtime address.
                     self._format_value(param.default_value),
                     self._format_value(value),
                 ]))
-                param_address += self._type_size(param.data_type)
+            for runtime_field in meta.runtime_field_layout():
+                lines.append("\t".join([
+                    block.name, runtime_field.name, runtime_field.data_type,
+                    str(block.address + runtime_field.offset), "", "",
+                ]))
 
         return "\n".join(lines) + "\n"
 
@@ -226,17 +229,24 @@ class CompileSupportEmitter:
                 "",
             ]))
             if meta:
-                param_address = int(block.address)
                 for param in getattr(meta, "parameters", []):
                     lines.append("\t".join([
-                        str(param_address),
-                        "parameter",
+                        "",
+                        "constructor_parameter",
                         block.name,
                         str(param.data_type),
                         str(self._type_size(param.data_type)),
                         param.name,
                     ]))
-                    param_address += self._type_size(param.data_type)
+                for runtime_field in meta.runtime_field_layout():
+                    lines.append("\t".join([
+                        str(block.address + runtime_field.offset),
+                        "runtime_field",
+                        block.name,
+                        runtime_field.data_type,
+                        str(runtime_field.size),
+                        runtime_field.name,
+                    ]))
 
         variable_addresses = getattr(memory, "_variable_addresses", {}) if memory else {}
         for name in sorted(variable_addresses.keys()):

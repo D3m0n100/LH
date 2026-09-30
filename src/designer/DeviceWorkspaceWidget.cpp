@@ -1,3 +1,4 @@
+#include "ui/ThemeManager.h"
 #include "DeviceWorkspaceWidget.h"
 #include "DownloadDockWidget.h"
 
@@ -64,10 +65,7 @@ DeviceWorkspaceWidget::DeviceWorkspaceWidget(QWidget* parent)
 
     // 1. 设备概览分组
     auto* overviewGroup = new QGroupBox(tr("设备目标与连接概览"), content);
-    overviewGroup->setStyleSheet(QStringLiteral(
-        "QGroupBox { font-weight: bold; border: 1px solid #d0d7de; border-radius: 6px; margin-top: 10px; padding: 12px 10px 10px 10px; background: #ffffff; }"
-        "QGroupBox::title { subcontrol-origin: margin; left: 8px; padding: 0 4px; background: #ffffff; color: #24292f; }"
-    ));
+    overviewGroup->setStyleSheet(ThemeManager::groupBoxStyleSheet() + QStringLiteral("QGroupBox { font-weight: bold; }"));
     auto* overviewLayout = new QGridLayout(overviewGroup);
     overviewLayout->setContentsMargins(10, 8, 10, 10);
     overviewLayout->setHorizontalSpacing(16);
@@ -110,10 +108,7 @@ DeviceWorkspaceWidget::DeviceWorkspaceWidget(QWidget* parent)
 
     // 2. 常规控制器操作分组
     auto* opsGroup = new QGroupBox(tr("常规控制器操作"), content);
-    opsGroup->setStyleSheet(QStringLiteral(
-        "QGroupBox { font-weight: bold; border: 1px solid #d0d7de; border-radius: 6px; margin-top: 10px; padding: 12px 10px 10px 10px; background: #ffffff; }"
-        "QGroupBox::title { subcontrol-origin: margin; left: 8px; padding: 0 4px; background: #ffffff; color: #24292f; }"
-    ));
+    opsGroup->setStyleSheet(ThemeManager::groupBoxStyleSheet() + QStringLiteral("QGroupBox { font-weight: bold; }"));
     // Keep the controls reachable at narrow logical widths. A single
     // horizontal row made the whole workspace request more than 1,000px.
     auto* opsLayout = new QGridLayout(opsGroup);

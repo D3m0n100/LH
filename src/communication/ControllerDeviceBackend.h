@@ -9,8 +9,8 @@
 #include "IDeviceBackend.h"
 #include "RuntimePointRegisterCodec.h"
 
-#include "common/ConfigTypes.h"
-#include "common/RuntimePointTypes.h"
+#include "../common/ConfigTypes.h"
+#include "../common/RuntimePointTypes.h"
 
 #include <QHash>
 #include <atomic>
@@ -66,6 +66,10 @@ public:
                           CommError* operationError = nullptr) override;
     bool supportsAsyncDownload() const { return m_client && m_client->hasWorkerThread(); }
     bool supportsAsyncRead() const override { return supportsAsyncDownload(); }
+    bool supportsAsyncWrite() const override { return supportsAsyncDownload(); }
+    void writePointsAsync(const QHash<QString, QVariant>& writes, int budgetMs,
+                          std::shared_ptr<std::atomic_bool> cancelled, QObject* context,
+                          WriteCompletion completed) override;
     void readPointsAsync(const QStringList& pointIds, int budgetMs,
                          std::shared_ptr<std::atomic_bool> cancelled, QObject* context,
                          ReadCompletion completed) override;

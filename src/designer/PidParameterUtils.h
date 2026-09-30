@@ -1,5 +1,5 @@
 #pragma once
-#include "common/ConfigTypes.h"
+#include "../common/ConfigTypes.h"
 #include <QStringList>
 
 namespace PidParameterUtils {

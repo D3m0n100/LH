@@ -1,6 +1,6 @@
 #ifndef LH_PROJECT_CONFIG_VALIDATION_H
 #define LH_PROJECT_CONFIG_VALIDATION_H
-#include "common/ConfigTypes.h"
+#include "../common/ConfigTypes.h"
 #include <QJsonObject>
 #include <QStringList>
 namespace ProjectConfigValidation {

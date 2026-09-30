@@ -1,18 +1,34 @@
 #include "ClassicOpcServer.h"
 
 #include "ModbusInterface.h"
+#include "ClassicOpcPollWorker.h"
+#include <QPointer>
+#include "RuntimePointRegisterCodec.h"
+#include "ModbusLimits.h"
 
 #include <QRegularExpression>
 #include <QDateTime>
+#include <QtMath>
 #include <initializer_list>
 #include <utility>
 
 ClassicOpcServer::ClassicOpcServer(QObject* parent)
     : IOpcServer(parent)
-    , m_modbus(new ModbusInterface(this))
+    , m_worker(new ClassicOpcPollWorker)
 {
+    m_worker->moveToThread(&m_ioThread);
+    connect(&m_ioThread, &QThread::finished, m_worker, &QObject::deleteLater);
+    m_ioThread.start();
     m_pollTimer.setSingleShot(false);
     connect(&m_pollTimer, &QTimer::timeout, this, &ClassicOpcServer::pollDevice);
+}
+
+ClassicOpcServer::~ClassicOpcServer()
+{
+    stop();
+    if (m_pollCancelled) m_pollCancelled->store(true);
+    m_ioThread.quit();
+    m_ioThread.wait();
 }
 
 bool ClassicOpcServer::applyConfig(const OpcServerConfig& config, QString* errorMessage)
@@ -29,17 +45,8 @@ bool ClassicOpcServer::applyConfig(const OpcServerConfig& config, QString* error
     m_lastErrorMessage.clear();
 
     if (m_running) {
-        if (m_modbus) {
-            m_modbus->close();
-        }
-        QString reopenError;
-        if (!ensureModbusOpen(&reopenError)) {
-            m_lastErrorCode = CommErrorCode::ConnectionFailed;
-            m_lastErrorMessage = reopenError;
-            emit errorOccurred(m_lastErrorMessage);
-            return false;
-        }
-        startPolling();
+        stop();
+        return start(errorMessage);
     }
     return true;
 }
@@ -57,20 +64,16 @@ bool ClassicOpcServer::start(QString* errorMessage)
         return true;
     }
 
-    if (!ensureModbusOpen(errorMessage)) {
-        m_lastErrorCode = CommErrorCode::ConnectionFailed;
-        m_lastErrorMessage = errorMessage ? *errorMessage : QStringLiteral("Classic OPC failed to open Modbus backend");
-        emit errorOccurred(m_lastErrorMessage);
-        return false;
-    }
-
     m_running = true;
+    ++m_pollGeneration;
+    m_pollCancelled = std::make_shared<std::atomic_bool>(false);
     m_lastErrorCode = CommErrorCode::NoError;
     m_lastErrorMessage.clear();
     m_lastStatusChangeTime = QDateTime::currentDateTimeUtc();
     rebuildMappings();
     startPolling();
     emit runningStateChanged(true);
+    pollDevice();
     return true;
 }
 
@@ -81,10 +84,14 @@ void ClassicOpcServer::stop()
     }
 
     m_running = false;
+    ++m_pollGeneration;
+    m_pollInFlight = false;
+    m_modbusConnected = false;
     stopPolling();
-    if (m_modbus) {
-        m_modbus->close();
-    }
+    const auto cancelled = m_pollCancelled;
+    if (cancelled) cancelled->store(true);
+    auto worker = m_worker;
+    QMetaObject::invokeMethod(worker, [worker, cancelled] { worker->closeWhenIdle(cancelled); }, Qt::QueuedConnection);
     m_lastStatusChangeTime = QDateTime::currentDateTimeUtc();
     emit runningStateChanged(false);
 }
@@ -118,6 +125,10 @@ void ClassicOpcServer::setRuntimePoints(const QList<RuntimePointDefinition>& poi
     }
 
     if (m_running) {
+        if (m_pollCancelled) m_pollCancelled->store(true);
+        ++m_pollGeneration;
+        m_pollInFlight = false;
+        m_pollCancelled = std::make_shared<std::atomic_bool>(false);
         pollDevice();
     }
 }
@@ -158,7 +169,7 @@ void ClassicOpcServer::recordWriteResult(const QString& pointId, bool success, c
 BackendStatusSnapshot ClassicOpcServer::statusSnapshot() const
 {
     BackendStatusSnapshot snapshot;
-    snapshot.online = m_running;
+    snapshot.online = m_running && m_modbusConnected;
     snapshot.backendType = QStringLiteral("classic-modbus");
     snapshot.downloading = false;
     snapshot.downloadPercent = 0;
@@ -171,7 +182,8 @@ BackendStatusSnapshot ClassicOpcServer::statusSnapshot() const
     snapshot.extras.insert(QStringLiteral("mappedNodeCount"), m_nodePathToPoint.size());
     snapshot.extras.insert(QStringLiteral("valueCount"), m_values.size());
     snapshot.extras.insert(QStringLiteral("polling"), m_pollTimer.isActive());
-    snapshot.extras.insert(QStringLiteral("modbusConnected"), m_modbus && m_modbus->isConnected());
+    snapshot.extras.insert(QStringLiteral("modbusConnected"), m_modbusConnected);
+    snapshot.extras.insert(QStringLiteral("pollInFlight"), m_pollInFlight);
     snapshot.extras.insert(QStringLiteral("successfulPollCount"), m_successfulPollCount);
     snapshot.extras.insert(QStringLiteral("failedPollCount"), m_failedPollCount);
     snapshot.extras.insert(QStringLiteral("successfulWriteCount"), m_successfulWriteCount);
@@ -250,212 +262,83 @@ void ClassicOpcServer::stopPolling()
 
 void ClassicOpcServer::pollDevice()
 {
-    if (!m_running || !m_modbus) {
-        return;
-    }
-
+    if (!m_running || m_pollInFlight) return;
+    m_pollInFlight = true;
     m_lastPollTime = QDateTime::currentDateTimeUtc();
-    int successCount = 0;
-    int failureCount = 0;
-
-    if (!m_modbus->isConnected()) {
-        QString errorMessage;
-        if (!ensureModbusOpen(&errorMessage)) {
-            m_lastErrorCode = CommErrorCode::ConnectionLost;
-            m_lastErrorMessage = errorMessage;
-            ++m_failedPollCount;
-            m_lastStatusChangeTime = QDateTime::currentDateTimeUtc();
-            emit errorOccurred(errorMessage);
-            return;
-        }
+    const auto generation = m_pollGeneration;
+    const auto cancelled = m_pollCancelled;
+    QList<ClassicPollPoint> requests;
+    const int maxRegisters = qBound(1, m_config.maxRegistersPerRequest, ModbusLimits::ReadRegisters);
+    for (const auto& point : std::as_const(m_points)) {
+        ClassicPollPoint request;
+        request.point = point;
+        const auto info = m_pointAddressing.value(point.id, parseAddressing(point));
+        request.unit = info.unitId; request.address = info.address; request.bit = info.bitOffset;
+        const auto area = info.area.trimmed().toLower();
+        if (area == "coil" || area == "coils") request.area = "coil";
+        else if (area == "discrete" || area == "discrete-input" || area == "discrete-inputs") request.area = "discrete";
+        else if (area == "input" || area == "input-register" || area == "input-registers") request.area = "input";
+        else if (area == "holding" || area == "holding-register" || area == "holding-registers") request.area = "holding";
+        else request.error = QStringLiteral("unknown register area");
+        QString codecError;
+        if (!RuntimePointRegisterCodec::buildSpec(point, &request.codec, &codecError)) request.error = codecError;
+        const bool bits = request.area == "coil" || request.area == "discrete";
+        const int limit = bits ? 2000 : maxRegisters;
+        if (!info.valid || request.unit < 1 || request.unit > 247 || request.address < 0 || request.address > 65535 ||
+                request.width() < 1 || request.width() > limit || request.address + request.width() > 65536 ||
+                info.bitOffset < 0 || info.bitOffset > 15)
+            request.error = QStringLiteral("invalid explicit address/unit/width/bit offset");
+        if (point.access == RuntimePointAccess::WriteOnly) request.error = QStringLiteral("point is write-only");
+        if (bits && !request.codec.dataType.isEmpty() && request.codec.dataType != "BOOL")
+            request.error = QStringLiteral("coil/discrete point must be BOOL");
+        if (info.bitOffset != 0 && (request.codec.dataType != "BOOL" || request.width() != 1 || bits))
+            request.error = QStringLiteral("bitOffset requires a scalar BOOL register");
+        requests.append(request);
     }
-
-    for (const RuntimePointDefinition& point : std::as_const(m_points)) {
-        QString errorMessage;
-        if (!refreshPointValue(point, &errorMessage)) {
-            m_lastErrorCode = CommErrorCode::ReceiveFailed;
-            m_lastErrorMessage = errorMessage;
-            ++failureCount;
-            ++m_failedPollCount;
-            m_lastStatusChangeTime = QDateTime::currentDateTimeUtc();
-            continue;
-        }
-        ++successCount;
-        ++m_successfulPollCount;
-    }
-
-    if (successCount > 0) {
-        m_lastSuccessfulPollTime = QDateTime::currentDateTimeUtc();
-    }
-}
-
-bool ClassicOpcServer::refreshPointValue(const RuntimePointDefinition& point, QString* errorMessage)
-{
-    const AddressingInfo info = m_pointAddressing.value(point.id, parseAddressing(point));
-    if (info.address < 0) {
-        if (errorMessage) {
-            *errorMessage = QStringLiteral("point %1 missing addressing.address").arg(point.id);
-        }
-        return false;
-    }
-
-    const int unitId = info.unitId <= 0 ? 1 : info.unitId;
-    const int effectiveAddress = info.address + qMax(0, info.bitOffset);
-    if (info.area.compare(QStringLiteral("coil"), Qt::CaseInsensitive) == 0
-            || info.area.compare(QStringLiteral("coils"), Qt::CaseInsensitive) == 0) {
-        m_modbus->setStationAddress(unitId);
-        if (!m_modbus->readCoils(effectiveAddress, info.elementCount > 0 ? info.elementCount : 1)) {
-            return false;
-        }
-        const auto values = m_modbus->coils().value(effectiveAddress);
-        RuntimePointValue current;
-        current.pointId = point.id;
-        current.value = values.isEmpty() ? QVariant() : QVariant(values.first());
-        current.quality = RuntimePointQuality::Good;
-        current.timestamp = QDateTime::currentDateTimeUtc();
-        current.origin = QStringLiteral("opc-poll");
-        m_values.insert(point.id, current);
-        return true;
-    }
-
-    if (info.area.compare(QStringLiteral("input"), Qt::CaseInsensitive) == 0
-            || info.area.compare(QStringLiteral("input-register"), Qt::CaseInsensitive) == 0
-            || info.area.compare(QStringLiteral("input-registers"), Qt::CaseInsensitive) == 0) {
-        m_modbus->setStationAddress(unitId);
-        if (!m_modbus->readInputRegisters(effectiveAddress, info.elementCount > 0 ? info.elementCount : 1)) {
-            return false;
-        }
-        const auto values = m_modbus->inputRegisters().value(effectiveAddress);
-        RuntimePointValue current;
-        current.pointId = point.id;
-        current.value = values.isEmpty() ? QVariant() : QVariant(values.first());
-        current.quality = RuntimePointQuality::Good;
-        current.timestamp = QDateTime::currentDateTimeUtc();
-        current.origin = QStringLiteral("opc-poll");
-        m_values.insert(point.id, current);
-        return true;
-    }
-
-    m_modbus->setStationAddress(unitId);
-    if (!m_modbus->readHoldingRegisters(effectiveAddress, info.elementCount > 0 ? info.elementCount : 1)) {
-        return false;
-    }
-    const auto values = m_modbus->holdingRegisters().value(effectiveAddress);
-    RuntimePointValue current;
-    current.pointId = point.id;
-    current.value = values.isEmpty() ? QVariant() : QVariant(values.first());
-    current.quality = RuntimePointQuality::Good;
-    current.timestamp = QDateTime::currentDateTimeUtc();
-    current.origin = QStringLiteral("opc-poll");
-    m_values.insert(point.id, current);
-    return true;
-}
-
-bool ClassicOpcServer::writePointValue(const RuntimePointDefinition& point, const QVariant& value, QString* errorMessage)
-{
-    const AddressingInfo info = m_pointAddressing.value(point.id, parseAddressing(point));
-    if (info.address < 0) {
-        if (errorMessage) {
-            *errorMessage = QStringLiteral("point %1 missing addressing.address").arg(point.id);
-        }
-        return false;
-    }
-
-    if (point.access == RuntimePointAccess::ReadOnly) {
-        if (errorMessage) {
-            *errorMessage = QStringLiteral("point is read-only");
-        }
-        return false;
-    }
-
-    const int unitId = info.unitId <= 0 ? 1 : info.unitId;
-    const int effectiveAddress = info.address + qMax(0, info.bitOffset);
-    m_modbus->setStationAddress(unitId);
-
-    if (info.area.compare(QStringLiteral("coil"), Qt::CaseInsensitive) == 0
-            || info.area.compare(QStringLiteral("coils"), Qt::CaseInsensitive) == 0) {
-        return m_modbus->writeSingleCoil(effectiveAddress, value.toBool());
-    }
-
-    if (info.elementCount > 1 || value.type() == QVariant::List) {
-        QVector<quint16> registers;
-        const QVariantList list = value.toList();
-        if (!list.isEmpty()) {
-            registers.reserve(list.size());
-            for (const QVariant& item : list) {
-                registers.push_back(static_cast<quint16>(item.toUInt()));
+    const auto config = toModbusConfig();
+    const int budgetMs = qBound(50, m_config.timeoutMs, 30000);
+    QPointer<ClassicOpcServer> guard(this);
+    auto completed = [guard, generation, requests](QList<RuntimePointValue> values, QString error, bool connected) {
+        if (!guard) return;
+        if (!connected && values.isEmpty()) {
+            for (const auto& request : requests) {
+                RuntimePointValue invalid;
+                invalid.pointId = request.point.id;
+                invalid.quality = RuntimePointQuality::Bad;
+                invalid.timestamp = QDateTime::currentDateTimeUtc();
+                invalid.origin = QStringLiteral("opc-poll");
+                values.append(invalid);
             }
-        } else {
-            registers.push_back(static_cast<quint16>(value.toUInt()));
         }
-        return m_modbus->writeMultipleRegisters(effectiveAddress, registers);
-    }
-
-    return m_modbus->writeSingleRegister(effectiveAddress, static_cast<quint16>(value.toUInt()));
+        QMetaObject::invokeMethod(guard.data(), [guard, generation, values, error, connected] {
+            if (!guard || !guard->m_running || generation != guard->m_pollGeneration) return;
+            guard->m_pollInFlight = false;
+            guard->m_modbusConnected = connected;
+            for (const auto& value : values) {
+                guard->m_values.insert(value.pointId, value);
+                if (value.quality == RuntimePointQuality::Good) {
+                    ++guard->m_successfulPollCount;
+                    guard->m_lastSuccessfulPollTime = value.timestamp;
+                } else ++guard->m_failedPollCount;
+            }
+            guard->m_lastErrorCode = error.isEmpty() ? CommErrorCode::NoError : CommErrorCode::ReceiveFailed;
+            guard->m_lastErrorMessage = error;
+            if (!error.isEmpty()) {
+                if (values.isEmpty()) ++guard->m_failedPollCount;
+                guard->m_lastStatusChangeTime = QDateTime::currentDateTimeUtc();
+                emit guard->errorOccurred(error);
+            }
+        }, Qt::QueuedConnection);
+    };
+    auto worker = m_worker;
+    QMetaObject::invokeMethod(worker, [worker, config, requests, budgetMs, maxRegisters, cancelled, completed] {
+        try {
+            worker->poll(config, requests, budgetMs, maxRegisters, cancelled, completed);
+        } catch (...) {
+            completed({}, QStringLiteral("Classic poll worker exception"), false);
+        }
+    }, Qt::QueuedConnection);
 }
-
-bool ClassicOpcServer::applyPointValue(const RuntimePointDefinition& point, const QVariant& value, QString* errorMessage)
-{
-    if (!m_running) {
-        if (errorMessage) {
-            *errorMessage = QStringLiteral("Classic OPC server is not running");
-        }
-        return false;
-    }
-
-    if (!m_modbus || !m_modbus->isConnected()) {
-        if (errorMessage) {
-            *errorMessage = QStringLiteral("Modbus backend is not connected");
-        }
-        return false;
-    }
-
-    const bool ok = writePointValue(point, value, errorMessage);
-    if (ok) {
-        m_lastWritePointId = point.id;
-        m_lastWriteSuccess = true;
-        m_lastWriteMessage = QStringLiteral("write ok");
-        m_lastWriteValue = value;
-        m_lastWriteTime = QDateTime::currentDateTimeUtc();
-        m_lastSuccessfulWriteTime = m_lastWriteTime;
-        m_lastSuccessfulWriteMessage = QStringLiteral("write ok");
-        ++m_successfulWriteCount;
-    }
-    return ok;
-}
-
-bool ClassicOpcServer::ensureModbusOpen(QString* errorMessage)
-{
-    if (!m_modbus) {
-        if (errorMessage) {
-            *errorMessage = QStringLiteral("Modbus backend unavailable");
-        }
-        return false;
-    }
-
-    ModbusConfig modbusConfig = toModbusConfig();
-    if (!modbusConfig.isValid()) {
-        if (errorMessage) {
-            *errorMessage = QStringLiteral("Classic OPC Modbus config invalid");
-        }
-        return false;
-    }
-
-    if (m_modbus->isConnected()) {
-        return true;
-    }
-
-    if (!m_modbus->open(modbusConfig)) {
-        if (errorMessage) {
-            *errorMessage = QStringLiteral("Failed to open Modbus backend");
-        }
-        m_lastStatusChangeTime = QDateTime::currentDateTimeUtc();
-        return false;
-    }
-    m_lastStatusChangeTime = QDateTime::currentDateTimeUtc();
-    return true;
-}
-
 ModbusConfig ClassicOpcServer::toModbusConfig() const
 {
     ModbusConfig cfg;
@@ -541,10 +424,13 @@ ClassicOpcServer::AddressingInfo ClassicOpcServer::parseAddressing(const Runtime
             const QString qKey = QString::fromLatin1(key);
             if (map.contains(qKey)) {
                 bool ok = false;
-                const int parsed = map.value(qKey).toInt(&ok);
-                if (ok) {
-                    return parsed;
-                }
+                const QVariant value = map.value(qKey);
+                const double parsed = value.toDouble(&ok);
+                if (value.type() != QVariant::Bool && ok && qIsFinite(parsed)
+                        && qFloor(parsed) == parsed && parsed >= 0 && parsed <= 65535)
+                    return static_cast<int>(parsed);
+                info.valid = false;
+                return fallback;
             }
         }
         return fallback;
@@ -567,7 +453,8 @@ ClassicOpcServer::AddressingInfo ClassicOpcServer::parseAddressing(const Runtime
     info.address = readInt({ "address", "regAddress", "register", "pointAddress", "offset" }, -1);
     info.unitId = readInt({ "unitId", "slaveId", "stationAddress", "serverAddress" }, 1);
     info.bitOffset = readInt({ "bitOffset", "bit", "bitIndex" }, 0);
-    info.elementCount = qMax(1, readInt({ "elementCount", "count", "length", "quantity" }, 1));
+    info.elementCount = readInt({ "elementCount", "count", "length", "quantity" }, 1);
+    if (info.elementCount <= 0) info.valid = false;
 
     if (info.address < 0) {
         const QVariantMap meta = point.metadata;
@@ -581,11 +468,15 @@ ClassicOpcServer::AddressingInfo ClassicOpcServer::parseAddressing(const Runtime
         for (const QString& key : addressKeys) {
             if (meta.contains(key)) {
                 bool ok = false;
-                const int parsed = meta.value(key).toInt(&ok);
-                if (ok) {
-                    info.address = parsed;
+                const QVariant value = meta.value(key);
+                const double parsed = value.toDouble(&ok);
+                if (value.type() != QVariant::Bool && ok && qIsFinite(parsed)
+                        && qFloor(parsed) == parsed && parsed >= 0 && parsed <= 65535) {
+                    info.address = static_cast<int>(parsed);
                     break;
                 }
+                info.valid = false;
+                break;
             }
         }
     }
@@ -596,11 +487,6 @@ ClassicOpcServer::AddressingInfo ClassicOpcServer::parseAddressing(const Runtime
         if (match.hasMatch()) {
             info.address = match.captured(1).toInt();
         }
-    }
-
-    if (info.area.compare(QStringLiteral("holding"), Qt::CaseInsensitive) == 0
-            && point.access == RuntimePointAccess::ReadOnly) {
-        info.area = QStringLiteral("input");
     }
 
     return info;

@@ -221,6 +221,7 @@ public:
     
     ExportConfig config() const { return m_config; }
     void setConfig(const ExportConfig& config);
+    void setCancellationPredicate(std::function<bool()> cancelled) { m_cancelled = std::move(cancelled); }
     void setParentWidget(QWidget* parent);
 
     // =========================================================================
@@ -472,6 +473,7 @@ private:
 
 private:
     ExportConfig m_config;
+    std::function<bool()> m_cancelled;
     QWidget* m_parentWidget = nullptr;
 };
 

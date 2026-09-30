@@ -1,4 +1,6 @@
 #include "AppLogging.h"
+#include "common/LogSafety.h"
+#include <QJsonDocument>
 
 #include <QDateTime>
 #include <QDebug>
@@ -35,6 +37,9 @@ struct LogState {
     quint64 submitted = 0;
     quint64 completed = 0;
     quint64 dropped = 0;
+    quint64 unreportedDropped = 0;
+    QDateTime firstDrop;
+    QDateTime lastDrop;
     bool stopping = false;
     std::atomic_bool accepting{false};
     QFile activeFile;
@@ -154,10 +159,10 @@ QByteArray formatLine(QtMsgType type, const QMessageLogContext& context,
     const QByteArray prefix = QStringLiteral("%1 [%2] [category=%3] [thread=0x%4] ")
         .arg(QDateTime::currentDateTimeUtc().toString(Qt::ISODateWithMs))
         .arg(messageTypeName(type))
-        .arg(category)
+        .arg(LogSafety::escapeLine(category))
         .arg(QString::number(reinterpret_cast<quintptr>(QThread::currentThreadId()), 16))
         .toUtf8();
-    const QByteArray messageBytes = message.toUtf8();
+    const QByteArray messageBytes = LogSafety::escapeLine(LogSafety::redactText(message)).toUtf8();
     const QByteArray truncationMarker(" [truncated]\n");
     if (prefix.size() + messageBytes.size() + 1 <= kMaxLineBytes) {
         return prefix + messageBytes + '\n';
@@ -209,6 +214,7 @@ void writerLoop(LogState& logState)
 {
     for (;;) {
         std::deque<QByteArray> batch;
+        quint64 admittedCount = 0;
         {
             std::unique_lock<std::mutex> lock(logState.queueMutex);
             logState.queueChanged.wait(lock, [&]() { return logState.stopping || !logState.queue.empty(); });
@@ -217,12 +223,20 @@ void writerLoop(LogState& logState)
                 return logState.stopping || logState.queuedBytes >= 64 * 1024;
             });
             batch.swap(logState.queue);
+            admittedCount = batch.size();
             logState.queuedBytes = 0;
+            if (logState.unreportedDropped) {
+                const QString summary = QStringLiteral("LOG_OVERLOAD dropped=%1 first=%2 last=%3 terminalPolicy=reserved-capacity-then-stderr")
+                        .arg(logState.unreportedDropped)
+                        .arg(logState.firstDrop.toString(Qt::ISODateWithMs), logState.lastDrop.toString(Qt::ISODateWithMs));
+                batch.push_back(formatLine(QtWarningMsg, QMessageLogContext(), summary));
+                logState.unreportedDropped = 0;
+            }
         }
         writeBatch(logState, batch);
         {
             std::lock_guard<std::mutex> lock(logState.queueMutex);
-            logState.completed += batch.size();
+            logState.completed += admittedCount;
         }
         logState.queueChanged.notify_all();
     }
@@ -233,6 +247,9 @@ void messageHandler(QtMsgType type, const QMessageLogContext& context, const QSt
     LogState& logState = state();
     const QByteArray encoded = formatLine(type, context, message);
     const bool critical = type == QtCriticalMsg || type == QtFatalMsg;
+    static const QRegularExpression terminalStatus(QStringLiteral(R"(\bstatus=(?:success|succeeded|failed|failure|canceled|cancelled|completed)\b)"));
+    const bool terminal = context.category && QByteArray(context.category) == "business_event"
+            && terminalStatus.match(message).hasMatch();
     quint64 sequence = 0;
     {
         std::unique_lock<std::mutex> lock(logState.queueMutex);
@@ -246,7 +263,12 @@ void messageHandler(QtMsgType type, const QMessageLogContext& context, const QSt
                 });
             }
             if (!logState.accepting) { lock.unlock(); writeStderr(encoded); }
-            else if (logState.queuedBytes + encoded.size() > maxQueueBytes) ++logState.dropped;
+            else if (logState.queuedBytes + encoded.size() > (terminal || critical ? maxQueueBytes : maxQueueBytes - 64 * 1024)) {
+                ++logState.dropped;
+                if (logState.unreportedDropped++ == 0) logState.firstDrop = QDateTime::currentDateTimeUtc();
+                logState.lastDrop = QDateTime::currentDateTimeUtc();
+                if (terminal) { lock.unlock(); writeStderr(encoded); }
+            }
             else {
                 logState.queue.push_back(encoded);
                 logState.queuedBytes += encoded.size();
@@ -332,6 +354,17 @@ quint64 droppedMessageCount()
     return logState.dropped;
 }
 
+QVariantMap overloadStatus()
+{
+    auto& logState = state();
+    std::lock_guard<std::mutex> lock(logState.queueMutex);
+    return {{QStringLiteral("droppedMessages"), QVariant::fromValue(logState.dropped)},
+            {QStringLiteral("firstDrop"), logState.firstDrop},
+            {QStringLiteral("lastDrop"), logState.lastDrop},
+            {QStringLiteral("queuedBytes"), logState.queuedBytes},
+            {QStringLiteral("terminalPolicy"), QStringLiteral("reserved-capacity-then-stderr")}};
+}
+
 void shutdown()
 {
     LogState& logState = state();
@@ -388,24 +421,13 @@ namespace {
 
 QString sanitizeBusinessValue(const QString& str)
 {
-    QString res = str;
-    res.replace(QLatin1Char('\\'), QStringLiteral("\\\\"));
-    res.replace(QLatin1Char('\n'), QStringLiteral("\\n"));
-    res.replace(QLatin1Char('\r'), QStringLiteral("\\r"));
-    res.replace(QLatin1Char('\t'), QStringLiteral("\\t"));
-    return res;
+    // Physical-line framing is applied once to the complete record.
+    return str;
 }
 
 bool isCredentialKey(const QString& key)
 {
-    const QString lower = key.toLower();
-    return lower.contains(QStringLiteral("password"))
-        || lower.contains(QStringLiteral("secret"))
-        || lower.contains(QStringLiteral("token"))
-        || lower.contains(QStringLiteral("credential"))
-        || lower.contains(QStringLiteral("auth"))
-        || lower.contains(QStringLiteral("passphrase"))
-        || lower.contains(QStringLiteral("privatekey"));
+    return LogSafety::isSensitiveKey(key);
 }
 
 } // namespace
@@ -428,7 +450,11 @@ void writeBusinessEvent(const BusinessEvent& event)
         if (isCredentialKey(key)) {
             valStr = QStringLiteral("******");
         } else {
-            valStr = sanitizeBusinessValue(it.value().toString());
+            const auto safe = LogSafety::redact(QJsonValue::fromVariant(it.value()));
+            if (safe.isObject()) valStr = QString::fromUtf8(QJsonDocument(safe.toObject()).toJson(QJsonDocument::Compact));
+            else if (safe.isArray()) valStr = QString::fromUtf8(QJsonDocument(safe.toArray()).toJson(QJsonDocument::Compact));
+            else valStr = safe.toVariant().toString();
+            valStr = sanitizeBusinessValue(valStr);
         }
         parts.append(QStringLiteral("%1=%2").arg(sanitizeBusinessValue(key), valStr));
     }

@@ -57,6 +57,11 @@ struct FunctionSnippet
     QVariantMap metadata;   ///< 额外元数据
     
     bool isValid() const { return !id.isEmpty(); }
+    bool canInsert() const {
+        const QString status = metadata.value(QStringLiteral("status")).toString();
+        return status.isEmpty() || status == QStringLiteral("supported");
+    }
+    QString capabilityReason() const { return metadata.value(QStringLiteral("incompleteReason")).toString(); }
 };
 
 /**

@@ -1,4 +1,6 @@
 #include "AsyncHistoryStoreAdapter.h"
+#include <exception>
+#include <QDebug>
 
 namespace Monitor {
 
@@ -100,26 +102,56 @@ void AsyncHistoryStoreAdapter::requestPage(QObject* context, const QString& chan
     const QDateTime& end, int size, const RuntimeHistoryCursor& cursor, int latestCount,
     std::function<void(RuntimeHistoryPage)> completed)
 {
-    if (!isAvailable()) { completed({}); return; }
+    if (!completed) return;
+    const auto userCompletion = completed;
+    completed = [userCompletion](RuntimeHistoryPage page) {
+        try { userCompletion(page); }
+        catch (...) { qWarning("History completion callback threw an exception"); }
+    };
+    if (!context) {
+        RuntimeHistoryPage page; page.status = RuntimeHistoryPageStatus::SqlError;
+        page.errorCode = QStringLiteral("MISSING_CALLBACK_CONTEXT");
+        page.errorText = QStringLiteral("History requests require a callback context");
+        completed(page); return;
+    }
+    if (!isAvailable()) {
+        RuntimeHistoryPage page; page.errorCode = QStringLiteral("NOT_INITIALIZED");
+        page.errorText = QStringLiteral("Async database worker is not available");
+        QMetaObject::invokeMethod(context, [completed, page] { completed(page); }, Qt::QueuedConnection);
+        return;
+    }
     const auto token = m_requestCancellation;
     QPointer<QObject> guard(context);
     auto* worker = m_worker.data();
     const bool accepted = worker->submitHistoryTask(context, [=]() {
-        RuntimeHistoryPage page = latestCount > 0
-            ? worker->queryLatestHistoryPage(channel, latestCount, size, cursor, end, token.get())
-            : worker->queryHistoryPage(channel, start, end, size, cursor, token.get());
+        RuntimeHistoryPage page;
+        try {
+            page = latestCount > 0
+                ? worker->queryLatestHistoryPage(channel, latestCount, size, cursor, end, token.get())
+                : worker->queryHistoryPage(channel, start, end, size, cursor, token.get());
+        } catch (...) {
+            page.status = RuntimeHistoryPageStatus::SqlError;
+            page.errorCode = QStringLiteral("HISTORY_REQUEST_EXCEPTION");
+            page.errorText = QStringLiteral("History query failed with an unexpected exception");
+        }
         if (guard) QMetaObject::invokeMethod(guard, [=]() {
-            if (token->load()) {
-                RuntimeHistoryPage cancelled; cancelled.status = RuntimeHistoryPageStatus::Cancelled;
-                completed(cancelled);
-            } else completed(page);
+            try {
+                if (token->load()) {
+                    RuntimeHistoryPage cancelled; cancelled.status = RuntimeHistoryPageStatus::Cancelled;
+                    cancelled.errorCode = QStringLiteral("CANCELLED");
+                    completed(cancelled);
+                } else completed(page);
+            } catch (...) { qWarning("History completion callback threw an exception"); }
         }, Qt::QueuedConnection);
     });
     if (!accepted) {
         RuntimeHistoryPage page; page.status = RuntimeHistoryPageStatus::SqlError;
         page.errorCode = QStringLiteral("HISTORY_QUEUE_UNAVAILABLE");
         page.errorText = QStringLiteral("History service is stopping or its request queue is full");
-        completed(page);
+        QMetaObject::invokeMethod(context, [completed, page] {
+            try { completed(page); }
+            catch (...) { qWarning("History completion callback threw an exception"); }
+        }, Qt::QueuedConnection);
     }
 }
 

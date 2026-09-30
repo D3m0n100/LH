@@ -15,6 +15,9 @@
 #include <QTableWidget>
 #include <QToolButton>
 #include <QVBoxLayout>
+#include <QTemporaryFile>
+#include <QDesktopServices>
+#include <QUrl>
 
 ProblemsPanel::ProblemsPanel(QWidget* parent)
     : QWidget(parent)
@@ -79,6 +82,12 @@ QHeaderView::section {
     tools->addSpacing(12);
     tools->addWidget(m_summaryLabel);
     tools->addStretch();
+    auto* detailsButton = new QToolButton(this);
+    detailsButton->setText(QStringLiteral("完整详情"));
+    connect(detailsButton, &QToolButton::clicked, this, [this] {
+        if (m_details && m_details->isOpen()) QDesktopServices::openUrl(QUrl::fromLocalFile(m_details->fileName()));
+    });
+    tools->addWidget(detailsButton);
     tools->addWidget(m_clearButton);
     root->addLayout(tools);
 
@@ -172,8 +181,52 @@ void ProblemsPanel::setDiagnostics(const QList<DiagnosticItem>& items)
     emit problemCountChanged(m_table->rowCount());
 }
 
-void ProblemsPanel::appendRowForDiagnostic(const DiagnosticItem& item)
+QString ProblemsPanel::diagnosticDetailsPath() const
 {
+    return m_details ? m_details->fileName() : QString();
+}
+
+void ProblemsPanel::removeDiagnosticRow(int row)
+{
+    const QString severity = itemAtRow(row).severity.toLower();
+    if (severity == "error" || severity == "错误") --m_errorCount;
+    else if (severity == "warning" || severity == "警告") --m_warningCount;
+    else --m_infoCount;
+    m_table->removeRow(row);
+}
+
+void ProblemsPanel::appendRowForDiagnostic(const DiagnosticItem& input)
+{
+    DiagnosticItem item = input;
+    int sourceCount = 0;
+    for (int r = 0; r < m_table->rowCount(); ++r)
+        if (itemAtRow(r).source == item.source) ++sourceCount;
+    for (int r = 0; sourceCount >= MaxRowsPerSource && r < m_table->rowCount();) {
+        if (itemAtRow(r).source == item.source) { removeDiagnosticRow(r); --sourceCount; }
+        else ++r;
+    }
+    while (m_table->rowCount() >= MaxRows) removeDiagnosticRow(0);
+    QString detailsPath;
+    if (item.message.size() > MaxMessageCharacters) {
+        if (!m_details) {
+            m_details = new QTemporaryFile(this);
+            m_details->open();
+        }
+        if (m_details->isOpen()) {
+            const QByteArray detail = item.message.toUtf8();
+            if (detail.size() + 2 <= MaxDetailsBytes - m_details->size()) {
+                m_details->write(detail);
+                m_details->write("\n\n");
+                m_details->flush();
+                detailsPath = m_details->fileName();
+            }
+        }
+        item.message = item.message.left(MaxMessageCharacters);
+        if (!item.message.isEmpty() && item.message.back().isHighSurrogate()) item.message.chop(1);
+        item.message += detailsPath.isEmpty()
+                ? QStringLiteral(" [已截断；详情未保留，存储失败或达到 16 MiB 上限]")
+                : QStringLiteral(" [已截断；完整内容见诊断详情]");
+    }
     const int row = m_table->rowCount();
     m_table->insertRow(row);
 
@@ -224,6 +277,10 @@ void ProblemsPanel::appendRowForDiagnostic(const DiagnosticItem& item)
 
     // 说明列 (Message)
     auto* messageItem = new QTableWidgetItem;
+    if (!detailsPath.isEmpty()) {
+        messageItem->setToolTip(QStringLiteral("完整诊断: %1").arg(detailsPath));
+        messageItem->setData(Qt::UserRole, detailsPath);
+    }
     if (item.isOutdated) {
         messageItem->setText(QStringLiteral("[可能已过期] ") + item.message);
         messageItem->setForeground(QColor("#8c8c8c"));
@@ -313,6 +370,8 @@ bool ProblemsPanel::eventFilter(QObject* watched, QEvent* event)
 
 void ProblemsPanel::clearProblems()
 {
+    delete m_details;
+    m_details = nullptr;
     if (!m_table) {
         return;
     }

@@ -2,7 +2,7 @@
 #define ASYNC_HISTORY_STORE_ADAPTER_H
 
 #include "IMonitorHistoryStore.h"
-#include "core/AsyncDatabaseWorker.h"
+#include "../core/AsyncDatabaseWorker.h"
 
 namespace Monitor {
 

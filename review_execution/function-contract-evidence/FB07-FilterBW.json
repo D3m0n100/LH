@@ -1,0 +1,1811 @@
+{
+  "calls": [
+    {
+      "sha256": "2154ad5656f908513ccbb58b7a1cf4038ab9e5aa04ff9e0445b7c40c1d99d8a1",
+      "entry": "265C8I/VC102/HSub/Cntrl/Cntrl.inva",
+      "instance": "FPWMOut",
+      "source": "_FilterBW[FPWMOut]       \"Src\":=FCrtTSO.OP;",
+      "orderedParameters": [
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "Src",
+          "lhOperandEncoding": null,
+          "rawValue": "FCrtTSO.OP",
+          "operator": ":="
+        }
+      ],
+      "line": 360
+    },
+    {
+      "sha256": "2154ad5656f908513ccbb58b7a1cf4038ab9e5aa04ff9e0445b7c40c1d99d8a1",
+      "entry": "265C8I/VC102/HSub/Cntrl/Cntrl.inva",
+      "instance": "BPWMOut",
+      "source": "_FilterBW[BPWMOut]       \"Src\":=BCrtTSO.OP;",
+      "orderedParameters": [
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "Src",
+          "lhOperandEncoding": null,
+          "rawValue": "BCrtTSO.OP",
+          "operator": ":="
+        }
+      ],
+      "line": 361
+    },
+    {
+      "sha256": "c166d9884e52abf161005feef5fe73c8e352759baad34859733dc6d85c918a4e",
+      "entry": "265C8I/VC102/HSub/Port/PortIn.inva",
+      "instance": "BucketDig",
+      "source": "_FilterBW[BucketDig]     \"Src\":=BucketDigRF.Output;",
+      "orderedParameters": [
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "Src",
+          "lhOperandEncoding": null,
+          "rawValue": "BucketDigRF.Output",
+          "operator": ":="
+        }
+      ],
+      "line": 53
+    },
+    {
+      "sha256": "c166d9884e52abf161005feef5fe73c8e352759baad34859733dc6d85c918a4e",
+      "entry": "265C8I/VC102/HSub/Port/PortIn.inva",
+      "instance": "BucketUDig",
+      "source": "_FilterBW[BucketUDig]    \"Src\":=BucketUDigRF.Output;",
+      "orderedParameters": [
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "Src",
+          "lhOperandEncoding": null,
+          "rawValue": "BucketUDigRF.Output",
+          "operator": ":="
+        }
+      ],
+      "line": 54
+    },
+    {
+      "sha256": "c166d9884e52abf161005feef5fe73c8e352759baad34859733dc6d85c918a4e",
+      "entry": "265C8I/VC102/HSub/Port/PortIn.inva",
+      "instance": "ArmDig",
+      "source": "_FilterBW[ArmDig]        \"Src\":=ArmDigRF.Output;",
+      "orderedParameters": [
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "Src",
+          "lhOperandEncoding": null,
+          "rawValue": "ArmDigRF.Output",
+          "operator": ":="
+        }
+      ],
+      "line": 55
+    },
+    {
+      "sha256": "c166d9884e52abf161005feef5fe73c8e352759baad34859733dc6d85c918a4e",
+      "entry": "265C8I/VC102/HSub/Port/PortIn.inva",
+      "instance": "ArmUDig",
+      "source": "_FilterBW[ArmUDig]       \"Src\":=ArmUDigRF.Output;",
+      "orderedParameters": [
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "Src",
+          "lhOperandEncoding": null,
+          "rawValue": "ArmUDigRF.Output",
+          "operator": ":="
+        }
+      ],
+      "line": 56
+    },
+    {
+      "sha256": "c166d9884e52abf161005feef5fe73c8e352759baad34859733dc6d85c918a4e",
+      "entry": "265C8I/VC102/HSub/Port/PortIn.inva",
+      "instance": "BoomUp",
+      "source": "_FilterBW[BoomUp]        \"Src\":=BoomUpRF.Output;",
+      "orderedParameters": [
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "Src",
+          "lhOperandEncoding": null,
+          "rawValue": "BoomUpRF.Output",
+          "operator": ":="
+        }
+      ],
+      "line": 57
+    },
+    {
+      "sha256": "c166d9884e52abf161005feef5fe73c8e352759baad34859733dc6d85c918a4e",
+      "entry": "265C8I/VC102/HSub/Port/PortIn.inva",
+      "instance": "BoomDown",
+      "source": "_FilterBW[BoomDown]      \"Src\":=BoomDownRF.Output;",
+      "orderedParameters": [
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "Src",
+          "lhOperandEncoding": null,
+          "rawValue": "BoomDownRF.Output",
+          "operator": ":="
+        }
+      ],
+      "line": 58
+    },
+    {
+      "sha256": "c166d9884e52abf161005feef5fe73c8e352759baad34859733dc6d85c918a4e",
+      "entry": "265C8I/VC102/HSub/Port/PortIn.inva",
+      "instance": "LeftRun",
+      "source": "_FilterBW[LeftRun]       \"Src\":=LeftRunRF.Output;",
+      "orderedParameters": [
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "Src",
+          "lhOperandEncoding": null,
+          "rawValue": "LeftRunRF.Output",
+          "operator": ":="
+        }
+      ],
+      "line": 59
+    },
+    {
+      "sha256": "c166d9884e52abf161005feef5fe73c8e352759baad34859733dc6d85c918a4e",
+      "entry": "265C8I/VC102/HSub/Port/PortIn.inva",
+      "instance": "RightRun",
+      "source": "_FilterBW[RightRun]      \"Src\":=RightRunRF.Output;",
+      "orderedParameters": [
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "Src",
+          "lhOperandEncoding": null,
+          "rawValue": "RightRunRF.Output",
+          "operator": ":="
+        }
+      ],
+      "line": 60
+    },
+    {
+      "sha256": "c166d9884e52abf161005feef5fe73c8e352759baad34859733dc6d85c918a4e",
+      "entry": "265C8I/VC102/HSub/Port/PortIn.inva",
+      "instance": "Turn",
+      "source": "_FilterBW[Turn]          \"Src\":=TurnRF.Output;",
+      "orderedParameters": [
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "Src",
+          "lhOperandEncoding": null,
+          "rawValue": "TurnRF.Output",
+          "operator": ":="
+        }
+      ],
+      "line": 61
+    },
+    {
+      "sha256": "c166d9884e52abf161005feef5fe73c8e352759baad34859733dc6d85c918a4e",
+      "entry": "265C8I/VC102/HSub/Port/PortIn.inva",
+      "instance": "FPumpPP",
+      "source": "_FilterBW[FPumpPP]       \"Src\":=FPumpPPRF.Output;",
+      "orderedParameters": [
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "Src",
+          "lhOperandEncoding": null,
+          "rawValue": "FPumpPPRF.Output",
+          "operator": ":="
+        }
+      ],
+      "line": 62
+    },
+    {
+      "sha256": "c166d9884e52abf161005feef5fe73c8e352759baad34859733dc6d85c918a4e",
+      "entry": "265C8I/VC102/HSub/Port/PortIn.inva",
+      "instance": "BPumpPP",
+      "source": "_FilterBW[BPumpPP]       \"Src\":=BPumpPPRF.Output;",
+      "orderedParameters": [
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "Src",
+          "lhOperandEncoding": null,
+          "rawValue": "BPumpPPRF.Output",
+          "operator": ":="
+        }
+      ],
+      "line": 63
+    },
+    {
+      "sha256": "c166d9884e52abf161005feef5fe73c8e352759baad34859733dc6d85c918a4e",
+      "entry": "265C8I/VC102/HSub/Port/PortIn.inva",
+      "instance": "YOilT",
+      "source": "_FilterBW[YOilT]         \"Src\":=YOilTRF.Output;",
+      "orderedParameters": [
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "Src",
+          "lhOperandEncoding": null,
+          "rawValue": "YOilTRF.Output",
+          "operator": ":="
+        }
+      ],
+      "line": 64
+    },
+    {
+      "sha256": "c166d9884e52abf161005feef5fe73c8e352759baad34859733dc6d85c918a4e",
+      "entry": "265C8I/VC102/HSub/Port/PortIn.inva",
+      "instance": "RWater",
+      "source": "_FilterBW[RWater]        \"Src\":=RWaterTRF.Output;",
+      "orderedParameters": [
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "Src",
+          "lhOperandEncoding": null,
+          "rawValue": "RWaterTRF.Output",
+          "operator": ":="
+        }
+      ],
+      "line": 65
+    },
+    {
+      "sha256": "c166d9884e52abf161005feef5fe73c8e352759baad34859733dc6d85c918a4e",
+      "entry": "265C8I/VC102/HSub/Port/PortIn.inva",
+      "instance": "OilPsnt",
+      "source": "_FilterBW[OilPsnt]       \"Src\":=OilPsntRF.Output;",
+      "orderedParameters": [
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "Src",
+          "lhOperandEncoding": null,
+          "rawValue": "OilPsntRF.Output",
+          "operator": ":="
+        }
+      ],
+      "line": 66
+    },
+    {
+      "sha256": "c166d9884e52abf161005feef5fe73c8e352759baad34859733dc6d85c918a4e",
+      "entry": "265C8I/VC102/HSub/Port/PortIn.inva",
+      "instance": "FPWMBack",
+      "source": "_FilterBW[FPWMBack]       \"Src\":=AIUnit.AI9;",
+      "orderedParameters": [
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "Src",
+          "lhOperandEncoding": null,
+          "rawValue": "AIUnit.AI9",
+          "operator": ":="
+        }
+      ],
+      "line": 67
+    },
+    {
+      "sha256": "c166d9884e52abf161005feef5fe73c8e352759baad34859733dc6d85c918a4e",
+      "entry": "265C8I/VC102/HSub/Port/PortIn.inva",
+      "instance": "BPWMBack",
+      "source": "_FilterBW[BPWMBack]       \"Src\":=AIUnit.AI11;",
+      "orderedParameters": [
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "Src",
+          "lhOperandEncoding": null,
+          "rawValue": "AIUnit.AI11",
+          "operator": ":="
+        }
+      ],
+      "line": 68
+    },
+    {
+      "sha256": "7ed22e2300142b8beb877f382920354a650cb680bd325f740e13901ecb991545",
+      "entry": "265C8I/VC102/HSub/SpdIn/Spd.inva",
+      "instance": "SpdFltr",
+      "source": "_FilterBW[SpdFltr] \"输入\":=SpdF.F3;",
+      "orderedParameters": [
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "输入",
+          "lhOperandEncoding": null,
+          "rawValue": "SpdF.F3",
+          "operator": ":="
+        }
+      ],
+      "line": 27
+    },
+    {
+      "sha256": "7ed22e2300142b8beb877f382920354a650cb680bd325f740e13901ecb991545",
+      "entry": "265C8I/VC102/HSub/SpdIn/Spd.inva",
+      "instance": "CtrlSpdFltr",
+      "source": "_FilterBW[CtrlSpdFltr] \"输入\":=SpdF.F3;",
+      "orderedParameters": [
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "输入",
+          "lhOperandEncoding": null,
+          "rawValue": "SpdF.F3",
+          "operator": ":="
+        }
+      ],
+      "line": 28
+    },
+    {
+      "sha256": "84406d8c2e2979f88d3e9736f01b5e00944893602ced8a562ca4f5d5f97ecf2a",
+      "entry": "265C8I/VC102/TSub/Port/PortIn.inva",
+      "instance": "KnbPstn",
+      "source": "_FilterBW[KnbPstn]   \"Src\":=KnbPstnRF.Output;",
+      "orderedParameters": [
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "Src",
+          "lhOperandEncoding": null,
+          "rawValue": "KnbPstnRF.Output",
+          "operator": ":="
+        }
+      ],
+      "line": 53
+    },
+    {
+      "sha256": "84406d8c2e2979f88d3e9736f01b5e00944893602ced8a562ca4f5d5f97ecf2a",
+      "entry": "265C8I/VC102/TSub/Port/PortIn.inva",
+      "instance": "MtrPstn",
+      "source": "_FilterBW[MtrPstn]   \"Src\":=MtrPstnRF.Output;",
+      "orderedParameters": [
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "Src",
+          "lhOperandEncoding": null,
+          "rawValue": "MtrPstnRF.Output",
+          "operator": ":="
+        }
+      ],
+      "line": 54
+    },
+    {
+      "sha256": "84406d8c2e2979f88d3e9736f01b5e00944893602ced8a562ca4f5d5f97ecf2a",
+      "entry": "265C8I/VC102/TSub/Port/PortIn.inva",
+      "instance": "Elec",
+      "source": "_FilterBW[Elec]      \"Src\":=AIUnit.AI1;",
+      "orderedParameters": [
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "Src",
+          "lhOperandEncoding": null,
+          "rawValue": "AIUnit.AI1",
+          "operator": ":="
+        }
+      ],
+      "line": 55
+    },
+    {
+      "sha256": "84406d8c2e2979f88d3e9736f01b5e00944893602ced8a562ca4f5d5f97ecf2a",
+      "entry": "265C8I/VC102/TSub/Port/PortIn.inva",
+      "instance": "RxSpdFltr",
+      "source": "_FilterBW[RxSpdFltr]   \"Src\":=RxSpd.F1;",
+      "orderedParameters": [
+        {
+          "direction": null,
+          "syntacticKind": "member-reference-syntax",
+          "name": "Src",
+          "lhOperandEncoding": null,
+          "rawValue": "RxSpd.F1",
+          "operator": ":="
+        }
+      ],
+      "line": 59
+    }
+  ],
+  "scope": "offline lexical LM evidence; production LH contract unverified",
+  "extractionLimits": [
+    "First 24 call excerpts retained; total count includes all matches",
+    "Lexical operator/value classification is not semantic direction or type proof",
+    "No unaddressed marker opcode is inferred from an empty parameter list"
+  ],
+  "externalPrerequisites": [
+    "用于生产编码的 LH 目标指令/操作数/数值版本支持证据"
+  ],
+  "planScope": "仅处理 FilterBW。根据 用户手册 PDF 第 183–184 页；指南 PDF 第 46 页；成功 SEHC 的源/list/typ/code 建立 Input/Output/Order/CutOffFreqc；Input 为运行时成员引用 的 LH 契约，输出名称/参数类别/方向/范围/初值/字段/布局/指令形式与来源映射。证据最完整，优先实现；构造操作数和运行时字段分开建模，保留 REAL/IQ 版本差异。旧 41148、543、473 不直接复制到当前 851 与地址布局。",
+  "fields": [
+    {
+      "sha256": "f464a5f185449d0dd99f6f0ba436c0aaddbfd0b20ab291e371d02f54e4bf332c",
+      "entry": "265C8I/VC102/SECD/SECD.typ",
+      "lhOffset": null,
+      "line": 1103,
+      "instance": "KnbPstn",
+      "direction": null,
+      "field": "Input",
+      "lhType": null,
+      "legacyAddress": 1096,
+      "legacyTypeCode": 3
+    },
+    {
+      "sha256": "f464a5f185449d0dd99f6f0ba436c0aaddbfd0b20ab291e371d02f54e4bf332c",
+      "entry": "265C8I/VC102/SECD/SECD.typ",
+      "lhOffset": null,
+      "line": 1104,
+      "instance": "KnbPstn",
+      "direction": null,
+      "field": "Output",
+      "lhType": null,
+      "legacyAddress": 1097,
+      "legacyTypeCode": 3
+    },
+    {
+      "sha256": "f464a5f185449d0dd99f6f0ba436c0aaddbfd0b20ab291e371d02f54e4bf332c",
+      "entry": "265C8I/VC102/SECD/SECD.typ",
+      "lhOffset": null,
+      "line": 1105,
+      "instance": "KnbPstn",
+      "direction": null,
+      "field": "Order",
+      "lhType": null,
+      "legacyAddress": 1098,
+      "legacyTypeCode": 2
+    },
+    {
+      "sha256": "f464a5f185449d0dd99f6f0ba436c0aaddbfd0b20ab291e371d02f54e4bf332c",
+      "entry": "265C8I/VC102/SECD/SECD.typ",
+      "lhOffset": null,
+      "line": 1106,
+      "instance": "KnbPstn",
+      "direction": null,
+      "field": "CutOffFreqc",
+      "lhType": null,
+      "legacyAddress": 1099,
+      "legacyTypeCode": 3
+    },
+    {
+      "sha256": "f464a5f185449d0dd99f6f0ba436c0aaddbfd0b20ab291e371d02f54e4bf332c",
+      "entry": "265C8I/VC102/SECD/SECD.typ",
+      "lhOffset": null,
+      "line": 1107,
+      "instance": "MtrPstn",
+      "direction": null,
+      "field": "Input",
+      "lhType": null,
+      "legacyAddress": 1100,
+      "legacyTypeCode": 3
+    },
+    {
+      "sha256": "f464a5f185449d0dd99f6f0ba436c0aaddbfd0b20ab291e371d02f54e4bf332c",
+      "entry": "265C8I/VC102/SECD/SECD.typ",
+      "lhOffset": null,
+      "line": 1108,
+      "instance": "MtrPstn",
+      "direction": null,
+      "field": "Output",
+      "lhType": null,
+      "legacyAddress": 1101,
+      "legacyTypeCode": 3
+    },
+    {
+      "sha256": "f464a5f185449d0dd99f6f0ba436c0aaddbfd0b20ab291e371d02f54e4bf332c",
+      "entry": "265C8I/VC102/SECD/SECD.typ",
+      "lhOffset": null,
+      "line": 1109,
+      "instance": "MtrPstn",
+      "direction": null,
+      "field": "Order",
+      "lhType": null,
+      "legacyAddress": 1102,
+      "legacyTypeCode": 2
+    },
+    {
+      "sha256": "f464a5f185449d0dd99f6f0ba436c0aaddbfd0b20ab291e371d02f54e4bf332c",
+      "entry": "265C8I/VC102/SECD/SECD.typ",
+      "lhOffset": null,
+      "line": 1110,
+      "instance": "MtrPstn",
+      "direction": null,
+      "field": "CutOffFreqc",
+      "lhType": null,
+      "legacyAddress": 1103,
+      "legacyTypeCode": 3
+    },
+    {
+      "sha256": "f464a5f185449d0dd99f6f0ba436c0aaddbfd0b20ab291e371d02f54e4bf332c",
+      "entry": "265C8I/VC102/SECD/SECD.typ",
+      "lhOffset": null,
+      "line": 1111,
+      "instance": "Elec",
+      "direction": null,
+      "field": "Input",
+      "lhType": null,
+      "legacyAddress": 1104,
+      "legacyTypeCode": 3
+    },
+    {
+      "sha256": "f464a5f185449d0dd99f6f0ba436c0aaddbfd0b20ab291e371d02f54e4bf332c",
+      "entry": "265C8I/VC102/SECD/SECD.typ",
+      "lhOffset": null,
+      "line": 1112,
+      "instance": "Elec",
+      "direction": null,
+      "field": "Output",
+      "lhType": null,
+      "legacyAddress": 1105,
+      "legacyTypeCode": 3
+    },
+    {
+      "sha256": "f464a5f185449d0dd99f6f0ba436c0aaddbfd0b20ab291e371d02f54e4bf332c",
+      "entry": "265C8I/VC102/SECD/SECD.typ",
+      "lhOffset": null,
+      "line": 1113,
+      "instance": "Elec",
+      "direction": null,
+      "field": "Order",
+      "lhType": null,
+      "legacyAddress": 1106,
+      "legacyTypeCode": 2
+    },
+    {
+      "sha256": "f464a5f185449d0dd99f6f0ba436c0aaddbfd0b20ab291e371d02f54e4bf332c",
+      "entry": "265C8I/VC102/SECD/SECD.typ",
+      "lhOffset": null,
+      "line": 1114,
+      "instance": "Elec",
+      "direction": null,
+      "field": "CutOffFreqc",
+      "lhType": null,
+      "legacyAddress": 1107,
+      "legacyTypeCode": 3
+    },
+    {
+      "sha256": "f464a5f185449d0dd99f6f0ba436c0aaddbfd0b20ab291e371d02f54e4bf332c",
+      "entry": "265C8I/VC102/SECD/SECD.typ",
+      "lhOffset": null,
+      "line": 1115,
+      "instance": "RxSpdFltr",
+      "direction": null,
+      "field": "Input",
+      "lhType": null,
+      "legacyAddress": 1108,
+      "legacyTypeCode": 3
+    },
+    {
+      "sha256": "f464a5f185449d0dd99f6f0ba436c0aaddbfd0b20ab291e371d02f54e4bf332c",
+      "entry": "265C8I/VC102/SECD/SECD.typ",
+      "lhOffset": null,
+      "line": 1116,
+      "instance": "RxSpdFltr",
+      "direction": null,
+      "field": "Output",
+      "lhType": null,
+      "legacyAddress": 1109,
+      "legacyTypeCode": 3
+    },
+    {
+      "sha256": "f464a5f185449d0dd99f6f0ba436c0aaddbfd0b20ab291e371d02f54e4bf332c",
+      "entry": "265C8I/VC102/SECD/SECD.typ",
+      "lhOffset": null,
+      "line": 1117,
+      "instance": "RxSpdFltr",
+      "direction": null,
+      "field": "Order",
+      "lhType": null,
+      "legacyAddress": 1110,
+      "legacyTypeCode": 2
+    },
+    {
+      "sha256": "f464a5f185449d0dd99f6f0ba436c0aaddbfd0b20ab291e371d02f54e4bf332c",
+      "entry": "265C8I/VC102/SECD/SECD.typ",
+      "lhOffset": null,
+      "line": 1118,
+      "instance": "RxSpdFltr",
+      "direction": null,
+      "field": "CutOffFreqc",
+      "lhType": null,
+      "legacyAddress": 1111,
+      "legacyTypeCode": 3
+    },
+    {
+      "sha256": "28ed832b790612a2d39619d720ed0c26ef94b6c131e85ae93103a19e18eb4833",
+      "entry": "265C8I/VC102/SEHC/SEHC.typ",
+      "lhOffset": null,
+      "line": 328,
+      "instance": "SpdFltr",
+      "direction": null,
+      "field": "Input",
+      "lhType": null,
+      "legacyAddress": 321,
+      "legacyTypeCode": 3
+    },
+    {
+      "sha256": "28ed832b790612a2d39619d720ed0c26ef94b6c131e85ae93103a19e18eb4833",
+      "entry": "265C8I/VC102/SEHC/SEHC.typ",
+      "lhOffset": null,
+      "line": 329,
+      "instance": "SpdFltr",
+      "direction": null,
+      "field": "Output",
+      "lhType": null,
+      "legacyAddress": 322,
+      "legacyTypeCode": 3
+    },
+    {
+      "sha256": "28ed832b790612a2d39619d720ed0c26ef94b6c131e85ae93103a19e18eb4833",
+      "entry": "265C8I/VC102/SEHC/SEHC.typ",
+      "lhOffset": null,
+      "line": 330,
+      "instance": "SpdFltr",
+      "direction": null,
+      "field": "Order",
+      "lhType": null,
+      "legacyAddress": 323,
+      "legacyTypeCode": 2
+    },
+    {
+      "sha256": "28ed832b790612a2d39619d720ed0c26ef94b6c131e85ae93103a19e18eb4833",
+      "entry": "265C8I/VC102/SEHC/SEHC.typ",
+      "lhOffset": null,
+      "line": 331,
+      "instance": "SpdFltr",
+      "direction": null,
+      "field": "CutOffFreqc",
+      "lhType": null,
+      "legacyAddress": 324,
+      "legacyTypeCode": 3
+    },
+    {
+      "sha256": "28ed832b790612a2d39619d720ed0c26ef94b6c131e85ae93103a19e18eb4833",
+      "entry": "265C8I/VC102/SEHC/SEHC.typ",
+      "lhOffset": null,
+      "line": 332,
+      "instance": "CtrlSpdFltr",
+      "direction": null,
+      "field": "Input",
+      "lhType": null,
+      "legacyAddress": 325,
+      "legacyTypeCode": 3
+    },
+    {
+      "sha256": "28ed832b790612a2d39619d720ed0c26ef94b6c131e85ae93103a19e18eb4833",
+      "entry": "265C8I/VC102/SEHC/SEHC.typ",
+      "lhOffset": null,
+      "line": 333,
+      "instance": "CtrlSpdFltr",
+      "direction": null,
+      "field": "Output",
+      "lhType": null,
+      "legacyAddress": 326,
+      "legacyTypeCode": 3
+    },
+    {
+      "sha256": "28ed832b790612a2d39619d720ed0c26ef94b6c131e85ae93103a19e18eb4833",
+      "entry": "265C8I/VC102/SEHC/SEHC.typ",
+      "lhOffset": null,
+      "line": 334,
+      "instance": "CtrlSpdFltr",
+      "direction": null,
+      "field": "Order",
+      "lhType": null,
+      "legacyAddress": 327,
+      "legacyTypeCode": 2
+    },
+    {
+      "sha256": "28ed832b790612a2d39619d720ed0c26ef94b6c131e85ae93103a19e18eb4833",
+      "entry": "265C8I/VC102/SEHC/SEHC.typ",
+      "lhOffset": null,
+      "line": 335,
+      "instance": "CtrlSpdFltr",
+      "direction": null,
+      "field": "CutOffFreqc",
+      "lhType": null,
+      "legacyAddress": 328,
+      "legacyTypeCode": 3
+    },
+    {
+      "sha256": "28ed832b790612a2d39619d720ed0c26ef94b6c131e85ae93103a19e18eb4833",
+      "entry": "265C8I/VC102/SEHC/SEHC.typ",
+      "lhOffset": null,
+      "line": 550,
+      "instance": "BucketDig",
+      "direction": null,
+      "field": "Input",
+      "lhType": null,
+      "legacyAddress": 543,
+      "legacyTypeCode": 3
+    },
+    {
+      "sha256": "28ed832b790612a2d39619d720ed0c26ef94b6c131e85ae93103a19e18eb4833",
+      "entry": "265C8I/VC102/SEHC/SEHC.typ",
+      "lhOffset": null,
+      "line": 551,
+      "instance": "BucketDig",
+      "direction": null,
+      "field": "Output",
+      "lhType": null,
+      "legacyAddress": 544,
+      "legacyTypeCode": 3
+    },
+    {
+      "sha256": "28ed832b790612a2d39619d720ed0c26ef94b6c131e85ae93103a19e18eb4833",
+      "entry": "265C8I/VC102/SEHC/SEHC.typ",
+      "lhOffset": null,
+      "line": 552,
+      "instance": "BucketDig",
+      "direction": null,
+      "field": "Order",
+      "lhType": null,
+      "legacyAddress": 545,
+      "legacyTypeCode": 2
+    },
+    {
+      "sha256": "28ed832b790612a2d39619d720ed0c26ef94b6c131e85ae93103a19e18eb4833",
+      "entry": "265C8I/VC102/SEHC/SEHC.typ",
+      "lhOffset": null,
+      "line": 553,
+      "instance": "BucketDig",
+      "direction": null,
+      "field": "CutOffFreqc",
+      "lhType": null,
+      "legacyAddress": 546,
+      "legacyTypeCode": 3
+    },
+    {
+      "sha256": "28ed832b790612a2d39619d720ed0c26ef94b6c131e85ae93103a19e18eb4833",
+      "entry": "265C8I/VC102/SEHC/SEHC.typ",
+      "lhOffset": null,
+      "line": 554,
+      "instance": "BucketUDig",
+      "direction": null,
+      "field": "Input",
+      "lhType": null,
+      "legacyAddress": 547,
+      "legacyTypeCode": 3
+    },
+    {
+      "sha256": "28ed832b790612a2d39619d720ed0c26ef94b6c131e85ae93103a19e18eb4833",
+      "entry": "265C8I/VC102/SEHC/SEHC.typ",
+      "lhOffset": null,
+      "line": 555,
+      "instance": "BucketUDig",
+      "direction": null,
+      "field": "Output",
+      "lhType": null,
+      "legacyAddress": 548,
+      "legacyTypeCode": 3
+    },
+    {
+      "sha256": "28ed832b790612a2d39619d720ed0c26ef94b6c131e85ae93103a19e18eb4833",
+      "entry": "265C8I/VC102/SEHC/SEHC.typ",
+      "lhOffset": null,
+      "line": 556,
+      "instance": "BucketUDig",
+      "direction": null,
+      "field": "Order",
+      "lhType": null,
+      "legacyAddress": 549,
+      "legacyTypeCode": 2
+    },
+    {
+      "sha256": "28ed832b790612a2d39619d720ed0c26ef94b6c131e85ae93103a19e18eb4833",
+      "entry": "265C8I/VC102/SEHC/SEHC.typ",
+      "lhOffset": null,
+      "line": 557,
+      "instance": "BucketUDig",
+      "direction": null,
+      "field": "CutOffFreqc",
+      "lhType": null,
+      "legacyAddress": 550,
+      "legacyTypeCode": 3
+    },
+    {
+      "sha256": "28ed832b790612a2d39619d720ed0c26ef94b6c131e85ae93103a19e18eb4833",
+      "entry": "265C8I/VC102/SEHC/SEHC.typ",
+      "lhOffset": null,
+      "line": 558,
+      "instance": "ArmDig",
+      "direction": null,
+      "field": "Input",
+      "lhType": null,
+      "legacyAddress": 551,
+      "legacyTypeCode": 3
+    },
+    {
+      "sha256": "28ed832b790612a2d39619d720ed0c26ef94b6c131e85ae93103a19e18eb4833",
+      "entry": "265C8I/VC102/SEHC/SEHC.typ",
+      "lhOffset": null,
+      "line": 559,
+      "instance": "ArmDig",
+      "direction": null,
+      "field": "Output",
+      "lhType": null,
+      "legacyAddress": 552,
+      "legacyTypeCode": 3
+    },
+    {
+      "sha256": "28ed832b790612a2d39619d720ed0c26ef94b6c131e85ae93103a19e18eb4833",
+      "entry": "265C8I/VC102/SEHC/SEHC.typ",
+      "lhOffset": null,
+      "line": 560,
+      "instance": "ArmDig",
+      "direction": null,
+      "field": "Order",
+      "lhType": null,
+      "legacyAddress": 553,
+      "legacyTypeCode": 2
+    },
+    {
+      "sha256": "28ed832b790612a2d39619d720ed0c26ef94b6c131e85ae93103a19e18eb4833",
+      "entry": "265C8I/VC102/SEHC/SEHC.typ",
+      "lhOffset": null,
+      "line": 561,
+      "instance": "ArmDig",
+      "direction": null,
+      "field": "CutOffFreqc",
+      "lhType": null,
+      "legacyAddress": 554,
+      "legacyTypeCode": 3
+    },
+    {
+      "sha256": "28ed832b790612a2d39619d720ed0c26ef94b6c131e85ae93103a19e18eb4833",
+      "entry": "265C8I/VC102/SEHC/SEHC.typ",
+      "lhOffset": null,
+      "line": 562,
+      "instance": "ArmUDig",
+      "direction": null,
+      "field": "Input",
+      "lhType": null,
+      "legacyAddress": 555,
+      "legacyTypeCode": 3
+    },
+    {
+      "sha256": "28ed832b790612a2d39619d720ed0c26ef94b6c131e85ae93103a19e18eb4833",
+      "entry": "265C8I/VC102/SEHC/SEHC.typ",
+      "lhOffset": null,
+      "line": 563,
+      "instance": "ArmUDig",
+      "direction": null,
+      "field": "Output",
+      "lhType": null,
+      "legacyAddress": 556,
+      "legacyTypeCode": 3
+    },
+    {
+      "sha256": "28ed832b790612a2d39619d720ed0c26ef94b6c131e85ae93103a19e18eb4833",
+      "entry": "265C8I/VC102/SEHC/SEHC.typ",
+      "lhOffset": null,
+      "line": 564,
+      "instance": "ArmUDig",
+      "direction": null,
+      "field": "Order",
+      "lhType": null,
+      "legacyAddress": 557,
+      "legacyTypeCode": 2
+    },
+    {
+      "sha256": "28ed832b790612a2d39619d720ed0c26ef94b6c131e85ae93103a19e18eb4833",
+      "entry": "265C8I/VC102/SEHC/SEHC.typ",
+      "lhOffset": null,
+      "line": 565,
+      "instance": "ArmUDig",
+      "direction": null,
+      "field": "CutOffFreqc",
+      "lhType": null,
+      "legacyAddress": 558,
+      "legacyTypeCode": 3
+    },
+    {
+      "sha256": "28ed832b790612a2d39619d720ed0c26ef94b6c131e85ae93103a19e18eb4833",
+      "entry": "265C8I/VC102/SEHC/SEHC.typ",
+      "lhOffset": null,
+      "line": 566,
+      "instance": "BoomUp",
+      "direction": null,
+      "field": "Input",
+      "lhType": null,
+      "legacyAddress": 559,
+      "legacyTypeCode": 3
+    },
+    {
+      "sha256": "28ed832b790612a2d39619d720ed0c26ef94b6c131e85ae93103a19e18eb4833",
+      "entry": "265C8I/VC102/SEHC/SEHC.typ",
+      "lhOffset": null,
+      "line": 567,
+      "instance": "BoomUp",
+      "direction": null,
+      "field": "Output",
+      "lhType": null,
+      "legacyAddress": 560,
+      "legacyTypeCode": 3
+    },
+    {
+      "sha256": "28ed832b790612a2d39619d720ed0c26ef94b6c131e85ae93103a19e18eb4833",
+      "entry": "265C8I/VC102/SEHC/SEHC.typ",
+      "lhOffset": null,
+      "line": 568,
+      "instance": "BoomUp",
+      "direction": null,
+      "field": "Order",
+      "lhType": null,
+      "legacyAddress": 561,
+      "legacyTypeCode": 2
+    },
+    {
+      "sha256": "28ed832b790612a2d39619d720ed0c26ef94b6c131e85ae93103a19e18eb4833",
+      "entry": "265C8I/VC102/SEHC/SEHC.typ",
+      "lhOffset": null,
+      "line": 569,
+      "instance": "BoomUp",
+      "direction": null,
+      "field": "CutOffFreqc",
+      "lhType": null,
+      "legacyAddress": 562,
+      "legacyTypeCode": 3
+    },
+    {
+      "sha256": "28ed832b790612a2d39619d720ed0c26ef94b6c131e85ae93103a19e18eb4833",
+      "entry": "265C8I/VC102/SEHC/SEHC.typ",
+      "lhOffset": null,
+      "line": 570,
+      "instance": "BoomDown",
+      "direction": null,
+      "field": "Input",
+      "lhType": null,
+      "legacyAddress": 563,
+      "legacyTypeCode": 3
+    },
+    {
+      "sha256": "28ed832b790612a2d39619d720ed0c26ef94b6c131e85ae93103a19e18eb4833",
+      "entry": "265C8I/VC102/SEHC/SEHC.typ",
+      "lhOffset": null,
+      "line": 571,
+      "instance": "BoomDown",
+      "direction": null,
+      "field": "Output",
+      "lhType": null,
+      "legacyAddress": 564,
+      "legacyTypeCode": 3
+    },
+    {
+      "sha256": "28ed832b790612a2d39619d720ed0c26ef94b6c131e85ae93103a19e18eb4833",
+      "entry": "265C8I/VC102/SEHC/SEHC.typ",
+      "lhOffset": null,
+      "line": 572,
+      "instance": "BoomDown",
+      "direction": null,
+      "field": "Order",
+      "lhType": null,
+      "legacyAddress": 565,
+      "legacyTypeCode": 2
+    },
+    {
+      "sha256": "28ed832b790612a2d39619d720ed0c26ef94b6c131e85ae93103a19e18eb4833",
+      "entry": "265C8I/VC102/SEHC/SEHC.typ",
+      "lhOffset": null,
+      "line": 573,
+      "instance": "BoomDown",
+      "direction": null,
+      "field": "CutOffFreqc",
+      "lhType": null,
+      "legacyAddress": 566,
+      "legacyTypeCode": 3
+    },
+    {
+      "sha256": "28ed832b790612a2d39619d720ed0c26ef94b6c131e85ae93103a19e18eb4833",
+      "entry": "265C8I/VC102/SEHC/SEHC.typ",
+      "lhOffset": null,
+      "line": 574,
+      "instance": "LeftRun",
+      "direction": null,
+      "field": "Input",
+      "lhType": null,
+      "legacyAddress": 567,
+      "legacyTypeCode": 3
+    },
+    {
+      "sha256": "28ed832b790612a2d39619d720ed0c26ef94b6c131e85ae93103a19e18eb4833",
+      "entry": "265C8I/VC102/SEHC/SEHC.typ",
+      "lhOffset": null,
+      "line": 575,
+      "instance": "LeftRun",
+      "direction": null,
+      "field": "Output",
+      "lhType": null,
+      "legacyAddress": 568,
+      "legacyTypeCode": 3
+    },
+    {
+      "sha256": "28ed832b790612a2d39619d720ed0c26ef94b6c131e85ae93103a19e18eb4833",
+      "entry": "265C8I/VC102/SEHC/SEHC.typ",
+      "lhOffset": null,
+      "line": 576,
+      "instance": "LeftRun",
+      "direction": null,
+      "field": "Order",
+      "lhType": null,
+      "legacyAddress": 569,
+      "legacyTypeCode": 2
+    },
+    {
+      "sha256": "28ed832b790612a2d39619d720ed0c26ef94b6c131e85ae93103a19e18eb4833",
+      "entry": "265C8I/VC102/SEHC/SEHC.typ",
+      "lhOffset": null,
+      "line": 577,
+      "instance": "LeftRun",
+      "direction": null,
+      "field": "CutOffFreqc",
+      "lhType": null,
+      "legacyAddress": 570,
+      "legacyTypeCode": 3
+    },
+    {
+      "sha256": "28ed832b790612a2d39619d720ed0c26ef94b6c131e85ae93103a19e18eb4833",
+      "entry": "265C8I/VC102/SEHC/SEHC.typ",
+      "lhOffset": null,
+      "line": 578,
+      "instance": "RightRun",
+      "direction": null,
+      "field": "Input",
+      "lhType": null,
+      "legacyAddress": 571,
+      "legacyTypeCode": 3
+    },
+    {
+      "sha256": "28ed832b790612a2d39619d720ed0c26ef94b6c131e85ae93103a19e18eb4833",
+      "entry": "265C8I/VC102/SEHC/SEHC.typ",
+      "lhOffset": null,
+      "line": 579,
+      "instance": "RightRun",
+      "direction": null,
+      "field": "Output",
+      "lhType": null,
+      "legacyAddress": 572,
+      "legacyTypeCode": 3
+    },
+    {
+      "sha256": "28ed832b790612a2d39619d720ed0c26ef94b6c131e85ae93103a19e18eb4833",
+      "entry": "265C8I/VC102/SEHC/SEHC.typ",
+      "lhOffset": null,
+      "line": 580,
+      "instance": "RightRun",
+      "direction": null,
+      "field": "Order",
+      "lhType": null,
+      "legacyAddress": 573,
+      "legacyTypeCode": 2
+    },
+    {
+      "sha256": "28ed832b790612a2d39619d720ed0c26ef94b6c131e85ae93103a19e18eb4833",
+      "entry": "265C8I/VC102/SEHC/SEHC.typ",
+      "lhOffset": null,
+      "line": 581,
+      "instance": "RightRun",
+      "direction": null,
+      "field": "CutOffFreqc",
+      "lhType": null,
+      "legacyAddress": 574,
+      "legacyTypeCode": 3
+    },
+    {
+      "sha256": "28ed832b790612a2d39619d720ed0c26ef94b6c131e85ae93103a19e18eb4833",
+      "entry": "265C8I/VC102/SEHC/SEHC.typ",
+      "lhOffset": null,
+      "line": 582,
+      "instance": "Turn",
+      "direction": null,
+      "field": "Input",
+      "lhType": null,
+      "legacyAddress": 575,
+      "legacyTypeCode": 3
+    },
+    {
+      "sha256": "28ed832b790612a2d39619d720ed0c26ef94b6c131e85ae93103a19e18eb4833",
+      "entry": "265C8I/VC102/SEHC/SEHC.typ",
+      "lhOffset": null,
+      "line": 583,
+      "instance": "Turn",
+      "direction": null,
+      "field": "Output",
+      "lhType": null,
+      "legacyAddress": 576,
+      "legacyTypeCode": 3
+    },
+    {
+      "sha256": "28ed832b790612a2d39619d720ed0c26ef94b6c131e85ae93103a19e18eb4833",
+      "entry": "265C8I/VC102/SEHC/SEHC.typ",
+      "lhOffset": null,
+      "line": 584,
+      "instance": "Turn",
+      "direction": null,
+      "field": "Order",
+      "lhType": null,
+      "legacyAddress": 577,
+      "legacyTypeCode": 2
+    },
+    {
+      "sha256": "28ed832b790612a2d39619d720ed0c26ef94b6c131e85ae93103a19e18eb4833",
+      "entry": "265C8I/VC102/SEHC/SEHC.typ",
+      "lhOffset": null,
+      "line": 585,
+      "instance": "Turn",
+      "direction": null,
+      "field": "CutOffFreqc",
+      "lhType": null,
+      "legacyAddress": 578,
+      "legacyTypeCode": 3
+    },
+    {
+      "sha256": "28ed832b790612a2d39619d720ed0c26ef94b6c131e85ae93103a19e18eb4833",
+      "entry": "265C8I/VC102/SEHC/SEHC.typ",
+      "lhOffset": null,
+      "line": 586,
+      "instance": "FPumpPP",
+      "direction": null,
+      "field": "Input",
+      "lhType": null,
+      "legacyAddress": 579,
+      "legacyTypeCode": 3
+    },
+    {
+      "sha256": "28ed832b790612a2d39619d720ed0c26ef94b6c131e85ae93103a19e18eb4833",
+      "entry": "265C8I/VC102/SEHC/SEHC.typ",
+      "lhOffset": null,
+      "line": 587,
+      "instance": "FPumpPP",
+      "direction": null,
+      "field": "Output",
+      "lhType": null,
+      "legacyAddress": 580,
+      "legacyTypeCode": 3
+    },
+    {
+      "sha256": "28ed832b790612a2d39619d720ed0c26ef94b6c131e85ae93103a19e18eb4833",
+      "entry": "265C8I/VC102/SEHC/SEHC.typ",
+      "lhOffset": null,
+      "line": 588,
+      "instance": "FPumpPP",
+      "direction": null,
+      "field": "Order",
+      "lhType": null,
+      "legacyAddress": 581,
+      "legacyTypeCode": 2
+    },
+    {
+      "sha256": "28ed832b790612a2d39619d720ed0c26ef94b6c131e85ae93103a19e18eb4833",
+      "entry": "265C8I/VC102/SEHC/SEHC.typ",
+      "lhOffset": null,
+      "line": 589,
+      "instance": "FPumpPP",
+      "direction": null,
+      "field": "CutOffFreqc",
+      "lhType": null,
+      "legacyAddress": 582,
+      "legacyTypeCode": 3
+    },
+    {
+      "sha256": "28ed832b790612a2d39619d720ed0c26ef94b6c131e85ae93103a19e18eb4833",
+      "entry": "265C8I/VC102/SEHC/SEHC.typ",
+      "lhOffset": null,
+      "line": 590,
+      "instance": "BPumpPP",
+      "direction": null,
+      "field": "Input",
+      "lhType": null,
+      "legacyAddress": 583,
+      "legacyTypeCode": 3
+    },
+    {
+      "sha256": "28ed832b790612a2d39619d720ed0c26ef94b6c131e85ae93103a19e18eb4833",
+      "entry": "265C8I/VC102/SEHC/SEHC.typ",
+      "lhOffset": null,
+      "line": 591,
+      "instance": "BPumpPP",
+      "direction": null,
+      "field": "Output",
+      "lhType": null,
+      "legacyAddress": 584,
+      "legacyTypeCode": 3
+    },
+    {
+      "sha256": "28ed832b790612a2d39619d720ed0c26ef94b6c131e85ae93103a19e18eb4833",
+      "entry": "265C8I/VC102/SEHC/SEHC.typ",
+      "lhOffset": null,
+      "line": 592,
+      "instance": "BPumpPP",
+      "direction": null,
+      "field": "Order",
+      "lhType": null,
+      "legacyAddress": 585,
+      "legacyTypeCode": 2
+    },
+    {
+      "sha256": "28ed832b790612a2d39619d720ed0c26ef94b6c131e85ae93103a19e18eb4833",
+      "entry": "265C8I/VC102/SEHC/SEHC.typ",
+      "lhOffset": null,
+      "line": 593,
+      "instance": "BPumpPP",
+      "direction": null,
+      "field": "CutOffFreqc",
+      "lhType": null,
+      "legacyAddress": 586,
+      "legacyTypeCode": 3
+    },
+    {
+      "sha256": "28ed832b790612a2d39619d720ed0c26ef94b6c131e85ae93103a19e18eb4833",
+      "entry": "265C8I/VC102/SEHC/SEHC.typ",
+      "lhOffset": null,
+      "line": 594,
+      "instance": "YOilT",
+      "direction": null,
+      "field": "Input",
+      "lhType": null,
+      "legacyAddress": 587,
+      "legacyTypeCode": 3
+    },
+    {
+      "sha256": "28ed832b790612a2d39619d720ed0c26ef94b6c131e85ae93103a19e18eb4833",
+      "entry": "265C8I/VC102/SEHC/SEHC.typ",
+      "lhOffset": null,
+      "line": 595,
+      "instance": "YOilT",
+      "direction": null,
+      "field": "Output",
+      "lhType": null,
+      "legacyAddress": 588,
+      "legacyTypeCode": 3
+    },
+    {
+      "sha256": "28ed832b790612a2d39619d720ed0c26ef94b6c131e85ae93103a19e18eb4833",
+      "entry": "265C8I/VC102/SEHC/SEHC.typ",
+      "lhOffset": null,
+      "line": 596,
+      "instance": "YOilT",
+      "direction": null,
+      "field": "Order",
+      "lhType": null,
+      "legacyAddress": 589,
+      "legacyTypeCode": 2
+    },
+    {
+      "sha256": "28ed832b790612a2d39619d720ed0c26ef94b6c131e85ae93103a19e18eb4833",
+      "entry": "265C8I/VC102/SEHC/SEHC.typ",
+      "lhOffset": null,
+      "line": 597,
+      "instance": "YOilT",
+      "direction": null,
+      "field": "CutOffFreqc",
+      "lhType": null,
+      "legacyAddress": 590,
+      "legacyTypeCode": 3
+    },
+    {
+      "sha256": "28ed832b790612a2d39619d720ed0c26ef94b6c131e85ae93103a19e18eb4833",
+      "entry": "265C8I/VC102/SEHC/SEHC.typ",
+      "lhOffset": null,
+      "line": 598,
+      "instance": "RWater",
+      "direction": null,
+      "field": "Input",
+      "lhType": null,
+      "legacyAddress": 591,
+      "legacyTypeCode": 3
+    },
+    {
+      "sha256": "28ed832b790612a2d39619d720ed0c26ef94b6c131e85ae93103a19e18eb4833",
+      "entry": "265C8I/VC102/SEHC/SEHC.typ",
+      "lhOffset": null,
+      "line": 599,
+      "instance": "RWater",
+      "direction": null,
+      "field": "Output",
+      "lhType": null,
+      "legacyAddress": 592,
+      "legacyTypeCode": 3
+    },
+    {
+      "sha256": "28ed832b790612a2d39619d720ed0c26ef94b6c131e85ae93103a19e18eb4833",
+      "entry": "265C8I/VC102/SEHC/SEHC.typ",
+      "lhOffset": null,
+      "line": 600,
+      "instance": "RWater",
+      "direction": null,
+      "field": "Order",
+      "lhType": null,
+      "legacyAddress": 593,
+      "legacyTypeCode": 2
+    },
+    {
+      "sha256": "28ed832b790612a2d39619d720ed0c26ef94b6c131e85ae93103a19e18eb4833",
+      "entry": "265C8I/VC102/SEHC/SEHC.typ",
+      "lhOffset": null,
+      "line": 601,
+      "instance": "RWater",
+      "direction": null,
+      "field": "CutOffFreqc",
+      "lhType": null,
+      "legacyAddress": 594,
+      "legacyTypeCode": 3
+    },
+    {
+      "sha256": "28ed832b790612a2d39619d720ed0c26ef94b6c131e85ae93103a19e18eb4833",
+      "entry": "265C8I/VC102/SEHC/SEHC.typ",
+      "lhOffset": null,
+      "line": 602,
+      "instance": "OilPsnt",
+      "direction": null,
+      "field": "Input",
+      "lhType": null,
+      "legacyAddress": 595,
+      "legacyTypeCode": 3
+    },
+    {
+      "sha256": "28ed832b790612a2d39619d720ed0c26ef94b6c131e85ae93103a19e18eb4833",
+      "entry": "265C8I/VC102/SEHC/SEHC.typ",
+      "lhOffset": null,
+      "line": 603,
+      "instance": "OilPsnt",
+      "direction": null,
+      "field": "Output",
+      "lhType": null,
+      "legacyAddress": 596,
+      "legacyTypeCode": 3
+    },
+    {
+      "sha256": "28ed832b790612a2d39619d720ed0c26ef94b6c131e85ae93103a19e18eb4833",
+      "entry": "265C8I/VC102/SEHC/SEHC.typ",
+      "lhOffset": null,
+      "line": 604,
+      "instance": "OilPsnt",
+      "direction": null,
+      "field": "Order",
+      "lhType": null,
+      "legacyAddress": 597,
+      "legacyTypeCode": 2
+    },
+    {
+      "sha256": "28ed832b790612a2d39619d720ed0c26ef94b6c131e85ae93103a19e18eb4833",
+      "entry": "265C8I/VC102/SEHC/SEHC.typ",
+      "lhOffset": null,
+      "line": 605,
+      "instance": "OilPsnt",
+      "direction": null,
+      "field": "CutOffFreqc",
+      "lhType": null,
+      "legacyAddress": 598,
+      "legacyTypeCode": 3
+    },
+    {
+      "sha256": "28ed832b790612a2d39619d720ed0c26ef94b6c131e85ae93103a19e18eb4833",
+      "entry": "265C8I/VC102/SEHC/SEHC.typ",
+      "lhOffset": null,
+      "line": 606,
+      "instance": "FPWMBack",
+      "direction": null,
+      "field": "Input",
+      "lhType": null,
+      "legacyAddress": 599,
+      "legacyTypeCode": 3
+    },
+    {
+      "sha256": "28ed832b790612a2d39619d720ed0c26ef94b6c131e85ae93103a19e18eb4833",
+      "entry": "265C8I/VC102/SEHC/SEHC.typ",
+      "lhOffset": null,
+      "line": 607,
+      "instance": "FPWMBack",
+      "direction": null,
+      "field": "Output",
+      "lhType": null,
+      "legacyAddress": 600,
+      "legacyTypeCode": 3
+    },
+    {
+      "sha256": "28ed832b790612a2d39619d720ed0c26ef94b6c131e85ae93103a19e18eb4833",
+      "entry": "265C8I/VC102/SEHC/SEHC.typ",
+      "lhOffset": null,
+      "line": 608,
+      "instance": "FPWMBack",
+      "direction": null,
+      "field": "Order",
+      "lhType": null,
+      "legacyAddress": 601,
+      "legacyTypeCode": 2
+    },
+    {
+      "sha256": "28ed832b790612a2d39619d720ed0c26ef94b6c131e85ae93103a19e18eb4833",
+      "entry": "265C8I/VC102/SEHC/SEHC.typ",
+      "lhOffset": null,
+      "line": 609,
+      "instance": "FPWMBack",
+      "direction": null,
+      "field": "CutOffFreqc",
+      "lhType": null,
+      "legacyAddress": 602,
+      "legacyTypeCode": 3
+    },
+    {
+      "sha256": "28ed832b790612a2d39619d720ed0c26ef94b6c131e85ae93103a19e18eb4833",
+      "entry": "265C8I/VC102/SEHC/SEHC.typ",
+      "lhOffset": null,
+      "line": 610,
+      "instance": "BPWMBack",
+      "direction": null,
+      "field": "Input",
+      "lhType": null,
+      "legacyAddress": 603,
+      "legacyTypeCode": 3
+    },
+    {
+      "sha256": "28ed832b790612a2d39619d720ed0c26ef94b6c131e85ae93103a19e18eb4833",
+      "entry": "265C8I/VC102/SEHC/SEHC.typ",
+      "lhOffset": null,
+      "line": 611,
+      "instance": "BPWMBack",
+      "direction": null,
+      "field": "Output",
+      "lhType": null,
+      "legacyAddress": 604,
+      "legacyTypeCode": 3
+    },
+    {
+      "sha256": "28ed832b790612a2d39619d720ed0c26ef94b6c131e85ae93103a19e18eb4833",
+      "entry": "265C8I/VC102/SEHC/SEHC.typ",
+      "lhOffset": null,
+      "line": 612,
+      "instance": "BPWMBack",
+      "direction": null,
+      "field": "Order",
+      "lhType": null,
+      "legacyAddress": 605,
+      "legacyTypeCode": 2
+    },
+    {
+      "sha256": "28ed832b790612a2d39619d720ed0c26ef94b6c131e85ae93103a19e18eb4833",
+      "entry": "265C8I/VC102/SEHC/SEHC.typ",
+      "lhOffset": null,
+      "line": 613,
+      "instance": "BPWMBack",
+      "direction": null,
+      "field": "CutOffFreqc",
+      "lhType": null,
+      "legacyAddress": 606,
+      "legacyTypeCode": 3
+    },
+    {
+      "sha256": "28ed832b790612a2d39619d720ed0c26ef94b6c131e85ae93103a19e18eb4833",
+      "entry": "265C8I/VC102/SEHC/SEHC.typ",
+      "lhOffset": null,
+      "line": 1569,
+      "instance": "FPWMOut",
+      "direction": null,
+      "field": "Input",
+      "lhType": null,
+      "legacyAddress": 1562,
+      "legacyTypeCode": 3
+    },
+    {
+      "sha256": "28ed832b790612a2d39619d720ed0c26ef94b6c131e85ae93103a19e18eb4833",
+      "entry": "265C8I/VC102/SEHC/SEHC.typ",
+      "lhOffset": null,
+      "line": 1570,
+      "instance": "FPWMOut",
+      "direction": null,
+      "field": "Output",
+      "lhType": null,
+      "legacyAddress": 1563,
+      "legacyTypeCode": 3
+    },
+    {
+      "sha256": "28ed832b790612a2d39619d720ed0c26ef94b6c131e85ae93103a19e18eb4833",
+      "entry": "265C8I/VC102/SEHC/SEHC.typ",
+      "lhOffset": null,
+      "line": 1571,
+      "instance": "FPWMOut",
+      "direction": null,
+      "field": "Order",
+      "lhType": null,
+      "legacyAddress": 1564,
+      "legacyTypeCode": 2
+    },
+    {
+      "sha256": "28ed832b790612a2d39619d720ed0c26ef94b6c131e85ae93103a19e18eb4833",
+      "entry": "265C8I/VC102/SEHC/SEHC.typ",
+      "lhOffset": null,
+      "line": 1572,
+      "instance": "FPWMOut",
+      "direction": null,
+      "field": "CutOffFreqc",
+      "lhType": null,
+      "legacyAddress": 1565,
+      "legacyTypeCode": 3
+    },
+    {
+      "sha256": "28ed832b790612a2d39619d720ed0c26ef94b6c131e85ae93103a19e18eb4833",
+      "entry": "265C8I/VC102/SEHC/SEHC.typ",
+      "lhOffset": null,
+      "line": 1573,
+      "instance": "BPWMOut",
+      "direction": null,
+      "field": "Input",
+      "lhType": null,
+      "legacyAddress": 1566,
+      "legacyTypeCode": 3
+    },
+    {
+      "sha256": "28ed832b790612a2d39619d720ed0c26ef94b6c131e85ae93103a19e18eb4833",
+      "entry": "265C8I/VC102/SEHC/SEHC.typ",
+      "lhOffset": null,
+      "line": 1574,
+      "instance": "BPWMOut",
+      "direction": null,
+      "field": "Output",
+      "lhType": null,
+      "legacyAddress": 1567,
+      "legacyTypeCode": 3
+    },
+    {
+      "sha256": "28ed832b790612a2d39619d720ed0c26ef94b6c131e85ae93103a19e18eb4833",
+      "entry": "265C8I/VC102/SEHC/SEHC.typ",
+      "lhOffset": null,
+      "line": 1575,
+      "instance": "BPWMOut",
+      "direction": null,
+      "field": "Order",
+      "lhType": null,
+      "legacyAddress": 1568,
+      "legacyTypeCode": 2
+    },
+    {
+      "sha256": "28ed832b790612a2d39619d720ed0c26ef94b6c131e85ae93103a19e18eb4833",
+      "entry": "265C8I/VC102/SEHC/SEHC.typ",
+      "lhOffset": null,
+      "line": 1576,
+      "instance": "BPWMOut",
+      "direction": null,
+      "field": "CutOffFreqc",
+      "lhType": null,
+      "legacyAddress": 1569,
+      "legacyTypeCode": 3
+    }
+  ],
+  "archive": "D:/Table/LM/程序.zip",
+  "missing": [
+    "LH firmware version, opcode and operand table",
+    "LH address unit, alignment, field width/direction",
+    "Named legacy operators/enums are not translated into LH values"
+  ],
+  "taskId": "FB07",
+  "candidateCodeRows": [
+    {
+      "sha256": "521c52a07d11014405c4ee1b25f2a2e26746ef7c250778fc5eb1606b2e71e695",
+      "entry": "265C8I/VC102/SECD/SECD.code",
+      "source": "41148\t41148\t1104\t1038\t",
+      "correlation": "candidate matching first legacy field address; no LH ABI translation",
+      "instance": "Elec",
+      "line": 126
+    },
+    {
+      "sha256": "521c52a07d11014405c4ee1b25f2a2e26746ef7c250778fc5eb1606b2e71e695",
+      "entry": "265C8I/VC102/SECD/SECD.code",
+      "source": "41148\t41148\t1096\t1086\t",
+      "correlation": "candidate matching first legacy field address; no LH ABI translation",
+      "instance": "KnbPstn",
+      "line": 124
+    },
+    {
+      "sha256": "521c52a07d11014405c4ee1b25f2a2e26746ef7c250778fc5eb1606b2e71e695",
+      "entry": "265C8I/VC102/SECD/SECD.code",
+      "source": "41148\t41148\t1100\t1091\t",
+      "correlation": "candidate matching first legacy field address; no LH ABI translation",
+      "instance": "MtrPstn",
+      "line": 125
+    },
+    {
+      "sha256": "521c52a07d11014405c4ee1b25f2a2e26746ef7c250778fc5eb1606b2e71e695",
+      "entry": "265C8I/VC102/SECD/SECD.code",
+      "source": "41148\t41148\t1108\t766\t",
+      "correlation": "candidate matching first legacy field address; no LH ABI translation",
+      "instance": "RxSpdFltr",
+      "line": 129
+    },
+    {
+      "sha256": "56c712ad9f683bc78b92cd7e74e64b3b7fcd1f7a8f782c8d75f8b957a9074c36",
+      "entry": "265C8I/VC102/SEHC/SEHC.code",
+      "source": "41148\t41148\t551\t483\t",
+      "correlation": "candidate matching first legacy field address; no LH ABI translation",
+      "instance": "ArmDig",
+      "line": 122
+    },
+    {
+      "sha256": "56c712ad9f683bc78b92cd7e74e64b3b7fcd1f7a8f782c8d75f8b957a9074c36",
+      "entry": "265C8I/VC102/SEHC/SEHC.code",
+      "source": "41148\t41148\t555\t488\t",
+      "correlation": "candidate matching first legacy field address; no LH ABI translation",
+      "instance": "ArmUDig",
+      "line": 123
+    },
+    {
+      "sha256": "56c712ad9f683bc78b92cd7e74e64b3b7fcd1f7a8f782c8d75f8b957a9074c36",
+      "entry": "265C8I/VC102/SEHC/SEHC.code",
+      "source": "41148\t41148\t563\t498\t",
+      "correlation": "candidate matching first legacy field address; no LH ABI translation",
+      "instance": "BoomDown",
+      "line": 125
+    },
+    {
+      "sha256": "56c712ad9f683bc78b92cd7e74e64b3b7fcd1f7a8f782c8d75f8b957a9074c36",
+      "entry": "265C8I/VC102/SEHC/SEHC.code",
+      "source": "41148\t41148\t559\t493\t",
+      "correlation": "candidate matching first legacy field address; no LH ABI translation",
+      "instance": "BoomUp",
+      "line": 124
+    },
+    {
+      "sha256": "56c712ad9f683bc78b92cd7e74e64b3b7fcd1f7a8f782c8d75f8b957a9074c36",
+      "entry": "265C8I/VC102/SEHC/SEHC.code",
+      "source": "41148\t41148\t583\t523\t",
+      "correlation": "candidate matching first legacy field address; no LH ABI translation",
+      "instance": "BPumpPP",
+      "line": 130
+    },
+    {
+      "sha256": "56c712ad9f683bc78b92cd7e74e64b3b7fcd1f7a8f782c8d75f8b957a9074c36",
+      "entry": "265C8I/VC102/SEHC/SEHC.code",
+      "source": "41148\t41148\t603\t421\t",
+      "correlation": "candidate matching first legacy field address; no LH ABI translation",
+      "instance": "BPWMBack",
+      "line": 135
+    },
+    {
+      "sha256": "56c712ad9f683bc78b92cd7e74e64b3b7fcd1f7a8f782c8d75f8b957a9074c36",
+      "entry": "265C8I/VC102/SEHC/SEHC.code",
+      "source": "41148\t41148\t1566\t1499\t",
+      "correlation": "candidate matching first legacy field address; no LH ABI translation",
+      "instance": "BPWMOut",
+      "line": 491
+    },
+    {
+      "sha256": "56c712ad9f683bc78b92cd7e74e64b3b7fcd1f7a8f782c8d75f8b957a9074c36",
+      "entry": "265C8I/VC102/SEHC/SEHC.code",
+      "source": "41148\t41148\t543\t473\t",
+      "correlation": "candidate matching first legacy field address; no LH ABI translation",
+      "instance": "BucketDig",
+      "line": 120
+    },
+    {
+      "sha256": "56c712ad9f683bc78b92cd7e74e64b3b7fcd1f7a8f782c8d75f8b957a9074c36",
+      "entry": "265C8I/VC102/SEHC/SEHC.code",
+      "source": "41148\t41148\t547\t478\t",
+      "correlation": "candidate matching first legacy field address; no LH ABI translation",
+      "instance": "BucketUDig",
+      "line": 121
+    },
+    {
+      "sha256": "56c712ad9f683bc78b92cd7e74e64b3b7fcd1f7a8f782c8d75f8b957a9074c36",
+      "entry": "265C8I/VC102/SEHC/SEHC.code",
+      "source": "41148\t41148\t325\t71\t",
+      "correlation": "candidate matching first legacy field address; no LH ABI translation",
+      "instance": "CtrlSpdFltr",
+      "line": 90
+    },
+    {
+      "sha256": "56c712ad9f683bc78b92cd7e74e64b3b7fcd1f7a8f782c8d75f8b957a9074c36",
+      "entry": "265C8I/VC102/SEHC/SEHC.code",
+      "source": "41148\t41148\t579\t518\t",
+      "correlation": "candidate matching first legacy field address; no LH ABI translation",
+      "instance": "FPumpPP",
+      "line": 129
+    },
+    {
+      "sha256": "56c712ad9f683bc78b92cd7e74e64b3b7fcd1f7a8f782c8d75f8b957a9074c36",
+      "entry": "265C8I/VC102/SEHC/SEHC.code",
+      "source": "41148\t41148\t599\t415\t",
+      "correlation": "candidate matching first legacy field address; no LH ABI translation",
+      "instance": "FPWMBack",
+      "line": 134
+    },
+    {
+      "sha256": "56c712ad9f683bc78b92cd7e74e64b3b7fcd1f7a8f782c8d75f8b957a9074c36",
+      "entry": "265C8I/VC102/SEHC/SEHC.code",
+      "source": "41148\t41148\t1562\t1462\t",
+      "correlation": "candidate matching first legacy field address; no LH ABI translation",
+      "instance": "FPWMOut",
+      "line": 490
+    },
+    {
+      "sha256": "56c712ad9f683bc78b92cd7e74e64b3b7fcd1f7a8f782c8d75f8b957a9074c36",
+      "entry": "265C8I/VC102/SEHC/SEHC.code",
+      "source": "41148\t41148\t567\t503\t",
+      "correlation": "candidate matching first legacy field address; no LH ABI translation",
+      "instance": "LeftRun",
+      "line": 126
+    },
+    {
+      "sha256": "56c712ad9f683bc78b92cd7e74e64b3b7fcd1f7a8f782c8d75f8b957a9074c36",
+      "entry": "265C8I/VC102/SEHC/SEHC.code",
+      "source": "41148\t41148\t595\t538\t",
+      "correlation": "candidate matching first legacy field address; no LH ABI translation",
+      "instance": "OilPsnt",
+      "line": 133
+    },
+    {
+      "sha256": "56c712ad9f683bc78b92cd7e74e64b3b7fcd1f7a8f782c8d75f8b957a9074c36",
+      "entry": "265C8I/VC102/SEHC/SEHC.code",
+      "source": "41148\t41148\t571\t508\t",
+      "correlation": "candidate matching first legacy field address; no LH ABI translation",
+      "instance": "RightRun",
+      "line": 127
+    },
+    {
+      "sha256": "56c712ad9f683bc78b92cd7e74e64b3b7fcd1f7a8f782c8d75f8b957a9074c36",
+      "entry": "265C8I/VC102/SEHC/SEHC.code",
+      "source": "41148\t41148\t591\t533\t",
+      "correlation": "candidate matching first legacy field address; no LH ABI translation",
+      "instance": "RWater",
+      "line": 132
+    },
+    {
+      "sha256": "56c712ad9f683bc78b92cd7e74e64b3b7fcd1f7a8f782c8d75f8b957a9074c36",
+      "entry": "265C8I/VC102/SEHC/SEHC.code",
+      "source": "41148\t41148\t321\t71\t",
+      "correlation": "candidate matching first legacy field address; no LH ABI translation",
+      "instance": "SpdFltr",
+      "line": 89
+    },
+    {
+      "sha256": "56c712ad9f683bc78b92cd7e74e64b3b7fcd1f7a8f782c8d75f8b957a9074c36",
+      "entry": "265C8I/VC102/SEHC/SEHC.code",
+      "source": "41148\t41148\t575\t513\t",
+      "correlation": "candidate matching first legacy field address; no LH ABI translation",
+      "instance": "Turn",
+      "line": 128
+    },
+    {
+      "sha256": "56c712ad9f683bc78b92cd7e74e64b3b7fcd1f7a8f782c8d75f8b957a9074c36",
+      "entry": "265C8I/VC102/SEHC/SEHC.code",
+      "source": "41148\t41148\t587\t528\t",
+      "correlation": "candidate matching first legacy field address; no LH ABI translation",
+      "instance": "YOilT",
+      "line": 131
+    }
+  ],
+  "lhNameMappingCertified": false,
+  "legacyCandidate": "_FilterBW",
+  "downloadableTargetCertified": false,
+  "callCount": 24,
+  "block": "FilterBW",
+  "observedLegacyName": "FilterBW",
+  "schemaVersion": 1,
+  "mappingStatus": "同名",
+  "manualPages": [
+    {
+      "path": "D:\\Table\\LM\\LM2007用户手册(1).pdf",
+      "sha256": "99d42e57db22fe0107fd3bde810a61267392196bd4612469e1256dcc77c3f706",
+      "physicalPage": 183,
+      "extractedText": "manual-evidence/manual-page-183.txt",
+      "typeDirectionAndLayoutCertifiedForLH": false
+    },
+    {
+      "path": "D:\\Table\\LM\\LM2007用户手册(1).pdf",
+      "sha256": "99d42e57db22fe0107fd3bde810a61267392196bd4612469e1256dcc77c3f706",
+      "physicalPage": 184,
+      "extractedText": "manual-evidence/manual-page-184.txt",
+      "typeDirectionAndLayoutCertifiedForLH": false
+    },
+    {
+      "path": "D:\\Table\\LM\\高质量LM编程指南V1.05.pdf",
+      "sha256": "5a8f7e95ff9632750a76d06bbebb8aa1ae3056fc8a503f4a468e57118c0819d4",
+      "physicalPage": 46,
+      "extractedText": "manual-evidence/guide-page-46.txt",
+      "typeDirectionAndLayoutCertifiedForLH": false
+    }
+  ],
+  "reviewCandidateContract": "Input/Output/Order/CutOffFreqc；Input 为运行时成员引用",
+  "reviewAssessment": "证据最完整，优先实现；构造操作数和运行时字段分开建模，保留 REAL/IQ 版本差异。旧 41148、543、473 不直接复制到当前 851 与地址布局。",
+  "manualExtractionScope": "Physical PDF pages, copied as evidence; legacy numeric tables do not certify LH operand encodings"
+}

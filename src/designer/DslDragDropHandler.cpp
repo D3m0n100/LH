@@ -123,6 +123,13 @@ DragDropResult DslDragDropHandler::handleDrop(QDropEvent* event, QPlainTextEdit*
     QString snippetName = snippetId;
     if (m_completionEngine) {
         FunctionSnippet snippet = m_completionEngine->snippetById(snippetId);
+        if (snippet.isValid() && !snippet.canInsert()) {
+            result.errorMessage = QStringLiteral("功能块暂不可插入：%1").arg(snippet.capabilityReason());
+            emit dropRejected(result.errorMessage);
+            event->ignore();
+            clearDragHighlight(editor);
+            return result;
+        }
         if (snippet.isValid()) {
             snippetName = snippet.name;
             // 使用补全引擎生成带缩进的代码

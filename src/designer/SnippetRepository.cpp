@@ -273,7 +273,13 @@ QList<FunctionSnippet> SnippetRepository::mergeSnippets(
     for (const auto& baseSnippet : base) {
         if (overlayMap.contains(baseSnippet.id)) {
             // 同 id：使用 overlay 的定义
-            result.append(overlayMap.value(baseSnippet.id));
+            FunctionSnippet merged = overlayMap.value(baseSnippet.id);
+            // Project templates may change presentation, never promote a built-in compiler capability.
+            for (const QString& key : {QStringLiteral("compilerName"), QStringLiteral("status"),
+                                       QStringLiteral("incompleteReason"), QStringLiteral("capability")}) {
+                if (baseSnippet.metadata.contains(key)) merged.metadata.insert(key, baseSnippet.metadata.value(key));
+            }
+            result.append(merged);
             processedIds.insert(baseSnippet.id);
         } else {
             // 仅 base 有：保留

@@ -35,6 +35,7 @@ Sample MonitorHistoryService::toSample(const QString& channelName,
         sample.metadata[QStringLiteral("id")] = record.id;
     }
     attachRuntimeRecordMetadata(sample, record);
+    sample.normalizeValidity();
     return sample;
 }
 

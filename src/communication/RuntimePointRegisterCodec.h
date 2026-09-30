@@ -1,7 +1,7 @@
 #ifndef RUNTIMEPOINTREGISTERCODEC_H
 #define RUNTIMEPOINTREGISTERCODEC_H
 
-#include "common/RuntimePointTypes.h"
+#include "../common/RuntimePointTypes.h"
 
 #include <QVariant>
 #include <QVector>

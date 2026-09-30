@@ -5,16 +5,22 @@
 
 #include <QHash>
 #include <QTimer>
+#include <QThread>
+#include <atomic>
+#include <memory>
 
-class ModbusInterface;
+class ClassicOpcPollWorker;
 
 class ClassicOpcServer : public IOpcServer
 {
     Q_OBJECT
 public:
     explicit ClassicOpcServer(QObject* parent = nullptr);
+    ~ClassicOpcServer() override;
 
     bool applyConfig(const OpcServerConfig& config, QString* errorMessage = nullptr) override;
+    // Accepts a configured server session. Serial connection completes on I/O
+    // thread; statusSnapshot.modbusConnected and errorOccurred report its outcome.
     bool start(QString* errorMessage = nullptr) override;
     void stop() override;
     bool isRunning() const override { return m_running; }
@@ -28,6 +34,7 @@ public:
 private:
     struct AddressingInfo
     {
+        bool valid = true;
         QString area;
         int address = -1;
         int unitId = 1;
@@ -40,10 +47,6 @@ private:
     void startPolling();
     void stopPolling();
     void pollDevice();
-    bool refreshPointValue(const RuntimePointDefinition& point, QString* errorMessage = nullptr);
-    bool writePointValue(const RuntimePointDefinition& point, const QVariant& value, QString* errorMessage = nullptr);
-    bool applyPointValue(const RuntimePointDefinition& point, const QVariant& value, QString* errorMessage = nullptr);
-    bool ensureModbusOpen(QString* errorMessage = nullptr);
     ModbusConfig toModbusConfig() const;
     static bool parseSerialMode(const QString& serialMode,
                                 int* baudRate,
@@ -58,7 +61,12 @@ private:
 
     OpcServerConfig m_config;
     bool m_running = false;
-    ModbusInterface* m_modbus = nullptr;
+    QThread m_ioThread;
+    ClassicOpcPollWorker* m_worker = nullptr;
+    bool m_modbusConnected = false;
+    bool m_pollInFlight = false;
+    quint64 m_pollGeneration = 0;
+    std::shared_ptr<std::atomic_bool> m_pollCancelled;
     QTimer m_pollTimer;
     QList<RuntimePointDefinition> m_points;
     QList<OpcTagDefinition> m_tags;

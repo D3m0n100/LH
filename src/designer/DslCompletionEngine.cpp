@@ -131,7 +131,7 @@ void DslCompletionEngine::syncFromRepository()
     // 重建索引
     for (const auto& snippet : m_snippets) {
         m_snippetMap.insert(snippet.id, snippet);
-        m_componentNames.append(snippet.name);
+        if (snippet.canInsert()) m_componentNames.append(snippet.name);
     }
     
     updateCompletionModel();
@@ -171,6 +171,7 @@ bool DslCompletionEngine::loadFromJson(const QString& jsonText)
         snippet.templateCode = obj.value("templateCode").toString();
         snippet.unit = obj.value("unit").toString();
         snippet.defaultPeriodMs = obj.value("defaultPeriodMs").toInt(20);
+        snippet.metadata = obj.value(QStringLiteral("metadata")).toObject().toVariantMap();
         
         if (snippet.isValid()) {
             addSnippet(snippet);
@@ -214,7 +215,7 @@ void DslCompletionEngine::addSnippet(const FunctionSnippet& snippet)
     } else {
         // 添加新 Snippet
         m_snippets.append(snippet);
-        m_componentNames.append(snippet.name);
+        if (snippet.canInsert()) m_componentNames.append(snippet.name);
     }
     
     m_snippetMap.insert(snippet.id, snippet);
@@ -243,6 +244,8 @@ QString DslCompletionEngine::completionPrefix() const
 
 void DslCompletionEngine::updateCompletionModel()
 {
+    m_componentNames.clear();
+    for (const auto& snippet : m_snippets) if (snippet.canInsert()) m_componentNames.append(snippet.name);
     if (m_completer) {
         QStringListModel* model = new QStringListModel(m_componentNames, m_completer);
         m_completer->setModel(model);
@@ -254,7 +257,7 @@ void DslCompletionEngine::updateCompletionModel()
 QString DslCompletionEngine::generateInsertCode(const FunctionSnippet& snippet,
                                                  const QString& indentation) const
 {
-    if (!snippet.isValid()) {
+    if (!snippet.isValid() || !snippet.canInsert()) {
         return QString();
     }
     
