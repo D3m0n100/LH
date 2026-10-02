@@ -13,7 +13,7 @@ target_link_libraries(compiler_module
 )
 
 target_include_directories(compiler_module PUBLIC
-    ${CMAKE_CURRENT_SOURCE_DIR}
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}> $<INSTALL_INTERFACE:include/compiler>
     ${LX_PUBLIC_INCLUDE_DIRS}
 )
 

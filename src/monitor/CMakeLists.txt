@@ -52,12 +52,18 @@ set(MONITOR_SOURCES
 
 # 创建监控模块库
 add_library(monitor STATIC ${MONITOR_SOURCES})
+add_library(monitor_sampling STATIC BackendSampler.cpp BackendSampler.h)
+target_link_libraries(monitor_sampling PUBLIC ServoValveComm Qt5::Core)
+target_include_directories(monitor_sampling PUBLIC ${LX_PUBLIC_INCLUDE_DIRS} ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(monitor_sampling PRIVATE ${LX_PRIVATE_INCLUDE_DIRS})
+target_compile_features(monitor_sampling PUBLIC cxx_std_17)
 
 # 链接依赖
 target_link_libraries(monitor
     PUBLIC
         core_module
         ServoValveComm
+        monitor_sampling
         Qt5::Core
         Qt5::Widgets
         Qt5::Charts

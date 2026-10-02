@@ -27,7 +27,7 @@ QList<ClassicReadBatch> planClassicReads(QList<ClassicPollPoint> points, int max
 // Construct, use and destroy this object and its transport on one I/O thread.
 class ClassicOpcPollWorker : public QObject {
 public:
-    ClassicOpcPollWorker();
+    explicit ClassicOpcPollWorker(std::unique_ptr<ModbusInterface> transport = {});
     ~ClassicOpcPollWorker() override;
     void poll(ModbusConfig config, QList<ClassicPollPoint> points, int budgetMs, int maxRegisters,
               std::shared_ptr<std::atomic_bool> cancelled,
@@ -35,7 +35,7 @@ public:
     void closeWhenIdle(std::shared_ptr<std::atomic_bool> session);
 private:
     void closeTransport();
-    ModbusInterface m_modbus;
+    std::unique_ptr<ModbusInterface> m_modbus;
     bool m_busy = false;
     std::shared_ptr<std::atomic_bool> m_session;
     QString m_owner;

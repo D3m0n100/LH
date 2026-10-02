@@ -136,7 +136,7 @@ END_PROGRAM
 
 
 def test_golden_valid_instructions(tmp_path, compiler):
-    """Literal assignment must not use an unrelated constant block as writeback."""
+    """Restore the prior constant instruction records with execution unconfirmed."""
     valid_code = """PROGRAM P
 VAR
   system : System;
@@ -153,9 +153,12 @@ END_PROGRAM
     out_path = tmp_path / "valid.code"
 
     res = compiler.compile_file(str(src_path), str(out_path))
-    assert not res.success
-    assert any("赋值写回" in error for error in res.errors)
-    assert not out_path.exists()
+    assert res.success and res.compile_only, res.errors
+    records = [line for line in out_path.read_text(encoding="utf-8").splitlines()
+               if line and not line.startswith("//")]
+    assert records[0] == "101 101 0 1 100 2601 1 1000"
+    assert records[1].startswith("121 121") and records[1].endswith(" 42")
+    assert records[2].startswith("121 121") and records[2].endswith(" 30")
 
 
 def test_array_type_declaration_fails_closed(tmp_path, compiler):
@@ -337,7 +340,7 @@ END_PROGRAM
 
 
 def test_constant_int_division_not_float(tmp_path, compiler):
-    """Constant folding must not bypass the missing variable writeback contract."""
+    """Integer constant division restores the integer record, not float encoding."""
     code = """PROGRAM P
 VAR
   system : System;
@@ -352,13 +355,13 @@ END_PROGRAM
     out_code = tmp_path / "int_div.code"
 
     res = compiler.compile_file(str(src_path), str(out_code))
-    assert not res.success
-    assert any("赋值写回" in error for error in res.errors)
-    assert not out_code.exists()
+    assert res.success and res.compile_only, res.errors
+    assert res.instructions[-1].type_id == 121
+    assert res.instructions[-1].params == [2]
 
 
 def test_constant_real_float_encoding(tmp_path, compiler):
-    """REAL assignments require writeback even when the float encoding is known."""
+    """REAL constants retain their IEEE 754 encoding and unconfirmed status."""
     code = """PROGRAM P
 VAR
   system : System;
@@ -373,9 +376,9 @@ END_PROGRAM
     out_code = tmp_path / "real_const.code"
 
     res = compiler.compile_file(str(src_path), str(out_code))
-    assert not res.success
-    assert any("赋值写回" in error for error in res.errors)
-    assert not out_code.exists()
+    assert res.success and res.compile_only, res.errors
+    assert res.instructions[-1].type_id == 122
+    assert res.instructions[-1].params == [1077936128]
 
 
 def test_division_by_zero_rejected(tmp_path, compiler):
@@ -621,9 +624,9 @@ END_PROGRAM
 
     res1 = compiler.compile_file(str(src_float), str(out_float))
     res2 = compiler.compile_file(str(src_int), str(out_int))
-    assert not res1.success and not res2.success
-    assert all(any("赋值写回" in error for error in result.errors) for result in (res1, res2))
-    assert not out_float.exists() and not out_int.exists()
+    assert res1.success and res2.success
+    assert res1.compile_only and res2.compile_only
+    assert res1.instructions[-1].params == res2.instructions[-1].params == [1065353216]
     from lh_compiler.backend.codegen import encode_float32
     assert encode_float32(1) == encode_float32(1.0) == (1065353216, None)
 
@@ -883,7 +886,20 @@ def test_t15_all_21_incomplete_fbs_have_status_incomplete():
     for b in incomplete:
         assert b.is_incomplete
         assert not b.is_supported
-        assert "TODO" in b.incomplete_reason
+        assert b.status == "incomplete"
+        assert "LH 固件版本" in b.incomplete_reason
+        assert "指令、引用和字段布局尚未核实" in b.incomplete_reason
+        assert b.name not in {supported.name for supported in reg.list_supported()}
+        # Neither declaring an instance nor using a direct empty call may promote
+        # an incomplete built-in block into the supported compilation path.
+        for source in (
+            f"PROGRAM P VAR fb : {b.name}; END_VAR fb(); END_PROGRAM",
+            f"PROGRAM P {b.name}(); END_PROGRAM",
+        ):
+            result = LHCompiler().compile_string(source)
+            assert not result.success
+            assert any(b.name in error and b.incomplete_reason in error
+                       and "尚未完善契约定义" in error for error in result.errors)
 
 
 def test_t15_supported_zero_parameter_fb_compiles_successfully(tmp_path, compiler):

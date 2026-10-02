@@ -2,11 +2,17 @@
 #include <QTemporaryDir>
 #include <QSqlQuery>
 #include <QSqlError>
+#include <atomic>
+#include <memory>
 #include "core/DataManager.h"
 #include "core/AsyncDatabaseWorker.h"
 #include "monitor/MonitorManager.h"
 #include "monitor/MonitorDataLogger.h"
 #include "monitor/MonitorExportHelper.h"
+#include "monitor/DataManagerHistoryStoreAdapter.h"
+#include "monitor/AsyncHistoryStoreAdapter.h"
+#include "monitor/ReadOnlyHistorySnapshot.h"
+#include <QScopeGuard>
 #include "common/PathSecurityUtils.h"
 using namespace Monitor;
 using Core::AsyncDatabaseWorker;
@@ -41,6 +47,113 @@ private slots:
         QVERIFY(PathSecurityUtils::sha256ForFile(dir.path()).isEmpty());
     }
     void cleanup() { DataManager::instance().shutdown(); }
+    void historyAdaptersPreserveQueryContract_data() {
+        QTest::addColumn<bool>("asynchronous");
+        QTest::addColumn<int>("offsetSeconds");
+        for (bool asynchronous : {false, true}) {
+            for (int hours : {0, 8, -7}) {
+                const QByteArray name = QByteArray(asynchronous ? "async" : "sync")
+                        + QByteArray::number(hours);
+                QTest::newRow(name.constData()) << asynchronous << hours * 3600;
+            }
+        }
+    }
+    void historyAdaptersPreserveQueryContract() {
+        QFETCH(bool, asynchronous);
+        QFETCH(int, offsetSeconds);
+        const QString path = database(QString::fromLatin1(QTest::currentDataTag()) + ".db");
+        QVERIFY(!path.isEmpty());
+        auto& dm = DataManager::instance();
+        const auto base = QDateTime::fromString("2026-09-08T23:59:59.998Z", Qt::ISODateWithMs);
+        QList<QVariantMap> seed;
+        for (int i = 0; i < 8; ++i) {
+            auto row = record("matrix", base.addMSecs(i / 2));
+            row["value"] = i;
+            seed.append(row);
+        }
+        seed.append(record("other", base));
+        QVERIFY(dm.logRuntimeDataBatch(seed).success);
+        const qint64 maxId = dm.latestRecordId();
+        QCOMPARE(maxId, qint64(9));
+        // Appends inside the time window must also be excluded by the ID snapshot.
+        QVERIFY(dm.logRuntimeDataBatch({record("matrix", base.addMSecs(2)),
+                                        record("matrix", base.addSecs(1))}).success);
+        const auto start = base.toOffsetFromUtc(offsetSeconds);
+        const auto end = base.addMSecs(3).toOffsetFromUtc(offsetSeconds);
+        struct Matrix {
+            QList<RuntimeRecord> history, latest;
+            RuntimeHistoryCount historyCount, latestCount, emptyCount;
+            RuntimeHistoryPage emptyPage, invalidPage, invalidLatest;
+            bool historyEnded = false, latestEnded = false;
+        };
+        const auto query = [=](IMonitorHistoryStore& store) {
+            Matrix out;
+            for (bool latest : {false, true}) {
+                RuntimeHistoryCursor cursor;
+                cursor.maxId = maxId;
+                for (int attempt = 0; attempt < 10; ++attempt) {
+                    const auto page = latest
+                            ? store.queryLatestHistoryPage("matrix", 5, 2, cursor, end)
+                            : store.queryHistoryPage("matrix", start, end, 2, cursor);
+                    if (!page.succeeded()) break;
+                    (latest ? out.latest : out.history).append(page.records);
+                    if (!page.hasMore) {
+                        (latest ? out.latestEnded : out.historyEnded) = true;
+                        break;
+                    }
+                    cursor = page.nextCursor;
+                }
+            }
+            out.historyCount = store.countHistory("matrix", start, end, maxId);
+            out.latestCount = store.countLatestHistory("matrix", 5, end, maxId);
+            RuntimeHistoryCursor empty;
+            empty.maxId = 0;
+            out.emptyPage = store.queryLatestHistoryPage("matrix", 5, 2, empty, end);
+            out.emptyCount = store.countHistory("matrix", start, end, 0);
+            out.invalidPage = store.queryHistoryPage("matrix", start, end, 0);
+            out.invalidLatest = store.queryLatestHistoryPage("matrix", 0, 2, {}, end);
+            return out;
+        };
+        struct Completion { Matrix value; std::atomic_bool done{false}; };
+        const auto completed = std::make_shared<Completion>();
+        AsyncDatabaseWorker worker;
+        if (asynchronous) {
+            QVERIFY(worker.startWorker(path));
+            QVERIFY(worker.submitHistoryTask(this, [&, completed, query] {
+                AsyncHistoryStoreAdapter adapter(&worker);
+                completed->value = query(adapter);
+                completed->done.store(true);
+            }));
+            QTRY_VERIFY_WITH_TIMEOUT(completed->done.load(), 5000);
+        } else {
+            DataManagerHistoryStoreAdapter adapter(&dm);
+            completed->value = query(adapter);
+        }
+        const auto& result = completed->value;
+        QVERIFY(result.historyEnded);
+        QVERIFY(result.latestEnded);
+        QCOMPARE(result.history.size(), 8);
+        QCOMPARE(result.latest.size(), 5);
+        for (int i = 0; i < 8; ++i) {
+            QCOMPARE(result.history[i].id, qint64(i + 1));
+            QCOMPARE(result.history[i].value, double(i));
+            QCOMPARE(result.history[i].timestamp, base.addMSecs(i / 2));
+        }
+        for (int i = 0; i < 5; ++i)
+            QCOMPARE(result.latest[i].id, qint64(i + 4));
+        QCOMPARE(result.historyCount.status, RuntimeHistoryPageStatus::Success);
+        QCOMPARE(result.historyCount.count, qint64(8));
+        QCOMPARE(result.latestCount.status, RuntimeHistoryPageStatus::Success);
+        QCOMPARE(result.latestCount.count, qint64(5));
+        QVERIFY(result.emptyPage.succeeded());
+        QVERIFY(result.emptyPage.records.isEmpty());
+        QCOMPARE(result.emptyCount.status, RuntimeHistoryPageStatus::Success);
+        QCOMPARE(result.emptyCount.count, qint64(0));
+        QCOMPARE(result.invalidPage.errorCode, QString("INVALID_PAGE_SIZE"));
+        QVERIFY(!result.invalidPage.errorText.isEmpty());
+        QCOMPARE(result.invalidLatest.errorCode, QString("INVALID_MAX_COUNT"));
+        QVERIFY(!result.invalidLatest.errorText.isEmpty());
+    }
     void timestampPreservesInstantAcrossZonesAndDays() {
         QVERIFY(!database("zones.db").isEmpty()); auto& dm=DataManager::instance();
         const auto utc=QDateTime::fromString("2026-09-08T20:00:00.123Z",Qt::ISODateWithMs);
@@ -183,6 +296,55 @@ private slots:
         qInfo()<<"Million-row cleanup ms"<<clock.elapsed()<<"batches"<<batches.count()<<"heartbeat max ms"<<maxGap<<"plan"<<plan;
         QVERIFY(q.exec("SELECT COUNT(*) FROM runtime_data"));QVERIFY(q.next());QCOMPARE(q.value(0).toLongLong(),995000LL);
         manager.shutdown();q=QSqlQuery();db.close();db=QSqlDatabase();QSqlDatabase::removeDatabase("round2_million");
+    }
+    void slowSnapshotExportAllowsCommitsCancellationAndShutdown_data() {
+        QTest::addColumn<bool>("cancel"); QTest::addColumn<bool>("shutdown");
+        QTest::newRow("continuous-commits") << false << false;
+        QTest::newRow("cancel-preserves-destination") << true << false;
+        QTest::newRow("writer-shutdown-during-export") << false << true;
+    }
+    void slowSnapshotExportAllowsCommitsCancellationAndShutdown() {
+        QFETCH(bool,cancel); QFETCH(bool,shutdown);
+        const auto path=database(QString("slow-export-%1-%2.db").arg(cancel).arg(shutdown));
+        AsyncDatabaseWorker worker; QVERIFY(worker.startWorker(path)); QSignalSpy commits(&worker,&AsyncDatabaseWorker::batchCommitted);
+        const auto base=QDateTime::currentDateTimeUtc(); QList<QVariantMap> records;
+        for(int i=0;i<600;++i) { auto r=record("stress",base.addMSecs(i)); r["value"]=i; records.append(r); }
+        worker.enqueueBatch(records); QTRY_COMPARE(commits.count(),1); commits.clear();
+        const auto destination=dir.filePath("stress.csv"); QFile original(destination);
+        QVERIFY(original.open(QIODevice::WriteOnly)); original.write("preserved-destination"); original.close();
+        auto cancelled=std::make_shared<std::atomic_bool>(false);
+        std::atomic_bool ready{false},done{false},release{false}; std::atomic_int pages{0}; ExportResult result; QString openError;
+        auto* exportThread=QThread::create([&] {
+            ReadOnlyHistorySnapshot store(path,cancelled);
+            if(!store.open(&openError)) { done=true; return; }
+            const auto maxId=store.maxRecordId(); ready=true;
+            while(!release.load() && !cancelled->load()) QThread::msleep(1);
+            MonitorHistoryService history(std::shared_ptr<IMonitorHistoryStore>(&store,[](IMonitorHistoryStore*){}));
+            ExportChannelInfo info; info.channelId="stress"; info.displayName="stress"; info.sampleCount=600;
+            ExportMetadata metadata; metadata.exportTime=base.addSecs(60); metadata.timeWindowMs=61000; metadata.totalChannels=1; metadata.totalSamples=600;
+            ExportPageProvider provider=[&](const QString& channel,const ExportCursor& cursor,int size) {
+                ++pages;
+                for(int i=0;i<60 && !cancelled->load();++i) QThread::msleep(1);
+                RuntimeHistoryCursor next; next.id=cursor.id; next.timestamp=cursor.timestamp; next.maxId=maxId;
+                const auto page=history.page(channel,base.addSecs(-1),base.addSecs(60),size,next);
+                ExportPage out; out.success=page.succeeded(); out.samples=page.samples; out.hasMore=page.hasMore;
+                out.nextCursor.id=page.nextCursor.id; out.nextCursor.timestamp=page.nextCursor.timestamp; out.errorMessage=page.errorText; return out;
+            };
+            MonitorExportHelper helper; result=helper.exportPackagePaged({info},metadata,provider,destination,100); done=true;
+        });
+        auto cleanup=qScopeGuard([&] { cancelled->store(true); release=true; exportThread->wait(); delete exportThread; worker.stopWorker(); });
+        exportThread->start(); QTRY_VERIFY_WITH_TIMEOUT(ready.load() || done.load(),3000); QVERIFY2(ready.load(),qPrintable(openError));
+        int ticks=0; QTimer heartbeat; connect(&heartbeat,&QTimer::timeout,[&]{++ticks;}); heartbeat.start(5);
+        int appended=0; QTimer producer; connect(&producer,&QTimer::timeout,[&] {
+            auto r=record("stress",base.addMSecs(1000+appended++)); r["value"]=9999; worker.enqueueBatch({r});
+        }); producer.start(10); release=true;
+        QTRY_VERIFY_WITH_TIMEOUT(commits.count()>=3,2000); QVERIFY(!done.load());
+        if(cancel) { QTRY_VERIFY(pages.load()>=2); cancelled->store(true); }
+        if(shutdown) { producer.stop(); QElapsedTimer stop; stop.start(); QVERIFY(worker.stopWorker(100)); QVERIFY(stop.elapsed()<250); QVERIFY(!done.load()); }
+        QTRY_VERIFY_WITH_TIMEOUT(done.load(),3000); producer.stop(); exportThread->wait(); QVERIFY(ticks>=5);
+        QFile output(destination); QVERIFY(output.open(QIODevice::ReadOnly)); const auto bytes=output.readAll();
+        if(cancel) { QVERIFY(!result.success); QCOMPARE(bytes,QByteArray("preserved-destination")); }
+        else { QVERIFY2(result.success,qPrintable(result.errorMessage)); QCOMPARE(result.exportedCount,600); QVERIFY(!bytes.contains("9999")); }
     }
     void shutdownDeadlineIncludesInflightDelay() {
         auto path=database("shutdown.db");AsyncDatabaseWorker worker;QVERIFY(worker.startWorker(path));worker.setInjectedStorageDelayMs(5000);

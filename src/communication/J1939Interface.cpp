@@ -37,7 +37,7 @@ bool J1939Interface::open(const J1939Config& config)
              .arg(config.pgn, 5, 16, QChar('0'))
              .arg(config.priority));
     
-    return CANInterface::open(static_cast<const CanConfig&>(config));
+    return CANInterface::open(static_cast<const CanConfig&>(m_j1939Config));
 }
 
 int J1939Interface::send(const QByteArray& data)

@@ -180,6 +180,7 @@ public:
 
 protected:
     void resizeEvent(QResizeEvent* event) override;
+    void changeEvent(QEvent* event) override;
 
 public slots:
     void resetZoom();
@@ -206,6 +207,7 @@ private slots:
 
 private:
     void setupChart();
+    void applyChartPalette();
     void setupControlButtons();
     void updateAxisRanges();
     void calculateVisibleYRange(double& minY, double& maxY) const;

@@ -82,7 +82,8 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 
 # ============ 包含目录 ============
 set(LX_PUBLIC_INCLUDE_DIRS
-    ${CMAKE_SOURCE_DIR}/include
+    $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:include>
 )
 
 set(LX_PRIVATE_INCLUDE_DIRS ${CMAKE_SOURCE_DIR}/src)
@@ -140,6 +141,22 @@ if(BUILD_TESTING)
 endif()
 
 # ============ 安装配置 ============
+include(CMakePackageConfigHelpers)
+install(TARGETS core_module project_command_coordinator compiler_module runtime_session_service
+    EXPORT LHTargets ARCHIVE DESTINATION lib)
+install(EXPORT LHTargets NAMESPACE LH:: DESTINATION lib/cmake/LH)
+configure_package_config_file(cmake/LHConfig.cmake.in ${CMAKE_CURRENT_BINARY_DIR}/LHConfig.cmake
+    INSTALL_DESTINATION lib/cmake/LH)
+write_basic_package_version_file(${CMAKE_CURRENT_BINARY_DIR}/LHConfigVersion.cmake
+    VERSION ${PROJECT_VERSION} COMPATIBILITY SameMajorVersion)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/LHConfig.cmake ${CMAKE_CURRENT_BINARY_DIR}/LHConfigVersion.cmake
+    DESTINATION lib/cmake/LH)
+foreach(module IN ITEMS core compiler runtime)
+    install(DIRECTORY ${CMAKE_SOURCE_DIR}/src/${module}/ DESTINATION include/${module}
+        FILES_MATCHING PATTERN "*.h")
+endforeach()
+install(FILES src/monitor/IMonitorHistoryStore.h DESTINATION include/monitor)
+install(FILES include/TextEncoding.h DESTINATION include)
 install(TARGETS ${PROJECT_NAME}
     RUNTIME DESTINATION bin
     LIBRARY DESTINATION lib
@@ -188,8 +205,10 @@ install(FILES
 
 install(DIRECTORY
     "${LH_DSL_RUNTIME_SOURCE}/src/lh_compiler/backend"
+    "${LH_DSL_RUNTIME_SOURCE}/src/lh_compiler/cli"
     "${LH_DSL_RUNTIME_SOURCE}/src/lh_compiler/frontend"
     "${LH_DSL_RUNTIME_SOURCE}/src/lh_compiler/function_blocks"
+    "${LH_DSL_RUNTIME_SOURCE}/src/lh_compiler/utils"
     DESTINATION "${LH_DSL_RUNTIME_INSTALL}/src/lh_compiler"
     FILES_MATCHING
     PATTERN "*.py"

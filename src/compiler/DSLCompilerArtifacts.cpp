@@ -1,4 +1,5 @@
 #include "DSLCompilerInterface.h"
+#include "../common/CompileArtifactPolicy.h"
 #include "DSLCompilerInternal.h"
 
 #include "common/PathSecurityUtils.h"
@@ -226,15 +227,7 @@ bool validateProjectScriptPath(const QString& projectPath,
             return false;
         }
     } else {
-        QDir parent = candidate.dir();
-        while (!parent.exists()) {
-            const QString currentPath = parent.absolutePath();
-            const QDir nextParent = QFileInfo(currentPath).dir();
-            if (nextParent.absolutePath() == currentPath)
-                break;
-            parent = nextParent;
-        }
-        const QString canonicalParent = parent.canonicalPath();
+        const QString canonicalParent = PathSecurityUtils::canonicalExistingAncestor(candidate.dir());
         if (canonicalParent.isEmpty() || !pathWithinRoot(root, canonicalParent)) {
             if (errorMessage)
                 *errorMessage = QStringLiteral("项目脚本父目录越出项目根目录：%1").arg(path);
@@ -394,8 +387,14 @@ CompileResult DSLCompilerInterface::buildCompileResult(const QString& sourceFile
 
     const QString outputFile = DSLCompilerInternal::defaultOutputFileForSource(sourceFile, outputDir);
     if (QFileInfo::exists(outputFile)) {
+        const bool requiresTargetValidation = CompileArtifactPolicy::isFile(outputFile);
+        if (requiresTargetValidation) {
+            result.metadata.insert(QStringLiteral("requiresTargetValidation"), true);
+            result.metadata.insert(QStringLiteral("compileOnly"), true);
+            result.warnings.append(QStringLiteral("赋值写回尚未通过目标固件验证，当前产物不可下载或运行。"));
+        }
         CompileArtifact artifact;
-        artifact.type = QStringLiteral("download");
+        artifact.type = requiresTargetValidation ? QStringLiteral("compiled_code") : QStringLiteral("download");
         artifact.path = outputFile;
         artifact.format = QStringLiteral("dsl_custom");
         artifact.checksum = DSLCompilerInternal::sha256ForFile(outputFile);
@@ -516,7 +515,7 @@ CompileResult DSLCompilerInterface::buildCompileResult(const QString& sourceFile
         return result;
     }
 
-    if (profileSource.isEmpty()) {
+    if (profileSource.isEmpty() || result.metadata.value(QStringLiteral("requiresTargetValidation")).toBool()) {
         result.metadata.insert(QStringLiteral("compileOnly"), true);
         // Do not label offline output as a downloadable artifact or issue a
         // manifest. RunController also refuses compileOnly results explicitly.

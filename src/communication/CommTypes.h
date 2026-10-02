@@ -567,6 +567,15 @@ struct CanConfig : public CommConfigBase
     bool useFilter = false;
     quint32 filterMask = 0;
     quint32 filterId = 0;
+    bool mapValid = true;
+    QString validationError;
+
+    bool readBounded(const QVariantMap& map, const QString& key, int fallback,
+                     int maximum, int* value, int minimum = 0) {
+        const bool valid = commReadStrictInt(map, key, fallback, minimum, maximum, value);
+        if (!valid) { mapValid = false; validationError = QStringLiteral("CAN 配置字段无效: %1").arg(key); }
+        return valid;
+    }
     
     QVariantMap toVariantMap() const override {
         return {
@@ -584,17 +593,29 @@ struct CanConfig : public CommConfigBase
     bool fromVariantMap(const QVariantMap& map) override {
         plugin = map.value("plugin", "socketcan").toString();
         interface = map.value("interface", "can0").toString();
-        bitrate = map.value("bitrate", 500000).toInt();
+        mapValid = true;
+        validationError.clear();
+        readBounded(map, "bitrate", 500000, std::numeric_limits<int>::max(), &bitrate, 1);
         extendedFrame = map.value("extended", false).toBool();
-        defaultFrameId = map.value("frameId", 0x100).toUInt();
         useFilter = map.value("useFilter", false).toBool();
-        filterMask = map.value("filterMask", 0u).toUInt();
-        filterId = map.value("filterId", 0u).toUInt();
-        return true;
+        for (const QString& key : {QStringLiteral("extended"), QStringLiteral("useFilter")}) {
+            if (map.contains(key) && map.value(key).type() != QVariant::Bool) {
+                mapValid = false; validationError = QStringLiteral("CAN 配置必须为布尔值: %1").arg(key);
+            }
+        }
+        const int maximum = extendedFrame ? 0x1fffffff : 0x7ff;
+        int value = 0;
+        if (readBounded(map, "frameId", 0x100, maximum, &value)) defaultFrameId = quint32(value);
+        if (readBounded(map, "filterMask", 0, maximum, &value)) filterMask = quint32(value);
+        if (readBounded(map, "filterId", 0, maximum, &value)) filterId = quint32(value);
+        return CanConfig::isValid();
     }
     
     bool isValid() const override {
-        return !plugin.isEmpty() && !interface.isEmpty() && bitrate > 0;
+        const quint32 maximum = extendedFrame ? 0x1fffffff : 0x7ff;
+        return mapValid && !plugin.trimmed().isEmpty() && !interface.trimmed().isEmpty()
+                && bitrate > 0 && defaultFrameId <= maximum
+                && filterMask <= maximum && filterId <= maximum;
     }
     
     static CanConfig fromMap(const QVariantMap& map) {
@@ -624,10 +645,16 @@ struct CANOpenConfig : public CanConfig
     
     bool fromVariantMap(const QVariantMap& map) override {
         CanConfig::fromVariantMap(map);
-        nodeId = static_cast<quint8>(map.value("nodeId", 1).toUInt());
-        functionCode = static_cast<quint8>(map.value("functionCode", 0x3).toUInt());
-        cobId = static_cast<quint16>(map.value("cobId", 0).toUInt());
-        return true;
+        int value = 0;
+        if (readBounded(map, "nodeId", 1, 127, &value)) nodeId = quint8(value);
+        if (readBounded(map, "functionCode", 3, 15, &value)) functionCode = quint8(value);
+        if (readBounded(map, "cobId", 0, 0x7ff, &value)) cobId = quint16(value);
+        return isValid();
+    }
+
+    bool isValid() const override {
+        return CanConfig::isValid() && !extendedFrame && nodeId <= 127
+                && functionCode <= 15 && cobId <= 0x7ff;
     }
     
     static CANOpenConfig fromMap(const QVariantMap& map) {
@@ -659,13 +686,20 @@ struct J1939Config : public CanConfig
     }
     
     bool fromVariantMap(const QVariantMap& map) override {
-        CanConfig::fromVariantMap(map);
-        priority = static_cast<quint8>(map.value("priority", 6).toUInt());
-        pgn = map.value("pgn", 0u).toUInt();
-        sourceAddress = static_cast<quint8>(map.value("sourceAddress", 0x80).toUInt());
-        destinationAddress = static_cast<quint8>(map.value("destinationAddress", 0xFF).toUInt());
+        QVariantMap base = map; base.insert("extended", true);
+        CanConfig::fromVariantMap(base);
+        int value = 0;
+        if (readBounded(map, "priority", 6, 7, &value)) priority = quint8(value);
+        if (readBounded(map, "pgn", 0, 0x3ffff, &value)) pgn = quint32(value);
+        if (readBounded(map, "sourceAddress", 0x80, 255, &value)) sourceAddress = quint8(value);
+        if (readBounded(map, "destinationAddress", 0xff, 255, &value)) destinationAddress = quint8(value);
         extendedFrame = true; // J1939 always uses extended frames
-        return true;
+        return isValid();
+    }
+
+    bool isValid() const override {
+        return CanConfig::isValid() && priority <= 7 && pgn <= 0x3ffff
+                && (((pgn >> 8) & 0xff) >= 240 || (pgn & 0xff) == 0);
     }
     
     static J1939Config fromMap(const QVariantMap& map) {

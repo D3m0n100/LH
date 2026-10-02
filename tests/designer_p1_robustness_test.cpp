@@ -142,7 +142,8 @@ private slots:
         QTest::newRow("program") << QByteArray("PROGRAM Broken\nVAR\n x : REAL;\nEND_VAR\nx := ;\nEND_PROGRAM\n") << 5;
         QTest::newRow("leading-empty-lines") << QByteArray("\n\nPROGRAM Broken\nVAR\n x : REAL;\nEND_VAR\nx := ;\nEND_PROGRAM\n") << 7;
         QTest::newRow("wrapped-fragment") << QByteArray("x := ;\n") << 1;
-        QTest::newRow("rewritten-legacy-fallback") << QByteArray("out = Sum(\n A = ;\n);\n") << -1;
+        QTest::newRow("rewritten-legacy-line") << QByteArray("\nlegacy_pid = PID(Kp := );\n") << 2;
+        QTest::newRow("synthetic-declaration-fallback") << QByteArray("out = VAR();\n") << -1;
     }
 
     void testRealCompilerDiagnosticsNavigateThroughPanel()
@@ -175,7 +176,14 @@ private slots:
             return;
         }
         int row=-1;for(int i=0;i<panel->problemCount();++i) if(panel->itemAtRow(i).line==expectedLine && !panel->itemAtRow(i).filePath.isEmpty()) {row=i;break;}
-        QVERIFY2(row>=0,"Real compiler must produce navigable diagnostic at erroneous source line");
+        QStringList observed;
+        for (int i = 0; i < panel->problemCount(); ++i) {
+            const auto item = panel->itemAtRow(i);
+            observed.append(QStringLiteral("%1:%2 %3").arg(item.filePath).arg(item.line).arg(item.message));
+        }
+        QVERIFY2(row>=0, qPrintable(observed.join(QStringLiteral("; "))));
+        if (qstrcmp(QTest::currentDataTag(), "rewritten-legacy-line") == 0)
+            QVERIFY(!panel->itemAtRow(row).hasExactColumn);
         auto* table=panel->findChild<QTableWidget*>();QVERIFY(table);
         table->setCurrentCell(row,0);
         QTest::keyClick(table,Qt::Key_Return);
@@ -513,6 +521,42 @@ private slots:
         QSignalSpy spyClose(actClose, &QAction::triggered);
         QTest::keyClick(dsl->editor(), Qt::Key_W, Qt::ControlModifier);
         QCOMPARE(spyClose.count(), 1);
+    }
+
+    void testAuxiliaryCloseShortcutPreservesDiscardDecision()
+    {
+        QTemporaryDir dir;
+        QFile file(dir.filePath("notes.txt"));
+        QVERIFY(file.open(QIODevice::WriteOnly));
+        file.write("original");
+        file.close();
+        MainWindow window;
+        window.show();
+        window.switchToWorkspace(WorkspaceId::Monitor);
+        QCoreApplication::processEvents();
+        auto* editor = qobject_cast<QPlainTextEdit*>(window.openAndActivateFile(file.fileName()));
+        QVERIFY(editor);
+        QCOMPARE(window.currentWorkspaceId(), WorkspaceId::Programming);
+        editor->insertPlainText("changed");
+        window.activateWindow();
+        editor->setFocus();
+        QTRY_VERIFY(editor->hasFocus());
+        QPointer<QWidget> alive(editor);
+        int decisions = 0;
+        window.setMessageBoxHook([&](const QString&, const QString&, QMessageBox::StandardButtons,
+                                    QMessageBox::StandardButton) {
+            ++decisions;
+            return QMessageBox::Discard;
+        });
+        auto* closeAction = window.findChild<QAction*>("actCloseActiveTab");
+        QVERIFY(closeAction);
+        QSignalSpy triggered(closeAction, &QAction::triggered);
+        QTest::keyClick(editor, Qt::Key_W, Qt::ControlModifier);
+        QTRY_VERIFY(alive.isNull());
+        QCOMPARE(triggered.count(), 1);
+        QCOMPARE(decisions, 1);
+        QVERIFY(file.open(QIODevice::ReadOnly));
+        QCOMPARE(file.readAll(), QByteArray("original"));
     }
 
     // 10. 保存失败确定性保护（未保存状态维持）

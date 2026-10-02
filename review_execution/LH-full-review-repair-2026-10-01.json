@@ -1,0 +1,1900 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-01",
+  "acceptanceCompletedDate": "2026-10-02",
+  "workspace": "D:\\Table\\LH",
+  "basis": "C:\\Users\\Ryan\\.codex\\visualizations\\2026\\09\\30\\01a0eff5-759e-7ec1-b9d1-4f644bae8f8f\\LH-full-review-2026-10-01\\LH-full-review-2026-10-01.json",
+  "authorization": "用户直接修复并验收，好的 执行 / 继续",
+  "supportScope": {
+    "supportedPlatforms": [
+      "Windows"
+    ],
+    "excludedPlatforms": [
+      "Linux",
+      "macOS"
+    ],
+    "windowsLocalDisk": "已实现并本地验收",
+    "windowsUNC": "需要支持；已实现并通过本机 SMB 验收",
+    "userInstructions": [
+      "目前只需要支持windows",
+      "需要支持网络共享目录"
+    ]
+  },
+  "counts": {
+    "total": 57,
+    "implementedAndLocallyVerified": 28,
+    "blockedCompilerContracts": 28,
+    "pendingSupportScope": 0,
+    "pendingFieldAcceptance": 1
+  },
+  "validation": {
+    "build": "passed",
+    "configuration": "Debug / Qt 5.15.2 / MinGW GNU 8.1",
+    "failureInjection": "OFF",
+    "ctest": {
+      "passedSuites": 45,
+      "failedSuites": 0,
+      "seconds": 46.74,
+      "note": "OFF 三个注入用例按条件跳过；ON 已单独执行通过。套件通过不等于所有平台/运行时分支均执行。"
+    },
+    "injectionOn": {
+      "businessCases": 3,
+      "qtTotals": "5 passed, 0 failed, 0 skipped (含 init/cleanup)"
+    },
+    "python": {
+      "passed": 97,
+      "skipped": 1,
+      "seconds": 20.41,
+      "runtime": "仓库默认 compile/venv/Scripts/python.exe",
+      "skip": "当前 Windows 令牌无创建符号链接权限；硬链接/相同路径回归执行"
+    },
+    "focused": {
+      "fullReview": "26 passed, 0 failed, 0 skipped",
+      "runtimeSession": "72 passed, 0 failed, 0 skipped",
+      "migration": "7 passed; 100000 runtime + 10000 logs; cancelled/ambiguous/exception rollback",
+      "sampler": "4 passed",
+      "diagnostics": "6 passed",
+      "logging": "exit 0; 包含暂停接收端、flush/退出预算与重装子进程"
+    },
+    "windowsUNC": {
+      "required": true,
+      "guard": "18 passed, 0 failed, 0 skipped (含初始化/清理)",
+      "projectLifecycle": "3 passed, 0 failed, 0 skipped (含初始化/清理)",
+      "testRoot": "\\\\localhost\\D$\\Table\\LH\\build_current_mingw\\unc_test_workspace",
+      "scope": "真实本机 SMB；默认无测试共享环境时按条件跳过，本次所有 UNC 用例实际执行",
+      "remoteServerAcceptance": false
+    },
+    "uncCLI": {
+      "passed": true,
+      "source": "\\\\localhost\\D$\\Table\\LH\\build_current_mingw\\unc_test_workspace\\lh-unc-cli-84c5dc6b-4aa8-4637-95aa-130ee5e29a76\\网络 main.lh",
+      "workingDirectory": "\\\\localhost\\D$\\Table\\LH\\build_current_mingw\\unc_test_workspace\\lh-unc-cli-84c5dc6b-4aa8-4637-95aa-130ee5e29a76",
+      "results": [
+        {
+          "launcher": [
+            "D:\\Table\\LH\\third_party\\custom_dsp_language\\compile\\venv\\Scripts\\python.exe",
+            "D:\\Table\\LH\\third_party\\custom_dsp_language\\compile\\lmc.py"
+          ],
+          "exitCode": 0,
+          "output": "\\\\localhost\\D$\\Table\\LH\\build_current_mingw\\unc_test_workspace\\lh-unc-cli-84c5dc6b-4aa8-4637-95aa-130ee5e29a76\\网络产物-0.code",
+          "code": "101 101 0 1 100 2601 1 1000\n"
+        },
+        {
+          "launcher": [
+            "D:\\Table\\LH\\third_party\\custom_dsp_language\\compile\\venv\\Scripts\\lmc.exe",
+            "compile"
+          ],
+          "exitCode": 0,
+          "output": "\\\\localhost\\D$\\Table\\LH\\build_current_mingw\\unc_test_workspace\\lh-unc-cli-84c5dc6b-4aa8-4637-95aa-130ee5e29a76\\网络产物-1.code",
+          "code": "101 101 0 1 100 2601 1 1000\n"
+        }
+      ],
+      "sourcePreserved": true,
+      "identicalToLocalCode": true,
+      "fixtureRetained": true,
+      "boundary": "本机真实 SMB 的 Unicode 源路径、产物路径与工作目录；不代表远端 NAS 或实际设备验收"
+    },
+    "independentProbes": {
+      "passed": true,
+      "cases": 12,
+      "results": [
+        {
+          "probe": "udp",
+          "passed": true,
+          "exitCode": 0,
+          "observed": {
+            "accounted_bytes": 0,
+            "byte_cap": 1048576,
+            "delivered": 10000,
+            "opened": true,
+            "queued_datagrams": 1024
+          }
+        },
+        {
+          "probe": "can-wait",
+          "passed": true,
+          "exitCode": 0,
+          "observed": {
+            "received_after_event_pump": "",
+            "received_during_wait": "x",
+            "wait_ms": 16
+          }
+        },
+        {
+          "probe": "can-config",
+          "passed": true,
+          "exitCode": 0,
+          "observed": {
+            "canopen_accepted": false,
+            "cob_id": 0,
+            "function_code": 3,
+            "j1939_accepted": false,
+            "node_id": 1,
+            "pgn": 0,
+            "priority": 6,
+            "source_address": 128
+          }
+        },
+        {
+          "probe": "reserved-name",
+          "passed": true,
+          "exitCode": 0,
+          "observed": {
+            "acquire": false,
+            "create": false,
+            "disk_names": [],
+            "error": "路径含不安全的文件名",
+            "qt_open": false,
+            "qt_read": ""
+          }
+        },
+        {
+          "probe": "callback-burst",
+          "passed": true,
+          "exitCode": 0,
+          "observed": {
+            "after_event_pump": 128,
+            "before_event_pump": 0
+          }
+        },
+        {
+          "probe": "redaction",
+          "passed": true,
+          "exitCode": 0,
+          "observed": {
+            "json_string_field": {
+              "requestBody": "{\"password\":\"[REDACTED]\"}"
+            },
+            "json_text": "{\"password\":\"[REDACTED]\"}",
+            "plain": "password=[REDACTED]"
+          }
+        },
+        {
+          "probe": "debug-block",
+          "passed": true,
+          "exitCode": 0,
+          "observed": {
+            "blocked_ms": 0,
+            "heartbeat_during_pause": 0,
+            "pause_ok": false
+          }
+        },
+        {
+          "probe": "terminal",
+          "passed": true,
+          "exitCode": 0,
+          "observed": {
+            "confirmed_final_present": true,
+            "dropped": 10456,
+            "succeeded_final_present": true
+          }
+        },
+        {
+          "probe": "critical",
+          "passed": true,
+          "exitCode": 0,
+          "observed": {
+            "critical_block_ms": 6,
+            "heartbeat_during_block": 0,
+            "installed": true
+          }
+        },
+        {
+          "probe": "expert-log",
+          "passed": true,
+          "exitCode": 0,
+          "observed": {
+            "block_cap": 2000,
+            "blocks": 2000,
+            "plain_text": "<b>probe-markup</b>"
+          }
+        },
+        {
+          "probe": "diagnostic-redaction",
+          "passed": true,
+          "exitCode": 0,
+          "observed": {
+            "contains_secret": false,
+            "error": "",
+            "exported": true
+          }
+        },
+        {
+          "probe": "export-time",
+          "passed": true,
+          "exitCode": 0,
+          "observed": {
+            "aligned": "timestamp,timestamp_ms,ch,ch_quality,ch_value_valid\n2026-10-01 04:00:00.000Z,1790827200000,1,Good,1\n",
+            "aligned_success": true,
+            "json_success": true,
+            "metadata_json": "{\"metadata\":{\"projectName\":\"\",\"exportTime\":\"2026-10-02T10:38:12\",\"exportTimeMs\":1790908692855,\"timeWindowMs\":30000,\"exportFormat\":\"JSON\",\"totalChannels\":1,\"totalSamples\":0,\"softwareVersion\":\"1.0.0\",\"unsignedMaximum\":\"18446744073709551615\"},\"channels\":[{\"channelId\":\"ch\",\"displayName\":\"channel\",\"unit\":\"\",\"samplePeriodMs\":100,\"sampleCount\":0,\"samples\":[{\"timestamp\":\"2026-10-01T04:00:00Z\",\"timestampMs\":1790827200000,\"value\":1,\"quality\":\"Good\",\"valueValid\":true}]}]}",
+            "unaligned": "timestamp,timestamp_ms,channel_id,channel_name,value,unit,quality,value_valid\n2026-10-01 04:00:00.000Z,1790827200000,ch,channel,1,,Good,1\n",
+            "unaligned_success": true
+          }
+        }
+      ],
+      "note": "Original independent probes copied without changing test logic; CMake adds the extracted sampler library. Raw synchronous pause now rejects GUI I/O; positive async command/heartbeat tested separately."
+    },
+    "installedSmoke": {
+      "passed": true,
+      "executable": "C:\\Users\\Ryan\\.codex\\visualizations\\2026\\09\\30\\01a0eff5-759e-7ec1-b9d1-4f644bae8f8f\\LH-full-review-repair-2026-10-01\\installed-off\\bin\\LH.exe",
+      "results": [
+        {
+          "argument": "--version",
+          "exitCode": 0,
+          "output": "LH 1.0.0"
+        },
+        {
+          "argument": "--smoke-test",
+          "exitCode": 0,
+          "output": ""
+        }
+      ],
+      "databaseBefore": {
+        "schemaVersion": 5,
+        "runtimeRecords": 76
+      },
+      "databaseAfter": {
+        "schemaVersion": 5,
+        "runtimeRecords": 76
+      },
+      "preservedRuntimeRecords": true,
+      "failureInjection": "OFF",
+      "smokePath": "Windows system directories only; Qt SDK and MinGW removed from child PATH",
+      "platformPlugin": "deployed qwindows; no application window is shown",
+      "versionConsole": "hidden console; Qt GUI command-line output can otherwise use a message box",
+      "initialProbe": "Initial SDK offscreen plugin request timed out; that plugin is not included in the deployment. Retried with the deployed Windows plugin; no production source change."
+    },
+    "ui": "10 张本机 offscreen Light/Dark 截图，已逐对查看；曲线用软件渲染，错误框仅隐藏渲染真实内容，原生窗口交互待现场",
+    "hardwareAcceptance": false,
+    "remoteCIExecuted": false
+  },
+  "integrity": {
+    "headUnchanged": true,
+    "head": "bed4d849ebebd9e6232a8d727e037005ec507d00",
+    "preservedExistingWorktree": true,
+    "baselineFiles": 348,
+    "changedBaselineFiles": [
+      ".github/workflows/windows-ci.yml",
+      ".gitignore",
+      "src/common/LogSafety.h",
+      "src/common/PathSecurityUtils.h",
+      "src/common/ProjectMutationGuard.h",
+      "src/communication/CANInterface.cpp",
+      "src/communication/CANInterface.h",
+      "src/communication/ClassicOpcServer.cpp",
+      "src/communication/ClassicOpcServer.h",
+      "src/communication/CMakeLists.txt",
+      "src/communication/CommTypes.h",
+      "src/communication/ControllerDebugClient.cpp",
+      "src/communication/ControllerDeviceBackend.cpp",
+      "src/communication/ControllerDeviceBackend.h",
+      "src/communication/ControllerDeviceBackendDebug.cpp",
+      "src/communication/EthernetInterface.cpp",
+      "src/communication/EthernetInterface.h",
+      "src/communication/J1939Interface.cpp",
+      "src/communication/MatrikonOpcServer.cpp",
+      "src/communication/MatrikonOpcServer.h",
+      "src/communication/OpcServerFactory.cpp",
+      "src/compiler/DSLCompilerArtifacts.cpp",
+      "src/core/AppLogging.cpp",
+      "src/core/AppLogging.h",
+      "src/core/CMakeLists.txt",
+      "src/core/DataManager.cpp",
+      "src/core/DataManager.h",
+      "src/designer/BuildController.cpp",
+      "src/designer/BuildController.h",
+      "src/designer/DownloadDockWidget.cpp",
+      "src/designer/MainWindow.cpp",
+      "src/designer/RuntimeSessionController.cpp",
+      "src/designer/RuntimeSessionController.h",
+      "src/designer/RuntimeSessionDebug.cpp",
+      "src/designer/RuntimeSessionOpc.cpp",
+      "src/designer/ui/ThemeManager.cpp",
+      "src/designer/ui/ThemeManager.h",
+      "src/main.cpp",
+      "src/monitor/ChartWidget.cpp",
+      "src/monitor/ChartWidget.h",
+      "src/monitor/CMakeLists.txt",
+      "src/monitor/MonitorExportHelper.cpp",
+      "src/monitor/MonitorExportHelper.h",
+      "src/monitor/MonitorManager.cpp",
+      "src/monitor/MonitorManager.h",
+      "src/monitor/MonitorManagerPolling.cpp",
+      "src/monitor/MonitorWidget.cpp",
+      "src/runtime/RunController.cpp",
+      "tests/app_logging_overload_test.cpp",
+      "tests/app_logging_test.cpp",
+      "tests/check_module_boundaries.py",
+      "tests/CMakeLists.txt",
+      "tests/diagnostic_snapshot_test.cpp",
+      "tests/main_window_integration_test.cpp",
+      "tests/monitor_history_export_integration_test.cpp",
+      "tests/project_mutation_guard_test.cpp",
+      "tests/project_save_close_test.cpp",
+      "tests/runtime_session_controller_test.cpp",
+      "tests/ui_style_preview.cpp",
+      "third_party/custom_dsp_language/compile/lmc.py",
+      "third_party/custom_dsp_language/compile/src/lh_compiler/backend/emitter.py",
+      "third_party/custom_dsp_language/compile/src/lh_compiler/cli/commands.py",
+      "third_party/custom_dsp_language/compile/src/lh_compiler/compiler.py"
+    ],
+    "newlyHashedFiles": [
+      "src/common/DeferredThreadCleanup.h",
+      "src/communication/AsyncOpcServer.cpp",
+      "src/communication/AsyncOpcServer.h",
+      "src/communication/OpcWriteResultState.h",
+      "src/core/BackgroundTaskRegistry.cpp",
+      "src/core/BackgroundTaskRegistry.h",
+      "src/monitor/BackendSampler.cpp",
+      "src/monitor/BackendSampler.h",
+      "tests/backend_sampler_test.cpp",
+      "tests/database_startup_migration_test.cpp",
+      "tests/full_review_regression_test.cpp",
+      "tests/unc_test_fixture.h",
+      "third_party/custom_dsp_language/compile/src/lh_compiler/backend/artifacts.py",
+      "third_party/custom_dsp_language/compile/src/lh_compiler/cli/service.py",
+      "third_party/custom_dsp_language/compile/tests/unit/test_cli_service_parity.py",
+      "third_party/custom_dsp_language/compile/tests/unit/test_output_safety.py",
+      "tools/setup_compiler_env.ps1"
+    ],
+    "commit": false,
+    "push": false,
+    "modelChanged": false
+  },
+  "tasks": [
+    {
+      "id": "FR01",
+      "priority": "P1",
+      "cost": "M",
+      "estimatedPersonDays": "1–2",
+      "title": "编译器辅属产物可覆盖源文件",
+      "category": "编译器 / 文件安全 / 异常处理",
+      "evidenceClass": "独立探针复现",
+      "status": "已修复，本地验收通过",
+      "independentlyDeliverable": true,
+      "requiredDependencies": [],
+      "sources": [
+        {
+          "path": "D:/Table/LH/third_party/custom_dsp_language/compile/src/lh_compiler/backend/emitter.py",
+          "line": 352
+        },
+        {
+          "path": "D:/Table/LH/third_party/custom_dsp_language/compile/src/lh_compiler/compiler.py",
+          "line": 193
+        },
+        {
+          "path": "D:/Table/LH/third_party/custom_dsp_language/compile/src/lh_compiler/compiler.py",
+          "line": 258
+        }
+      ],
+      "observation": "对合法 main.lh 分别建立 main.list、main.typ、main.rep 硬链接，三个案例均返回 success=true 且源文件字节被覆盖。另一个输入文件本身名为 main.rep 的失败案例也覆盖输入。当前仅比较输入与主 .code 的 resolve 路径；辅属产物 open(..., w) 会跟随硬链接/文件别名。主产物的临时文件采用可预测名称且写入非排他，也需要纳入输出保护。",
+      "implementationScope": "把 .code、.list、.typ、.rep、临时文件以及失败诊断统一纳入输出计划；检查源文件与全部输出的路径和文件身份，安全创建临时文件并发布，清理失败可观测。不得从 LM 推导目标 ABI。",
+      "acceptanceCriteria": "普通成功/失败编译保持行为；辅属产物、临时文件与输入的硬链接、符号链接、相同路径碰撞都保留源文件原始字节；失败不得返回成功或留下看似本次有效的产物。",
+      "evidenceFiles": [
+        "C:/Users/Ryan/.codex/visualizations/2026/09/30/01a0eff5-759e-7ec1-b9d1-4f644bae8f8f/LH-full-review-2026-10-01/compiler_probes.py",
+        "C:/Users/Ryan/.codex/visualizations/2026/09/30/01a0eff5-759e-7ec1-b9d1-4f644bae8f8f/LH-full-review-2026-10-01/compiler-probes.json"
+      ],
+      "implementation": "统一产物身份预检与随机独占临时文件原子发布；所有辅属产物及失败清理保护源文件。",
+      "source": "D:/Table/LH/third_party/custom_dsp_language/compile/src/lh_compiler/backend/artifacts.py",
+      "evidence": "Python output_safety + CLI parity；真实 lmc.exe 与直接入口",
+      "implementationStatus": "已实现",
+      "acceptance": "Windows Qt 5.15.2 / MinGW Debug；本机、离屏、测试桩范围"
+    },
+    {
+      "id": "C02",
+      "cost": "U",
+      "title": "分离构造参数、运行时字段、地址引用和无实例操作",
+      "implementationStatus": "未实现",
+      "acceptance": "未完成",
+      "reason": "VariableRef/MemberRef 目标编码、可写字段固件证据、合法无实例操作分类仍缺契约，不能标为完整实现。现有安全拒绝/清理只验收边界，不能算原功能完成。",
+      "followup": [
+        "R05"
+      ],
+      "priority": "P1",
+      "previousCost": "L",
+      "estimatedPersonDays": "未知：待 LH 契约取证后评估",
+      "status": "外部 LH 契约不足",
+      "independentlyDeliverable": true,
+      "requiredDependencies": [
+        "对应 LH 目标契约证据"
+      ],
+      "previousTitle": "分离构造参数、运行时字段、地址引用和无实例操作",
+      "currentReviewState": "现有未知能力安全拒绝；未获得 LH 目标契约，功能未完成。历史标题不代表当前仍静默生成错误产物。",
+      "acceptanceCriteria": "取得适用 LH 固件版本的指令/操作数/地址单位/执行语义证据，再实现并进行正反例及目标设备验证；LM 资料只能作历史契约线索。"
+    },
+    {
+      "id": "T03",
+      "cost": "U",
+      "title": "实现标量初始化的 LH 目标写回能力",
+      "implementationStatus": "未实现",
+      "acceptance": "未完成",
+      "reason": "缺 LH 固件初始化写回指令、目标地址单位、执行时机，不能从 LM 地址推导生产实现。现有安全拒绝/清理只验收边界，不能算原功能完成。",
+      "followup": [],
+      "priority": "P1",
+      "previousCost": "M",
+      "estimatedPersonDays": "未知：待 LH 契约取证后评估",
+      "status": "外部 LH 契约不足",
+      "independentlyDeliverable": true,
+      "requiredDependencies": [
+        "对应 LH 目标契约证据"
+      ],
+      "previousTitle": "简单变量初始化通过校验，却没有进入生成产物",
+      "currentReviewState": "现有未知能力安全拒绝；未获得 LH 目标契约，功能未完成。历史标题不代表当前仍静默生成错误产物。",
+      "acceptanceCriteria": "取得适用 LH 固件版本的指令/操作数/地址单位/执行语义证据，再实现并进行正反例及目标设备验证；LM 资料只能作历史契约线索。"
+    },
+    {
+      "id": "T04",
+      "cost": "U",
+      "title": "实现赋值对目标变量的真实写回",
+      "implementationStatus": "未实现",
+      "acceptance": "未完成",
+      "reason": "缺目标变量写回指令及操作数契约，尚不能实现真正赋值。现有安全拒绝/清理只验收边界，不能算原功能完成。",
+      "followup": [],
+      "priority": "P1",
+      "previousCost": "M",
+      "estimatedPersonDays": "未知：待 LH 契约取证后评估",
+      "status": "外部 LH 契约不足",
+      "independentlyDeliverable": true,
+      "requiredDependencies": [
+        "对应 LH 目标契约证据"
+      ],
+      "previousTitle": "常量赋值生成了另一个内存块，没有写入变量地址",
+      "currentReviewState": "现有未知能力安全拒绝；未获得 LH 目标契约，功能未完成。历史标题不代表当前仍静默生成错误产物。",
+      "acceptanceCriteria": "取得适用 LH 固件版本的指令/操作数/地址单位/执行语义证据，再实现并进行正反例及目标设备验证；LM 资料只能作历史契约线索。"
+    },
+    {
+      "id": "ENV01",
+      "priority": "P2",
+      "cost": "S",
+      "estimatedPersonDays": "0.5",
+      "title": "恢复默认启动器使用的 DSL Python 环境",
+      "status": "已修复，本地验收通过",
+      "observation": "现有 compile/venv/Scripts/python.exe --version 本轮返回 No Python at 已删除的 Python311 路径；run_platform.bat 依赖此 venv，会退出。82 个 Python 测试使用已有独立验收环境，不代表默认启动器可用。",
+      "acceptanceCriteria": "可恢复地处理旧环境，配置受控 Python/ANTLR 依赖；默认启动器真实可运行并完成离线编译，环境错误能说明修复方式。",
+      "independentlyDeliverable": true,
+      "implementation": "可恢复归档坏 venv，重建仓库默认解释器并安装受控依赖；提供环境恢复脚本。",
+      "source": "D:/Table/LH/tools/setup_compiler_env.ps1",
+      "evidence": "默认 venv 的 97 passed / 1 skipped，pip check、启动器与离线编译",
+      "implementationStatus": "已实现",
+      "acceptance": "Windows Qt 5.15.2 / MinGW Debug；本机、离屏、测试桩范围",
+      "requiredDependencies": []
+    },
+    {
+      "id": "FR02",
+      "priority": "P2",
+      "cost": "S",
+      "estimatedPersonDays": "0.5–1",
+      "title": "JSON 文本字符串中的凭据未脱敏",
+      "category": "安全 / 日志 / 诊断",
+      "evidenceClass": "独立探针复现",
+      "status": "已修复，本地验收通过",
+      "independentlyDeliverable": true,
+      "requiredDependencies": [],
+      "sources": [
+        {
+          "path": "D:/Table/LH/src/common/LogSafety.h",
+          "line": 26
+        },
+        {
+          "path": "D:/Table/LH/src/common/LogSafety.h",
+          "line": 53
+        },
+        {
+          "path": "D:/Table/LH/src/diagnostics/DiagnosticSnapshotService.cpp",
+          "line": 43
+        }
+      ],
+      "observation": "password=probe-secret 被遮蔽，但 {\"password\":\"probe-secret\"} 以及 requestBody 中嵌套的 JSON 文本保持原样。真实 DiagnosticSnapshotService 导出的诊断文件 contains_secret=true。这是受控输入下的泄漏能力，未声称发现生产凭据泄漏。",
+      "implementationScope": "补齐带引号键及嵌套结构化字符串的脱敏；复用同一策略供文本日志、业务字段和诊断导出使用，保持单行转义。",
+      "acceptanceCriteria": "覆盖带引号 JSON 键、转义引号、嵌套字符串、大小写/别名、Bearer/URI；真实诊断文件和实际日志接收端不出现探针秘密，普通字段内容不被误删。",
+      "evidenceFiles": [
+        "C:/Users/Ryan/.codex/visualizations/2026/09/30/01a0eff5-759e-7ec1-b9d1-4f644bae8f8f/LH-full-review-2026-10-01/probe-redaction.log",
+        "C:/Users/Ryan/.codex/visualizations/2026/09/30/01a0eff5-759e-7ec1-b9d1-4f644bae8f8f/LH-full-review-2026-10-01/probe-diagnostic-redaction.log",
+        "C:/Users/Ryan/.codex/visualizations/2026/09/30/01a0eff5-759e-7ec1-b9d1-4f644bae8f8f/LH-full-review-2026-10-01/probes/ui_data.cpp"
+      ],
+      "implementation": "递归处理 JSON 文本与嵌套字符串、转义引号及凭据别名；日志和诊断真实接收端回归。",
+      "source": "D:/Table/LH/src/common/LogSafety.h",
+      "evidence": "FullReviewRegressionTest + DiagnosticSnapshotTest + AppLoggingOverloadTest",
+      "implementationStatus": "已实现",
+      "acceptance": "Windows Qt 5.15.2 / MinGW Debug；本机、离屏、测试桩范围"
+    },
+    {
+      "id": "FR03",
+      "priority": "P2",
+      "cost": "S",
+      "estimatedPersonDays": "0.5–1",
+      "title": "CSV 两种布局输出不同时间语义",
+      "category": "数据导出 / 时间正确性",
+      "evidenceClass": "独立探针复现",
+      "status": "已修复，本地验收通过",
+      "independentlyDeliverable": true,
+      "requiredDependencies": [],
+      "sources": [
+        {
+          "path": "D:/Table/LH/src/monitor/MonitorExportHelper.cpp",
+          "line": 1786
+        },
+        {
+          "path": "D:/Table/LH/src/monitor/MonitorExportHelper.cpp",
+          "line": 1825
+        },
+        {
+          "path": "D:/Table/LH/src/monitor/MonitorExportHelper.h",
+          "line": 52
+        }
+      ],
+      "observation": "相同 UTC 样本 2026-10-01T04:00:00Z、timestamp_ms=1790827200000，非对齐 CSV 为 04:00，对齐 CSV 为 12:00。后者 fromMSecsSinceEpoch 默认使用本地时区，文本没有偏移标识。",
+      "implementationScope": "明确各导出布局共同的时区契约；显式转换，文本标明时区或在元数据明确说明，不改写历史数据。",
+      "acceptanceCriteria": "UTC、香港时区及夏令时边界下，CSV 两布局的文本时间与相同 epoch 表示同一时刻；保留既有 CSV 转义和质量字段。",
+      "evidenceFiles": [
+        "C:/Users/Ryan/.codex/visualizations/2026/09/30/01a0eff5-759e-7ec1-b9d1-4f644bae8f8f/LH-full-review-2026-10-01/probe-export-time.log",
+        "C:/Users/Ryan/.codex/visualizations/2026/09/30/01a0eff5-759e-7ec1-b9d1-4f644bae8f8f/LH-full-review-2026-10-01/probes/ui_data.cpp"
+      ],
+      "implementation": "分页/非分页 CSV、TSV 两布局统一 UTC，默认格式标注 Z；保留 epoch。",
+      "source": "D:/Table/LH/src/monitor/MonitorExportHelper.cpp",
+      "evidence": "DST 两侧时间与两布局回归；独立 export-time 探针",
+      "implementationStatus": "已实现",
+      "acceptance": "Windows Qt 5.15.2 / MinGW Debug；本机、离屏、测试桩范围"
+    },
+    {
+      "id": "FR04",
+      "priority": "P2",
+      "cost": "S",
+      "estimatedPersonDays": "0.5–1",
+      "title": "UDP 接收队列仅限字节，空报文可无限堆积",
+      "category": "通信 / 内存 / 可用性",
+      "evidenceClass": "独立探针复现",
+      "status": "已修复，本地验收通过",
+      "independentlyDeliverable": true,
+      "requiredDependencies": [],
+      "sources": [
+        {
+          "path": "D:/Table/LH/src/communication/EthernetInterface.cpp",
+          "line": 532
+        },
+        {
+          "path": "D:/Table/LH/src/communication/EthernetInterface.cpp",
+          "line": 548
+        }
+      ],
+      "observation": "真实 loopback UDP 送入 10000 个空数据报，队列保存 10000 项而字节计数为 0；1 MiB 字节上限无法限制记录数和对象开销。",
+      "implementationScope": "同时限制数据报数量和字节数，明确过载时丢弃策略及计数；保留合法空数据报的协议语义。",
+      "acceptanceCriteria": "空报文、1 字节报文和混合长度洪泛下队列始终有数量与字节上限；顺序、唤醒、断线清理和过载统计正确。",
+      "evidenceFiles": [
+        "C:/Users/Ryan/.codex/visualizations/2026/09/30/01a0eff5-759e-7ec1-b9d1-4f644bae8f8f/LH-full-review-2026-10-01/probe-udp.log",
+        "C:/Users/Ryan/.codex/visualizations/2026/09/30/01a0eff5-759e-7ec1-b9d1-4f644bae8f8f/LH-full-review-2026-10-01/probes/main.cpp"
+      ],
+      "implementation": "UDP 队列同时限制 1024 报文和 1 MiB；过载丢弃可计数。",
+      "source": "D:/Table/LH/src/communication/EthernetInterface.cpp",
+      "evidence": "空/一字节混合洪泛，关闭清理；独立空报文探针",
+      "implementationStatus": "已实现",
+      "acceptance": "Windows Qt 5.15.2 / MinGW Debug；本机、离屏、测试桩范围"
+    },
+    {
+      "id": "FR07",
+      "priority": "P2",
+      "cost": "S",
+      "estimatedPersonDays": "0.5",
+      "title": "工程原生文件操作允许 Windows 保留名",
+      "category": "文件操作 / 安全边界 / 可用性",
+      "evidenceClass": "独立探针复现",
+      "status": "已修复，本地验收通过",
+      "independentlyDeliverable": true,
+      "requiredDependencies": [],
+      "sources": [
+        {
+          "path": "D:/Table/LH/src/common/ProjectMutationGuard.h",
+          "line": 203
+        },
+        {
+          "path": "D:/Table/LH/src/designer/ProjectExplorerWidget.cpp",
+          "line": 473
+        }
+      ],
+      "observation": "guard.acquire/create 对 NUL 返回成功，目录实际出现 NUL 文件，但正常 Qt 路径 open 返回 false。原生相对句柄可以创建 Qt/Win32 普通路径难以操作的保留名称，导致无法编辑的工程条目。",
+      "implementationScope": "统一拒绝 Windows 保留设备名称，覆盖扩展名和大小写变体；在 UI 输入与原生操作边界使用一致的名称规则。",
+      "acceptanceCriteria": "NUL、CON、AUX、PRN、COM/LPT 系列及扩展名变体不能创建/重命名；普通相似词合法，错误返回不留孤立文件。",
+      "evidenceFiles": [
+        "C:/Users/Ryan/.codex/visualizations/2026/09/30/01a0eff5-759e-7ec1-b9d1-4f644bae8f8f/LH-full-review-2026-10-01/probe-reserved-name.log",
+        "C:/Users/Ryan/.codex/visualizations/2026/09/30/01a0eff5-759e-7ec1-b9d1-4f644bae8f8f/LH-full-review-2026-10-01/probes/main.cpp"
+      ],
+      "implementation": "原生写入 guard 拒绝 Windows 保留设备名、扩展变体及非法字符。",
+      "source": "D:/Table/LH/src/common/ProjectMutationGuard.h",
+      "evidence": "ProjectMutationGuardTest + 保留名零残留回归 + 独立探针",
+      "implementationStatus": "已实现",
+      "acceptance": "Windows Qt 5.15.2 / MinGW Debug；本机、离屏、测试桩范围"
+    },
+    {
+      "id": "FR09",
+      "priority": "P2",
+      "cost": "S",
+      "estimatedPersonDays": "0.5–1",
+      "title": "OPC 成功终态 confirmed 未获得日志保留容量",
+      "category": "日志完整性 / OPC",
+      "evidenceClass": "独立探针复现",
+      "status": "已修复，本地验收通过",
+      "independentlyDeliverable": true,
+      "requiredDependencies": [],
+      "sources": [
+        {
+          "path": "D:/Table/LH/src/core/AppLogging.cpp",
+          "line": 499
+        },
+        {
+          "path": "D:/Table/LH/src/designer/RuntimeSessionOpc.cpp",
+          "line": 371
+        }
+      ],
+      "observation": "真实业务事件使用 opc_write_succeeded/status=confirmed，日志终态白名单没有 confirmed。暂停测试日志写入器并填满普通队列后，confirmed_final_present=false、succeeded_final_present=true，丢弃计数 10457。",
+      "implementationScope": "建立明确的结构化终态分类契约，使实际 OPC 成功终态受到保护；保留拒绝从任意字段文本推断终态的安全边界。",
+      "acceptanceCriteria": "对真实调用点的 succeeded/confirmed/failed/cancelled 等终态做过载回归；伪造 payload 的 status=failed 不消耗保留容量，最终事件进入文件或约定兜底。",
+      "evidenceFiles": [
+        "C:/Users/Ryan/.codex/visualizations/2026/09/30/01a0eff5-759e-7ec1-b9d1-4f644bae8f8f/LH-full-review-2026-10-01/probe-terminal.log",
+        "C:/Users/Ryan/.codex/visualizations/2026/09/30/01a0eff5-759e-7ec1-b9d1-4f644bae8f8f/LH-full-review-2026-10-01/probes/logging.cpp"
+      ],
+      "implementation": "confirmed 等成功/失败/取消终态使用保留容量或 stderr 兜底；按结构化状态识别。",
+      "source": "D:/Table/LH/src/core/AppLogging.cpp",
+      "evidence": "AppLoggingOverloadTest + 独立 terminal 探针",
+      "implementationStatus": "已实现",
+      "acceptance": "Windows Qt 5.15.2 / MinGW Debug；本机、离屏、测试桩范围"
+    },
+    {
+      "id": "FR10",
+      "priority": "P2",
+      "cost": "S",
+      "estimatedPersonDays": "0.5–1",
+      "title": "专家下载日志未限容量且按富文本解释输入",
+      "category": "界面 / 日志 / 内存",
+      "evidenceClass": "独立探针复现",
+      "status": "已修复，本地验收通过",
+      "independentlyDeliverable": true,
+      "requiredDependencies": [],
+      "sources": [
+        {
+          "path": "D:/Table/LH/src/designer/DownloadDockWidget.cpp",
+          "line": 52
+        },
+        {
+          "path": "D:/Table/LH/src/designer/DownloadDockWidget.cpp",
+          "line": 109
+        },
+        {
+          "path": "D:/Table/LH/src/designer/DeviceWorkspaceWidget.cpp",
+          "line": 232
+        }
+      ],
+      "observation": "正在使用的专家下载面板直接 QTextEdit::append。<b>probe-markup</b> 被解释为标签，随后 25000 行日志得到 25001 个 block，maximumBlockCount=0。没有声称 Qt 富文本会执行 JavaScript。",
+      "implementationScope": "按纯文本追加并给日志文档设定容量，统一过载/裁剪提示；保留错误文本和真实文件名。",
+      "acceptanceCriteria": "HTML 样式字符串、换行、特殊字符按字面显示；大量日志后的块数和内存有界，末尾操作结果可见。",
+      "evidenceFiles": [
+        "C:/Users/Ryan/.codex/visualizations/2026/09/30/01a0eff5-759e-7ec1-b9d1-4f644bae8f8f/LH-full-review-2026-10-01/probe-expert-log.log",
+        "C:/Users/Ryan/.codex/visualizations/2026/09/30/01a0eff5-759e-7ec1-b9d1-4f644bae8f8f/LH-full-review-2026-10-01/probes/ui_data.cpp"
+      ],
+      "implementation": "专家日志使用纯文本插入，最多 2000 块，并说明裁剪策略。",
+      "source": "D:/Table/LH/src/designer/DownloadDockWidget.cpp",
+      "evidence": "5000 行永久回归 + 25000 行独立探针；HTML 字面显示",
+      "implementationStatus": "已实现",
+      "acceptance": "Windows Qt 5.15.2 / MinGW Debug；本机、离屏、测试桩范围"
+    },
+    {
+      "id": "FR13",
+      "priority": "P2",
+      "cost": "S",
+      "estimatedPersonDays": "0.5–1",
+      "title": "CI 安装包沿用开启故障注入的测试构建",
+      "category": "构建 / 交付隔离",
+      "evidenceClass": "静态构建链确认",
+      "status": "已修复，本地验收通过",
+      "independentlyDeliverable": true,
+      "requiredDependencies": [],
+      "sources": [
+        {
+          "path": "D:/Table/LH/.github/workflows/windows-ci.yml",
+          "line": 57
+        },
+        {
+          "path": "D:/Table/LH/.github/workflows/windows-ci.yml",
+          "line": 74
+        },
+        {
+          "path": "D:/Table/LH/tests/CMakeLists.txt",
+          "line": 61
+        },
+        {
+          "path": "D:/Table/LH/src/designer/BuildController.cpp",
+          "line": 221
+        }
+      ],
+      "observation": "Windows CI 以 LH_ENABLE_TEST_FAILURE_INJECTION=ON 编译 designer_module，再从同一构建目录安装和上传。生产类会读取测试 QObject 属性并可触发发布故障。当前本机配置为 OFF；这不是远程后门或环境变量开关。",
+      "implementationScope": "隔离测试注入构建与交付构建；安装/上传来源必须 OFF，保留 ON 构建运行故障回归。",
+      "acceptanceCriteria": "CI 中注入回归执行且交付目录使用 OFF 构建；从交付构建验证属性不会触发测试分支，安装布局/可执行程序 smoke 均通过。",
+      "evidenceFiles": [],
+      "implementation": "CI 注入回归之后重新配置 OFF 并重建，再测试、安装和上传。",
+      "source": "D:/Table/LH/.github/workflows/windows-ci.yml",
+      "evidence": "本机 ON 三个注入分支；OFF 属性无效回归；最终 OFF 全量和安装",
+      "implementationStatus": "已实现",
+      "acceptance": "Windows Qt 5.15.2 / MinGW Debug；本机、离屏、测试桩范围"
+    },
+    {
+      "id": "FR15",
+      "priority": "P2",
+      "cost": "S",
+      "estimatedPersonDays": "0.5",
+      "title": "导出 DTO 公共头在 Qt 5 中不能独立使用",
+      "category": "模块接口 / 构建 / 耦合",
+      "evidenceClass": "独立编译探针复现",
+      "status": "已修复，本地验收通过",
+      "independentlyDeliverable": true,
+      "requiredDependencies": [],
+      "sources": [
+        {
+          "path": "D:/Table/LH/src/monitor/MonitorExportHelper.h",
+          "line": 28
+        },
+        {
+          "path": "D:/Table/LH/src/monitor/MonitorExportHelper.h",
+          "line": 125
+        }
+      ],
+      "observation": "只 include MonitorExportHelper.h 后实例化 ExportDataPackage 并调用 totalSampleCount，Qt 5.15 的 QList 类型信息/析构报 Monitor::Sample 不完整。先 include MonitorSample.h 才可编译；现有完整构建被包含顺序掩盖。该头是模块接口，不声称它已作为 SDK 安装。",
+      "implementationScope": "头文件提供 DTO 容器所需完整 Sample 定义，保持 MonitorSample 的 QtCore 边界；加入直接使用此头的最小消费者检查。",
+      "acceptanceCriteria": "Qt 5.15 下单头实例化、访问、析构 DTO 可编译，完整工程及既有公共消费者通过。",
+      "evidenceFiles": [
+        "C:/Users/Ryan/.codex/visualizations/2026/09/30/01a0eff5-759e-7ec1-b9d1-4f644bae8f8f/LH-full-review-2026-10-01/probe-header.log",
+        "C:/Users/Ryan/.codex/visualizations/2026/09/30/01a0eff5-759e-7ec1-b9d1-4f644bae8f8f/LH-full-review-2026-10-01/probes/header_probe.cpp"
+      ],
+      "implementation": "公共导出 DTO 头直接包含完整 Sample 类型。",
+      "source": "D:/Table/LH/src/monitor/MonitorExportHelper.h",
+      "evidence": "Qt 5.15 完整构建及永久测试；安装公共消费者",
+      "implementationStatus": "已实现",
+      "acceptance": "Windows Qt 5.15.2 / MinGW Debug；本机、离屏、测试桩范围"
+    },
+    {
+      "id": "FR05",
+      "priority": "P2",
+      "cost": "M",
+      "estimatedPersonDays": "1–2",
+      "title": "CAN 在设备所属线程同步等待时无法处理到帧事件",
+      "category": "通信 / 时序 / 性能",
+      "evidenceClass": "独立探针复现",
+      "status": "已修复，本地验收通过",
+      "independentlyDeliverable": true,
+      "requiredDependencies": [],
+      "sources": [
+        {
+          "path": "D:/Table/LH/src/communication/CANInterface.cpp",
+          "line": 151
+        }
+      ],
+      "observation": "在设备所属线程安排 20 ms 后到帧，receive(120) 等待约 131 ms 后返回空；随后运行事件循环，receive(0) 才取到 x。QWaitCondition 阻塞了负责派发 Qt CAN 到帧事件的线程。",
+      "implementationScope": "明确调用线程契约，采用设备支持的期限等待或异步接收，避免阻塞所属线程的事件派发；禁止无边界嵌套事件循环。",
+      "acceptanceCriteria": "同线程及其他线程调用分别覆盖到帧、超时、断线、关闭和取消；绝对期限不被虚假唤醒延长，硬件验证另列。",
+      "evidenceFiles": [
+        "C:/Users/Ryan/.codex/visualizations/2026/09/30/01a0eff5-759e-7ec1-b9d1-4f644bae8f8f/LH-full-review-2026-10-01/probe-can-wait.log",
+        "C:/Users/Ryan/.codex/visualizations/2026/09/30/01a0eff5-759e-7ec1-b9d1-4f644bae8f8f/LH-full-review-2026-10-01/probes/main.cpp"
+      ],
+      "implementation": "所属线程用短事件等待片段；其他线程使用绝对期限条件等待；断开和关闭立即唤醒。",
+      "source": "D:/Table/LH/src/communication/CANInterface.cpp",
+      "evidence": "同线程到帧/超时，跨线程到帧/断开/关闭/虚假唤醒；独立 can-wait",
+      "implementationStatus": "已实现",
+      "acceptance": "Windows Qt 5.15.2 / MinGW Debug；本机、离屏、测试桩范围",
+      "limits": "真实设备/服务、物理桌面、不可中断 OS 磁盘故障及长时运行保留 FIELD-ACCEPTANCE。"
+    },
+    {
+      "id": "FR06",
+      "priority": "P2",
+      "cost": "M",
+      "estimatedPersonDays": "1–2",
+      "title": "CANopen/J1939 非法配置被截断后仍通过校验",
+      "category": "通信 / 配置 / 参数边界",
+      "evidenceClass": "独立探针复现",
+      "status": "已修复，本地验收通过",
+      "independentlyDeliverable": true,
+      "requiredDependencies": [],
+      "sources": [
+        {
+          "path": "D:/Table/LH/src/communication/CommTypes.h",
+          "line": 596
+        },
+        {
+          "path": "D:/Table/LH/src/communication/CommTypes.h",
+          "line": 625
+        },
+        {
+          "path": "D:/Table/LH/src/communication/CommTypes.h",
+          "line": 661
+        },
+        {
+          "path": "D:/Table/LH/src/communication/CANCommon.h",
+          "line": 78
+        }
+      ],
+      "observation": "nodeId=257、cobId=65537 被截为 1；J1939 sourceAddress=384 被截为 128，priority=14 与 pgn=0xffffffff 仍 isValid=true。帧构造继续掩码，可能将非法输入转成另一个有效节点/优先级。useFilter/filterMask/filterId 虽有序列化字段，但 open 路径未应用过滤；该部分只有静态证据。",
+      "implementationScope": "转换前检查输入类型、范围、转换成功标志及协议位宽，拒绝非法值；对声明的过滤选项明确支持/拒绝，不静默忽略。",
+      "acceptanceCriteria": "负数、溢出、布尔、小数、非法协议位及无效过滤配置失败且给出原因；合法边界、默认值及帧生成不变。",
+      "evidenceFiles": [
+        "C:/Users/Ryan/.codex/visualizations/2026/09/30/01a0eff5-759e-7ec1-b9d1-4f644bae8f8f/LH-full-review-2026-10-01/probe-can-config.log",
+        "C:/Users/Ryan/.codex/visualizations/2026/09/30/01a0eff5-759e-7ec1-b9d1-4f644bae8f8f/LH-full-review-2026-10-01/probes/main.cpp"
+      ],
+      "implementation": "配置转换先验证类型、整数和协议位范围；应用原生 CAN 过滤器，发送拒绝无效帧。",
+      "source": "D:/Table/LH/src/communication/CommTypes.h",
+      "evidence": "非法/边界 CANopen/J1939 配置，帧拒绝；独立 can-config",
+      "implementationStatus": "已实现",
+      "acceptance": "Windows Qt 5.15.2 / MinGW Debug；本机、离屏、测试桩范围"
+    },
+    {
+      "id": "FR08",
+      "priority": "P2",
+      "cost": "M",
+      "estimatedPersonDays": "2–3",
+      "title": "调试命令通过 BlockingQueuedConnection 阻塞界面",
+      "category": "运行控制 / 调试 / 性能",
+      "evidenceClass": "独立探针复现",
+      "status": "已修复，本地验收通过",
+      "independentlyDeliverable": true,
+      "requiredDependencies": [],
+      "sources": [
+        {
+          "path": "D:/Table/LH/src/communication/ControllerDebugClient.h",
+          "line": 110
+        },
+        {
+          "path": "D:/Table/LH/src/communication/ControllerDeviceBackendDebug.cpp",
+          "line": 10
+        },
+        {
+          "path": "D:/Table/LH/src/designer/RuntimeSessionDebug.cpp",
+          "line": 62
+        }
+      ],
+      "observation": "ControllerDebugClient 已有工作线程，但 dispatch 同步等待 actor。注入写入耗时 300 ms 的传输，pause 调用阻塞 309 ms，GUI 心跳期间为 0。真实慢链路会把等待带回调用界面线程。",
+      "implementationScope": "调试请求改为异步请求/完成信号，建立总期限、取消及会话代际保护；前端按进行中状态反馈，完成结果不串入新会话。",
+      "acceptanceCriteria": "pause/resume/step/寄存器操作在慢传输、失败、取消、重连时界面心跳持续；每个命令只产生一次正确终态，超时有界。",
+      "evidenceFiles": [
+        "C:/Users/Ryan/.codex/visualizations/2026/09/30/01a0eff5-759e-7ec1-b9d1-4f644bae8f8f/LH-full-review-2026-10-01/probe-debug-block.log",
+        "C:/Users/Ryan/.codex/visualizations/2026/09/30/01a0eff5-759e-7ec1-b9d1-4f644bae8f8f/LH-full-review-2026-10-01/probes/main.cpp"
+      ],
+      "implementation": "调试命令异步排队，单次终态与绝对期限；会话在完成后更新暂停状态，等待期间禁用命令。",
+      "source": "D:/Table/LH/src/communication/ControllerDeviceBackendDebug.cpp",
+      "evidence": "五种慢命令心跳、超时、取消/断开与重连；RuntimeSessionControllerTest",
+      "implementationStatus": "已实现",
+      "acceptance": "Windows Qt 5.15.2 / MinGW Debug；本机、离屏、测试桩范围"
+    },
+    {
+      "id": "FR11",
+      "priority": "P2",
+      "cost": "M",
+      "estimatedPersonDays": "1–2",
+      "title": "Matrikon OPC 回调到 Qt 的积压无上限",
+      "category": "OPC / 队列 / 内存",
+      "evidenceClass": "独立探针复现",
+      "status": "已修复，本地验收通过",
+      "independentlyDeliverable": true,
+      "requiredDependencies": [],
+      "sources": [
+        {
+          "path": "D:/Table/LH/src/communication/MatrikonOpcServer.cpp",
+          "line": 1942
+        },
+        {
+          "path": "D:/Table/LH/src/communication/MatrikonOpcServer.cpp",
+          "line": 1994
+        }
+      ],
+      "observation": "每次回调先复制 payload 再提交 queued functor，只有代际检查而无积压预算。停住接收线程事件派发后提交 20000 个合成 native VARIANT 回调，事件泵恢复后全部 20000 项继续派发。不是真实 OPC 服务器压力测试。",
+      "implementationScope": "限制待处理回调数量、字节和单回调项数；按已声明的点位更新语义合并或显式丢弃，记录过载信息；保留生命周期和 generation 检查。",
+      "acceptanceCriteria": "接收线程暂停、高频多点、超大回调、停止/重连竞争时积压有界，最新值与质量/时间语义正确，无跨代回调及对象释放后访问。",
+      "evidenceFiles": [
+        "C:/Users/Ryan/.codex/visualizations/2026/09/30/01a0eff5-759e-7ec1-b9d1-4f644bae8f8f/LH-full-review-2026-10-01/probe-callback-burst.log",
+        "C:/Users/Ryan/.codex/visualizations/2026/09/30/01a0eff5-759e-7ec1-b9d1-4f644bae8f8f/LH-full-review-2026-10-01/probes/main.cpp"
+      ],
+      "implementation": "回调在复制前限制 128 条、4096 项和 4 MiB；代际隔离，失败释放计数；修复入口重复加锁。",
+      "source": "D:/Table/LH/src/communication/MatrikonOpcServer.cpp",
+      "evidence": "20000 回调最多应用 128；队列归零；独立 callback-burst",
+      "implementationStatus": "已实现",
+      "acceptance": "Windows Qt 5.15.2 / MinGW Debug；本机、离屏、测试桩范围"
+    },
+    {
+      "id": "RK01",
+      "priority": "P2",
+      "cost": "M",
+      "estimatedPersonDays": "1–2",
+      "title": "日志接收端停顿可延长关键日志、flush 与退出等待",
+      "category": "日志 / 性能 / 退出",
+      "evidenceClass": "受控停顿复现，真实磁盘挂死待验证",
+      "status": "已修复，本地验收通过",
+      "independentlyDeliverable": true,
+      "requiredDependencies": [],
+      "sources": [
+        {
+          "path": "D:/Table/LH/src/core/AppLogging.cpp",
+          "line": 275
+        },
+        {
+          "path": "D:/Table/LH/src/core/AppLogging.cpp",
+          "line": 296
+        },
+        {
+          "path": "D:/Table/LH/src/core/AppLogging.cpp",
+          "line": 379
+        },
+        {
+          "path": "D:/Table/LH/src/core/AppLogging.cpp",
+          "line": 409
+        }
+      ],
+      "observation": "队列等待、关键日志完成等待、flush 以及 writer.join 没有期限。测试写入器暂停 300 ms 时 qCritical 调用阻塞 322 ms，界面心跳为 0；没有模拟真实磁盘永久挂死，因此永久卡死只作为风险。",
+      "implementationScope": "先定义日志可靠性和等待预算，再验证有界等待与降级接收端；不能用丢失关键终态换取表面不卡顿。",
+      "acceptanceCriteria": "慢接收端、写失败、队列过载及退出竞争都有明确结果和等待界限，终态兜底可观察，不残留使用已销毁全局状态的线程。",
+      "evidenceFiles": [
+        "C:/Users/Ryan/.codex/visualizations/2026/09/30/01a0eff5-759e-7ec1-b9d1-4f644bae8f8f/LH-full-review-2026-10-01/probe-logging.log",
+        "C:/Users/Ryan/.codex/visualizations/2026/09/30/01a0eff5-759e-7ec1-b9d1-4f644bae8f8f/LH-full-review-2026-10-01/probes/logging.cpp"
+      ],
+      "implementation": "关键日志和 flush 有等待预算；退出等待 1000 ms，超时 writer 使用进程所有状态及可观察兜底。",
+      "source": "D:/Table/LH/src/core/AppLogging.cpp",
+      "evidence": "暂停接收端、过载、flush 超时、退出及重新安装子进程；物理 OS 磁盘停顿待现场",
+      "implementationStatus": "已实现",
+      "acceptance": "Windows Qt 5.15.2 / MinGW Debug；本机、离屏、测试桩范围",
+      "limits": "真实设备/服务、物理桌面、不可中断 OS 磁盘故障及长时运行保留 FIELD-ACCEPTANCE。"
+    },
+    {
+      "id": "RK02",
+      "priority": "P2",
+      "cost": "M",
+      "estimatedPersonDays": "1–2",
+      "title": "导出线程退出是否先于应用全局资源销毁尚缺闭环",
+      "category": "数据库 / 生命周期 / 退出",
+      "evidenceClass": "静态风险，未复现退出崩溃",
+      "status": "已修复，本地验收通过",
+      "independentlyDeliverable": true,
+      "requiredDependencies": [],
+      "sources": [
+        {
+          "path": "D:/Table/LH/src/monitor/MonitorWidget.cpp",
+          "line": 127
+        },
+        {
+          "path": "D:/Table/LH/src/monitor/MonitorWidget.cpp",
+          "line": 846
+        },
+        {
+          "path": "D:/Table/LH/src/monitor/MonitorWidget.cpp",
+          "line": 883
+        },
+        {
+          "path": "D:/Table/LH/src/monitor/MonitorWidget.cpp",
+          "line": 1000
+        }
+      ],
+      "observation": "导出通过 QThread::create 启动、finished 时 deleteLater；关闭 widget 设置取消标志，但未找到统一应用退出阶段的线程登记/等待屏障。仍在 SQL/文件 I/O 中的线程是否跨过 Qt 全局资源销毁需专项探针确认。",
+      "implementationScope": "建立退出期间导出任务的归属与收尾契约，并按探针结果修复；避免销毁运行中的 QThread，也避免无期限阻塞 UI 等待。",
+      "acceptanceCriteria": "分别在启动屏障、数据库读取、文件写入时关闭窗口/退出应用；原目标文件保持原子性，线程和数据库连接安全结束；若现有机制证明安全则记录证据关闭风险。",
+      "evidenceFiles": [],
+      "implementation": "导出由进程级注册表持有，关闭取消并等待；应用全局销毁前确认结束，超时采用有日志的进程退出。",
+      "source": "D:/Table/LH/src/core/BackgroundTaskRegistry.cpp",
+      "evidence": "窗口关闭覆盖快照前/数据库页/原子发布；原文件不变，连接与线程结束",
+      "implementationStatus": "已实现",
+      "acceptance": "Windows Qt 5.15.2 / MinGW Debug；本机、离屏、测试桩范围",
+      "limits": "真实设备/服务、物理桌面、不可中断 OS 磁盘故障及长时运行保留 FIELD-ACCEPTANCE。"
+    },
+    {
+      "id": "RK03",
+      "priority": "P2",
+      "cost": "M",
+      "estimatedPersonDays": "2–3",
+      "title": "旧数据库启动迁移仍同步扫描全表",
+      "category": "数据库 / 启动性能",
+      "evidenceClass": "静态风险，未做大库基准",
+      "status": "已修复，本地验收通过",
+      "independentlyDeliverable": true,
+      "requiredDependencies": [],
+      "sources": [
+        {
+          "path": "D:/Table/LH/src/main.cpp",
+          "line": 95
+        },
+        {
+          "path": "D:/Table/LH/src/core/DataManager.cpp",
+          "line": 418
+        },
+        {
+          "path": "D:/Table/LH/src/core/DataManager.cpp",
+          "line": 881
+        }
+      ],
+      "observation": "应用进入窗口事件循环前 initialize 可能执行 legacy 迁移和 V5 两张表的逐行时间校正。日常写入已移入 worker，但启动升级路径仍同步。QSqlQuery 是流式遍历，未发现这里把全表聚合成 QList；大库耗时未测量。",
+      "implementationScope": "用真实形状的旧版本大库测启动预算、事务回滚和错误反馈；超预算时设计可见的升级阶段和后台/分批方案，保持不可猜测时区的失败策略。",
+      "acceptanceCriteria": "新库、小旧库、大旧库、坏时间值和失败中断分别验证；没有静默时间改写、部分迁移提交或不可反馈的长期等待。",
+      "evidenceFiles": [],
+      "implementation": "启动数据库预检/迁移在独立 SQL 线程执行，进度及取消可反馈；逐版本事务回滚，按主键稳定扫描。",
+      "source": "D:/Table/LH/src/core/DataManager.cpp",
+      "evidence": "新/小/10万行旧库；取消/无时区/回调异常回滚；GUI 心跳",
+      "implementationStatus": "已实现",
+      "acceptance": "Windows Qt 5.15.2 / MinGW Debug；本机、离屏、测试桩范围"
+    },
+    {
+      "id": "T05-PORT",
+      "priority": "P2",
+      "cost": "M",
+      "estimatedPersonDays": "约 1-2 人日；支持范围已明确，包含真实 SMB 竞争回归",
+      "title": "Windows 网络共享目录（UNC）的工程安全文件操作",
+      "status": "已修复，本地验收通过",
+      "observation": "用户已明确当前仅支持 Windows，且需要网络共享目录。Linux/macOS 不属于当前范围。UNC 已实现，并通过本机真实 SMB 共享回归。",
+      "acceptanceCriteria": "Windows 本地磁盘与 UNC 共享的工程创建、保存、重命名、删除和失败回滚；保留文件身份与目录竞争保护。实际 NAS/远端服务器的权限组合、断线与长期运行转 FIELD-ACCEPTANCE。",
+      "independentlyDeliverable": true,
+      "previousTitle": "原生工程写入 guard 的 UNC/非 Windows 支持",
+      "previousCost": "U",
+      "scopeDecision": {
+        "supportedPlatforms": [
+          "Windows"
+        ],
+        "excludedPlatforms": [
+          "Linux",
+          "macOS"
+        ],
+        "windowsUNCRequired": true,
+        "userInstructions": [
+          "目前只需要支持windows",
+          "需要支持网络共享目录"
+        ]
+      },
+      "implementation": "Windows UNC 共享根句柄、相对打开与原子发布；按文件身份核对父子目录，自动清理的保护文件阻止服务器端目录重解析竞争。",
+      "source": "D:/Table/LH/src/common/ProjectMutationGuard.h",
+      "evidence": "真实本机 SMB：创建/替换/重命名/递归删除、冲突清理、既有 junction、普通与仅属性写入的竞争攻击；工程保存和删除回滚。实际 NAS/远端服务器故障待现场",
+      "implementationStatus": "已实现",
+      "acceptance": "Windows Qt 5.15.2 / MinGW Debug；本机真实 SMB 共享，含服务器端竞争攻击",
+      "requiredDependencies": [],
+      "limits": "实际 NAS/远端服务器协议能力、权限组合、断线与长期运行保留 FIELD-ACCEPTANCE。不支持可靠文件身份/安全删除与重命名的服务端会安全拒绝；非 Windows 不属于当前范围。"
+    },
+    {
+      "id": "FR12",
+      "priority": "P2",
+      "cost": "L",
+      "estimatedPersonDays": "3–5",
+      "title": "Matrikon COM 建链、探测和写入仍在界面调用链同步执行",
+      "category": "架构 / OPC / 性能",
+      "evidenceClass": "静态调用链确认",
+      "status": "已修复，本地验收通过",
+      "independentlyDeliverable": true,
+      "requiredDependencies": [],
+      "sources": [
+        {
+          "path": "D:/Table/LH/src/designer/RuntimeSessionController.cpp",
+          "line": 38
+        },
+        {
+          "path": "D:/Table/LH/src/designer/RuntimeSessionOpc.cpp",
+          "line": 156
+        },
+        {
+          "path": "D:/Table/LH/src/communication/MatrikonOpcServer.cpp",
+          "line": 387
+        },
+        {
+          "path": "D:/Table/LH/src/communication/MatrikonOpcServer.cpp",
+          "line": 1404
+        },
+        {
+          "path": "D:/Table/LH/src/communication/MatrikonOpcServer.cpp",
+          "line": 1843
+        }
+      ],
+      "observation": "默认 Matrikon 服务由界面控制器创建；start、点表更新/读探测、updatePointValues 直接调用 IOPCSyncIO::Read/Write。当前无专属 COM 工作线程和 API 截止期限。同步调用链已确认，真实 COM 服务卡顿时间/挂死尚未测量。",
+      "implementationScope": "在明确的 COM apartment 工作线程完成接口创建、使用和释放；前端请求与结果异步，隔离会话与取消语义。不能只 moveToThread 却继续跨 apartment 使用接口。",
+      "acceptanceCriteria": "慢/失败 COM 测试桩证明界面不阻塞、状态正确；真实 DA 服务验证线程/apartment、重连和退出；硬件/服务环境无法具备时保留验收限制。",
+      "evidenceFiles": [],
+      "implementation": "原生 OPC 由独立 STA 线程创建、调用和销毁；异步状态、期限、取消、队列与值内存限制；退出保留超时线程。",
+      "source": "D:/Table/LH/src/communication/AsyncOpcServer.cpp",
+      "evidence": "慢/失败测试桩、同线程创建/调用/销毁、取消与旧代隔离；真实 DA 待现场",
+      "implementationStatus": "已实现",
+      "acceptance": "Windows Qt 5.15.2 / MinGW Debug；本机、离屏、测试桩范围",
+      "limits": "真实设备/服务、物理桌面、不可中断 OS 磁盘故障及长时运行保留 FIELD-ACCEPTANCE。"
+    },
+    {
+      "id": "C04",
+      "cost": "U",
+      "title": "实现标量运行时表达式、拷贝和成员读写",
+      "implementationStatus": "未实现",
+      "acceptance": "未完成",
+      "reason": "相关 LH 运算与写回操作数契约。现有安全拒绝/清理只验收边界，不能算原功能完成。",
+      "followup": [],
+      "priority": "P2",
+      "previousCost": "L",
+      "estimatedPersonDays": "未知：待 LH 契约取证后评估",
+      "status": "外部 LH 契约不足",
+      "independentlyDeliverable": true,
+      "requiredDependencies": [
+        "对应 LH 目标契约证据"
+      ],
+      "previousTitle": "实现标量运行时表达式、拷贝和成员读写",
+      "currentReviewState": "现有未知能力安全拒绝；未获得 LH 目标契约，功能未完成。历史标题不代表当前仍静默生成错误产物。",
+      "acceptanceCriteria": "取得适用 LH 固件版本的指令/操作数/地址单位/执行语义证据，再实现并进行正反例及目标设备验证；LM 资料只能作历史契约线索。"
+    },
+    {
+      "id": "C05",
+      "cost": "U",
+      "title": "实现 IF/CASE/循环与跳转的正确代码生成",
+      "implementationStatus": "未实现",
+      "acceptance": "未完成",
+      "reason": "分支/循环/跳转的 LH 目标契约。现有安全拒绝/清理只验收边界，不能算原功能完成。",
+      "followup": [],
+      "priority": "P2",
+      "previousCost": "L",
+      "estimatedPersonDays": "未知：待 LH 契约取证后评估",
+      "status": "外部 LH 契约不足",
+      "independentlyDeliverable": true,
+      "requiredDependencies": [
+        "对应 LH 目标契约证据"
+      ],
+      "previousTitle": "实现 IF/CASE/循环与跳转的正确代码生成",
+      "currentReviewState": "现有未知能力安全拒绝；未获得 LH 目标契约，功能未完成。历史标题不代表当前仍静默生成错误产物。",
+      "acceptanceCriteria": "取得适用 LH 固件版本的指令/操作数/地址单位/执行语义证据，再实现并进行正反例及目标设备验证；LM 资料只能作历史契约线索。"
+    },
+    {
+      "id": "C06",
+      "cost": "U",
+      "title": "支持明确声明的重复参数组和长度可变契约",
+      "implementationStatus": "未实现",
+      "acceptance": "未完成",
+      "reason": "每个可变组的明确目标编码与长度限制。现有安全拒绝/清理只验收边界，不能算原功能完成。",
+      "followup": [],
+      "priority": "P2",
+      "previousCost": "M",
+      "estimatedPersonDays": "未知：待 LH 契约取证后评估",
+      "status": "外部 LH 契约不足",
+      "independentlyDeliverable": true,
+      "requiredDependencies": [
+        "对应 LH 目标契约证据"
+      ],
+      "previousTitle": "支持明确声明的重复参数组和长度可变契约",
+      "currentReviewState": "现有未知能力安全拒绝；未获得 LH 目标契约，功能未完成。历史标题不代表当前仍静默生成错误产物。",
+      "acceptanceCriteria": "取得适用 LH 固件版本的指令/操作数/地址单位/执行语义证据，再实现并进行正反例及目标设备验证；LM 资料只能作历史契约线索。"
+    },
+    {
+      "id": "FIELD-ACCEPTANCE",
+      "priority": "P2",
+      "cost": "U",
+      "estimatedPersonDays": "依赖现场设备与服务",
+      "title": "设备、真实 OPC DA、远端网络共享、物理桌面和长时间故障验收",
+      "status": "待现场条件",
+      "observation": "本轮为本机/离屏构建与探针，没有实体控制器、真实慢 COM 服务、物理磁盘故障和长时运行结果。",
+      "acceptanceCriteria": "按固定设备/固件/服务版本执行独立探针、断线/重连、压力、退出和物理桌面检查，记录实际证据；UNC 本机 SMB 已验证，实际 NAS/远端服务器还需验证协议能力、ACL 权限、断线/重连与长期运行。",
+      "independentlyDeliverable": true,
+      "implementationStatus": "未实现",
+      "acceptance": "未完成"
+    },
+    {
+      "id": "DQ01",
+      "priority": "P3",
+      "cost": "S",
+      "estimatedPersonDays": "0.5–1",
+      "title": "合并 OPC 写结果状态更新策略",
+      "category": "重复代码 / 状态一致性",
+      "evidenceClass": "静态重复确认",
+      "status": "已修复，本地验收通过",
+      "independentlyDeliverable": true,
+      "requiredDependencies": [],
+      "sources": [
+        {
+          "path": "D:/Table/LH/src/communication/ClassicOpcServer.cpp",
+          "line": 152
+        },
+        {
+          "path": "D:/Table/LH/src/communication/MatrikonOpcServer.cpp",
+          "line": 605
+        }
+      ],
+      "observation": "两个 recordWriteResult 的时间、成功失败消息、计数更新有一段相同策略。扫描中的四个重叠窗口实际属于同一段重复，不按四个缺陷计数。",
+      "implementationScope": "提取 QtCore 级结果状态辅助对象或公共更新策略，不合并两种协议实现。",
+      "acceptanceCriteria": "两个后端的成功/失败时间、计数、最后状态和状态快照契约一致且既有测试通过。",
+      "evidenceFiles": [],
+      "implementation": "共享 OPC 写结果状态策略，协议映射保持各自实现。",
+      "source": "D:/Table/LH/src/communication/OpcWriteResultState.h",
+      "evidence": "两个后端成功/失败计数、时间和快照一致",
+      "implementationStatus": "已实现",
+      "acceptance": "Windows Qt 5.15.2 / MinGW Debug；本机、离屏、测试桩范围"
+    },
+    {
+      "id": "DQ02",
+      "priority": "P3",
+      "cost": "S",
+      "estimatedPersonDays": "0.5–1",
+      "title": "统一编译与运行校验的祖先路径策略",
+      "category": "重复代码 / 路径安全",
+      "evidenceClass": "静态重复确认",
+      "status": "已修复，本地验收通过",
+      "independentlyDeliverable": true,
+      "requiredDependencies": [],
+      "sources": [
+        {
+          "path": "D:/Table/LH/src/compiler/DSLCompilerArtifacts.cpp",
+          "line": 230
+        },
+        {
+          "path": "D:/Table/LH/src/runtime/RunController.cpp",
+          "line": 71
+        }
+      ],
+      "observation": "最近存在祖先的 canonicalPath 遍历与工程根检查重复，修改一方容易使构建和运行的判断不一致。",
+      "implementationScope": "提取纯路径校验策略供两方使用，保留构建输出与运行清单各自额外约束。",
+      "acceptanceCriteria": "不存在目录、工程根外路径、符号链接、别名和普通相对路径两方判断符合各自契约；不弱化原生写入 guard。",
+      "evidenceFiles": [],
+      "implementation": "编译与运行复用最近存在祖先的规范路径策略。",
+      "source": "D:/Table/LH/src/common/PathSecurityUtils.h",
+      "evidence": "DSL 路径安全与运行现有回归；ModuleBoundaryCheck",
+      "implementationStatus": "已实现",
+      "acceptance": "Windows Qt 5.15.2 / MinGW Debug；本机、离屏、测试桩范围"
+    },
+    {
+      "id": "DQ03",
+      "priority": "P3",
+      "cost": "S",
+      "estimatedPersonDays": "0.5",
+      "title": "统一 Monitor 后端连接释放逻辑",
+      "category": "重复代码 / 生命周期",
+      "evidenceClass": "静态重复确认",
+      "status": "已修复，本地验收通过",
+      "independentlyDeliverable": true,
+      "requiredDependencies": [],
+      "sources": [
+        {
+          "path": "D:/Table/LH/src/monitor/MonitorManager.cpp",
+          "line": 250
+        },
+        {
+          "path": "D:/Table/LH/src/monitor/MonitorManagerPolling.cpp",
+          "line": 109
+        }
+      ],
+      "observation": "后端多个 QMetaObject::Connection 的 disconnect/reset 策略在切换和轮询路径重复。",
+      "implementationScope": "建立单一释放辅助函数，保留代际和待处理状态的独立处理。",
+      "acceptanceCriteria": "重复绑定、销毁后端、切换后端、停止轮询后无重复信号、过期调用和悬空连接。",
+      "evidenceFiles": [],
+      "implementation": "采样组件统一断开旧后端信号与代际取消。",
+      "source": "D:/Table/LH/src/monitor/BackendSampler.cpp",
+      "evidence": "重绑、停止、后端销毁、迟到回调回归",
+      "implementationStatus": "已实现",
+      "acceptance": "Windows Qt 5.15.2 / MinGW Debug；本机、离屏、测试桩范围"
+    },
+    {
+      "id": "DQ05",
+      "priority": "P3",
+      "cost": "S",
+      "estimatedPersonDays": "0.5",
+      "title": "核实旧 QProcess 兼容槽的保留价值",
+      "category": "废弃代码 / 兼容性",
+      "evidenceClass": "静态无调用候选，非直接删除结论",
+      "status": "已修复，本地验收通过",
+      "independentlyDeliverable": true,
+      "requiredDependencies": [],
+      "sources": [
+        {
+          "path": "D:/Table/LH/src/designer/BuildController.cpp",
+          "line": 838
+        },
+        {
+          "path": "D:/Table/LH/src/designer/BuildController.cpp",
+          "line": 848
+        },
+        {
+          "path": "D:/Table/LH/src/designer/BuildController.h",
+          "line": 141
+        }
+      ],
+      "observation": "旧 onCompileProcessFinished/onCompileProcessError 留有声明和实现，搜索未找到 connect/直接调用。Qt 元对象可能存在动态调用，不能只依据文本无调用就删除。",
+      "implementationScope": "核对运行时 meta-object/外部消费者契约；无兼容要求则删除，有要求则明确保留原因和迁移入口。",
+      "acceptanceCriteria": "完整构建、异步编译代际/取消回归及必要动态槽调用通过；报告明确删除或保留依据。",
+      "evidenceFiles": [],
+      "implementation": "核实后删除未使用的旧 QProcess 兼容槽及成员依赖。",
+      "source": "D:/Table/LH/src/designer/BuildController.h",
+      "evidence": "完整构建、异步编译与取消回归",
+      "implementationStatus": "已实现",
+      "acceptance": "Windows Qt 5.15.2 / MinGW Debug；本机、离屏、测试桩范围"
+    },
+    {
+      "id": "DQ07",
+      "priority": "P3",
+      "cost": "S",
+      "estimatedPersonDays": "0.5",
+      "title": "建立当前审查状态索引，避免历史目录与结论误用",
+      "category": "文档 / 任务状态",
+      "evidenceClass": "静态陈旧索引确认",
+      "status": "已修复，本地验收通过",
+      "independentlyDeliverable": true,
+      "requiredDependencies": [],
+      "sources": [
+        {
+          "path": "D:/Table/LH/.md/ENGINEERING_REVIEW_EXECUTION_PLAN.md",
+          "line": 15
+        }
+      ],
+      "observation": "旧执行计划写 CMake 根目录 D:\\Table\\LH\\LH，而本次工作区工程根为 D:\\Table\\LH。历史报告的 32/32 等结论与不同阶段重复任务编号不应代替当前状态。",
+      "implementationScope": "保留历史证据，增加当前状态索引和明确的报告日期/工作区/任务编号映射。",
+      "acceptanceCriteria": "当前入口能定位本次 42/42、82/82、FR/RK/DQ 和旧契约任务；历史结果不会被标成当前全量完成。",
+      "evidenceFiles": [],
+      "implementation": "建立当前状态入口，指向审查基线、当前修复与历史证据，并说明工作区与验收界限。",
+      "source": "D:/Table/LH/review_execution/CURRENT_REVIEW.md",
+      "evidence": "当前 57 项状态与实际本轮证据交叉校验",
+      "implementationStatus": "已实现",
+      "acceptance": "Windows Qt 5.15.2 / MinGW Debug；本机、离屏、测试桩范围"
+    },
+    {
+      "id": "FR14",
+      "priority": "P3",
+      "cost": "S",
+      "estimatedPersonDays": "0.5",
+      "title": "JSON 导出将无符号 64 位值转换为负数",
+      "category": "数据导出 / 类型正确性",
+      "evidenceClass": "独立探针复现",
+      "status": "已修复，本地验收通过",
+      "independentlyDeliverable": true,
+      "requiredDependencies": [],
+      "sources": [
+        {
+          "path": "D:/Table/LH/src/monitor/MonitorExportHelper.cpp",
+          "line": 1525
+        },
+        {
+          "path": "D:/Table/LH/src/monitor/MonitorExportHelper.cpp",
+          "line": 1534
+        }
+      ],
+      "observation": "JSON variant 分支把 ULongLong 与有符号整数统一调用 toLongLong。实际 metadata.customFields 的 unsignedMaximum=ULLONG_MAX 输出为 -1，导出仍成功。",
+      "implementationScope": "分别处理有符号/无符号整数；明确超出下游 JSON 安全整数范围的表示契约，避免静默变号和精度丢失。",
+      "acceptanceCriteria": "0、LLONG_MAX、LLONG_MAX+1、ULLONG_MAX、负整数和其他 QVariant 类型正确；序列化文本与声明的消费者精度契约一致。",
+      "evidenceFiles": [
+        "C:/Users/Ryan/.codex/visualizations/2026/09/30/01a0eff5-759e-7ec1-b9d1-4f644bae8f8f/LH-full-review-2026-10-01/probe-export-time.log",
+        "C:/Users/Ryan/.codex/visualizations/2026/09/30/01a0eff5-759e-7ec1-b9d1-4f644bae8f8f/LH-full-review-2026-10-01/probes/ui_data.cpp"
+      ],
+      "implementation": "JSON 大整数超过 IEEE-754 安全范围时用十进制字符串，无符号和嵌套字段保持精度。",
+      "source": "D:/Table/LH/src/monitor/MonitorExportHelper.cpp",
+      "evidence": "0/负数/LLONG_MAX/MIN/以上值/ULLONG_MAX及嵌套；独立 export-time",
+      "implementationStatus": "已实现",
+      "acceptance": "Windows Qt 5.15.2 / MinGW Debug；本机、离屏、测试桩范围"
+    },
+    {
+      "id": "DQ06",
+      "priority": "P3",
+      "cost": "M",
+      "estimatedPersonDays": "1–2",
+      "title": "共享两个编译器 CLI 的业务入口",
+      "category": "重复实现 / 编译器维护",
+      "evidenceClass": "静态双入口确认",
+      "status": "已修复，本地验收通过",
+      "independentlyDeliverable": true,
+      "requiredDependencies": [],
+      "sources": [
+        {
+          "path": "D:/Table/LH/third_party/custom_dsp_language/compile/lmc.py",
+          "line": 67
+        },
+        {
+          "path": "D:/Table/LH/third_party/custom_dsp_language/compile/src/lh_compiler/cli/commands.py",
+          "line": 37
+        },
+        {
+          "path": "D:/Table/LH/third_party/custom_dsp_language/compile/pyproject.toml",
+          "line": 56
+        }
+      ],
+      "observation": "直接 lmc.py 使用 argparse，安装后的 lmc 使用 Click commands；二者共享 compiler 但 CLI 选项和报错策略由各自入口维护。目前未证明二者产生不同机器码。",
+      "implementationScope": "共享编译/诊断业务层，保留或显式迁移两个公开命令行契约；不得直接删掉 IDE 仍调用的入口。",
+      "acceptanceCriteria": "直接入口和安装入口对成功、失败、输出路径和退出码有对应测试；IDE 调用与安装 smoke 均通过。",
+      "evidenceFiles": [],
+      "implementation": "两个 CLI 使用共同编译业务服务，保留各自公开命令契约。",
+      "source": "D:/Table/LH/third_party/custom_dsp_language/compile/src/lh_compiler/cli/service.py",
+      "evidence": "四组合成功/失败/check/compile及硬链接；实际安装 lmc.exe",
+      "implementationStatus": "已实现",
+      "acceptance": "Windows Qt 5.15.2 / MinGW Debug；本机、离屏、测试桩范围"
+    },
+    {
+      "id": "UI-DARK",
+      "priority": "P3",
+      "cost": "M",
+      "estimatedPersonDays": "1–2",
+      "title": "实现真正的 Dark 主题",
+      "status": "已修复，本地验收通过",
+      "observation": "ThemeManager.cpp 的 Dark 分支仍使用 Light palette/styleSheet，是已知回退行为，不能算真正 Dark 主题验收通过。",
+      "acceptanceCriteria": "实现 Dark palette 与必要控件样式，进行物理界面/截图对比并验证文字、图表、错误提示可读性。",
+      "independentlyDeliverable": true,
+      "implementation": "独立 Dark palette，动态内联样式自动适配并保留原样式；图表同步背景、轴、图例与工具条，切回 Light 恢复。",
+      "source": "D:/Table/LH/src/designer/ui/ThemeManager.cpp",
+      "evidence": "已有/新建控件、内联样式变化、Light 恢复及图表数据回归；10 张截图；物理桌面待现场",
+      "implementationStatus": "已实现",
+      "acceptance": "Windows Qt 5.15.2 / MinGW Debug；本机、离屏、测试桩范围",
+      "requiredDependencies": [],
+      "limits": "真实设备/服务、物理桌面、不可中断 OS 磁盘故障及长时运行保留 FIELD-ACCEPTANCE。"
+    },
+    {
+      "id": "DQ04",
+      "priority": "P3",
+      "cost": "L",
+      "estimatedPersonDays": "5+",
+      "title": "继续收敛 MonitorManager 的采样与存储协调职责",
+      "category": "架构 / 模块耦合",
+      "evidenceClass": "静态维护负担确认",
+      "status": "已修复，本地验收通过",
+      "independentlyDeliverable": true,
+      "requiredDependencies": [],
+      "sources": [
+        {
+          "path": "D:/Table/LH/src/monitor/MonitorManager.h",
+          "line": 42
+        },
+        {
+          "path": "D:/Table/LH/src/monitor/MonitorManager.h",
+          "line": 189
+        }
+      ],
+      "observation": "history 服务虽已隔离 QtCore，MonitorManager 仍同时持有 UI 数据处理器、后端轮询计时、点表、数据库 worker、logger 和历史存储。大文件也是维护信号：MatrikonOpcServer 2528、MainWindow 2165、MonitorExportHelper 1859、DataManager 1761 行；行数本身不作为行为缺陷。",
+      "implementationScope": "先固定现有 manager 外部接口，再拆出采样/后端连接协调对象并显式注入存储接口，保持现有 composition root。此任务只处理 MonitorManager，不要求一次重写整个应用。",
+      "acceptanceCriteria": "QtCore 服务边界检查仍通过，存储/采样可用假后端独立验证，既有时序和数据库回归不退化。",
+      "evidenceFiles": [],
+      "implementation": "抽出 QtCore BackendSampler；MonitorManager 保持协调门面，存储端口可显式注入。",
+      "source": "D:/Table/LH/src/monitor/BackendSampler.h",
+      "evidence": "独立 sampler 假后端；MonitorManager/历史时序回归；模块边界",
+      "implementationStatus": "已实现",
+      "acceptance": "Windows Qt 5.15.2 / MinGW Debug；本机、离屏、测试桩范围"
+    },
+    {
+      "id": "C07",
+      "cost": "U",
+      "title": "补齐数组布局、下标与元素读写",
+      "implementationStatus": "未实现",
+      "acceptance": "未完成",
+      "reason": "相关数据宽度/寻址模式的 LH 目标契约。现有安全拒绝/清理只验收边界，不能算原功能完成。",
+      "followup": [],
+      "priority": "P3",
+      "previousCost": "L",
+      "estimatedPersonDays": "未知：待 LH 契约取证后评估",
+      "status": "外部 LH 契约不足",
+      "independentlyDeliverable": true,
+      "requiredDependencies": [
+        "对应 LH 目标契约证据"
+      ],
+      "previousTitle": "补齐数组布局、下标与元素读写",
+      "currentReviewState": "现有未知能力安全拒绝；未获得 LH 目标契约，功能未完成。历史标题不代表当前仍静默生成错误产物。",
+      "acceptanceCriteria": "取得适用 LH 固件版本的指令/操作数/地址单位/执行语义证据，再实现并进行正反例及目标设备验证；LM 资料只能作历史契约线索。"
+    },
+    {
+      "id": "FB01",
+      "cost": "U",
+      "title": "恢复并核实 KeyScan 的 LH 契约，补齐已证明的能力",
+      "implementationStatus": "未实现",
+      "acceptance": "未完成",
+      "reason": "用于生产编码的 LH 目标指令/操作数/数值版本支持证据；本轮没有将候选字段表序列化为已认证 LH 功能块；完整可下载实现未完成",
+      "followup": [],
+      "priority": "P3",
+      "previousCost": "M",
+      "estimatedPersonDays": "未知：待 LH 契约取证后评估",
+      "status": "外部 LH 契约不足",
+      "independentlyDeliverable": true,
+      "requiredDependencies": [
+        "对应 LH 目标契约证据"
+      ],
+      "previousTitle": "恢复并核实 KeyScan 的 LH 契约，补齐已证明的能力",
+      "currentReviewState": "现有未知能力安全拒绝；未获得 LH 目标契约，功能未完成。历史标题不代表当前仍静默生成错误产物。",
+      "acceptanceCriteria": "取得适用 LH 固件版本的指令/操作数/地址单位/执行语义证据，再实现并进行正反例及目标设备验证；LM 资料只能作历史契约线索。"
+    },
+    {
+      "id": "FB02",
+      "cost": "U",
+      "title": "恢复并核实 SCIDispTrans 的 LH 契约，补齐已证明的能力",
+      "implementationStatus": "未实现",
+      "acceptance": "未完成",
+      "reason": "用于生产编码的 LH 目标指令/操作数/数值版本支持证据；本轮没有将候选字段表序列化为已认证 LH 功能块；完整可下载实现未完成",
+      "followup": [],
+      "priority": "P3",
+      "previousCost": "M",
+      "estimatedPersonDays": "未知：待 LH 契约取证后评估",
+      "status": "外部 LH 契约不足",
+      "independentlyDeliverable": true,
+      "requiredDependencies": [
+        "对应 LH 目标契约证据"
+      ],
+      "previousTitle": "恢复并核实 SCIDispTrans 的 LH 契约，补齐已证明的能力",
+      "currentReviewState": "现有未知能力安全拒绝；未获得 LH 目标契约，功能未完成。历史标题不代表当前仍静默生成错误产物。",
+      "acceptanceCriteria": "取得适用 LH 固件版本的指令/操作数/地址单位/执行语义证据，再实现并进行正反例及目标设备验证；LM 资料只能作历史契约线索。"
+    },
+    {
+      "id": "FB03",
+      "cost": "U",
+      "title": "恢复并核实 SCIDispInit 的 LH 契约，补齐已证明的能力",
+      "implementationStatus": "未实现",
+      "acceptance": "未完成",
+      "reason": "用于生产编码的 LH 目标指令/操作数/数值版本支持证据；可完成契约取证表，完整启用仍缺波特率枚举、接收终止规则、缓冲区与错误时序说明。；本轮没有将候选字段表序列化为已认证 LH 功能块；完整可下载实现未完成",
+      "followup": [],
+      "priority": "P3",
+      "previousCost": "U",
+      "estimatedPersonDays": "未知：待 LH 契约取证后评估",
+      "status": "外部 LH 契约不足",
+      "independentlyDeliverable": true,
+      "requiredDependencies": [
+        "对应 LH 目标契约证据"
+      ],
+      "previousTitle": "恢复并核实 SCIDispInit 的 LH 契约，补齐已证明的能力",
+      "currentReviewState": "现有未知能力安全拒绝；未获得 LH 目标契约，功能未完成。历史标题不代表当前仍静默生成错误产物。",
+      "acceptanceCriteria": "取得适用 LH 固件版本的指令/操作数/地址单位/执行语义证据，再实现并进行正反例及目标设备验证；LM 资料只能作历史契约线索。"
+    },
+    {
+      "id": "FB04",
+      "cost": "U",
+      "title": "恢复并核实 M600TextDisp 的 LH 契约，补齐已证明的能力",
+      "implementationStatus": "未实现",
+      "acceptance": "未完成",
+      "reason": "用于生产编码的 LH 目标指令/操作数/数值版本支持证据；需有序重复参数和字符串/整数/浮点格式契约；指南明确转引 HMI 指令集与 LM 工程机械软件专题，现有材料不足以声称全协议完整。；本轮没有将候选字段表序列化为已认证 LH 功能块；完整可下载实现未完成",
+      "followup": [],
+      "priority": "P3",
+      "previousCost": "U",
+      "estimatedPersonDays": "未知：待 LH 契约取证后评估",
+      "status": "外部 LH 契约不足",
+      "independentlyDeliverable": true,
+      "requiredDependencies": [
+        "对应 LH 目标契约证据"
+      ],
+      "previousTitle": "恢复并核实 M600TextDisp 的 LH 契约，补齐已证明的能力",
+      "currentReviewState": "现有未知能力安全拒绝；未获得 LH 目标契约，功能未完成。历史标题不代表当前仍静默生成错误产物。",
+      "acceptanceCriteria": "取得适用 LH 固件版本的指令/操作数/地址单位/执行语义证据，再实现并进行正反例及目标设备验证；LM 资料只能作历史契约线索。"
+    },
+    {
+      "id": "FB05",
+      "cost": "U",
+      "title": "恢复并核实 M600ProgressBar 的 LH 契约，补齐已证明的能力",
+      "implementationStatus": "未实现",
+      "acceptance": "未完成",
+      "reason": "用于生产编码的 LH 目标指令/操作数/数值版本支持证据；可取证和实现明确子集；ModeAdd 在表头写为 Const，而程序用成员地址，限幅/数据类型/项数/序列化规则须核对。；本轮没有将候选字段表序列化为已认证 LH 功能块；完整可下载实现未完成",
+      "followup": [],
+      "priority": "P3",
+      "previousCost": "U",
+      "estimatedPersonDays": "未知：待 LH 契约取证后评估",
+      "status": "外部 LH 契约不足",
+      "independentlyDeliverable": true,
+      "requiredDependencies": [
+        "对应 LH 目标契约证据"
+      ],
+      "previousTitle": "恢复并核实 M600ProgressBar 的 LH 契约，补齐已证明的能力",
+      "currentReviewState": "现有未知能力安全拒绝；未获得 LH 目标契约，功能未完成。历史标题不代表当前仍静默生成错误产物。",
+      "acceptanceCriteria": "取得适用 LH 固件版本的指令/操作数/地址单位/执行语义证据，再实现并进行正反例及目标设备验证；LM 资料只能作历史契约线索。"
+    },
+    {
+      "id": "FB06",
+      "cost": "U",
+      "title": "恢复并核实 EXCACycDisp 的 LH 契约，补齐已证明的能力",
+      "implementationStatus": "未实现",
+      "acceptance": "未完成",
+      "reason": "用于生产编码的 LH 目标指令/操作数/数值版本支持证据；只有调用线索，缺完整模式枚举、轮显推进与输出/越界/错误语义；不能据 2 个样例补齐任意组合。；本轮没有将候选字段表序列化为已认证 LH 功能块；完整可下载实现未完成",
+      "followup": [],
+      "priority": "P3",
+      "previousCost": "U",
+      "estimatedPersonDays": "未知：待 LH 契约取证后评估",
+      "status": "外部 LH 契约不足",
+      "independentlyDeliverable": true,
+      "requiredDependencies": [
+        "对应 LH 目标契约证据"
+      ],
+      "previousTitle": "恢复并核实 EXCACycDisp 的 LH 契约，补齐已证明的能力",
+      "currentReviewState": "现有未知能力安全拒绝；未获得 LH 目标契约，功能未完成。历史标题不代表当前仍静默生成错误产物。",
+      "acceptanceCriteria": "取得适用 LH 固件版本的指令/操作数/地址单位/执行语义证据，再实现并进行正反例及目标设备验证；LM 资料只能作历史契约线索。"
+    },
+    {
+      "id": "FB07",
+      "cost": "U",
+      "title": "恢复并核实 FilterBW 的 LH 契约，补齐已证明的能力",
+      "implementationStatus": "未实现",
+      "acceptance": "未完成",
+      "reason": "用于生产编码的 LH 目标指令/操作数/数值版本支持证据；本轮没有将候选字段表序列化为已认证 LH 功能块；完整可下载实现未完成",
+      "followup": [],
+      "priority": "P3",
+      "previousCost": "M",
+      "estimatedPersonDays": "未知：待 LH 契约取证后评估",
+      "status": "外部 LH 契约不足",
+      "independentlyDeliverable": true,
+      "requiredDependencies": [
+        "对应 LH 目标契约证据"
+      ],
+      "previousTitle": "恢复并核实 FilterBW 的 LH 契约，补齐已证明的能力",
+      "currentReviewState": "现有未知能力安全拒绝；未获得 LH 目标契约，功能未完成。历史标题不代表当前仍静默生成错误产物。",
+      "acceptanceCriteria": "取得适用 LH 固件版本的指令/操作数/地址单位/执行语义证据，再实现并进行正反例及目标设备验证；LM 资料只能作历史契约线索。"
+    },
+    {
+      "id": "FB08",
+      "cost": "U",
+      "title": "恢复并核实 Task 的 LH 契约，补齐已证明的能力",
+      "implementationStatus": "未实现",
+      "acceptance": "未完成",
+      "reason": "用于生产编码的 LH 目标指令/操作数/数值版本支持证据；本轮没有将候选字段表序列化为已认证 LH 功能块；完整可下载实现未完成",
+      "followup": [],
+      "priority": "P3",
+      "previousCost": "M",
+      "estimatedPersonDays": "未知：待 LH 契约取证后评估",
+      "status": "外部 LH 契约不足",
+      "independentlyDeliverable": true,
+      "requiredDependencies": [
+        "对应 LH 目标契约证据"
+      ],
+      "previousTitle": "恢复并核实 Task 的 LH 契约，补齐已证明的能力",
+      "currentReviewState": "现有未知能力安全拒绝；未获得 LH 目标契约，功能未完成。历史标题不代表当前仍静默生成错误产物。",
+      "acceptanceCriteria": "取得适用 LH 固件版本的指令/操作数/地址单位/执行语义证据，再实现并进行正反例及目标设备验证；LM 资料只能作历史契约线索。"
+    },
+    {
+      "id": "FB09",
+      "cost": "U",
+      "title": "恢复并核实 TaskPeriodic 的 LH 契约，补齐已证明的能力",
+      "implementationStatus": "未实现",
+      "acceptance": "未完成",
+      "reason": "用于生产编码的 LH 目标指令/操作数/数值版本支持证据；本轮没有将候选字段表序列化为已认证 LH 功能块；完整可下载实现未完成",
+      "followup": [],
+      "priority": "P3",
+      "previousCost": "M",
+      "estimatedPersonDays": "未知：待 LH 契约取证后评估",
+      "status": "外部 LH 契约不足",
+      "independentlyDeliverable": true,
+      "requiredDependencies": [
+        "对应 LH 目标契约证据"
+      ],
+      "previousTitle": "恢复并核实 TaskPeriodic 的 LH 契约，补齐已证明的能力",
+      "currentReviewState": "现有未知能力安全拒绝；未获得 LH 目标契约，功能未完成。历史标题不代表当前仍静默生成错误产物。",
+      "acceptanceCriteria": "取得适用 LH 固件版本的指令/操作数/地址单位/执行语义证据，再实现并进行正反例及目标设备验证；LM 资料只能作历史契约线索。"
+    },
+    {
+      "id": "FB10",
+      "cost": "U",
+      "title": "恢复并核实 TaskWake 的 LH 契约，补齐已证明的能力",
+      "implementationStatus": "未实现",
+      "acceptance": "未完成",
+      "reason": "用于生产编码的 LH 目标指令/操作数/数值版本支持证据；本轮没有将候选字段表序列化为已认证 LH 功能块；完整可下载实现未完成",
+      "followup": [],
+      "priority": "P3",
+      "previousCost": "M",
+      "estimatedPersonDays": "未知：待 LH 契约取证后评估",
+      "status": "外部 LH 契约不足",
+      "independentlyDeliverable": true,
+      "requiredDependencies": [
+        "对应 LH 目标契约证据"
+      ],
+      "previousTitle": "恢复并核实 TaskWake 的 LH 契约，补齐已证明的能力",
+      "currentReviewState": "现有未知能力安全拒绝；未获得 LH 目标契约，功能未完成。历史标题不代表当前仍静默生成错误产物。",
+      "acceptanceCriteria": "取得适用 LH 固件版本的指令/操作数/地址单位/执行语义证据，再实现并进行正反例及目标设备验证；LM 资料只能作历史契约线索。"
+    },
+    {
+      "id": "FB11",
+      "cost": "U",
+      "title": "恢复并核实 TaskDataWake 的 LH 契约，补齐已证明的能力",
+      "implementationStatus": "未实现",
+      "acceptance": "未完成",
+      "reason": "用于生产编码的 LH 目标指令/操作数/数值版本支持证据；本轮没有将候选字段表序列化为已认证 LH 功能块；完整可下载实现未完成",
+      "followup": [],
+      "priority": "P3",
+      "previousCost": "M",
+      "estimatedPersonDays": "未知：待 LH 契约取证后评估",
+      "status": "外部 LH 契约不足",
+      "independentlyDeliverable": true,
+      "requiredDependencies": [
+        "对应 LH 目标契约证据"
+      ],
+      "previousTitle": "恢复并核实 TaskDataWake 的 LH 契约，补齐已证明的能力",
+      "currentReviewState": "现有未知能力安全拒绝；未获得 LH 目标契约，功能未完成。历史标题不代表当前仍静默生成错误产物。",
+      "acceptanceCriteria": "取得适用 LH 固件版本的指令/操作数/地址单位/执行语义证据，再实现并进行正反例及目标设备验证；LM 资料只能作历史契约线索。"
+    },
+    {
+      "id": "FB12",
+      "cost": "U",
+      "title": "恢复并核实 TaskLock 的 LH 契约，补齐已证明的能力",
+      "implementationStatus": "未实现",
+      "acceptance": "未完成",
+      "reason": "用于生产编码的 LH 目标指令/操作数/数值版本支持证据；本轮没有将候选字段表序列化为已认证 LH 功能块；完整可下载实现未完成",
+      "followup": [],
+      "priority": "P3",
+      "previousCost": "S",
+      "estimatedPersonDays": "未知：待 LH 契约取证后评估",
+      "status": "外部 LH 契约不足",
+      "independentlyDeliverable": true,
+      "requiredDependencies": [
+        "对应 LH 目标契约证据"
+      ],
+      "previousTitle": "恢复并核实 TaskLock 的 LH 契约，补齐已证明的能力",
+      "currentReviewState": "现有未知能力安全拒绝；未获得 LH 目标契约，功能未完成。历史标题不代表当前仍静默生成错误产物。",
+      "acceptanceCriteria": "取得适用 LH 固件版本的指令/操作数/地址单位/执行语义证据，再实现并进行正反例及目标设备验证；LM 资料只能作历史契约线索。"
+    },
+    {
+      "id": "FB13",
+      "cost": "U",
+      "title": "恢复并核实 TaskUnlock 的 LH 契约，补齐已证明的能力",
+      "implementationStatus": "未实现",
+      "acceptance": "未完成",
+      "reason": "用于生产编码的 LH 目标指令/操作数/数值版本支持证据；本轮没有将候选字段表序列化为已认证 LH 功能块；完整可下载实现未完成",
+      "followup": [],
+      "priority": "P3",
+      "previousCost": "S",
+      "estimatedPersonDays": "未知：待 LH 契约取证后评估",
+      "status": "外部 LH 契约不足",
+      "independentlyDeliverable": true,
+      "requiredDependencies": [
+        "对应 LH 目标契约证据"
+      ],
+      "previousTitle": "恢复并核实 TaskUnlock 的 LH 契约，补齐已证明的能力",
+      "currentReviewState": "现有未知能力安全拒绝；未获得 LH 目标契约，功能未完成。历史标题不代表当前仍静默生成错误产物。",
+      "acceptanceCriteria": "取得适用 LH 固件版本的指令/操作数/地址单位/执行语义证据，再实现并进行正反例及目标设备验证；LM 资料只能作历史契约线索。"
+    },
+    {
+      "id": "FB14",
+      "cost": "U",
+      "title": "恢复并核实 TaskSemDef 的 LH 契约，补齐已证明的能力",
+      "implementationStatus": "未实现",
+      "acceptance": "未完成",
+      "reason": "用于生产编码的 LH 目标指令/操作数/数值版本支持证据；本轮没有将候选字段表序列化为已认证 LH 功能块；完整可下载实现未完成",
+      "followup": [],
+      "priority": "P3",
+      "previousCost": "M",
+      "estimatedPersonDays": "未知：待 LH 契约取证后评估",
+      "status": "外部 LH 契约不足",
+      "independentlyDeliverable": true,
+      "requiredDependencies": [
+        "对应 LH 目标契约证据"
+      ],
+      "previousTitle": "恢复并核实 TaskSemDef 的 LH 契约，补齐已证明的能力",
+      "currentReviewState": "现有未知能力安全拒绝；未获得 LH 目标契约，功能未完成。历史标题不代表当前仍静默生成错误产物。",
+      "acceptanceCriteria": "取得适用 LH 固件版本的指令/操作数/地址单位/执行语义证据，再实现并进行正反例及目标设备验证；LM 资料只能作历史契约线索。"
+    },
+    {
+      "id": "FB15",
+      "cost": "U",
+      "title": "恢复并核实 TaskSemWait 的 LH 契约，补齐已证明的能力",
+      "implementationStatus": "未实现",
+      "acceptance": "未完成",
+      "reason": "用于生产编码的 LH 目标指令/操作数/数值版本支持证据；本轮没有将候选字段表序列化为已认证 LH 功能块；完整可下载实现未完成",
+      "followup": [],
+      "priority": "P3",
+      "previousCost": "M",
+      "estimatedPersonDays": "未知：待 LH 契约取证后评估",
+      "status": "外部 LH 契约不足",
+      "independentlyDeliverable": true,
+      "requiredDependencies": [
+        "对应 LH 目标契约证据"
+      ],
+      "previousTitle": "恢复并核实 TaskSemWait 的 LH 契约，补齐已证明的能力",
+      "currentReviewState": "现有未知能力安全拒绝；未获得 LH 目标契约，功能未完成。历史标题不代表当前仍静默生成错误产物。",
+      "acceptanceCriteria": "取得适用 LH 固件版本的指令/操作数/地址单位/执行语义证据，再实现并进行正反例及目标设备验证；LM 资料只能作历史契约线索。"
+    },
+    {
+      "id": "FB16",
+      "cost": "U",
+      "title": "恢复并核实 TaskSemPost 的 LH 契约，补齐已证明的能力",
+      "implementationStatus": "未实现",
+      "acceptance": "未完成",
+      "reason": "用于生产编码的 LH 目标指令/操作数/数值版本支持证据；本轮没有将候选字段表序列化为已认证 LH 功能块；完整可下载实现未完成",
+      "followup": [],
+      "priority": "P3",
+      "previousCost": "M",
+      "estimatedPersonDays": "未知：待 LH 契约取证后评估",
+      "status": "外部 LH 契约不足",
+      "independentlyDeliverable": true,
+      "requiredDependencies": [
+        "对应 LH 目标契约证据"
+      ],
+      "previousTitle": "恢复并核实 TaskSemPost 的 LH 契约，补齐已证明的能力",
+      "currentReviewState": "现有未知能力安全拒绝；未获得 LH 目标契约，功能未完成。历史标题不代表当前仍静默生成错误产物。",
+      "acceptanceCriteria": "取得适用 LH 固件版本的指令/操作数/地址单位/执行语义证据，再实现并进行正反例及目标设备验证；LM 资料只能作历史契约线索。"
+    },
+    {
+      "id": "FB17",
+      "cost": "U",
+      "title": "恢复并核实 TaskEnd 的 LH 契约，补齐已证明的能力",
+      "implementationStatus": "未实现",
+      "acceptance": "未完成",
+      "reason": "用于生产编码的 LH 目标指令/操作数/数值版本支持证据；本轮没有将候选字段表序列化为已认证 LH 功能块；完整可下载实现未完成",
+      "followup": [],
+      "priority": "P3",
+      "previousCost": "S",
+      "estimatedPersonDays": "未知：待 LH 契约取证后评估",
+      "status": "外部 LH 契约不足",
+      "independentlyDeliverable": true,
+      "requiredDependencies": [
+        "对应 LH 目标契约证据"
+      ],
+      "previousTitle": "恢复并核实 TaskEnd 的 LH 契约，补齐已证明的能力",
+      "currentReviewState": "现有未知能力安全拒绝；未获得 LH 目标契约，功能未完成。历史标题不代表当前仍静默生成错误产物。",
+      "acceptanceCriteria": "取得适用 LH 固件版本的指令/操作数/地址单位/执行语义证据，再实现并进行正反例及目标设备验证；LM 资料只能作历史契约线索。"
+    },
+    {
+      "id": "FB18",
+      "cost": "U",
+      "title": "恢复并核实 TSO 的 LH 契约，补齐已证明的能力",
+      "implementationStatus": "未实现",
+      "acceptance": "未完成",
+      "reason": "用于生产编码的 LH 目标指令/操作数/数值版本支持证据；本轮没有将候选字段表序列化为已认证 LH 功能块；完整可下载实现未完成",
+      "followup": [],
+      "priority": "P3",
+      "previousCost": "L",
+      "estimatedPersonDays": "未知：待 LH 契约取证后评估",
+      "status": "外部 LH 契约不足",
+      "independentlyDeliverable": true,
+      "requiredDependencies": [
+        "对应 LH 目标契约证据"
+      ],
+      "previousTitle": "恢复并核实 TSO 的 LH 契约，补齐已证明的能力",
+      "currentReviewState": "现有未知能力安全拒绝；未获得 LH 目标契约，功能未完成。历史标题不代表当前仍静默生成错误产物。",
+      "acceptanceCriteria": "取得适用 LH 固件版本的指令/操作数/地址单位/执行语义证据，再实现并进行正反例及目标设备验证；LM 资料只能作历史契约线索。"
+    },
+    {
+      "id": "FB19",
+      "cost": "U",
+      "title": "恢复并核实 TSOAutoTune 的 LH 契约，补齐已证明的能力",
+      "implementationStatus": "未实现",
+      "acceptance": "未完成",
+      "reason": "用于生产编码的 LH 目标指令/操作数/数值版本支持证据；本轮没有将候选字段表序列化为已认证 LH 功能块；完整可下载实现未完成",
+      "followup": [],
+      "priority": "P3",
+      "previousCost": "L",
+      "estimatedPersonDays": "未知：待 LH 契约取证后评估",
+      "status": "外部 LH 契约不足",
+      "independentlyDeliverable": true,
+      "requiredDependencies": [
+        "对应 LH 目标契约证据"
+      ],
+      "previousTitle": "恢复并核实 TSOAutoTune 的 LH 契约，补齐已证明的能力",
+      "currentReviewState": "现有未知能力安全拒绝；未获得 LH 目标契约，功能未完成。历史标题不代表当前仍静默生成错误产物。",
+      "acceptanceCriteria": "取得适用 LH 固件版本的指令/操作数/地址单位/执行语义证据，再实现并进行正反例及目标设备验证；LM 资料只能作历史契约线索。"
+    },
+    {
+      "id": "FB20",
+      "cost": "U",
+      "title": "恢复并核实 TwoPosition 的 LH 契约，补齐已证明的能力",
+      "implementationStatus": "未实现",
+      "acceptance": "未完成",
+      "reason": "用于生产编码的 LH 目标指令/操作数/数值版本支持证据；本轮没有将候选字段表序列化为已认证 LH 功能块；完整可下载实现未完成",
+      "followup": [],
+      "priority": "P3",
+      "previousCost": "M",
+      "estimatedPersonDays": "未知：待 LH 契约取证后评估",
+      "status": "外部 LH 契约不足",
+      "independentlyDeliverable": true,
+      "requiredDependencies": [
+        "对应 LH 目标契约证据"
+      ],
+      "previousTitle": "恢复并核实 TwoPosition 的 LH 契约，补齐已证明的能力",
+      "currentReviewState": "现有未知能力安全拒绝；未获得 LH 目标契约，功能未完成。历史标题不代表当前仍静默生成错误产物。",
+      "acceptanceCriteria": "取得适用 LH 固件版本的指令/操作数/地址单位/执行语义证据，再实现并进行正反例及目标设备验证；LM 资料只能作历史契约线索。"
+    },
+    {
+      "id": "FB21",
+      "cost": "U",
+      "title": "恢复并核实 RelayCtrl2 的 LH 契约，补齐已证明的能力",
+      "implementationStatus": "未实现",
+      "acceptance": "未完成",
+      "reason": "用于生产编码的 LH 目标指令/操作数/数值版本支持证据；不能证明 RelayCtrl2 与 RelayCtrl/TwoPosition 仅是别名；必须核实变体差异、字段布局、状态与使能/故障行为。；本轮没有将候选字段表序列化为已认证 LH 功能块；完整可下载实现未完成",
+      "followup": [],
+      "priority": "P3",
+      "previousCost": "U",
+      "estimatedPersonDays": "未知：待 LH 契约取证后评估",
+      "status": "外部 LH 契约不足",
+      "independentlyDeliverable": true,
+      "requiredDependencies": [
+        "对应 LH 目标契约证据"
+      ],
+      "previousTitle": "恢复并核实 RelayCtrl2 的 LH 契约，补齐已证明的能力",
+      "currentReviewState": "现有未知能力安全拒绝；未获得 LH 目标契约，功能未完成。历史标题不代表当前仍静默生成错误产物。",
+      "acceptanceCriteria": "取得适用 LH 固件版本的指令/操作数/地址单位/执行语义证据，再实现并进行正反例及目标设备验证；LM 资料只能作历史契约线索。"
+    }
+  ]
+}

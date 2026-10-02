@@ -29,6 +29,7 @@ public:
     using Role = EthernetConfig::Role;
 
     static constexpr int MAX_BUFFER_SIZE = 1048576;
+    static constexpr int MAX_QUEUED_DATAGRAMS = 1024;
     static constexpr int DEFAULT_RECEIVE_BUFFER_SIZE = 65536;
 
     explicit EthernetInterface(QObject *parent = nullptr);
@@ -63,6 +64,14 @@ public:
     
     qint64 bytesReceived() const { return m_bytesReceived; }
     qint64 bytesSent() const { return m_bytesSent; }
+    quint64 droppedUdpDatagrams() const {
+        QMutexLocker lock(&m_bufferMutex);
+        return m_udpDroppedDatagrams;
+    }
+    int queuedUdpDatagrams() const {
+        QMutexLocker lock(&m_bufferMutex);
+        return m_udpReceiveQueue.size();
+    }
 
 signals:
     void clientConnected(const QString& address, quint16 port);
@@ -98,6 +107,7 @@ private:
     QByteArray m_receiveBuffer;
     QQueue<QByteArray> m_udpReceiveQueue;
     qint64 m_udpQueuedBytes = 0;
+    quint64 m_udpDroppedDatagrams = 0;
     mutable QMutex m_bufferMutex;
     QWaitCondition m_receiveWaitCondition;
     

@@ -17,37 +17,9 @@
 #include <atomic>
 
 #include "../common/ConfigTypes.h"
+#include "ParameterStateTypes.h"
 
 class IDeviceBackend;
-
-enum class ParameterState {
-    Clean,
-    Modified,
-    PendingApply,
-    Applying,
-    PendingReadback,
-    Confirmed,
-    Mismatch,
-    Timeout,
-    ApplyFailed
-};
-
-struct ParameterStateInfo
-{
-    QString pointId;
-    QString name;
-    QString dataType;
-    ParameterState state = ParameterState::Clean;
-    QString definitionValue;
-    QString editedValue;
-    QString appliedValue;
-    QString readbackValue;
-    QString lastError;
-    QDateTime lastWriteTime;
-    QDateTime lastReadbackTime;
-    int readbackAttempts = 0;
-    bool onlineEditable = false;
-};
 
 class ParameterController : public QObject
 {
@@ -90,6 +62,12 @@ signals:
     void readbackFinished(bool success, const QString& message);
 
 private:
+    struct StateChange {
+        QString name;
+        ParameterState previous;
+        ParameterState current;
+    };
+    bool notifyStateChanges(const QList<StateChange>& changes);
     enum class ReadbackDecision {
         Success,
         Continue,
@@ -107,7 +85,7 @@ private:
             int readbackRetryIntervalMs,
             QString* errorMessage);
     QStringList pendingReadbackPointIds(const QStringList& targetPointIds) const;
-    void applyReadbackValues(const QHash<QString, QVariant>& readbackValues,
+    bool applyReadbackValues(const QHash<QString, QVariant>& readbackValues,
                              const QStringList& targetPointIds);
     ReadbackDecision evaluateReadback(const QStringList& targetPointIds,
                                       QString* message) const;
@@ -126,6 +104,7 @@ private:
     QString m_pendingReadbackMessage;
     QString m_pendingReadbackOpId;
     quint64 m_pendingReadbackGeneration = 0;
+    quint64 m_definitionsGeneration = 0;
     QDeadlineTimer m_pendingDeadline;
     std::shared_ptr<std::atomic_bool> m_pendingCancelled;
 };

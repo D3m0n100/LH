@@ -62,6 +62,7 @@ venv/
 .venv/
 */.venv/
 third_party/custom_dsp_language/compile/venv/
+third_party/custom_dsp_language/compile/venv.backup-*/
 logs/
 __pycache__/
 */__pycache__/
@@ -72,6 +73,8 @@ pip-log.txt
 pip-delete-this-directory.txt
 
 # Test and tooling outputs
+review_execution/rework-*.txt
+review_execution/rework-*.xml
 Testing/
 CTestTestfile.cmake
 test_output/

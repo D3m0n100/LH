@@ -365,11 +365,8 @@ void ProgramBlocksWidget::rebuildTree(const QList<FunctionSnippet>& snippets)
         leaf->setData(0, Qt::UserRole + 1, sn.templateCode);
         leaf->setData(0, Qt::UserRole + 2, sn.description);
         leaf->setData(0, Qt::UserRole + 3, sn.canInsert());
-        leaf->setToolTip(0, makeSnippetTooltip(sn)
-                        + (sn.canInsert() ? QStringLiteral("<br/>编译契约状态：supported；硬件支持需目标契约确认")
-                                          : QStringLiteral("<br/>暂不可插入：%1").arg(sn.capabilityReason().toHtmlEscaped())));
+        leaf->setToolTip(0, makeSnippetTooltip(sn));
         if (!sn.canInsert()) {
-            leaf->setText(0, sn.name + QStringLiteral("（未完成）"));
             leaf->setFlags(leaf->flags() & ~Qt::ItemIsDragEnabled);
         }
 

@@ -66,7 +66,6 @@ void FunctionListWidget::setSnippets(const QList<FunctionSnippet>& snippets)
         item->setData(Qt::UserRole, snippet.id);
         item->setData(Qt::UserRole + 1, snippet.templateCode);
         if (!snippet.canInsert()) {
-            item->setText(snippet.name + QStringLiteral("（未完成）"));
             item->setFlags(item->flags() & ~Qt::ItemIsDragEnabled);
         }
         
@@ -83,7 +82,6 @@ void FunctionListWidget::setSnippets(const QList<FunctionSnippet>& snippets)
             .arg(snippet.unit.isEmpty() ? "-" : snippet.unit)
             .arg(snippet.defaultPeriodMs)
             .arg(snippet.templateCode.left(100).replace("\n", "<br/>"));
-        if (!snippet.canInsert()) tooltip += QStringLiteral("<br/>暂不可插入：%1").arg(snippet.capabilityReason().toHtmlEscaped());
         item->setToolTip(tooltip);
         
         if (snippet.category == "input") {

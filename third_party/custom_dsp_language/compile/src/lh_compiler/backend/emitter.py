@@ -20,6 +20,7 @@
 import os
 from datetime import datetime
 from typing import Any, Dict, List, Optional
+from .artifacts import atomic_write, validate_outputs
 
 # 同级导入
 try:
@@ -75,9 +76,7 @@ class CodeEmitter:
 
         content = self.to_string(instructions)
 
-        with open(output_path, 'w', encoding='utf-8') as f:
-            f.write(content)
-            f.write("\n")  # 文件末尾换行
+        atomic_write(output_path, content + "\n")
 
     def emit_with_header(
         self,
@@ -114,9 +113,7 @@ class CodeEmitter:
         if output_dir and not os.path.exists(output_dir):
             os.makedirs(output_dir, exist_ok=True)
 
-        with open(output_path, 'w', encoding='utf-8') as f:
-            f.write(content)
-            f.write("\n")
+        atomic_write(output_path, content + "\n")
 
     @staticmethod
     def print_instructions(instructions: List[Instruction]):
@@ -143,12 +140,8 @@ class CompileSupportEmitter:
         code_generator: Any,
         errors: Optional[List[str]] = None
     ) -> Dict[str, str]:
-        base_path, _ = os.path.splitext(output_path)
-        paths = {
-            "list": base_path + ".list",
-            "typ": base_path + ".typ",
-            "rep": base_path + ".rep",
-        }
+        paths = {key: str(path) for key, path in validate_outputs(output_path, source_path).items()
+                 if key != "code"}
 
         output_dir = os.path.dirname(output_path)
         if output_dir and not os.path.exists(output_dir):
@@ -163,8 +156,8 @@ class CompileSupportEmitter:
                 if p.exists():
                     try:
                         p.unlink()
-                    except Exception:
-                        pass
+                    except OSError as error:
+                        raise OSError(f"无法清理残留产物文件 '{p}': {error}") from error
             self._write(paths["rep"], self._build_rep(source_path, output_path, instructions, code_generator, errors))
         else:
             self._write(paths["list"], self._build_list(source_path, program, code_generator))
@@ -279,6 +272,12 @@ class CompileSupportEmitter:
             f"memory_units\t{memory.total_allocated if memory else 0}",
             f"status\t{'failed' if errors else 'success'}",
         ])
+        if getattr(code_generator, "requires_target_validation", False):
+            from .artifact_policy import UNCONFIRMED_EXECUTION_WARNING
+            lines.extend([
+                "compile_only\t1", "target_execution_confirmed\t0",
+                f"warning\t{UNCONFIRMED_EXECUTION_WARNING}",
+            ])
         if errors:
             for error in errors:
                 lines.append(f"error\t{error}")
@@ -350,5 +349,4 @@ class CompileSupportEmitter:
         return sizes.get(str(data_type).upper(), 2)
 
     def _write(self, path: str, content: str):
-        with open(path, 'w', encoding='utf-8') as f:
-            f.write(content)
+        atomic_write(path, content)

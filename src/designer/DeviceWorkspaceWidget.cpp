@@ -209,7 +209,8 @@ DeviceWorkspaceWidget::DeviceWorkspaceWidget(QWidget* parent)
     expertHeaderLayout->addWidget(expertTip);
     expertHeaderLayout->addStretch();
 
-    m_toggleExpertButton = new QPushButton(tr("展开专家诊断 ▾"), expertHeader);
+    m_toggleExpertButton = new QPushButton(tr("展开专家诊断"), expertHeader);
+    m_toggleExpertButton->setIcon(style()->standardIcon(QStyle::SP_ArrowDown));
     m_toggleExpertButton->setObjectName(QStringLiteral("ToggleExpertDiagnosticButton"));
     m_toggleExpertButton->setCheckable(true);
     m_toggleExpertButton->setChecked(false);
@@ -367,7 +368,8 @@ void DeviceWorkspaceWidget::setExpertDiagnosticVisible(bool visible)
     if (m_toggleExpertButton) {
         m_toggleExpertButton->blockSignals(true);
         m_toggleExpertButton->setChecked(visible);
-        m_toggleExpertButton->setText(visible ? tr("收起专家诊断 ▴") : tr("展开专家诊断 ▾"));
+        m_toggleExpertButton->setText(visible ? tr("收起专家诊断") : tr("展开专家诊断"));
+        m_toggleExpertButton->setIcon(style()->standardIcon(visible ? QStyle::SP_ArrowUp : QStyle::SP_ArrowDown));
         m_toggleExpertButton->blockSignals(false);
     }
 }

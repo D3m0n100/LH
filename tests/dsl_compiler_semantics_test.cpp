@@ -216,6 +216,52 @@ private slots:
         QVERIFY(!error.isEmpty());
     }
 
+    void normalCompilationRestoresConstantsWithAValidDownloadProfile()
+    {
+        QTemporaryDir project;
+        QVERIFY(project.isValid());
+        QVERIFY(writeTextFile(QDir(project.path()).filePath("main.lh"),
+                              "PROGRAM Main\nVAR\nflag : BOOL; gain : REAL;\nEND_VAR\n"
+                              "flag := TRUE; gain := 1.5;\nEND_PROGRAM\n"));
+        QVERIFY(writeTextFile(QDir(project.path()).filePath("download_profile.json"),
+                              "{\"name\":\"offline-test\",\"slaveId\":1,\"steps\":["
+                              "{\"type\":\"sendChunk\",\"params\":{\"dataAddress\":210,\"chunkWords\":1}}]}"));
+        ProjectRuntimeConfig config;
+        config.mainScriptPath = QStringLiteral("main.lh");
+        config.scriptFiles = QStringList{QStringLiteral("main.lh")};
+        config.downloadArtifact.metadata.insert(QStringLiteral("downloadProfileSourcePath"),
+                                                 QStringLiteral("download_profile.json"));
+        DSLCompilerInterface compiler;
+        CompileResult result;
+        QString error;
+        const QString output = QDir(project.path()).filePath("build_output");
+        QVERIFY2(compileProject(&compiler, project.path(), config, output, 903,
+                                &result, &error), qPrintable(error));
+        QVERIFY2(result.success, qPrintable(diagnostics(result)));
+        QVERIFY(result.metadata.value(QStringLiteral("requiresTargetValidation")).toBool());
+        QVERIFY(result.metadata.value(QStringLiteral("compileOnly")).toBool());
+        QVERIFY(!result.warnings.isEmpty());
+        bool foundCode = false;
+        for (const auto& artifact : result.artifacts) {
+            QVERIFY(artifact.type != QStringLiteral("download"));
+            QVERIFY(artifact.type != QStringLiteral("runtime_manifest"));
+            if (artifact.type == QStringLiteral("compiled_code")) {
+                foundCode = true;
+                QVERIFY(readTextFile(artifact.path).contains(QStringLiteral("LH-EXECUTION-UNCONFIRMED")));
+                QVERIFY(!QFileInfo::exists(QDir(QFileInfo(artifact.path).absolutePath())
+                                                  .filePath("runtime_manifest.json")));
+            }
+        }
+        QVERIFY(foundCode);
+        QVERIFY(writeTextFile(QDir(project.path()).filePath("main.lh"),
+                              "PROGRAM Main\nVAR\nx : INT;\nEND_VAR\nEND_PROGRAM\n"));
+        QVERIFY2(compileProject(&compiler, project.path(), config, output, 904,
+                                &result, &error), qPrintable(error));
+        QVERIFY2(result.success, qPrintable(diagnostics(result)));
+        QVERIFY(!result.metadata.value(QStringLiteral("requiresTargetValidation")).toBool());
+        QVERIFY(!result.metadata.value(QStringLiteral("compileOnly")).toBool());
+    }
+
     void asyncProjectPublishesValidatedGeneration()
     {
         QTemporaryDir temporaryRoot;
@@ -345,7 +391,7 @@ private slots:
         QVERIFY(writeTextFile(QDir(projectRoot).filePath(QStringLiteral("valve_auto.lh")),
                               QStringLiteral("PROGRAM ValveAuto\nEND_PROGRAM\n")));
         QVERIFY(writeTextFile(QDir(projectRoot).filePath(QStringLiteral("download_profile.json")),
-                              QStringLiteral("{\"steps\":[{\"type\":\"sendChunk\",\"params\":{}}]}\n")));
+                              QStringLiteral("{\"steps\":[{\"type\":\"sendChunk\",\"params\":{\"dataAddress\":210,\"chunkWords\":1}}]}\n")));
 
         ProjectRuntimeConfig config;
         config.mainScriptPath = QStringLiteral("main.lh");
@@ -396,6 +442,34 @@ private slots:
                 QVERIFY(!QFileInfo(QDir(generation.absoluteFilePath()).filePath(QStringLiteral("main.code"))).exists());
             }
         }
+    }
+
+    void missingDataAddressFailsProfilePrecheck()
+    {
+        QTemporaryDir project;
+        QVERIFY(project.isValid());
+        // Valid DSL isolates the Profile precheck from compiler diagnostics.
+        QVERIFY(writeTextFile(project.filePath("main.lh"),
+                              "PROGRAM P\nVAR no_op : Nop; END_VAR\nno_op();\nEND_PROGRAM\n"));
+        QVERIFY(writeTextFile(project.filePath("download_profile.json"),
+                              "{\"steps\":[{\"type\":\"sendChunk\",\"params\":{}}]}\n"));
+        ProjectRuntimeConfig config;
+        config.mainScriptPath = QStringLiteral("main.lh");
+        config.scriptFiles = QStringList{QStringLiteral("main.lh")};
+        config.downloadArtifact.metadata.insert(QStringLiteral("downloadProfilePath"),
+                                                QStringLiteral("download_profile.json"));
+        DSLCompilerInterface compiler;
+        QSignalSpy finished(&compiler, &DSLCompilerInterface::compileFinishedForGeneration);
+        QSignalSpy failed(&compiler, &DSLCompilerInterface::compileFailedToStartForGeneration);
+        compiler.compileProjectAsync(project.path(), config, project.filePath("build_output"),
+                                     QStringLiteral("profile_precheck"), 2999);
+        QTRY_COMPARE_WITH_TIMEOUT(failed.count(), 1, 1000);
+        QCOMPARE(finished.count(), 0);
+        QCOMPARE(failed.first().at(0).toULongLong(), quint64(2999));
+        QVERIFY2(failed.first().at(1).toString().contains(QStringLiteral("dataAddress")),
+                 qPrintable(failed.first().at(1).toString()));
+        QVERIFY(compiler.lastCompileResult().artifacts.isEmpty());
+        QVERIFY(!QFileInfo::exists(project.filePath("build_output/generations")));
     }
 
     void nonFiniteFloatExpressionsFailClosed()

@@ -2,6 +2,19 @@ import pytest
 from click.testing import CliRunner
 
 from lh_compiler.cli.commands import main
+from lh_compiler.function_blocks.registry import FunctionBlockRegistry
+
+
+def assert_incomplete_reason(output):
+    registry = FunctionBlockRegistry()
+    registry.load_defaults()
+    block = registry.get("FilterBW")
+    assert block.status == "incomplete"
+    assert not block.is_supported
+    assert "LH 固件版本" in block.incomplete_reason
+    assert "尚未核实" in block.incomplete_reason
+    # Rich may wrap the reason differently across terminal widths.
+    assert "".join(block.incomplete_reason.split()) in "".join(output.split())
 
 
 def test_cli_compile_and_check(tmp_path):
@@ -48,7 +61,7 @@ def test_cli_registry_commands():
     desc_incomplete = runner.invoke(main, ["describe", "FilterBW"])
     assert desc_incomplete.exit_code == 0
     assert "incomplete" in desc_incomplete.output
-    assert "TODO" in desc_incomplete.output
+    assert_incomplete_reason(desc_incomplete.output)
 
     list_res2 = runner.invoke(main, ["list-blocks"])
     assert list_res2.exit_code == 0
@@ -102,7 +115,7 @@ def test_lmc_subcommands_compatibility(tmp_path, capsys):
     assert lmc_mod.main(["describe", "FilterBW"]) == 0
     captured_desc = capsys.readouterr()
     assert "未完善 (incomplete)" in captured_desc.out
-    assert "TODO" in captured_desc.out
+    assert_incomplete_reason(captured_desc.out)
 
     assert lmc_mod.main(["list-blocks"]) == 0
     captured_list = capsys.readouterr()

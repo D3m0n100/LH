@@ -14,14 +14,15 @@ from rich import print as rprint
 from ..function_blocks.registry import FunctionBlockRegistry
 from ..utils.logger import setup_logger
 from ..compiler import LHCompiler, CompilerDependencyError
+from .service import compile_source
 
 
 console = Console()
 
 
-def _create_compiler():
+def _create_compiler(**options):
     try:
-        return LHCompiler()
+        return LHCompiler(**options)
     except CompilerDependencyError as error:
         raise click.ClickException(str(error)) from error
 
@@ -47,11 +48,14 @@ def compile(input_file, output):
     """Compile an LH source file"""
     console.print(f"[bold blue]Compiling:[/bold blue] {input_file}")
     compiler = _create_compiler()
-    result = compiler.compile_file(input_file, output)
+    result = compile_source(compiler, input_file, output)
     if not result.success:
         err_msg = "\n".join(result.errors) if result.errors else "Compilation failed"
         raise click.ClickException(f"Compile failed:\n{err_msg}")
     console.print(f"[bold green]Compile success:[/bold green] {output or input_file}")
+    if result.compile_only:
+        from ..backend.artifact_policy import UNCONFIRMED_EXECUTION_WARNING
+        console.print(f"警告: {UNCONFIRMED_EXECUTION_WARNING}")
 
 
 @main.command(name='list-blocks')
@@ -141,9 +145,7 @@ def check(input_file):
     """Check syntax without compiling"""
     console.print(f"[bold blue]Checking:[/bold blue] {input_file}")
     compiler = _create_compiler()
-    with open(input_file, 'r', encoding='utf-8', errors='replace') as f:
-        src = f.read()
-    result = compiler.compile_string(src)
+    result = compile_source(compiler, input_file, check_only=True)
     if not result.success:
         err_msg = "\n".join(result.errors) if result.errors else "Check failed"
         raise click.ClickException(f"Check failed:\n{err_msg}")

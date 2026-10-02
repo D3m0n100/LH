@@ -6,6 +6,7 @@
 #include <QtTest/QtTest>
 
 #include <QObject>
+#include <QFile>
 #include <QPointer>
 #include <QSignalSpy>
 #include <QTemporaryDir>
@@ -54,6 +55,32 @@ private slots:
         QTRY_COMPARE(errorSpy.count(), 2);
         QCOMPARE(errorSpy.at(1).at(0).value<DownloadManager::ErrorCode>(),
                  DownloadManager::ErrorCode::INVALID_CONFIG);
+        QTRY_VERIFY(!manager.m_thread.isRunning());
+        QTRY_VERIFY(manager.m_activeWorker.isNull());
+    }
+
+    void unverifiedExecutionFailsBeforeOpeningSerialPort()
+    {
+        QTemporaryDir temp;
+        QVERIFY(temp.isValid());
+        const QString profile = temp.filePath("profile.json");
+        const QString code = temp.filePath("main.code");
+        QFile profileFile(profile);
+        QVERIFY(profileFile.open(QIODevice::WriteOnly));
+        profileFile.write("{\"slaveId\":1,\"steps\":[{\"type\":\"sendChunk\","
+                          "\"params\":{\"dataAddress\":210,\"chunkWords\":1}}]}");
+        profileFile.close();
+        QFile codeFile(code);
+        QVERIFY(codeFile.open(QIODevice::WriteOnly));
+        codeFile.write("// LH-EXECUTION-UNCONFIRMED: scalar-assignment-v1\n123 123 43 1\n");
+        codeFile.close();
+        DownloadManager manager;
+        QSignalSpy errors(&manager, &DownloadManager::errorOccurred);
+        manager.startDownload(profile, code);
+        QTRY_COMPARE(errors.count(), 1);
+        QCOMPARE(errors.at(0).at(0).value<DownloadManager::ErrorCode>(),
+                 DownloadManager::ErrorCode::INVALID_CONFIG);
+        QVERIFY(errors.at(0).at(1).toString().contains(QStringLiteral("不适用于控制器下载或运行")));
         QTRY_VERIFY(!manager.m_thread.isRunning());
         QTRY_VERIFY(manager.m_activeWorker.isNull());
     }

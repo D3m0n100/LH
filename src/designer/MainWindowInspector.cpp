@@ -380,14 +380,5 @@ void MainWindow::onSnippetSelectedInBlocks(const FunctionSnippet& snippet)
     if (!snippet.description.isEmpty()) {
         props.insert(QStringLiteral("描述"), snippet.description);
     }
-    const QString status = snippet.metadata.value(QStringLiteral("status")).toString();
-    if (!status.isEmpty()) {
-        props.insert(QStringLiteral("契约状态"), status);
-    }
-    const QString incReason = snippet.metadata.value(QStringLiteral("incompleteReason")).toString();
-    if (!incReason.isEmpty()) {
-        props.insert(QStringLiteral("待完善原因"), incReason);
-    }
-
     m_inspectorPanel->setSelectedObject(QStringLiteral("函数块"), snippet.name, props);
 }

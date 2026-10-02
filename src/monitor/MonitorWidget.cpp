@@ -17,6 +17,7 @@ std::shared_ptr<HistoryExportAdmission> acquireHistoryExport()
 }
 }
 #include "core/AsyncDatabaseWorker.h"
+#include "core/BackgroundTaskRegistry.h"
 #include <QProgressDialog>
 #include <QPointer>
 // 文件: src/monitor/MonitorWidget.cpp
@@ -997,8 +998,12 @@ void MonitorWidget::onExportData()
                     fail(QStringLiteral("History export failed with an unexpected exception"));
                 }
             });
-            connect(exportThread, &QThread::finished, exportThread, &QObject::deleteLater);
-            exportThread->start();
+            if (!Core::BackgroundTaskRegistry::instance().start(exportThread, cancelled)) {
+                delete exportThread;
+                cancelled->store(true);
+                fail(QStringLiteral("应用正在退出，历史导出已取消"));
+                return;
+            }
             // One bounded startup handoff pins the snapshot; bulk queries/file IO never occupy the writer.
             if (!pinned->tryAcquire(1, 3000)) {
                 cancelled->store(true);

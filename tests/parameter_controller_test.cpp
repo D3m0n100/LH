@@ -8,6 +8,7 @@
 #include <QEventLoop>
 #include <QTimer>
 #include <QPointer>
+#include <QScopedValueRollback>
 
 #include "designer/ParameterController.h"
 #include "communication/VirtualDeviceBackend.h"
@@ -19,6 +20,7 @@ public:
     void readPointsAsync(const QStringList& ids, int budget, std::shared_ptr<std::atomic_bool> cancelled,
                          QObject* context, ReadCompletion completion) override
     {
+        ++asyncReadCalls;
         if (!scripted) { VirtualDeviceBackend::readPointsAsync(ids, budget, cancelled, context, completion); return; }
           QPointer<ScriptedReadbackBackend> safe(this);
           QTimer::singleShot(0, context, [=] {
@@ -51,6 +53,7 @@ public:
     }
 
     bool scripted = false;
+    int asyncReadCalls = 0;
     bool readResult = true;
     QHash<QString, QVariant> readbackValues;
 };
@@ -76,6 +79,255 @@ private:
     }
 
 private slots:
+    void readbackNotificationReentry_data()
+    {
+        QTest::addColumn<int>("entry"); // external values, sync polling, async polling
+        QTest::addColumn<int>("terminal");
+        QTest::addColumn<int>("action");
+        const QList<ParameterState> terminals{ParameterState::Confirmed,
+                                              ParameterState::Mismatch,
+                                              ParameterState::Timeout};
+        for (int entry = 0; entry < 3; ++entry) {
+            for (auto terminal : terminals) {
+                if (entry == 0 && terminal == ParameterState::Timeout) continue;
+                for (int action = 0; action < 6; ++action) {
+                    const QByteArray name = QStringLiteral("entry_%1_state_%2_action_%3")
+                            .arg(entry).arg(int(terminal)).arg(action).toLatin1();
+                    QTest::newRow(name.constData()) << entry << int(terminal) << action;
+                }
+            }
+        }
+    }
+
+    void readbackNotificationReentry()
+    {
+        QFETCH(int, entry);
+        QFETCH(int, terminal);
+        QFETCH(int, action);
+        const auto expected = static_cast<ParameterState>(terminal);
+        const QList<ParameterDefinition> definitions{makeParam("A", true, "0", "param.a"),
+                                                      makeParam("B", true, "0", "param.b")};
+        QPointer<ParameterController> ctrl = new ParameterController;
+        ctrl->loadDefinitions(definitions);
+        QVERIFY(ctrl->editParameter("A", "2"));
+        QVERIFY(ctrl->editParameter("B", "2"));
+        ScriptedReadbackBackend backend;
+        QList<RuntimePointDefinition> points;
+        for (const auto& def : definitions) {
+            RuntimePointDefinition point;
+            point.id = def.id; point.name = def.name;
+            point.kind = RuntimePointKind::Parameter;
+            point.dataType = QStringLiteral("REAL");
+            point.access = RuntimePointAccess::ReadWrite;
+            points.append(point);
+        }
+        backend.loadPointDefinitions(points);
+        QVERIFY(backend.connectBackend());
+        backend.scripted = true;
+        if (expected != ParameterState::Timeout) {
+            backend.readbackValues.insert("param.a", expected == ParameterState::Confirmed ? 2.0 : 99.0);
+            backend.readbackValues.insert("param.b", expected == ParameterState::Confirmed ? 2.0 : 99.0);
+        }
+        bool acted = false;
+        int terminalNotifications = 0;
+        int completions = 0;
+        connect(ctrl.data(), &ParameterController::readbackFinished, &backend,
+                [&](bool, const QString&) { ++completions; });
+        connect(ctrl.data(), &ParameterController::stateChanged, &backend,
+                [&](const QString&, ParameterState, ParameterState next) {
+            if (next != expected) return;
+            ++terminalNotifications;
+            if (acted) return;
+            acted = true;
+            // Both parameters must already have their new state before the first signal.
+            QCOMPARE(ctrl->parameterState("A").state, expected);
+            QCOMPARE(ctrl->parameterState("B").state, expected);
+            switch (action) {
+            case 0: ctrl->loadDefinitions({}); break;
+            case 1: ctrl->clear(); break;
+            case 2: ctrl->loadDefinitions({makeParam("New", true, "0", "other.project")}); break;
+            case 3: ctrl->cancelPendingReadback(); break;
+            case 4: delete ctrl.data(); break;
+            case 5: ctrl->loadDefinitions(definitions); break;
+            }
+        });
+        if (entry == 0) {
+            QVERIFY(ctrl->applyModifiedParameters(&backend));
+            ctrl->onReadbackValues(backend.readbackValues);
+        } else if (entry == 1) {
+            const bool success = ctrl->applyModifiedParametersWithReadback(&backend, 1, 0);
+            QCOMPARE(success, action == 5 && expected == ParameterState::Confirmed);
+        } else {
+            QVERIFY(ctrl->applyModifiedParametersWithReadbackAsync(&backend, 1, 0));
+            QTRY_VERIFY_WITH_TIMEOUT(acted, 1000);
+        }
+        QVERIFY(acted);
+        QCOMPARE(terminalNotifications, action == 5 ? 2 : 1);
+        QVERIFY(completions <= 1);
+        const int completed = completions;
+        QTest::qWait(30);
+        QCOMPARE(terminalNotifications, action == 5 ? 2 : 1);
+        QCOMPARE(completions, completed);
+        if (action == 4) QVERIFY(ctrl.isNull());
+        else if (action <= 1) QVERIFY(ctrl->parameterStates().isEmpty());
+        else if (action == 2) {
+            QCOMPARE(ctrl->parameterStates().size(), 1);
+            QCOMPARE(ctrl->parameterState("New").state, ParameterState::Clean);
+        }
+        delete ctrl.data();
+    }
+
+    void lateReadbackCannotCompleteCancelledOrReplacementBatch()
+    {
+        class DeferredBackend : public VirtualDeviceBackend {
+        public:
+            QList<ReadCompletion> reads;
+            void readPointsAsync(const QStringList&, int, std::shared_ptr<std::atomic_bool>,
+                                 QObject*, ReadCompletion completion) override
+            {
+                reads.append(completion);
+            }
+        } backend;
+        ParameterController ctrl;
+        ctrl.loadDefinitions({makeParam("A", true, "0", "param.a")});
+        RuntimePointDefinition point;
+        point.id = QStringLiteral("param.a"); point.name = QStringLiteral("A");
+        point.kind = RuntimePointKind::Parameter; point.dataType = QStringLiteral("REAL");
+        point.access = RuntimePointAccess::ReadWrite;
+        backend.loadPointDefinitions({point});
+        QVERIFY(backend.connectBackend());
+        QSignalSpy finished(&ctrl, &ParameterController::readbackFinished);
+        QVERIFY(ctrl.editParameter("A", "2"));
+        QVERIFY(ctrl.applyModifiedParametersWithReadbackAsync(&backend));
+        QTRY_COMPARE_WITH_TIMEOUT(backend.reads.size(), 1, 1000);
+        const auto oldRead = backend.reads.first();
+        ctrl.cancelPendingReadback();
+        QCOMPARE(finished.count(), 1);
+        QCOMPARE(finished.first().at(0).toBool(), false);
+        QVERIFY(ctrl.editParameter("A", "3"));
+        QVERIFY(ctrl.applyModifiedParametersWithReadbackAsync(&backend));
+        QTRY_COMPARE_WITH_TIMEOUT(backend.reads.size(), 2, 1000);
+        oldRead(true, {{QStringLiteral("param.a"), 99.0}}, QString(), {}, {});
+        QCOMPARE(ctrl.parameterState("A").state, ParameterState::PendingReadback);
+        QCOMPARE(finished.count(), 1);
+        backend.reads.last()(true, {{QStringLiteral("param.a"), 3.0}}, QString(), {}, {});
+        QCOMPARE(ctrl.parameterState("A").state, ParameterState::Confirmed);
+        QCOMPARE(finished.count(), 2);
+        QCOMPARE(finished.last().at(0).toBool(), true);
+        oldRead(true, {{QStringLiteral("param.a"), 2.0}}, QString(), {}, {});
+        QTest::qWait(30);
+        QCOMPARE(finished.count(), 2);
+        QCOMPARE(ctrl.parameterState("A").appliedValue, QStringLiteral("3"));
+    }
+
+    void inspectorRefreshPreservesReadback_data()
+    {
+        QTest::addColumn<bool>("async");
+        QTest::newRow("sync") << false;
+        QTest::newRow("async") << true;
+    }
+
+    void inspectorRefreshPreservesReadback()
+    {
+        QFETCH(bool, async);
+        ParameterController ctrl;
+        const QList<ParameterDefinition> definitions{makeParam("A", true, "0", "param.a"),
+                                                      makeParam("B", true, "0", "param.b")};
+        ctrl.loadDefinitions(definitions);
+        VirtualDeviceBackend backend;
+        QList<RuntimePointDefinition> points;
+        for (const auto& def : definitions) {
+            RuntimePointDefinition point;
+            point.id = def.id; point.name = def.name;
+            point.kind = RuntimePointKind::Parameter;
+            point.dataType = QStringLiteral("REAL");
+            point.access = RuntimePointAccess::ReadWrite;
+            points.append(point);
+        }
+        backend.loadPointDefinitions(points);
+        QVERIFY(backend.connectBackend());
+        bool refreshing = false;
+        connect(&ctrl, &ParameterController::statesChanged, &ctrl, [&] {
+            if (refreshing) return;
+            QScopedValueRollback<bool> guard(refreshing, true);
+            ctrl.loadDefinitions(definitions);
+        });
+        QVERIFY(ctrl.editParameter("A", "2"));
+        QVERIFY(ctrl.editParameter("B", "2"));
+        QSignalSpy finished(&ctrl, &ParameterController::readbackFinished);
+        if (async) {
+            QVERIFY(ctrl.applyModifiedParametersWithReadbackAsync(&backend));
+            QTRY_COMPARE_WITH_TIMEOUT(finished.count(), 1, 1000);
+            QCOMPARE(finished.first().at(0).toBool(), true);
+        } else {
+            QVERIFY(ctrl.applyModifiedParametersWithReadback(&backend));
+        }
+        QCOMPARE(ctrl.parameterState("A").state, ParameterState::Confirmed);
+        QCOMPARE(ctrl.parameterState("B").state, ParameterState::Confirmed);
+    }
+
+    void totalDeadlineRejectsLateCompletion_data()
+    {
+        QTest::addColumn<bool>("stallWrite");
+        QTest::newRow("write") << true;
+        QTest::newRow("read") << false;
+    }
+
+    void totalDeadlineRejectsLateCompletion()
+    {
+        QFETCH(bool, stallWrite);
+        class DeferredBackend : public VirtualDeviceBackend {
+        public:
+            bool stallWrite = false;
+            WriteCompletion write;
+            ReadCompletion read;
+            int reads = 0;
+            void writePointsAsync(const QHash<QString, QVariant>& values, int budget,
+                                  std::shared_ptr<std::atomic_bool> cancelled,
+                                  QObject* context, WriteCompletion completion) override
+            {
+                if (stallWrite) write = completion;
+                else VirtualDeviceBackend::writePointsAsync(values, budget, cancelled, context, completion);
+            }
+            void readPointsAsync(const QStringList&, int, std::shared_ptr<std::atomic_bool>,
+                                 QObject*, ReadCompletion completion) override
+            {
+                ++reads;
+                read = completion;
+            }
+        } backend;
+        backend.stallWrite = stallWrite;
+        ParameterController ctrl;
+        ctrl.loadDefinitions({makeParam("A", true, "0", "param.a")});
+        RuntimePointDefinition point;
+        point.id = QStringLiteral("param.a"); point.name = QStringLiteral("A");
+        point.kind = RuntimePointKind::Parameter; point.dataType = QStringLiteral("REAL");
+        point.access = RuntimePointAccess::ReadWrite;
+        backend.loadPointDefinitions({point});
+        QVERIFY(backend.connectBackend());
+        QVERIFY(ctrl.editParameter("A", "2"));
+        QSignalSpy finished(&ctrl, &ParameterController::readbackFinished);
+        QElapsedTimer elapsed;
+        elapsed.start();
+        QVERIFY(ctrl.applyModifiedParametersWithReadbackAsync(&backend, 2, 0));
+        QTRY_COMPARE_WITH_TIMEOUT(finished.count(), 1, 17000);
+        QVERIFY(elapsed.elapsed() < 17000);
+        QCOMPARE(finished.first().at(0).toBool(), false);
+        QVERIFY(finished.first().at(1).toString().contains(QStringLiteral("总时限")));
+        QCOMPARE(ctrl.parameterState("A").state, ParameterState::Timeout);
+        if (stallWrite) {
+            QVERIFY(bool(backend.write));
+            backend.write(true, QString(), {});
+            QCOMPARE(backend.reads, 0);
+        } else {
+            QVERIFY(bool(backend.read));
+            backend.read(true, {{QStringLiteral("param.a"), 2.0}}, QString(), {}, {});
+        }
+        QTest::qWait(30);
+        QCOMPARE(finished.count(), 1);
+        QCOMPARE(ctrl.parameterState("A").state, ParameterState::Timeout);
+    }
+
     void asyncWriteKeepsEventLoopResponsiveAndCancellationPreventsLateWrite()
     {
         ParameterController controller;
@@ -447,7 +699,7 @@ private slots:
         ctrl.editParameter("A", "2.0");
         ctrl.editParameter("B", "3.0");
 
-        VirtualDeviceBackend backend;
+        ScriptedReadbackBackend backend;
         RuntimePointDefinition readOnly;
         readOnly.kind = RuntimePointKind::Parameter;
         readOnly.dataType = "REAL";
@@ -461,10 +713,16 @@ private slots:
         backend.connectBackend();
 
         QSignalSpy finishedSpy(&ctrl, &ParameterController::readbackFinished);
-        QVERIFY(!ctrl.applyModifiedParametersWithReadbackAsync(&backend, 1, 0));
+        QVERIFY(ctrl.applyModifiedParametersWithReadbackAsync(&backend, 1, 0));
         QCOMPARE(finishedSpy.count(), 0);
+        QTRY_COMPARE_WITH_TIMEOUT(finishedSpy.count(), 1, 1000);
+        QCOMPARE(finishedSpy.first().at(0).toBool(), false);
+        QCOMPARE(backend.asyncReadCalls, 0);
         QCOMPARE(ctrl.parameterState("A").state, ParameterState::ApplyFailed);
         QCOMPARE(ctrl.parameterState("B").state, ParameterState::ApplyFailed);
+        QTest::qWait(30);
+        QCOMPARE(finishedSpy.count(), 1);
+        QCOMPARE(backend.asyncReadCalls, 0);
     }
 
     void syncMismatchReturnsFalse()
@@ -510,10 +768,11 @@ private slots:
         QSignalSpy finishedSpy(&ctrl, &ParameterController::readbackFinished);
         QVERIFY(ctrl.applyModifiedParametersWithReadbackAsync(&backend, 1, 0));
         QCOMPARE(finishedSpy.count(), 0);
-        QCoreApplication::processEvents(QEventLoop::AllEvents);
-        QCOMPARE(finishedSpy.count(), 1);
+        QTRY_COMPARE_WITH_TIMEOUT(finishedSpy.count(), 1, 1000);
         QCOMPARE(finishedSpy.first().at(0).toBool(), false);
         QCOMPARE(ctrl.parameterState("Kp").state, ParameterState::Mismatch);
+        QTest::qWait(30);
+        QCOMPARE(finishedSpy.count(), 1);
     }
 
     void asyncRetryExhaustionReturnsTimeout()

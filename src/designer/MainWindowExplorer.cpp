@@ -168,6 +168,15 @@ QWidget* MainWindow::openAndActivateFile(const QString& filePath)
         return nullptr;
     }
 
+    auto activateDocument = [this](QMdiSubWindow* sub) {
+        switchToWorkspace(WorkspaceId::Programming);
+        sub->show();
+        sub->raise();
+        m_mdiArea->setActiveSubWindow(sub);
+        if (auto* widget = sub->widget())
+            widget->setFocus();
+    };
+
     // 1. 先查复用：若已打开，直接激活并返回（不读盘、不弹保存确认、完整保留未保存缓冲区）
     if (m_mdiArea) {
         const auto subWindows = m_mdiArea->subWindowList();
@@ -177,9 +186,7 @@ QWidget* MainWindow::openAndActivateFile(const QString& filePath)
             }
             const QString existingPath = sub->property("filePath").toString();
             if (isSameDocument(existingPath, targetId)) {
-                sub->show();
-                sub->raise();
-                m_mdiArea->setActiveSubWindow(sub);
+                activateDocument(sub);
                 if (QWidget* w = sub->widget()) {
                     w->setFocus();
                     return w;
@@ -192,10 +199,7 @@ QWidget* MainWindow::openAndActivateFile(const QString& filePath)
     if (m_dslEditor && isSameDocument(m_dslEditor->currentFilePath(), targetId)) {
         if (m_editorSubWindow) {
             m_dslEditor->show();
-            m_editorSubWindow->show();
-            m_editorSubWindow->raise();
-            m_mdiArea->setActiveSubWindow(m_editorSubWindow);
-            m_dslEditor->setFocus();
+            activateDocument(m_editorSubWindow);
         }
         return m_dslEditor;
     }
@@ -244,10 +248,7 @@ QWidget* MainWindow::openAndActivateFile(const QString& filePath)
         }
         if (m_editorSubWindow) {
             m_dslEditor->show();
-            m_editorSubWindow->show();
-            m_editorSubWindow->raise();
-            m_mdiArea->setActiveSubWindow(m_editorSubWindow);
-            m_dslEditor->setFocus();
+            activateDocument(m_editorSubWindow);
         }
         updateStatusBar(QStringLiteral("已打开文件: %1").arg(info.fileName()));
         refreshInspectorPanel();
@@ -264,7 +265,7 @@ QWidget* MainWindow::openAndActivateFile(const QString& filePath)
     viewer->setPlainText(content);
     viewer->setWindowTitle(info.fileName());
 
-    auto* sub = m_mdiArea->addSubWindow(viewer);
+    auto* sub = addDocumentSubWindow(viewer);
     sub->setAttribute(Qt::WA_DeleteOnClose, true);
     sub->setProperty("filePath", targetId);
     sub->setProperty("modified", false);
@@ -282,9 +283,7 @@ QWidget* MainWindow::openAndActivateFile(const QString& filePath)
         onDocumentModified(targetId);
     });
 
-    sub->show();
-    m_mdiArea->setActiveSubWindow(sub);
-    viewer->setFocus();
+    activateDocument(sub);
 
     updateStatusBar(QStringLiteral("已打开文件: %1").arg(info.fileName()));
     refreshInspectorPanel();

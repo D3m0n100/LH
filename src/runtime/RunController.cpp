@@ -1,5 +1,6 @@
 #include "communication/DownloadProfile.h"
 #include "RunController.h"
+#include "../common/CompileArtifactPolicy.h"
 
 #include "common/RuntimePointTypes.h"
 #include "common/PathSecurityUtils.h"
@@ -67,15 +68,7 @@ bool resolveContainedPath(const QString& root,
             return false;
         }
     } else {
-        QDir parent = info.dir();
-        while (!parent.exists()) {
-            const QString currentPath = parent.absolutePath();
-            const QDir nextParent = QFileInfo(currentPath).dir();
-            if (nextParent.absolutePath() == currentPath)
-                break;
-            parent = nextParent;
-        }
-        const QString canonicalParent = parent.canonicalPath();
+        const QString canonicalParent = PathSecurityUtils::canonicalExistingAncestor(info.dir());
         if (canonicalParent.isEmpty() || !pathWithinRoot(root, canonicalParent)) {
             if (errorMessage)
                 *errorMessage = QStringLiteral("父目录越出允许目录：%1").arg(configured);
@@ -251,6 +244,10 @@ bool loadPublishedBundle(const QString& projectPath,
     if (!codeInfo.exists() || !codeInfo.isFile() || !codeInfo.isReadable()) {
         if (errors)
             errors->append(QStringLiteral("下载产物不存在或不可读：%1").arg(codePath));
+        return false;
+    }
+    if (CompileArtifactPolicy::isFile(codePath)) {
+        if (errors) errors->append(CompileArtifactPolicy::operationUnavailableMessage());
         return false;
     }
     if (codeInfo.suffix().compare(QStringLiteral("code"), Qt::CaseInsensitive) != 0) {
@@ -567,6 +564,8 @@ RunController::DownloadArtifactPrecheckReport validateLegacyDownloadArtifact(
         report.errors << QStringLiteral("产物文件不存在：%1").arg(trimmedPath);
     } else {
         details.insert(QStringLiteral("artifactBytes"), artifactInfo.size());
+        if (CompileArtifactPolicy::isFile(artifactInfo.absoluteFilePath()))
+            report.errors << CompileArtifactPolicy::operationUnavailableMessage();
         if (!artifactInfo.isReadable())
             report.errors << QStringLiteral("产物文件不可读：%1").arg(artifactInfo.absoluteFilePath());
         if (artifactInfo.suffix().compare(QStringLiteral("code"), Qt::CaseInsensitive) != 0) {

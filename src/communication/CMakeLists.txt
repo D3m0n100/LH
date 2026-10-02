@@ -21,6 +21,7 @@ set(COMM_SOURCES
     ClassicOpcServer.cpp
     ClassicOpcPollWorker.cpp
     MatrikonOpcServer.cpp
+    AsyncOpcServer.cpp
     OpcServerFactory.cpp
 )
 
@@ -48,13 +49,16 @@ set(COMM_HEADERS
     IOpcServer.h
     ClassicOpcServer.h
     MatrikonOpcServer.h
+    AsyncOpcServer.h
+    OpcWriteResultState.h
     OpcServerFactory.h
     RuntimePointQualityMapper.h
     ModbusLimits.h
 )
 
 add_library(download_profile_contract STATIC DownloadProfile.cpp DownloadProfile.h ModbusLimits.h)
-target_include_directories(download_profile_contract PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(download_profile_contract PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}> $<INSTALL_INTERFACE:include/communication>)
 target_link_libraries(download_profile_contract PUBLIC Qt5::Core)
 target_compile_features(download_profile_contract PUBLIC cxx_std_17)
 
@@ -65,7 +69,7 @@ add_library(ServoValveComm STATIC
 
 target_include_directories(ServoValveComm
     PUBLIC
-        ${CMAKE_CURRENT_SOURCE_DIR}
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}> $<INSTALL_INTERFACE:include/communication>
         ${LX_PUBLIC_INCLUDE_DIRS}
 )
 
@@ -91,6 +95,7 @@ set_target_properties(ServoValveComm PROPERTIES
 )
 
 install(TARGETS ServoValveComm download_profile_contract
+    EXPORT LHTargets
     LIBRARY DESTINATION lib
     ARCHIVE DESTINATION lib
 )
@@ -100,7 +105,7 @@ install(FILES ${COMM_HEADERS}
 )
 
 install(DIRECTORY ${CMAKE_SOURCE_DIR}/src/common/
-    DESTINATION include/common FILES_MATCHING PATTERN "*.h")
+    DESTINATION include/common FILES_MATCHING PATTERN "*.h" PATTERN "ProjectMutationGuard.h" EXCLUDE)
 install(FILES ${CMAKE_SOURCE_DIR}/include/Common.h DESTINATION include)
 
 target_include_directories(ServoValveComm PRIVATE ${LX_PRIVATE_INCLUDE_DIRS})

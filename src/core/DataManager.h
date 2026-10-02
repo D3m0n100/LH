@@ -137,6 +137,10 @@ public:
 
     /// 获取平台提供的用户可写数据库路径；返回空字符串表示路径不可用。
     static QString defaultDatabasePath();
+    // Creates, upgrades and closes a temporary connection entirely on the calling worker thread.
+    static bool prepareDatabase(const QString& dbPath, const QString& legacyDbPath,
+        const std::atomic_bool* cancelled, std::function<void(QString, qint64)> progress,
+        QString* error = nullptr);
 
     /**
      * @brief 初始化数据管理器
@@ -427,6 +431,9 @@ private:
     bool m_initialized = false;                 ///< 初始化状态标志
     int m_schemaVersion = -1;                   ///< 当前 Schema 版本
     QThread* m_ownerThread = nullptr;           ///< 数据库所有者线程
+    const std::atomic_bool* m_migrationCancelled = nullptr;
+    std::function<void(QString, qint64)> m_migrationProgress;
+    QString m_migrationError;
 };
 
 #endif // DATAMANAGER_H

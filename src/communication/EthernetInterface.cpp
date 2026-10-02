@@ -540,13 +540,16 @@ void EthernetInterface::onUdpReadyRead()
         {
             QMutexLocker locker(&m_bufferMutex);
             if (data.size() > MAX_BUFFER_SIZE) {
+                ++m_udpDroppedDatagrams;
                 LOG_WARN("UDP 报文超过接收缓冲区，已丢弃");
                 continue;
             }
 
             while (!m_udpReceiveQueue.isEmpty() &&
-                   m_udpQueuedBytes + data.size() > MAX_BUFFER_SIZE) {
+                   (m_udpQueuedBytes + data.size() > MAX_BUFFER_SIZE
+                    || m_udpReceiveQueue.size() >= MAX_QUEUED_DATAGRAMS)) {
                 m_udpQueuedBytes -= m_udpReceiveQueue.dequeue().size();
+                ++m_udpDroppedDatagrams;
             }
             m_udpReceiveQueue.enqueue(data);
             m_udpQueuedBytes += data.size();

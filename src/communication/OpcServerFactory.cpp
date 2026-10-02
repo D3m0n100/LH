@@ -3,10 +3,11 @@
 #include "IOpcServer.h"
 #include "ClassicOpcServer.h"
 #include "MatrikonOpcServer.h"
+#include "AsyncOpcServer.h"
 
 IOpcServer* OpcServerFactory::createDefault(QObject* parent)
 {
-    auto* server = new MatrikonOpcServer(parent);
+    auto* server = new AsyncOpcServer([] { return new MatrikonOpcServer; }, parent);
     server->setObjectName(QStringLiteral("OpcServerFactory::MatrikonOpcServer"));
     return server;
 }
@@ -20,7 +21,7 @@ IOpcServer* OpcServerFactory::createForConfig(const OpcServerConfig& config, QOb
         return server;
     }
 
-    auto* server = new MatrikonOpcServer(parent);
+    auto* server = new AsyncOpcServer([] { return new MatrikonOpcServer; }, parent);
     server->setObjectName(QStringLiteral("OpcServerFactory::MatrikonOpcServer"));
     return server;
 }

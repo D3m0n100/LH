@@ -222,7 +222,7 @@ void ProblemsPanel::appendRowForDiagnostic(const DiagnosticItem& input)
             }
         }
         item.message = item.message.left(MaxMessageCharacters);
-        if (!item.message.isEmpty() && item.message.back().isHighSurrogate()) item.message.chop(1);
+        if (!item.message.isEmpty() && item.message.at(item.message.size() - 1).isHighSurrogate()) item.message.chop(1);
         item.message += detailsPath.isEmpty()
                 ? QStringLiteral(" [已截断；详情未保留，存储失败或达到 16 MiB 上限]")
                 : QStringLiteral(" [已截断；完整内容见诊断详情]");

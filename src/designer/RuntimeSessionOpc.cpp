@@ -168,6 +168,10 @@ void RuntimeSessionController::startOpcServerIfEnabled()
     }
 
     const BackendStatusSnapshot status = m_opcServer->statusSnapshot();
+    if (status.extras.value(QStringLiteral("startPending")).toBool()) {
+        emit logMessage(QStringLiteral("OPC 服务启动请求已提交，正在等待就绪"));
+        return;
+    }
     const bool isDegraded = status.extras.value(QStringLiteral("degraded")).toBool();
     AppLogging::writeBusinessEvent(
         QStringLiteral("opc_server_started"),
@@ -213,7 +217,7 @@ void RuntimeSessionController::startOpcServerIfEnabled()
 void RuntimeSessionController::stopOpcServer()
 {
     cancelPendingOpcWrite(QStringLiteral("OPC 服务已停止，写入已取消"));
-    if (!m_opcServer || !m_opcServer->isRunning()) {
+    if (!m_opcServer) {
         return;
     }
 
@@ -250,6 +254,12 @@ void RuntimeSessionController::connectOpcServerSignals()
 void RuntimeSessionController::handleOpcRunningStateChanged(bool running)
 {
     emit opcRunningChanged(running);
+    if (running && m_opcServer && m_opcServer->statusSnapshot().extras.value("asyncOperations").toBool()) {
+        const auto status = m_opcServer->statusSnapshot();
+        AppLogging::writeBusinessEvent("opc_server_started", QtInfoMsg, {}, "opc",
+            status.extras.value("degraded").toBool() ? "degraded" : "operational");
+        emit logMessage(QStringLiteral("OPC 服务已就绪"));
+    }
     if (!running) {
         cancelPendingOpcWrite(QStringLiteral("OPC 服务已停止，写入已取消"));
     }

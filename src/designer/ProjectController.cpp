@@ -4,6 +4,7 @@
  */
 
 #include "ProjectController.h"
+#include "common/ProjectMutationGuard.h"
 #include "ProjectConfigValidation.h"
 using namespace ProjectConfigValidation;
 #include "DslScriptEditor.h"
@@ -202,6 +203,21 @@ bool ProjectController::setMainScriptFile(const QString& scriptFile)
     return true;
 }
 
+QString ProjectController::currentMainScriptFile() const
+{
+    return m_runtimeConfig.mainScriptPath.isEmpty() ? QString()
+            : QDir(m_currentProject).absoluteFilePath(m_runtimeConfig.mainScriptPath);
+}
+
+QStringList ProjectController::projectScriptFiles() const
+{
+    QStringList paths;
+    const QDir root(m_currentProject);
+    for (const auto& path : m_runtimeConfig.scriptFiles)
+        paths.append(root.absoluteFilePath(path));
+    return paths;
+}
+
 bool ProjectController::removeProjectPath(const QString& path, QString* errorMessage)
 {
     auto fail = [&](const QString& message) { if (errorMessage) *errorMessage = message; return false; };
@@ -211,7 +227,9 @@ bool ProjectController::removeProjectPath(const QString& path, QString* errorMes
     if (m_currentProject.isEmpty() || !PathSecurityUtils::safeProjectMutation(m_currentProject, absolute, true, &securityError))
         return fail(securityError.isEmpty() ? QStringLiteral("未打开工程") : securityError);
     const QString configPath = root.filePath(QStringLiteral("project_config.json"));
-    const bool directory = QFileInfo(absolute).isDir();
+    ProjectMutationGuard mutation;
+    if (!mutation.acquire(m_currentProject, absolute, true, &securityError)) return fail(securityError);
+    const bool directory = mutation.isDirectory();
     const auto affected = [&](const QString& configured) {
         if (configured.isEmpty()) return false;
         const QString full = QDir::cleanPath(QFileInfo(configured).isRelative() ? root.absoluteFilePath(configured) : configured);
@@ -223,7 +241,13 @@ bool ProjectController::removeProjectPath(const QString& path, QString* errorMes
     const QString previousCurrent = m_currentScriptFile;
     const QString staged = QDir(QFileInfo(absolute).absolutePath()).filePath(
             QStringLiteral(".lh-delete-%1").arg(QUuid::createUuid().toString(QUuid::WithoutBraces)));
-    if (!QDir().rename(absolute, staged)) return fail(QStringLiteral("无法暂存删除路径：%1").arg(absolute));
+    if (!mutation.renameLeaf(QFileInfo(staged).fileName())) return fail(securityError);
+    if (!mutation.lockForDeletion()) {
+        const QString lockError = securityError;
+        if (!mutation.renameLeaf(QFileInfo(absolute).fileName()))
+            return fail(QStringLiteral("删除保护失败且恢复路径失败；原内容保留在：%1").arg(staged));
+        return fail(lockError);
+    }
     if (affected(m_runtimeConfig.mainScriptPath)) {
         m_runtimeConfig.mainScriptPath.clear();
         m_runtimeConfig.dslScriptPath.clear();
@@ -255,11 +279,11 @@ bool ProjectController::removeProjectPath(const QString& path, QString* errorMes
     if (!saveProjectConfig(m_currentProject)) {
         m_runtimeConfig = previous;
         m_currentScriptFile = previousCurrent;
-        if (!QDir().rename(staged, absolute))
+        if (!mutation.renameLeaf(QFileInfo(absolute).fileName()))
             return fail(QStringLiteral("配置保存失败且恢复路径失败；原内容保留在：%1").arg(staged));
         return fail(QStringLiteral("配置保存失败，删除已取消并恢复原路径"));
     }
-    const bool removed = directory ? QDir(staged).removeRecursively() : QFile::remove(staged);
+    const bool removed = mutation.removeTree();
     if (!removed) emit warningOccurred(QStringLiteral("删除清理未完成"), QStringLiteral("工程路径已删除；暂存内容仍保留在：%1").arg(staged));
     setModified(true);
     return true;
@@ -587,18 +611,19 @@ bool ProjectController::openProjectFromPath(const QString& projectPath)
     }
     const QString content = TextEncoding::decodeUtf8WithLocalFallback(scriptFile.readAll());
     scriptFile.close();
-    loadedConfig.mainScriptPath = mainScript;
-    loadedConfig.dslScriptPath = mainScript;
+    const QString relativeMainScript = relativeProjectPath(projectRoot, mainScript);
+    loadedConfig.mainScriptPath = relativeMainScript;
+    loadedConfig.dslScriptPath = relativeMainScript;
     QStringList normalizedScripts;
     for (const QString& script : loadedConfig.scriptFiles) {
         QString normalized;
         if (!resolveProjectScript(script, &normalized)) {
             return false;
         }
-        normalizedScripts.append(normalized);
+        normalizedScripts.append(relativeProjectPath(projectRoot, normalized));
     }
-    normalizedScripts.removeAll(mainScript);
-    normalizedScripts.prepend(mainScript);
+    normalizedScripts.removeAll(relativeMainScript);
+    normalizedScripts.prepend(relativeMainScript);
     loadedConfig.scriptFiles = normalizedScripts;
 
     if (!confirmPendingChanges()) {
@@ -830,6 +855,17 @@ bool ProjectController::saveProjectConfig(const QString& projectDir)
     m_runtimeConfig.lastModified = QDateTime::currentDateTime();
 
     QString configPath = projectDir + "/project_config.json";
+    QJsonDocument doc(m_runtimeConfig.toJson());
+    const QByteArray data = doc.toJson(QJsonDocument::Indented);
+#ifdef Q_OS_WIN
+    QString mutationError;
+    ProjectMutationGuard mutation;
+    if (!mutation.acquire(projectDir, configPath, false, &mutationError) || !mutation.writeAtomically(data)) {
+        m_runtimeConfig.lastModified = previousLastModified;
+        emit logMessage(timestampedMessage(QString("无法保存项目配置文件: %1").arg(mutationError)));
+        return false;
+    }
+#else
     QSaveFile file(configPath);
 
     if (!file.open(QIODevice::WriteOnly)) {
@@ -837,8 +873,6 @@ bool ProjectController::saveProjectConfig(const QString& projectDir)
         emit logMessage(timestampedMessage(QString("无法保存项目配置文件: %1").arg(file.errorString())));
         return false;
     }
-    QJsonDocument doc(m_runtimeConfig.toJson());
-    const QByteArray data = doc.toJson(QJsonDocument::Indented);
     if (file.write(data) != data.size()) {
         const QString error = file.errorString();
         file.cancelWriting();
@@ -852,6 +886,7 @@ bool ProjectController::saveProjectConfig(const QString& projectDir)
         emit logMessage(timestampedMessage(QString("无法保存项目配置文件: %1").arg(file.errorString())));
         return false;
     }
+#endif
 
     emit logMessage(timestampedMessage("项目配置已保存"));
 
@@ -929,6 +964,10 @@ void ProjectController::syncScriptConfigFields()
     if (!m_runtimeConfig.mainScriptPath.isEmpty() && !isLhScript(m_runtimeConfig.mainScriptPath)) {
         m_runtimeConfig.mainScriptPath.clear();
     }
+
+    const QString relativeMain = relativeProjectPath(m_currentProject, m_runtimeConfig.mainScriptPath);
+    if (!relativeMain.isEmpty())
+        m_runtimeConfig.mainScriptPath = relativeMain;
 
     if (m_runtimeConfig.mainScriptPath.isEmpty() && !m_currentProject.isEmpty()) {
         const QString mainLh = QDir(m_currentProject).absoluteFilePath(QStringLiteral("main.lh"));

@@ -1,4 +1,5 @@
 #include "ProjectExplorerWidget.h"
+#include "common/ProjectMutationGuard.h"
 #include "common/PathSecurityUtils.h"
 
 #include <QFileSystemModel>
@@ -450,12 +451,7 @@ void ProjectExplorerWidget::createFileInDirectory(const QString& directoryPath)
         return;
     }
 
-    QFile file(absoluteFilePath);
-    if (!file.open(QIODevice::WriteOnly | QIODevice::Text | QIODevice::NewOnly)) {
-        QMessageBox::warning(this, tr("创建失败"),
-                             tr("无法创建文件:\n%1").arg(absoluteFilePath));
-        return;
-    }
+    QByteArray contents;
     if (QFileInfo(absoluteFilePath).suffix().compare(QStringLiteral("lh"), Qt::CaseInsensitive) == 0) {
         const QString text =
                 QString::fromUtf8(u8"// LH脚本\n")
@@ -472,25 +468,13 @@ void ProjectExplorerWidget::createFileInDirectory(const QString& directoryPath)
                 + QString::fromUtf8(u8"drv_ai_1(NumChannels := 1, InputNum := 0, DivisionNum := 4096);\n")
                 + QString::fromUtf8(u8"add_1();\n\n")
                 + QString::fromUtf8(u8"END_PROGRAM\n");
-        const QByteArray contents = text.toUtf8();
-        if (file.write(contents) != contents.size()) {
-            const QString writeError = file.errorString();
-            file.close();
-            if (!file.remove()) {
-                const QString removeError = file.errorString();
-                QMessageBox::warning(this, tr("创建失败"),
-                                     tr("无法写入文件，且无法删除残留文件:\n%1\n"
-                                        "写入错误: %2\n删除错误: %3")
-                                         .arg(absoluteFilePath, writeError, removeError));
-                return;
-            }
-            QMessageBox::warning(this, tr("创建失败"),
-                                 tr("无法写入文件:\n%1\n%2")
-                                     .arg(absoluteFilePath, writeError));
-            return;
-        }
+        contents = text.toUtf8();
     }
-    file.close();
+    ProjectMutationGuard mutation;
+    if (!mutation.acquire(m_rootPath, absoluteFilePath, false, &pathError) || !mutation.create(false, contents)) {
+        QMessageBox::warning(this, tr("创建失败"), pathError);
+        return;
+    }
 
     refreshAndReveal(absoluteFilePath);
 }
@@ -527,10 +511,9 @@ void ProjectExplorerWidget::createFolderInDirectory(const QString& directoryPath
         return;
     }
 
-    QDir dir;
-    if (!dir.mkpath(absoluteFolderPath)) {
-        QMessageBox::warning(this, tr("创建失败"),
-                             tr("无法创建文件夹:\n%1").arg(absoluteFolderPath));
+    ProjectMutationGuard mutation;
+    if (!mutation.acquire(m_rootPath, absoluteFolderPath, false, &pathError) || !mutation.create(true)) {
+        QMessageBox::warning(this, tr("创建失败"), pathError);
         return;
     }
 

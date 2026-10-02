@@ -85,6 +85,9 @@ public:
     bool step(QString* errorMessage = nullptr);
     bool runToCursor(int lineNumber, QString* errorMessage = nullptr);
     bool setBreakpoints(int firstLine, int secondLine, QString* errorMessage = nullptr);
+    bool requestDebugCommand(const QString& command, const QVector<quint16>& arguments,
+                             QObject* context, std::function<void(bool, QString)> completed,
+                             QString* errorMessage = nullptr, int budgetMs = 3000);
     bool testConnection(ControllerConnectionDiagnostic* diagnostic = nullptr,
                         QString* errorMessage = nullptr);
     bool tryBeginOperation(QString* errorMessage = nullptr);
@@ -180,6 +183,8 @@ private:
     std::atomic_bool m_asyncDownloadActive{false};
     std::atomic_bool m_asyncReadActive{false};
     std::atomic<bool> m_downloadCancelled{false};
+    std::shared_ptr<std::atomic_bool> m_debugCancelled;
+    std::atomic_bool m_disconnectPending{false};
 };
 
 #endif // CONTROLLERDEVICEBACKEND_H

@@ -506,6 +506,7 @@ private slots:
 
         QVERIFY(QMetaObject::invokeMethod(&manager, "onBackendPollTimeout", Qt::DirectConnection));
 
+        QTRY_VERIFY_WITH_TIMEOUT(!manager.history(QStringLiteral("channel.1"), 1).isEmpty(), 1000);
         const auto history = manager.history(QStringLiteral("channel.1"), 1);
         QVERIFY(!history.isEmpty());
         const auto sample = history.last();

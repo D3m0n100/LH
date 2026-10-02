@@ -835,23 +835,6 @@ QString BuildController::currentDslScriptPath(const ProjectRuntimeConfig& config
     return QString();
 }
 
-void BuildController::onCompileProcessFinished(int exitCode, QProcess::ExitStatus exitStatus)
-{
-    const bool normalExit = (exitStatus == QProcess::NormalExit);
-    onDslCompilerFinished(m_activeOperationGeneration,
-                          exitCode,
-                          normalExit,
-                          QString(),
-                          QString());
-}
-
-void BuildController::onCompileProcessError(QProcess::ProcessError error)
-{
-    Q_UNUSED(error);
-    onDslCompilerFailedToStart(m_activeOperationGeneration,
-                               QStringLiteral("编译进程启动失败或异常退出。"));
-}
-
 QString BuildController::buildOutputDirectory(BuildType type) const
 {
     const QString baseDir = QDir(m_currentProjectPath).absoluteFilePath(QStringLiteral("build_output"));

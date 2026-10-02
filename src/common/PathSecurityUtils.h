@@ -65,6 +65,16 @@ inline bool pathWithinDirectory(const QString& directory, const QString& path)
     return pathWithinRoot(directory, path);
 }
 
+inline QString canonicalExistingAncestor(QDir directory)
+{
+    while (!directory.exists()) {
+        const QDir parent = QFileInfo(directory.absolutePath()).dir();
+        if (parent.absolutePath() == directory.absolutePath()) break;
+        directory = parent;
+    }
+    return directory.canonicalPath();
+}
+
 inline bool isLinkOrReparsePoint(const QString& path)
 {
     if (QFileInfo(path).isSymLink()) return true;

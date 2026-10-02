@@ -61,3 +61,7 @@ target_include_directories(designer_module PUBLIC
 )
 
 target_include_directories(designer_module PRIVATE ${LX_PRIVATE_INCLUDE_DIRS})
+if(WIN32)
+    set_property(SOURCE ProjectController.cpp ProjectExplorerWidget.cpp APPEND
+        PROPERTY COMPILE_DEFINITIONS _WIN32_WINNT=0x0601)
+endif()

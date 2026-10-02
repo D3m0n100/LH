@@ -142,6 +142,7 @@ int main(int argc, char* argv[])
             + AppLogging::droppedMessageCount() - dropsBefore != 1000) return 13;
 
     qCritical() << "critical-must-be-visible";
+    if (!AppLogging::flush(1000)) return 22;
     if (!queueLog.open(QIODevice::ReadOnly)) return 14;
     if (!queueLog.readAll().contains("critical-must-be-visible")) return 15;
     queueLog.close();
@@ -158,6 +159,7 @@ int main(int argc, char* argv[])
     if (!QDir().mkdir(testLogPath + ".2")) return 19;
     if (!AppLogging::install()) return 20;
     qCritical() << "rotation-failure-probe";
+    AppLogging::flush();
     if (AppLogging::isAvailable()) return 21;
     AppLogging::shutdown();
     QDir().rmdir(testLogPath + ".2");

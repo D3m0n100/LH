@@ -1,6 +1,7 @@
 // 文件：src/monitor/MonitorManager.cpp
 // 监控管理器实现（性能优化版本）
 #include "MonitorManager.h"
+#include "BackendSampler.h"
 #include "core/AsyncDatabaseWorker.h"
 #include "AsyncHistoryStoreAdapter.h"
 #include "MonitorChannel.h"
@@ -211,17 +212,17 @@ MonitorManager& MonitorManager::instance()
 }
 
 MonitorManager::MonitorManager(QObject* parent)
+    : MonitorManager(std::make_shared<DataManagerHistoryStoreAdapter>(), parent) {}
+
+MonitorManager::MonitorManager(std::shared_ptr<IMonitorHistoryStore> store, QObject* parent)
     : QObject(parent)
-    , m_backendPollTimer(new QTimer(this))
+    , m_backendSampler(std::make_unique<BackendSampler>([this](const Sample& sample) { recordSample(sample); }, this))
     , m_cleanupTimer(new QTimer(this))
     , m_dataRetentionDays(DEFAULT_DATA_RETENTION_DAYS)
 {
-    m_historyStore = std::make_shared<DataManagerHistoryStoreAdapter>();
-    m_backendPollClock.start();
+    m_historyStore = std::move(store);
     setupCleanupTimer();
 
-    connect(m_backendPollTimer, &QTimer::timeout,
-            this, &MonitorManager::onBackendPollTimeout);
 
     m_dataLogger = std::make_unique<MonitorDataLogger>(this);
     m_dataLogger->setEnabled(DEFAULT_DB_LOGGING_ENABLED);
@@ -247,29 +248,13 @@ void MonitorManager::shutdown()
     m_databaseServiceStarting = false;
     stopMonitoring();
 
-    if (m_backendPointsChangedConnection) {
-        disconnect(m_backendPointsChangedConnection);
-        m_backendPointsChangedConnection = {};
-    }
-    if (m_backendConnectionStateConnection) {
-        disconnect(m_backendConnectionStateConnection);
-        m_backendConnectionStateConnection = {};
-    }
-    if (m_backendDestroyedConnection) {
-        disconnect(m_backendDestroyedConnection);
-        m_backendDestroyedConnection = {};
-    }
+    m_backendSampler->setDeviceBackend(nullptr);
     if (m_dataProcessorDestroyedConnection) {
         disconnect(m_dataProcessorDestroyedConnection);
         m_dataProcessorDestroyedConnection = {};
     }
 
-    m_backend = nullptr;
     m_dataProcessor = nullptr;
-    m_backendPointIds.clear();
-    m_pointIdToChannel.clear();
-    m_backendPointPeriodsMs.clear();
-    m_backendPointNextDueMs.clear();
 
     if (m_dataLogger) {
         m_dataLogger->shutdown();
@@ -1047,7 +1032,7 @@ bool MonitorManager::applyConfiguration(const ProjectRuntimeConfig& config)
             provider.metadata["lineNumber"] = mapping.lineNumber;
         }
 
-        if (!m_backend) {
+        if (!deviceBackend()) {
             const QString snippetId = provider.metadata.value("snippetId").toString();
             provider.sampler = makeDemoSampler(provider.id, provider.channelName,
                                                provider.unit, snippetId, provider.metadata);
@@ -1057,7 +1042,7 @@ bool MonitorManager::applyConfiguration(const ProjectRuntimeConfig& config)
         }
         candidate.providers.insert(provider.id, provider);
 
-        if (m_backend) {
+        if (deviceBackend()) {
             const int periodMs = qMax(kMinPeriodMs, provider.periodMs);
             if (!candidate.backendPointPeriodsMs.contains(provider.id)) {
                 candidate.backendPointIds.append(provider.id);
@@ -1313,18 +1298,8 @@ bool MonitorManager::applyConfiguration(const ProjectRuntimeConfig& config)
         }
     }
 
-    m_backendPointIds = candidate.backendPointIds;
-    m_pointIdToChannel = candidate.pointIdToChannel;
-    m_backendPointPeriodsMs = candidate.backendPointPeriodsMs;
-    m_backendPointNextDueMs.clear();
-    if (m_backend && !m_backendPointIds.isEmpty() && candidate.backendPollIntervalMs > 0) {
-        m_backendPollTimer->setInterval(candidate.backendPollIntervalMs);
-        qDebug() << "[MonitorManager] backend polling configured:"
-                 << m_backendPointIds.size() << "points, interval="
-                 << candidate.backendPollIntervalMs << "ms";
-    } else {
-        m_backendPollTimer->stop();
-    }
+    m_backendSampler->configure(candidate.backendPointIds, candidate.pointIdToChannel,
+        candidate.backendPointPeriodsMs, candidate.backendPollIntervalMs);
 
     QPointer<MonitorDataProcessor> proc = m_dataProcessor;
     if (proc) {

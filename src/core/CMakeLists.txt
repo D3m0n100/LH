@@ -2,12 +2,15 @@
 
 add_library(project_command_coordinator STATIC ProjectCommandCoordinator.h ProjectCommandCoordinator.cpp)
 target_link_libraries(project_command_coordinator PUBLIC Qt5::Core)
-target_include_directories(project_command_coordinator PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(project_command_coordinator PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}> $<INSTALL_INTERFACE:include/core>)
 target_compile_features(project_command_coordinator PUBLIC cxx_std_17)
 
 add_library(core_module STATIC
     AppLogging.h
     AppLogging.cpp
+    BackgroundTaskRegistry.h
+    BackgroundTaskRegistry.cpp
     DataManager.h
     DataManager.cpp
     AsyncDatabaseWorker.h
@@ -22,7 +25,7 @@ target_link_libraries(core_module
 )
 
 target_include_directories(core_module PUBLIC
-    ${CMAKE_CURRENT_SOURCE_DIR}
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}> $<INSTALL_INTERFACE:include/core>
     ${LX_PUBLIC_INCLUDE_DIRS}
 )
 

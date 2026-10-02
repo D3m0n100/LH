@@ -15,6 +15,8 @@
 #include <QSerialPortInfo>
 #include <QSpinBox>
 #include <QTextEdit>
+#include <QTextCursor>
+#include <QTextDocument>
 #include <QVBoxLayout>
 
 #include "communication/DownloadManager.h"
@@ -51,6 +53,8 @@ DownloadDockWidget::DownloadDockWidget(QWidget* parent)
 
     m_log = new QTextEdit(this);
     m_log->setReadOnly(true);
+    m_log->document()->setMaximumBlockCount(2000);
+    m_log->setToolTip(QStringLiteral("保留最近 2000 行日志；达到上限后会裁剪较早内容"));
     m_log->setPlaceholderText(QStringLiteral("下载过程日志会显示在这里"));
 
     auto* commGroup = new QGroupBox(QStringLiteral("通信参数"), this);
@@ -108,7 +112,11 @@ DownloadDockWidget::DownloadDockWidget(QWidget* parent)
 
 void DownloadDockWidget::appendLog(const QString& s)
 {
-    m_log->append(s);
+    QTextCursor cursor(m_log->document());
+    cursor.movePosition(QTextCursor::End);
+    if (!m_log->document()->isEmpty()) cursor.insertBlock();
+    cursor.insertText(s);
+    m_log->setTextCursor(cursor);
 }
 
 QVariantMap DownloadDockWidget::buildCommConfig() const

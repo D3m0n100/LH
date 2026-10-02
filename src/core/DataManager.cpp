@@ -415,6 +415,25 @@ DataManager::~DataManager()
 // 生命周期管理
 // ============================================================================
 
+bool DataManager::prepareDatabase(const QString& dbPath, const QString& legacyDbPath,
+    const std::atomic_bool* cancelled, std::function<void(QString, qint64)> progress, QString* error)
+{
+    if (cancelled && cancelled->load()) {
+        if (error) *error = QStringLiteral("数据库升级已取消");
+        return false;
+    }
+    DataManager temporary;
+    temporary.m_migrationCancelled = cancelled;
+    temporary.m_migrationProgress = std::move(progress);
+    QObject::connect(&temporary, &DataManager::databaseError, &temporary,
+        [error](const QString&, const QString& detail) { if (error) *error = detail; });
+    bool ready = false;
+    try { ready = temporary.initialize(dbPath, legacyDbPath); }
+    catch (...) { if (error) *error = QStringLiteral("数据库升级发生异常，连接已关闭且未提交事务将回滚"); }
+    temporary.shutdown();
+    return ready;
+}
+
 bool DataManager::initialize(const QString& dbPath, const QString& legacyDbPath)
 {
     if (!checkThreadOwnership()) {
@@ -422,6 +441,7 @@ bool DataManager::initialize(const QString& dbPath, const QString& legacyDbPath)
     }
 
     QString initError; // 在锁外 emit 的错误信息
+    m_migrationError.clear();
     bool migratedLegacy = false;
 
     // --- 持锁阶段：准备数据库连接 ---
@@ -500,7 +520,7 @@ bool DataManager::initialize(const QString& dbPath, const QString& legacyDbPath)
                 // 执行迁移
                 if (currentVersion < CURRENT_SCHEMA_VERSION) {
                     if (!migrateSchema(currentVersion, CURRENT_SCHEMA_VERSION)) {
-                        initError = "Schema 迁移失败";
+                        initError = m_migrationError.isEmpty() ? QStringLiteral("Schema 迁移失败") : m_migrationError;
                         LOG_ERROR(initError);
                     }
                 }
@@ -581,7 +601,7 @@ bool DataManager::migrateLegacyDatabase(const QString& legacyDbPath,
             backup.prepare(QStringLiteral("VACUUM INTO ?"));
             backup.addBindValue(stagingPath);
             snapshotOk = backup.exec();
-            if (!snapshotOk) errorText = QStringLiteral("SQLite 一致快照失败（需要 SQLite >= 3.27）: %1").arg(backup.lastError().text());
+            if (!snapshotOk) errorText = QStringLiteral("旧数据库一致快照失败（需要 SQLite >= 3.27）: %1").arg(backup.lastError().text());
             backup.finish();
             source.close();
         }
@@ -759,6 +779,12 @@ bool DataManager::migrateSchema(int fromVersion, int toVersion)
 
     // 执行各版本升级
     for (int ver = fromVersion + 1; ver <= toVersion && success; ++ver) {
+        if (m_migrationCancelled && m_migrationCancelled->load()) {
+            m_migrationError = QStringLiteral("数据库升级已取消，迁移事务已回滚");
+            success = false;
+            break;
+        }
+        if (m_migrationProgress) m_migrationProgress(QStringLiteral("升级到版本 %1").arg(ver), 0);
         LOG_INFO(QString("执行迁移到版本 %1...").arg(ver));
 
         switch (ver) {
@@ -788,6 +814,10 @@ bool DataManager::migrateSchema(int fromVersion, int toVersion)
         }
     }
 
+    if (m_migrationCancelled && m_migrationCancelled->load()) {
+        m_migrationError = QStringLiteral("数据库升级已取消，迁移事务已回滚");
+        success = false;
+    }
     // 提交或回滚事务
     if (success) {
         if (!m_db.commit()) {
@@ -886,7 +916,8 @@ bool DataManager::upgradeToVersion5()
     // 1. 迁移 runtime_data 表时间戳
     if (m_db.tables().contains(QStringLiteral("runtime_data"))) {
         QSqlQuery selectQuery(m_db);
-        if (!selectQuery.exec(QStringLiteral("SELECT id, CAST(timestamp AS TEXT) FROM runtime_data"))) {
+        // Traverse the immutable primary key, not a timestamp index changed below.
+        if (!selectQuery.exec(QStringLiteral("SELECT id, CAST(timestamp AS TEXT) FROM runtime_data ORDER BY id"))) {
             logSqlError(selectQuery, QStringLiteral("V5 迁移查询 runtime_data 表"));
             return false;
         }
@@ -897,12 +928,17 @@ bool DataManager::upgradeToVersion5()
         int processed = 0;
         int updated = 0;
         while (selectQuery.next()) {
+            if (m_migrationCancelled && m_migrationCancelled->load()) {
+                m_migrationError = QStringLiteral("数据库升级已取消，迁移事务已回滚");
+                return false;
+            }
             const qint64 id = selectQuery.value(0).toLongLong();
             const QString rawTime = selectQuery.value(1).toString();
 
             QString normalized;
             QString errorMsg;
             if (!normalizeTimestampString(rawTime, &normalized, &errorMsg)) {
+                m_migrationError = errorMsg;
                 LOG_ERROR(QStringLiteral("Schema V5 迁移失败: runtime_data 表记录 (id=%1, timestamp='%2') 校验失败: %3")
                           .arg(id).arg(rawTime).arg(errorMsg));
                 return false;
@@ -919,6 +955,7 @@ bool DataManager::upgradeToVersion5()
             }
             ++processed;
             if (processed % 10000 == 0) {
+                if (m_migrationProgress) m_migrationProgress(QStringLiteral("runtime_data"), processed);
                 LOG_INFO(QStringLiteral("runtime_data 时间迁移进度: 已处理 %1 条记录，更新 %2 条...")
                          .arg(processed).arg(updated));
             }
@@ -930,7 +967,7 @@ bool DataManager::upgradeToVersion5()
     // 2. 迁移 system_logs 表时间戳
     if (m_db.tables().contains(QStringLiteral("system_logs"))) {
         QSqlQuery selectQuery(m_db);
-        if (!selectQuery.exec(QStringLiteral("SELECT id, CAST(timestamp AS TEXT) FROM system_logs"))) {
+        if (!selectQuery.exec(QStringLiteral("SELECT id, CAST(timestamp AS TEXT) FROM system_logs ORDER BY id"))) {
             logSqlError(selectQuery, QStringLiteral("V5 迁移查询 system_logs 表"));
             return false;
         }
@@ -941,12 +978,17 @@ bool DataManager::upgradeToVersion5()
         int processed = 0;
         int updated = 0;
         while (selectQuery.next()) {
+            if (m_migrationCancelled && m_migrationCancelled->load()) {
+                m_migrationError = QStringLiteral("数据库升级已取消，迁移事务已回滚");
+                return false;
+            }
             const qint64 id = selectQuery.value(0).toLongLong();
             const QString rawTime = selectQuery.value(1).toString();
 
             QString normalized;
             QString errorMsg;
             if (!normalizeTimestampString(rawTime, &normalized, &errorMsg)) {
+                m_migrationError = errorMsg;
                 LOG_ERROR(QStringLiteral("Schema V5 迁移失败: system_logs 表记录 (id=%1, timestamp='%2') 校验失败: %3")
                           .arg(id).arg(rawTime).arg(errorMsg));
                 return false;
@@ -963,6 +1005,7 @@ bool DataManager::upgradeToVersion5()
             }
             ++processed;
             if (processed % 10000 == 0) {
+                if (m_migrationProgress) m_migrationProgress(QStringLiteral("system_logs"), processed);
                 LOG_INFO(QStringLiteral("system_logs 时间迁移进度: 已处理 %1 条记录，更新 %2 条...")
                          .arg(processed).arg(updated));
             }
@@ -1342,7 +1385,7 @@ RuntimeHistoryPage DataManager::queryHistoryPage(const QString& channel, const Q
     }
     if (!m_initialized) { unavailable.errorCode = QStringLiteral("NOT_INITIALIZED"); return unavailable; }
     QMutexLocker lock(&m_dbMutex);
-    return HistoryQuery(m_db).queryHistoryPage(channel, start, end, pageSize, cursor);
+    return Core::HistoryQuery(m_db).queryHistoryPage(channel, start, end, pageSize, cursor);
 }
 RuntimeHistoryPage DataManager::queryLatestHistoryPage(const QString& channel, int maxCount, int pageSize,
     const RuntimeHistoryCursor& cursor, const QDateTime& end)
@@ -1354,7 +1397,7 @@ RuntimeHistoryPage DataManager::queryLatestHistoryPage(const QString& channel, i
     }
     if (!m_initialized) { unavailable.errorCode = QStringLiteral("NOT_INITIALIZED"); return unavailable; }
     QMutexLocker lock(&m_dbMutex);
-    return HistoryQuery(m_db).queryLatestHistoryPage(channel, maxCount, pageSize, cursor, end);
+    return Core::HistoryQuery(m_db).queryLatestHistoryPage(channel, maxCount, pageSize, cursor, end);
 }
 RuntimeHistoryCount DataManager::countHistory(const QString& channel, const QDateTime& start,
     const QDateTime& end, qint64 maxRecordId)
@@ -1366,7 +1409,7 @@ RuntimeHistoryCount DataManager::countHistory(const QString& channel, const QDat
     }
     if (!m_initialized) { unavailable.errorCode = QStringLiteral("NOT_INITIALIZED"); return unavailable; }
     QMutexLocker lock(&m_dbMutex);
-    return HistoryQuery(m_db).countHistory(channel, start, end, maxRecordId);
+    return Core::HistoryQuery(m_db).countHistory(channel, start, end, maxRecordId);
 }
 RuntimeHistoryCount DataManager::countLatestHistory(const QString& channel, int maxCount,
     const QDateTime& end, qint64 maxRecordId)
@@ -1378,7 +1421,7 @@ RuntimeHistoryCount DataManager::countLatestHistory(const QString& channel, int 
     }
     if (!m_initialized) { unavailable.errorCode = QStringLiteral("NOT_INITIALIZED"); return unavailable; }
     QMutexLocker lock(&m_dbMutex);
-    return HistoryQuery(m_db).countLatestHistory(channel, maxCount, end, maxRecordId);
+    return Core::HistoryQuery(m_db).countLatestHistory(channel, maxCount, end, maxRecordId);
 }
 qint64 DataManager::latestRecordId()
 {

@@ -13,6 +13,7 @@
 #include <QScopedPointer>
 #include <QSettings>
 #include <QTemporaryDir>
+#include "unc_test_fixture.h"
 
 #if defined(Q_OS_UNIX)
 #include <unistd.h>
@@ -127,6 +128,43 @@ private:
     }
 
 private slots:
+    void uncProjectSaveAndDeleteRollback()
+    {
+        if (qEnvironmentVariableIsEmpty("LH_TEST_UNC_ROOT")) QSKIP("Set LH_TEST_UNC_ROOT to a writable SMB test directory");
+        UncTestDirectory temp(qEnvironmentVariable("LH_TEST_UNC_ROOT"));
+        QVERIFY2(temp.isValid(), qPrintable(temp.errorString())); QVERIFY(temp.path().startsWith("//"));
+        const QString project = createProject(temp.path(), QStringLiteral("网络工程"), QStringLiteral("PROGRAM Initial\nEND_PROGRAM\n"));
+        QVERIFY(!project.isEmpty());
+        DslScriptEditor editor;
+        ProjectController controller;
+        bindEditor(controller, editor);
+        QVERIFY(controller.openProjectFromPath(project));
+        setDirtyScript(controller, editor, QStringLiteral("PROGRAM Updated\nEND_PROGRAM\n"));
+        QVERIFY(controller.saveProject());
+        QVERIFY(readFile(QDir(project).filePath("main.lh")).contains("Updated"));
+        const QString helper = QDir(project).filePath("helper.lh");
+        QVERIFY(writeFile(helper, "PROGRAM Helper\nEND_PROGRAM\n"));
+        controller.runtimeConfig().scriptFiles.append("helper.lh");
+        controller.setModified(true);
+        QVERIFY(controller.saveProject());
+        const QString configPath = QDir(project).filePath("project_config.json");
+        const QString originalConfig = readFile(configPath);
+        QFile lockedConfig(configPath); QVERIFY(lockedConfig.open(QIODevice::ReadOnly));
+        QString error;
+        QVERIFY(!controller.removeProjectPath(helper, &error));
+        lockedConfig.close();
+        QVERIFY(!error.isEmpty());
+        QVERIFY(QFileInfo::exists(helper));
+        QCOMPARE(readFile(configPath), originalConfig);
+        QVERIFY(controller.projectScriptFiles().contains(helper));
+        QCOMPARE(QDir(project).entryList({".lh-delete-*", ".lh-write-*", ".lh-guard-*"}, QDir::AllEntries | QDir::Hidden | QDir::NoDotAndDotDot).size(), 0);
+        QVERIFY2(controller.removeProjectPath(helper, &error), qPrintable(error));
+        QVERIFY(!QFileInfo::exists(helper));
+        QVERIFY(controller.closeProject());
+        QVERIFY(controller.openProjectFromPath(project));
+        QVERIFY(!controller.projectScriptFiles().contains(helper));
+        QVERIFY(editor.currentScript().contains("Updated"));
+    }
     void deletingDirtyMainScriptHonorsCancelAndDoesNotResurrectAfterDiscard()
     {
         QTemporaryDir temp;
@@ -1057,7 +1095,7 @@ private slots:
     {
         QTemporaryDir temp;
         const QString path = createProject(temp.path(), QStringLiteral("offline"),
-                QStringLiteral("PROGRAM Main\nVAR\n x : REAL;\nEND_VAR\nx := 1.0;\nEND_PROGRAM\n"));
+                QStringLiteral("PROGRAM Main\nVAR\n x : REAL;\nEND_VAR\nEND_PROGRAM\n"));
         QVERIFY(!path.isEmpty());
         MainWindow window;
         auto* project = window.findChild<ProjectController*>();

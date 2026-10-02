@@ -237,7 +237,7 @@ private:
                     separator, Qt::KeepEmptyParts);
                 QCOMPARE(fields.size(), 8);
                 QCOMPARE(fields.at(0),
-                         record.timestamp.toString(QStringLiteral("yyyy-MM-dd hh:mm:ss.zzz")));
+                         record.timestamp.toUTC().toString(QStringLiteral("yyyy-MM-dd hh:mm:ss.zzz")));
                 QCOMPARE(fields.at(1), QString::number(record.timestamp.toMSecsSinceEpoch()));
                 QCOMPARE(fields.at(2), channel);
                 QCOMPARE(fields.at(3), displayNameFor(channel));

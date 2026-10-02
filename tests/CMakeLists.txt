@@ -1,4 +1,11 @@
 # tests/CMakeLists.txt
+if(WIN32)
+    add_executable(project_mutation_guard_test project_mutation_guard_test.cpp)
+    target_include_directories(project_mutation_guard_test PRIVATE ${CMAKE_SOURCE_DIR}/src)
+    target_link_libraries(project_mutation_guard_test PRIVATE Qt5::Core Qt5::Test)
+    target_compile_definitions(project_mutation_guard_test PRIVATE _WIN32_WINNT=0x0601)
+    add_test(NAME ProjectMutationGuardTest COMMAND project_mutation_guard_test)
+endif()
 
 add_executable(runtime_session_service_test runtime_session_service_test.cpp)
 target_link_libraries(runtime_session_service_test PRIVATE runtime_session_service Qt5::Test)
@@ -8,6 +15,10 @@ add_executable(classic_poll_plan_test classic_poll_plan_test.cpp)
 target_link_libraries(classic_poll_plan_test PRIVATE ServoValveComm Qt5::Test)
 target_include_directories(classic_poll_plan_test PRIVATE ${CMAKE_SOURCE_DIR}/src)
 add_test(NAME ClassicPollPlanTest COMMAND classic_poll_plan_test)
+add_executable(classic_opc_worker_test classic_opc_worker_test.cpp)
+target_link_libraries(classic_opc_worker_test PRIVATE ServoValveComm Qt5::Test)
+target_include_directories(classic_opc_worker_test PRIVATE ${CMAKE_SOURCE_DIR}/src)
+add_test(NAME ClassicOpcWorkerTest COMMAND classic_opc_worker_test)
 
 find_package(Python3 COMPONENTS Interpreter QUIET)
 if(Python3_Interpreter_FOUND)
@@ -59,6 +70,11 @@ target_link_libraries(app_logging_test
 )
 configure_lh_test(app_logging_test)
 register_lh_test(app_logging_test app_logging_test)
+add_executable(app_logging_overload_test app_logging_overload_test.cpp ${CMAKE_SOURCE_DIR}/src/core/AppLogging.cpp)
+target_compile_definitions(app_logging_overload_test PRIVATE LH_LOGGING_TESTING)
+target_link_libraries(app_logging_overload_test PRIVATE Qt5::Core)
+configure_lh_test(app_logging_overload_test)
+register_lh_test(AppLoggingOverloadTest app_logging_overload_test)
 
 # SnippetRepository + completion tests
 add_executable(snippet_repository_test
@@ -409,6 +425,7 @@ add_executable(diagnostic_snapshot_test
 target_link_libraries(diagnostic_snapshot_test
     Qt5::Core
     Qt5::Test
+    core_module
 )
 configure_lh_test(diagnostic_snapshot_test
     ${CMAKE_SOURCE_DIR}/src/diagnostics
@@ -454,6 +471,10 @@ add_test(NAME InstallLayoutTest
         "-DLH_INSTALL_EXECUTABLE_NAME=$<TARGET_FILE_NAME:${PROJECT_NAME}>"
         "-DLH_INSTALL_CONFIG=$<CONFIG>"
         "-DLH_ENABLE_QT_DEPLOYMENT=${LH_ENABLE_QT_DEPLOYMENT}"
+        "-DLH_PUBLIC_CONSUMER_SOURCE=${CMAKE_CURRENT_SOURCE_DIR}/public_consumer"
+        "-DLH_CONSUMER_GENERATOR=${CMAKE_GENERATOR}"
+        "-DLH_CONSUMER_COMPILER=${CMAKE_CXX_COMPILER}"
+        "-DLH_CONSUMER_QT_DIR=${Qt5_DIR}"
         -P "${CMAKE_CURRENT_SOURCE_DIR}/install_layout_test.cmake"
 )
 
@@ -479,3 +500,24 @@ configure_lh_test(designer_p1_robustness_test
     ${CMAKE_SOURCE_DIR}/src/designer
 )
 register_lh_test(DesignerP1RobustnessTest designer_p1_robustness_test)
+
+# Manual visual acceptance: render the actual widgets in both application themes.
+add_executable(full_review_regression_test full_review_regression_test.cpp)
+add_executable(database_startup_migration_test database_startup_migration_test.cpp)
+target_link_libraries(database_startup_migration_test PRIVATE core_module Qt5::Test Qt5::Sql)
+configure_lh_test(database_startup_migration_test)
+register_lh_test(DatabaseStartupMigrationTest database_startup_migration_test)
+add_executable(backend_sampler_test backend_sampler_test.cpp)
+target_link_libraries(backend_sampler_test PRIVATE monitor_sampling Qt5::Core Qt5::Test)
+configure_lh_test(backend_sampler_test)
+register_lh_test(BackendSamplerTest backend_sampler_test)
+target_link_libraries(full_review_regression_test PRIVATE designer_module monitor core_module Qt5::Test Qt5::Widgets Qt5::Network Qt5::SerialBus)
+configure_lh_test(full_review_regression_test)
+if(WIN32)
+    target_compile_definitions(full_review_regression_test PRIVATE _WIN32_WINNT=0x0601)
+endif()
+register_lh_test(FullReviewRegressionTest full_review_regression_test)
+
+add_executable(ui_style_preview ui_style_preview.cpp ${CMAKE_SOURCE_DIR}/resources/resources.qrc)
+target_link_libraries(ui_style_preview PRIVATE designer_module Qt5::Widgets Qt5::Charts)
+configure_lh_test(ui_style_preview)

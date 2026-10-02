@@ -16,6 +16,22 @@ class DiagnosticSnapshotTest : public QObject
     Q_OBJECT
 
 private slots:
+    void jsonStringsAreRedactedInActualSnapshot()
+    {
+        QTemporaryDir dir;
+        ProjectRuntimeConfig config;
+        config.commParameters["requestBody"] = QStringLiteral("{\"PASSWORD\":\"probe-secret\",\"normal\":\"visible\",\"nested\":\"{\\\"token\\\":\\\"nested-secret\\\"}\"}");
+        QString path, error;
+        QVERIFY(DiagnosticSnapshotService::exportSnapshot(dir.path(), config, false,
+            QStringLiteral("body={\"password\":\"text-secret\"}"), {}, &path, &error));
+        QFile file(path);
+        QVERIFY(file.open(QIODevice::ReadOnly));
+        const auto bytes = file.readAll();
+        QVERIFY(!bytes.contains("probe-secret"));
+        QVERIFY(!bytes.contains("nested-secret"));
+        QVERIFY(!bytes.contains("text-secret"));
+        QVERIFY(bytes.contains("visible"));
+    }
     void repeatedExportsHaveIndependentFiles()
     {
         QTemporaryDir dir;

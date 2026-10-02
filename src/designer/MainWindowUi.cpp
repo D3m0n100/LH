@@ -855,6 +855,22 @@ void MainWindow::onDockBackParameterTuning()
     }
 }
 
+QMdiSubWindow* MainWindow::addDocumentSubWindow(QWidget* widget)
+{
+    auto* sub = m_mdiArea->addSubWindow(widget);
+    // The shared action owns Ctrl+W and the save/discard decision. Qt also
+    // registers close shortcuts on each MDI system menu; keep other bindings.
+    if (auto* menu = sub->systemMenu()) {
+        for (auto* action : menu->actions()) {
+            auto shortcuts = action->shortcuts();
+            for (const auto& shortcut : m_actCloseActiveTab->shortcuts())
+                shortcuts.removeAll(shortcut);
+            action->setShortcuts(shortcuts);
+        }
+    }
+    return sub;
+}
+
 void MainWindow::createDslEditorSubWindow()
 {
     m_dslEditor = new DslScriptEditor(this);
@@ -865,7 +881,7 @@ void MainWindow::createDslEditorSubWindow()
 
     m_projectController->setDslEditor(m_dslEditor);
 
-    m_editorSubWindow = m_mdiArea->addSubWindow(m_dslEditor);
+    m_editorSubWindow = addDocumentSubWindow(m_dslEditor);
     m_editorSubWindow->setAttribute(Qt::WA_DeleteOnClose, false);
     m_editorSubWindow->installEventFilter(this);
     m_editorSubWindow->setWindowTitle("LH脚本编辑器");

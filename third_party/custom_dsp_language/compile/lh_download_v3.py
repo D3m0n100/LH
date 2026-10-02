@@ -98,6 +98,9 @@ class ModbusRTU:
 def parse_code_file(code_path):
     with open(code_path, 'rb') as f:
         raw = f.read()
+    if (b'// LH-EXECUTION-UNCONFIRMED: scalar-assignment-v1' in raw
+            or b'// LH-OFFLINE-COMPATIBILITY: legacy-constants-v1' in raw):
+        raise ValueError('赋值写回尚未通过目标固件验证，当前产物不可下载或运行。')
     print(f"[解析] 文件大小: {len(raw)} 字节")
 
     text  = raw.decode('ascii', errors='replace')
@@ -150,7 +153,11 @@ def download(code_path, port='COM5', device_addr=65):
 
     # 1. 解析
     print(f"\n[步骤1] 解析 {code_path}")
-    writes = parse_code_file(code_path)
+    try:
+        writes = parse_code_file(code_path)
+    except ValueError as exc:
+        print(f"[错误] {exc}")
+        sys.exit(1)
     if not writes:
         print("[错误] 文件解析结果为空")
         sys.exit(1)

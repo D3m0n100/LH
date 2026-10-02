@@ -25,6 +25,7 @@ if venv_site.exists():
 
 from lh_compiler.compiler import LHCompiler
 from lh_compiler.function_blocks.registry import FunctionBlockRegistry
+from lh_compiler.cli.service import compile_source
 
 
 def normalize_cli_args(argv=None):
@@ -194,7 +195,7 @@ def main(argv=None):
         compiler = LHCompiler(
             verbose=args.verbose,
             debug=args.debug,
-            grammar_path=args.grammar
+            grammar_path=args.grammar,
         )
     except Exception as e:
         print(f"错误: 无法初始化编译器: {e}")
@@ -206,13 +207,7 @@ def main(argv=None):
         output_file = args.output
         
         if args.check:
-            try:
-                with open(source_file, 'r', encoding='utf-8') as f:
-                    src = f.read()
-            except Exception as e:
-                print(f"错误: 无法读取源文件: {e}")
-                return 1
-            result = compiler.compile_string(src, None, source_file)
+            result = compile_source(compiler, source_file, check_only=True)
             if result.success:
                 print(f"✓ 语法与语义检查通过: {source_file}")
                 return 0
@@ -222,11 +217,14 @@ def main(argv=None):
                     print(f"  {error}")
                 return 1
 
-        result = compiler.compile_file(source_file, output_file)
+        result = compile_source(compiler, source_file, output_file)
         
         if result.success:
             if not args.verbose:
                 print(f"✓ 编译成功: {result.output_file}")
+            if result.compile_only:
+                from lh_compiler.backend.artifact_policy import UNCONFIRMED_EXECUTION_WARNING
+                print(f"警告: {UNCONFIRMED_EXECUTION_WARNING}")
                 
             return 0
         else:
@@ -243,14 +241,7 @@ def main(argv=None):
         if args.check:
             fail_count = 0
             for sf in input_files:
-                try:
-                    with open(sf, 'r', encoding='utf-8') as f:
-                        src = f.read()
-                except Exception as e:
-                    print(f"错误: 无法读取源文件 {sf}: {e}")
-                    fail_count += 1
-                    continue
-                r = compiler.compile_string(src, None, sf)
+                r = compile_source(compiler, sf, check_only=True)
                 if not r.success:
                     fail_count += 1
                     print(f"✗ 检查失败: {sf}")
@@ -272,6 +263,9 @@ def main(argv=None):
         print(f"\n总计: {len(results)} 个文件")
         print(f"成功: {success_count} 个")
         print(f"失败: {fail_count} 个")
+        if any(result.success and result.compile_only for result in results):
+            from lh_compiler.backend.artifact_policy import UNCONFIRMED_EXECUTION_WARNING
+            print(f"警告: {UNCONFIRMED_EXECUTION_WARNING}")
         
         if fail_count > 0:
             print("\n失败的文件:")

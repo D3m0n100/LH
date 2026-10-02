@@ -36,12 +36,14 @@ QList<ClassicReadBatch> planClassicReads(QList<ClassicPollPoint> points, int max
     return batches;
 }
 
-ClassicOpcPollWorker::ClassicOpcPollWorker()
-    : m_modbus(this), m_owner("classic-opc-" + QUuid::createUuid().toString(QUuid::WithoutBraces)) {}
+ClassicOpcPollWorker::ClassicOpcPollWorker(std::unique_ptr<ModbusInterface> transport)
+    : m_modbus(transport ? std::move(transport) : std::make_unique<ModbusInterface>()),
+      m_owner("classic-opc-" + QUuid::createUuid().toString(QUuid::WithoutBraces))
+{ m_modbus->setParent(this); }
 ClassicOpcPollWorker::~ClassicOpcPollWorker() { closeTransport(); }
 void ClassicOpcPollWorker::closeTransport()
 {
-    m_modbus.close();
+    m_modbus->close();
     Communication::releaseRtuPort(m_claimedPort, m_owner);
     m_claimedPort.clear();
     m_openConfig.clear();
@@ -66,22 +68,22 @@ void ClassicOpcPollWorker::poll(ModbusConfig config, QList<ClassicPollPoint> poi
         return;
     }
     QScopedValueRollback<bool> active(m_busy, true);
-    auto resetBudget = qScopeGuard([this] { m_modbus.setRequestBudget(-1, nullptr); });
+    auto resetBudget = qScopeGuard([this] { m_modbus->setRequestBudget(-1, nullptr); });
     QList<RuntimePointValue> values;
     QString error;
     QDeadlineTimer deadline(qMax(1, budgetMs));
     auto stopped = [&] { return (cancelled && cancelled->load()) || deadline.hasExpired(); };
-    if (stopped()) { completed({}, QStringLiteral("Classic poll cancelled"), m_modbus.isConnected()); return; }
+    if (stopped()) { completed({}, QStringLiteral("Classic poll cancelled"), m_modbus->isConnected()); return; }
     m_session = cancelled;
     config.responseTimeout = qMin(config.responseTimeout, qMax(50, budgetMs));
     if (config.toVariantMap() != m_openConfig) closeTransport();
-    if (!m_modbus.isConnected()) {
+    if (!m_modbus->isConnected()) {
         if (!Communication::tryClaimRtuPort(config.portName, m_owner)) {
             completed({}, QStringLiteral("Classic OPC RTU port is owned by another session"), false); return;
         }
         m_claimedPort = config.portName;
-        m_modbus.setRequestBudget(static_cast<int>(deadline.remainingTime()), cancelled.get());
-        if (!m_modbus.open(config)) {
+        m_modbus->setRequestBudget(static_cast<int>(deadline.remainingTime()), cancelled.get());
+        if (!m_modbus->open(config)) {
             closeTransport(); completed({}, QStringLiteral("Classic OPC Modbus open failed"), false); return;
         }
         m_openConfig = config.toVariantMap();
@@ -94,21 +96,27 @@ void ClassicOpcPollWorker::poll(ModbusConfig config, QList<ClassicPollPoint> poi
         values.append(sample);
         if (!issue.isEmpty()) error = issue;
     };
-    for (const auto& point : points) if (!point.error.isEmpty()) result(point, {}, point.error);
+    // The worker is also an API boundary: invalid callers must receive Bad
+    // samples rather than silently disappearing from the read planner.
+    for (auto& point : points) {
+        if (point.error.isEmpty() && planClassicReads({point}, maxRegisters).isEmpty())
+            point.error = QStringLiteral("Invalid Classic poll address, area, unit or width");
+        if (!point.error.isEmpty()) result(point, {}, point.error);
+    }
     for (const auto& batch : planClassicReads(points, maxRegisters)) {
         const bool bits = batch.area == "coil" || batch.area == "discrete";
         bool ok = false;
         QVector<quint16> words;
         QVector<bool> bitValues;
         if (!stopped()) {
-            m_modbus.setRequestBudget(static_cast<int>(deadline.remainingTime()), cancelled.get());
-            m_modbus.setStationAddress(batch.unit);
-            if (batch.area == "coil") ok = m_modbus.readCoils(batch.address, batch.width);
-            else if (batch.area == "discrete") ok = m_modbus.readDiscreteInputs(batch.address, batch.width);
-            else if (batch.area == "input") ok = m_modbus.readInputRegisters(batch.address, batch.width);
-            else ok = m_modbus.readHoldingRegisters(batch.address, batch.width);
-            if (bits) bitValues = batch.area == "coil" ? m_modbus.coils().value(batch.address) : m_modbus.discreteInputs().value(batch.address);
-            else words = batch.area == "input" ? m_modbus.inputRegisters().value(batch.address) : m_modbus.holdingRegisters().value(batch.address);
+            m_modbus->setRequestBudget(static_cast<int>(deadline.remainingTime()), cancelled.get());
+            m_modbus->setStationAddress(batch.unit);
+            if (batch.area == "coil") ok = m_modbus->readCoils(batch.address, batch.width);
+            else if (batch.area == "discrete") ok = m_modbus->readDiscreteInputs(batch.address, batch.width);
+            else if (batch.area == "input") ok = m_modbus->readInputRegisters(batch.address, batch.width);
+            else ok = m_modbus->readHoldingRegisters(batch.address, batch.width);
+            if (bits) bitValues = batch.area == "coil" ? m_modbus->coils().value(batch.address) : m_modbus->discreteInputs().value(batch.address);
+            else words = batch.area == "input" ? m_modbus->inputRegisters().value(batch.address) : m_modbus->holdingRegisters().value(batch.address);
             ok = ok && (bits ? bitValues.size() : words.size()) == batch.width;
         }
         for (const auto& point : batch.points) {
@@ -121,12 +129,18 @@ void ClassicOpcPollWorker::poll(ModbusConfig config, QList<ClassicPollPoint> poi
                 decoded = list.size() == 1 ? list.first() : QVariant(list);
             } else {
                 auto slice = words.mid(point.address - batch.address, point.width());
-                if (point.codec.dataType == "BOOL" && slice.size() == 1) slice[0] = (slice[0] >> point.bit) & 1;
-                if (!RuntimePointRegisterCodec::decode(point.codec, slice, &decoded, &issue) && issue.isEmpty())
+                auto codec = point.codec;
+                if (codec.dataType == "BOOL" && slice.size() == 1) {
+                    const quint16 raw = codec.byteOrder == "LittleEndian"
+                            ? quint16((slice[0] >> 8) | (slice[0] << 8)) : slice[0];
+                    slice[0] = (raw >> point.bit) & 1;
+                    codec.byteOrder = QStringLiteral("BigEndian");
+                }
+                if (!RuntimePointRegisterCodec::decode(codec, slice, &decoded, &issue) && issue.isEmpty())
                     issue = QStringLiteral("Classic point decode failed");
             }
             result(point, issue.isEmpty() ? decoded : QVariant(), issue);
         }
     }
-    completed(values, error, m_modbus.isConnected());
+    completed(values, error, m_modbus->isConnected());
 }

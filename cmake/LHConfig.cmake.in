@@ -1,0 +1,5 @@
+@PACKAGE_INIT@
+include(CMakeFindDependencyMacro)
+find_dependency(Qt5 REQUIRED COMPONENTS Core Sql Network SerialPort SerialBus)
+include("${CMAKE_CURRENT_LIST_DIR}/LHTargets.cmake")
+check_required_components(LH)

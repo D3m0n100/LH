@@ -19,15 +19,12 @@
 #include <QMap>
 #include <QDateTime>
 #include <functional>
+#include "MonitorSample.h"
 
 QT_BEGIN_NAMESPACE
 class QWidget;
 class QSaveFile;
 QT_END_NAMESPACE
-
-namespace Monitor {
-struct Sample;
-}
 
 class MonitorChartView;
 struct ProcessedChannelData;
@@ -49,7 +46,7 @@ struct ExportConfig
     int csvPrecision = 6;               ///< CSV 数值精度
     QString csvSeparator = ",";         ///< CSV 分隔符
     bool csvIncludeHeader = true;       ///< CSV 是否包含表头
-    QString timestampFormat = "yyyy-MM-dd hh:mm:ss.zzz"; ///< 时间戳格式
+    QString timestampFormat = "yyyy-MM-dd hh:mm:ss.zzz'Z'"; ///< UTC; custom formats also receive UTC
     bool includeMetadataComments = true; ///< 是否在文件头包含元数据注释
     bool alignMultiChannelByTime = true; ///< 多通道导出时是否按时间对齐
 };
@@ -107,7 +104,7 @@ struct ExportMetadata
     int totalChannels = 0;      ///< 通道总数
     int totalSamples = 0;       ///< 样本总数
     QString softwareVersion;    ///< 软件版本
-    QVariantMap customFields;   ///< 自定义扩展字段
+    QVariantMap customFields;   ///< JSON integers outside ±(2^53-1) use exact decimal strings, including nested fields
     
     ExportMetadata() 
         : exportTime(QDateTime::currentDateTime())

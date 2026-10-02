@@ -72,6 +72,8 @@ void RuntimeSessionController::setDeviceBackend(IDeviceBackend* backend)
         m_ownedControllerBackend = nullptr;
     }
     const quint64 generation = ++m_backendGeneration;
+    ++m_debugCommandGeneration;
+    setDebugCommandPending(false);
     m_backend = backend;
     if (m_backend) {
         auto* currentBackend = m_backend.data();
@@ -86,6 +88,8 @@ void RuntimeSessionController::setDeviceBackend(IDeviceBackend* backend)
                     if (m_ownedControllerBackend == currentBackend)
                         m_ownedControllerBackend = nullptr;
                     m_backend = nullptr;
+                    ++m_debugCommandGeneration;
+                    setDebugCommandPending(false);
                     const QString failure = QStringLiteral("设备后端已销毁，运行操作已取消");
                     cancelPendingOpcWrite(failure);
                     if (m_parameterController)
@@ -498,6 +502,10 @@ void RuntimeSessionController::setDownloadState(DownloadState newState)
 
 void RuntimeSessionController::handleBackendConnectionStateChanged(bool connected)
 {
+    if (!connected) {
+        ++m_debugCommandGeneration;
+        setDebugCommandPending(false);
+    }
     AppLogging::writeBusinessEvent(
         QStringLiteral("backend_connection_changed"),
         (connected ? QtInfoMsg : QtWarningMsg),

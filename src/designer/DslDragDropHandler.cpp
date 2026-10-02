@@ -124,7 +124,7 @@ DragDropResult DslDragDropHandler::handleDrop(QDropEvent* event, QPlainTextEdit*
     if (m_completionEngine) {
         FunctionSnippet snippet = m_completionEngine->snippetById(snippetId);
         if (snippet.isValid() && !snippet.canInsert()) {
-            result.errorMessage = QStringLiteral("功能块暂不可插入：%1").arg(snippet.capabilityReason());
+            result.errorMessage = QStringLiteral("当前工程不支持插入此功能块。");
             emit dropRejected(result.errorMessage);
             event->ignore();
             clearDragHighlight(editor);

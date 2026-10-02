@@ -16,11 +16,18 @@
 #include <QMessageBox>
 #include <QCommandLineParser>
 #include <QCommandLineOption>
+#include <QProgressDialog>
+#include <QEventLoop>
+#include <QThread>
+#include <atomic>
 #include "designer/MainWindow.h"
 #include "core/AppLogging.h"
 #include "core/DataManager.h"
+#include "core/BackgroundTaskRegistry.h"
+#include <cstdlib>
 #include "monitor/MonitorManager.h"
 #include "Common.h"
+#include "common/DeferredThreadCleanup.h"
 
 int main(int argc, char *argv[])
 {
@@ -92,8 +99,33 @@ int main(int argc, char *argv[])
     }
     const QString legacyDbPath = QDir::cleanPath(
         QDir(QCoreApplication::applicationDirPath()).filePath("../data/platform.db"));
-    if (!DataManager::instance().initialize(dbPath, legacyDbPath)) {
-        LOG_ERROR("数据库初始化失败！");
+    // SQL objects are created, used and closed in the startup worker; no connection crosses threads.
+    bool databaseReady = false;
+    QString databaseError;
+    std::atomic_bool migrationCancelled{false};
+    QProgressDialog databaseProgress(QStringLiteral("正在检查和升级数据库…"), QStringLiteral("取消"), 0, 0, &splash);
+    databaseProgress.setWindowModality(Qt::NonModal);
+    databaseProgress.setMinimumDuration(250);
+    QObject::connect(&databaseProgress, &QProgressDialog::canceled,
+        [&] { migrationCancelled.store(true); });
+    QEventLoop startupLoop;
+    auto* startupThread = QThread::create([&] {
+        databaseReady = DataManager::prepareDatabase(dbPath, legacyDbPath, &migrationCancelled,
+            [&](const QString& table, qint64 count) {
+                QMetaObject::invokeMethod(&databaseProgress, [&, table, count] {
+                    databaseProgress.setLabelText(QStringLiteral("正在升级数据库：%1，已处理 %2 条").arg(table).arg(count));
+                }, Qt::QueuedConnection);
+            }, &databaseError);
+    });
+    QObject::connect(startupThread, &QThread::finished, &startupLoop, &QEventLoop::quit);
+    startupThread->start();
+    startupLoop.exec();
+    startupThread->wait();
+    delete startupThread;
+    databaseProgress.close();
+    if (!databaseReady || !DataManager::instance().initialize(dbPath)) {
+        LOG_ERROR("数据库初始化失败: " + databaseError);
+        if (!migrationCancelled.load()) QMessageBox::critical(&splash, QStringLiteral("数据库升级失败"), databaseError);
         AppLogging::shutdown();
         return -1;
     }
@@ -109,6 +141,7 @@ int main(int argc, char *argv[])
     Monitor::MonitorManager::instance().startDatabaseServiceAsync(dbPath);
 
     QObject::connect(&app, &QCoreApplication::aboutToQuit, []() {
+        Core::BackgroundTaskRegistry::instance().cancelAndWait(3000);
         Monitor::MonitorManager::instance().shutdown();
         DataManager::instance().shutdown();
     });
@@ -144,6 +177,17 @@ int main(int argc, char *argv[])
         LOG_INFO("平台启动成功！");
 
         exitCode = app.exec();
+        if (!Core::BackgroundTaskRegistry::instance().cancelAndWait(0)) {
+            // An uninterruptible OS file call cannot safely outlive Qt global teardown.
+            qCritical("历史导出在退出期限后仍未结束；退出进程以保护全局资源及原目标文件");
+            AppLogging::shutdown();
+            std::_Exit(2);
+        }
+    }
+    if (!DeferredThreadCleanup::drain()) {
+        qCritical("OPC 原生调用在退出期限后仍未结束；退出进程以保护 Qt 全局资源");
+        AppLogging::shutdown();
+        std::_Exit(2);
     }
     AppLogging::shutdown();
     return exitCode;

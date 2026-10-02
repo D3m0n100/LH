@@ -6,7 +6,7 @@
 
 #include "../../common/ConfigTypes.h"
 
-struct ParameterStateInfo;
+#include "../../runtime/ParameterStateTypes.h"
 
 class QLabel;
 class QTableWidget;

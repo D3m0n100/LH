@@ -29,6 +29,7 @@ struct ProjectRuntimeConfig;
 namespace Monitor {
 
 class MonitorChannel;
+class BackendSampler;
 class MonitorDataLogger;
 
 /**
@@ -46,6 +47,7 @@ class MonitorManager : public QObject
 public:
     static MonitorManager& instance();
     explicit MonitorManager(QObject* parent = nullptr);
+    MonitorManager(std::shared_ptr<IMonitorHistoryStore> store, QObject* parent);
     ~MonitorManager() override;
 
     /// 注入/配置历史数据存储后端；传入 nullptr 时清空存储后端
@@ -189,19 +191,7 @@ private:
     QPointer<MonitorDataProcessor> m_dataProcessor;
     QMetaObject::Connection m_dataProcessorDestroyedConnection;
 
-    QPointer<IDeviceBackend> m_backend;
-    QTimer* m_backendPollTimer = nullptr;
-    QStringList m_backendPointIds;
-    QHash<QString, QString> m_pointIdToChannel;
-    QHash<QString, int> m_backendPointPeriodsMs;
-    QHash<QString, qint64> m_backendPointNextDueMs;
-    QElapsedTimer m_backendPollClock;
-    quint64 m_backendPollGeneration = 0;
-    bool m_backendPollPending = false;
-    std::shared_ptr<std::atomic_bool> m_backendPollCancelled;
-    QMetaObject::Connection m_backendPointsChangedConnection;
-    QMetaObject::Connection m_backendConnectionStateConnection;
-    QMetaObject::Connection m_backendDestroyedConnection;
+    std::unique_ptr<BackendSampler> m_backendSampler;
 
     std::unique_ptr<Core::AsyncDatabaseWorker> m_databaseWorker;
     quint64 m_databaseServiceGeneration = 0;

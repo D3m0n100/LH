@@ -30,7 +30,6 @@
 #define BUILDCONTROLLER_H
 
 #include <QObject>
-#include <QProcess>
 #include <QString>
 #include <functional>
 #include "../common/ConfigTypes.h"
@@ -137,9 +136,6 @@ private slots:
                                const QString& stdErr);
     void onDslCompilerFailedToStart(quint64 operationGeneration, const QString& errorString);
 
-    // 兼容旧版 moc/增量构建生成的槽签名
-    void onCompileProcessFinished(int exitCode, QProcess::ExitStatus exitStatus);
-    void onCompileProcessError(QProcess::ProcessError error);
 
 private:
     // ===== 内部方法 =====

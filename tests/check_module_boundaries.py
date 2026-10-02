@@ -39,6 +39,12 @@ for module, permitted in ALLOWED.items():
                     errors.append(f"{source.relative_to(ROOT)}: runtime may only use the QtCore history port")
 
 # Public headers must resolve their explicit inter-module dependencies themselves.
+for name in ("BackendSampler.h", "BackendSampler.cpp"):
+    source = SRC / "monitor" / name
+    for include in INCLUDE.findall(source.read_text(encoding="utf-8-sig")):
+        if QT_UI.search(include):
+            errors.append(f"{source.relative_to(ROOT)}: sampling port has UI dependency {include}")
+
 for header in SRC.rglob("*.h"):
     for include in INCLUDE.findall(header.read_text(encoding="utf-8-sig")):
         if re.match(r"(?:common|core|compiler|communication|designer|monitor|diagnostics)/", include):

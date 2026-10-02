@@ -92,6 +92,7 @@ private:
     QQueue<CANMessage> m_receiveBuffer;
     mutable QMutex m_receiveMutex;
     QWaitCondition m_frameAvailable;
+    bool m_receiveInterrupted = false; // Protected by m_receiveMutex; close/disconnect cancels waits.
     
     CanConfig m_config;
     

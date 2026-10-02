@@ -20,6 +20,7 @@
 #include <QMessageBox>
 #include <QBrush>
 #include <QPen>
+#include <QEvent>
 #include <QtCharts/QLegendMarker>
 #include <algorithm>
 #include <cmath>
@@ -82,14 +83,6 @@ void ChartWidget::setupControlButtons()
     m_toolbarWidget = new QWidget(this);
     m_toolbarWidget->setObjectName("ChartToolbar");
     m_toolbarWidget->setMinimumHeight(34);
-    m_toolbarWidget->setStyleSheet(
-        "#ChartToolbar {"
-        "  background-color: #f3f3f3;"
-        "  border-bottom: 1px solid #d0d7de;"
-        "  padding: 2px;"
-        "}"
-        "#ChartToolbar QLabel { color: #5f6a72; }"
-    );
 
     m_toolbarLayout = new QHBoxLayout(m_toolbarWidget);
     m_toolbarLayout->setContentsMargins(8, 4, 8, 4);
@@ -181,7 +174,36 @@ void ChartWidget::setupChart()
     QDateTime now = QDateTime::currentDateTime();
     m_axisX->setRange(now.addMSecs(-m_timeWindowMs), now);
     m_axisY->setRange(m_fixedMinY, m_fixedMaxY);
+    applyChartPalette();
     updateResponsiveLayout();
+}
+
+void ChartWidget::changeEvent(QEvent* event)
+{
+    QWidget::changeEvent(event);
+    if (event->type() == QEvent::PaletteChange || event->type() == QEvent::ApplicationPaletteChange)
+        applyChartPalette();
+}
+
+void ChartWidget::applyChartPalette()
+{
+    if (!m_chart || !m_axisX || !m_axisY) return;
+    const auto colors = palette();
+    const bool dark = colors.color(QPalette::Base).lightness() < 128;
+    const QColor grid = dark ? QColor("#34414f") : QColor("#e5e5e5");
+    const QColor axis = dark ? QColor("#607082") : QColor("#8c959f");
+    const auto text = colors.color(QPalette::Text);
+    for (auto* item : {static_cast<QAbstractAxis*>(m_axisX), static_cast<QAbstractAxis*>(m_axisY)}) {
+        item->setGridLinePen(QPen(grid)); item->setLinePen(QPen(axis));
+        item->setLabelsBrush(QBrush(text)); item->setTitleBrush(QBrush(text));
+    }
+    m_chart->setBackgroundBrush(colors.brush(QPalette::Base));
+    m_chart->setPlotAreaBackgroundBrush(colors.brush(QPalette::Base));
+    m_chart->legend()->setLabelColor(text);
+    if (m_toolbarWidget) m_toolbarWidget->setStyleSheet(QStringLiteral(
+        "#ChartToolbar { background-color: %1; border-bottom: 1px solid %2; padding: 2px; }"
+        "#ChartToolbar QLabel { color: %3; }")
+        .arg(colors.color(QPalette::Window).name(), grid.name(), text.name()));
 }
 
 // ============================================================================

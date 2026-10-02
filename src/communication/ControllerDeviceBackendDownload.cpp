@@ -2,6 +2,7 @@
 // File: src/communication/ControllerDeviceBackendDownload.cpp
 
 #include "ControllerDeviceBackend.h"
+#include "../common/CompileArtifactPolicy.h"
 #include "ModbusLimits.h"
 #include "common/ArtifactSnapshot.h"
 
@@ -161,6 +162,11 @@ bool validatePublishedProfileBinding(const QString& artifactPath,
         if (!snapshots.contains(key)) {
             QByteArray bytes;
             if (!ArtifactSnapshot::read(path, &bytes, errorMessage)) return QString();
+            if (key == ArtifactSnapshot::key(artifactPath)
+                    && CompileArtifactPolicy::containsMarker(bytes)) {
+                if (errorMessage) *errorMessage = CompileArtifactPolicy::operationUnavailableMessage();
+                return QString();
+            }
             if (totalBytes + bytes.size() > ArtifactSnapshot::MaxTotalBytes) {
                 if (errorMessage) *errorMessage = QStringLiteral("Artifact snapshot set exceeds 64 MiB");
                 return QString();
@@ -286,6 +292,8 @@ bool validatePublishedProfileBinding(const QString& artifactPath,
     }
 
     const QString actualCodeChecksum = snapshotChecksum(codeInfo.absoluteFilePath());
+    if (actualCodeChecksum.isEmpty())
+        return false;
     const QString expectedCodeChecksum = config.downloadArtifact.checksum.trimmed();
     const QString manifestCodeChecksum = manifest.value(QStringLiteral("codeChecksum"))
                                                  .toString().trimmed();

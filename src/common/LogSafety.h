@@ -3,10 +3,12 @@
 #include <QJsonArray>
 #include <QJsonObject>
 #include <QJsonValue>
+#include <QJsonDocument>
 #include <QRegularExpression>
 #include <QSet>
 
 namespace LogSafety {
+inline QJsonValue redact(const QJsonValue& value, int depth = 0);
 inline bool isSensitiveKey(const QString& key)
 {
     QString normalized;
@@ -23,10 +25,18 @@ inline bool isSensitiveKey(const QString& key)
 
 // Free text supports common key=value credentials, Bearer tokens and URI
 // passwords. Arbitrary prose cannot be classified; callers must not log secrets.
-inline QString redactText(QString text)
+inline QString redactText(QString text, int depth = 0)
 {
+    if (depth >= 32) return QStringLiteral("[REDACTED: nesting limit]");
+    const auto document = QJsonDocument::fromJson(text.toUtf8());
+    if (document.isObject() || document.isArray()) {
+        const auto safe = redact(document.isObject() ? QJsonValue(document.object())
+                                                     : QJsonValue(document.array()), depth + 1);
+        return QString::fromUtf8((safe.isObject() ? QJsonDocument(safe.toObject())
+                                                  : QJsonDocument(safe.toArray())).toJson(QJsonDocument::Compact));
+    }
     static const QRegularExpression credential(
-        QStringLiteral(R"((\b[\w-]*(?:password|passwd|pwd|secret|token|api[_-]?key|authorization|cookie|connection[_-]?string|private[_-]?key)\b\s*[:=]\s*)(?:"[^"]*"|'[^']*'|[^\s;,]+))"),
+        QStringLiteral(R"((\b[\w-]*(?:password|passwd|pwd|secret|token|api[_-]?key|authorization|cookie|connection[_-]?string|private[_-]?key|credential|credentials|passphrase)\b["']?\s*[:=]\s*)(?:"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|[^\s;,}]+))"),
         QRegularExpression::CaseInsensitiveOption);
     static const QRegularExpression bearer(QStringLiteral(R"((\bBearer\s+)[A-Za-z0-9._~+/-]+=*)"), QRegularExpression::CaseInsensitiveOption);
     static const QRegularExpression uri(QStringLiteral(R"((\b[a-z][a-z0-9+.-]*://[^\s:/@]+:)[^\s/@]+(@))"), QRegularExpression::CaseInsensitiveOption);
@@ -36,21 +46,22 @@ inline QString redactText(QString text)
     return text;
 }
 
-inline QJsonValue redact(const QJsonValue& value)
+inline QJsonValue redact(const QJsonValue& value, int depth)
 {
+    if (depth >= 32) return QStringLiteral("[REDACTED: nesting limit]");
     if (value.isObject()) {
         QJsonObject result;
         const auto object = value.toObject();
         for (auto it = object.begin(); it != object.end(); ++it)
-            result.insert(it.key(), isSensitiveKey(it.key()) ? QJsonValue(QStringLiteral("[REDACTED]")) : redact(it.value()));
+            result.insert(it.key(), isSensitiveKey(it.key()) ? QJsonValue(QStringLiteral("[REDACTED]")) : redact(it.value(), depth + 1));
         return result;
     }
     if (value.isArray()) {
         QJsonArray result;
-        for (const auto& item : value.toArray()) result.append(redact(item));
+        for (const auto& item : value.toArray()) result.append(redact(item, depth + 1));
         return result;
     }
-    return value.isString() ? QJsonValue(redactText(value.toString())) : value;
+    return value.isString() ? QJsonValue(redactText(value.toString(), depth + 1)) : value;
 }
 
 inline QString escapeLine(const QString& text)

@@ -195,6 +195,85 @@ private slots:
         manager.clearAllData();
     }
 
+    void ordinaryCompileActionGeneratesConstantsAndClearsOldDownload()
+    {
+        QTemporaryDir project;
+        QVERIFY(project.isValid());
+        const auto writeFile = [&](const QString& name, const QByteArray& bytes) {
+            QFile file(QDir(project.path()).filePath(name));
+            return file.open(QIODevice::WriteOnly) && file.write(bytes) == bytes.size();
+        };
+        QVERIFY(writeFile(QStringLiteral("main.lh"),
+                          "PROGRAM Main\nVAR\nflag : BOOL; gain : REAL;\nEND_VAR\n"
+                          "flag := TRUE; gain := 1.5;\nEND_PROGRAM\n"));
+        QVERIFY(writeFile(QStringLiteral("download_profile.json"),
+                          "{\"name\":\"scalar-test\",\"slaveId\":1,\"steps\":["
+                          "{\"type\":\"sendChunk\",\"params\":{\"dataAddress\":210,\"chunkWords\":1}}]}"));
+        QVERIFY(writeFile(QStringLiteral("project_config.json"),
+                          "{\"projectName\":\"scalar-test\",\"dslScriptPath\":\"main.lh\","
+                          "\"mainScriptPath\":\"main.lh\",\"scriptFiles\":[\"main.lh\"],"
+                          "\"downloadArtifact\":{\"metadata\":{\"downloadProfileSourcePath\":\"download_profile.json\"}}}"));
+        QScopedPointer<MainWindow> window(new MainWindow());
+        window->resize(1278, 750);
+        window->show();
+        auto* controller = window->findChild<ProjectController*>();
+        auto* build = window->findChild<BuildController*>();
+        QVERIFY(controller && build);
+        QVERIFY(controller->openProjectFromPath(project.path()));
+        controller->runtimeConfig().downloadArtifact.filePath = QStringLiteral("previous.code");
+        QSignalSpy succeeded(build, &BuildController::compileSucceeded);
+        QSignalSpy failed(build, &BuildController::compileFailed);
+        auto* action = window->findChild<QAction*>(QStringLiteral("actCompile"));
+        QVERIFY(action && action->isEnabled());
+        action->trigger();
+        QTRY_VERIFY_WITH_TIMEOUT(succeeded.count() + failed.count() > 0, 15000);
+        QVERIFY2(failed.isEmpty(), qPrintable(failed.isEmpty() ? QString() : failed.first().at(1).toString()));
+        QCOMPARE(succeeded.count(), 1);
+        const auto result = build->lastCompileResult();
+        QVERIFY(result.success);
+        QVERIFY(result.metadata.value(QStringLiteral("requiresTargetValidation")).toBool());
+        QVERIFY(!result.warnings.isEmpty()); // Internal status and execution guards remain intact.
+        QVERIFY(result.stdOut.contains(QStringLiteral("目标固件验证")));
+        QVERIFY(controller->runtimeConfig().downloadArtifact.filePath.isEmpty());
+        QVERIFY(!result.stdOut.contains(QStringLiteral("历史兼容")));
+        QVERIFY(!window->findChild<QAction*>(QStringLiteral("actCompileLegacyOffline")));
+        bool hasCode = false;
+        for (const auto& artifact : result.artifacts) {
+            QVERIFY(artifact.type != QStringLiteral("download"));
+            if (artifact.type == QStringLiteral("compiled_code")) {
+                hasCode = true;
+                QVERIFY(QFileInfo::exists(artifact.path));
+            }
+        }
+        QVERIFY(hasCode);
+        const auto saved = QJsonDocument::fromJson(readTextFile(
+                QDir(project.path()).filePath(QStringLiteral("project_config.json"))).toUtf8()).object();
+        QVERIFY(saved.value(QStringLiteral("downloadArtifact")).toObject()
+                     .value(QStringLiteral("filePath")).toString().isEmpty());
+        auto* problems = window->findChild<ProblemsPanel*>();
+        auto* output = window->findChild<QTextEdit*>(QStringLiteral("outputViewer"));
+        QVERIFY(problems && output);
+        QCOMPARE(problems->errorCount(), 0);
+        QCOMPARE(problems->warningCount(), 0);
+        QCOMPARE(problems->infoCount(), 1);
+        QCOMPARE(problems->itemAtRow(0).message, QStringLiteral("编译成功：%1")
+                 .arg(result.metadata.value(QStringLiteral("generationDirectory")).toString()));
+        QVERIFY(output->toPlainText().contains(QStringLiteral("编译成功")));
+        QVERIFY(!output->toPlainText().contains(QStringLiteral("目标固件验证")));
+        QVERIFY(!output->toPlainText().contains(QStringLiteral("当前产物不可下载或运行")));
+        const QString detailsPath = problems->diagnosticDetailsPath();
+        if (!detailsPath.isEmpty()) {
+            QFile details(detailsPath);
+            QVERIFY(details.open(QIODevice::ReadOnly));
+            QVERIFY(!QString::fromUtf8(details.readAll()).contains(QStringLiteral("目标固件验证")));
+        }
+        saveEvidence(window->grab(), QStringLiteral("ordinary_compile_success.png"));
+        // Filtering is specific to the internal notice; real warnings and errors stay visible.
+        emit build->logMessage(QStringLiteral("警告: DEMO_VISIBLE_WARNING\n错误: DEMO_VISIBLE_ERROR"));
+        QVERIFY(output->toPlainText().contains(QStringLiteral("DEMO_VISIBLE_WARNING")));
+        QVERIFY(output->toPlainText().contains(QStringLiteral("DEMO_VISIBLE_ERROR")));
+    }
+
     void applyParameterSyncsConfirmedAndCurrentValue()
     {
         QScopedPointer<MainWindow> window(new MainWindow());
@@ -614,6 +693,25 @@ private slots:
 #endif
     }
 
+    void productionBuildIgnoresFaultInjectionProperties()
+    {
+#if LH_BUILD_CONTROLLER_TESTING
+        QSKIP("此断言验证 OFF 交付构建；ON 构建执行实际故障注入回归。");
+#else
+        QTemporaryDir dir;
+        ProjectRuntimeConfig config;
+        config.projectName = QStringLiteral("production_no_test_hooks");
+        config.parameters.append(makeParameter());
+        BuildController controller;
+        controller.setProperty("lh_test_inject_publish_failure_after_first", true);
+        QSignalSpy success(&controller, &BuildController::compileSucceeded);
+        QSignalSpy failure(&controller, &BuildController::compileFailed);
+        controller.compileParameters(dir.path(), config);
+        QCOMPARE(success.count(), 1);
+        QCOMPARE(failure.count(), 0);
+#endif
+    }
+
     void cancelBeforeCompilerStartEmitsSingleTerminal()
     {
         QTemporaryDir tempDir;
@@ -941,6 +1039,7 @@ private slots:
         auto* compileBtn = mainToolBar->findChild<QToolButton*>(QStringLiteral("btnCompileDropdown"));
         QVERIFY(compileBtn != nullptr);
         QCOMPARE(compileBtn->defaultAction(), actCompile);
+        QVERIFY(!window->findChild<QAction*>(QStringLiteral("actCompileLegacyOffline")));
 
         // 修改状态时，工具栏和菜单必然同时更新（同一指针）
         actRun->setEnabled(false);
@@ -1545,12 +1644,33 @@ private slots:
         }
         QVERIFY(!expectedIds.isEmpty());
         QCOMPARE(actualIds, expectedIds);
+        auto* functionList = dslEditor->findChild<FunctionListWidget*>();
+        QVERIFY(functionList);
+        QCOMPARE(functionList->count(), expectedIds.size());
+        for (int i = 0; i < functionList->count(); ++i) {
+            const auto* item = functionList->item(i);
+            const auto snippet = dslEditor->completionEngine()->snippetById(
+                    item->data(Qt::UserRole).toString());
+            QCOMPARE(item->text(), snippet.name);
+            QVERIFY(!item->toolTip().contains(QStringLiteral("暂不可插入")));
+            QVERIFY(!item->toolTip().contains(QStringLiteral("未完成")));
+            QVERIFY(!item->toolTip().contains(QStringLiteral("待完善")));
+            if (!snippet.canInsert()) QVERIFY(!(item->flags() & Qt::ItemIsDragEnabled));
+        }
 
-        // 验证所有函数节点展示正常且均不包含“[未完善]”标记
+        // 所有函数保留原名称；名称不附加能力状态，插入限制仍有效。
         for (int i = 0; i < treeWidget->topLevelItemCount(); ++i) {
             auto* cat = treeWidget->topLevelItem(i);
             for (int j = 0; j < cat->childCount(); ++j) {
-                QVERIFY(!cat->child(j)->text(0).contains(QStringLiteral("未完善")));
+                const auto* leaf = cat->child(j);
+                const bool insertable = leaf->data(0, Qt::UserRole + 3).toBool();
+                const auto snippet = dslEditor->completionEngine()->snippetById(
+                        leaf->data(0, Qt::UserRole).toString());
+                QCOMPARE(leaf->text(0), snippet.name);
+                QVERIFY(!leaf->toolTip(0).contains(QStringLiteral("暂不可插入")));
+                QVERIFY(!leaf->toolTip(0).contains(QStringLiteral("契约状态")));
+                QVERIFY(!leaf->toolTip(0).contains(QStringLiteral("未完成")));
+                if (!insertable) QVERIFY(!(leaf->flags() & Qt::ItemIsDragEnabled));
             }
         }
 
@@ -1583,7 +1703,54 @@ private slots:
         QVERIFY(displayCatItem->childCount() > 0);
 
         // 3. 验证通过真实鼠标点击与双击插入代码（无信号伪造兜底）
-        QTreeWidgetItem* targetLeaf = displayCatItem->child(0);
+        QTreeWidgetItem* targetLeaf = nullptr;
+        QTreeWidgetItem* incompleteLeaf = nullptr;
+        for (int i = 0; i < displayCatItem->childCount(); ++i) {
+            auto* leaf = displayCatItem->child(i);
+            if (leaf->data(0, Qt::UserRole + 3).toBool()) {
+                if (!targetLeaf) targetLeaf = leaf;
+            } else if (!incompleteLeaf) {
+                incompleteLeaf = leaf;
+            }
+        }
+        QVERIFY(incompleteLeaf);
+        dslEditor->setScript(QString());
+        treeWidget->scrollToItem(incompleteLeaf);
+        QTest::qWait(50);
+        const QRect incompleteRect = treeWidget->visualItemRect(incompleteLeaf);
+        QVERIFY(incompleteRect.isValid());
+        QTest::mouseClick(treeWidget->viewport(), Qt::LeftButton, Qt::NoModifier, incompleteRect.center());
+        auto* inspector = window->findChild<InspectorPanel*>();
+        QVERIFY(inspector);
+        bool foundFunctionId = false;
+        for (auto* table : inspector->findChildren<QTableWidget*>()) {
+            for (int row = 0; row < table->rowCount(); ++row) {
+                const auto* key = table->item(row, 0);
+                if (!key) continue;
+                if (key->text() == QStringLiteral("ID")) foundFunctionId = true;
+                QVERIFY(key->text() != QStringLiteral("契约状态"));
+                QVERIFY(key->text() != QStringLiteral("待完善原因"));
+            }
+        }
+        QVERIFY(foundFunctionId);
+        saveEvidence(window->grab(), QStringLiteral("function_properties_clean.png"));
+        QTest::mouseDClick(treeWidget->viewport(), Qt::LeftButton, Qt::NoModifier, incompleteRect.center());
+        QVERIFY(dslEditor->currentScript().isEmpty());
+        // Display contracts are all incomplete. Use a supported block from the
+        // complete library for the separate insertion path.
+        filterEdit->clear();
+        QTest::qWait(30);
+        for (int i = 0; i < treeWidget->topLevelItemCount() && !targetLeaf; ++i) {
+            auto* category = treeWidget->topLevelItem(i);
+            for (int j = 0; j < category->childCount(); ++j) {
+                auto* leaf = category->child(j);
+                if (leaf->data(0, Qt::UserRole + 3).toBool()) {
+                    category->setExpanded(true);
+                    targetLeaf = leaf;
+                    break;
+                }
+            }
+        }
         QVERIFY(targetLeaf != nullptr);
         QVERIFY(!targetLeaf->isHidden());
         const QString expectedSnippetCode = targetLeaf->data(0, Qt::UserRole + 1).toString();

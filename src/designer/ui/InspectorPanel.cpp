@@ -37,9 +37,9 @@ public:
 
     void setFullText(const QString& text)
     {
-        m_fullText = text.isEmpty() ? QStringLiteral("-") : text;
-        QLabel::setText(m_fullText);
-        setToolTip(m_fullText == QStringLiteral("-") ? QString() : m_fullText);
+        const QString fullText = text.isEmpty() ? QStringLiteral("-") : text;
+        QLabel::setText(fullText);
+        setToolTip(fullText == QStringLiteral("-") ? QString() : fullText);
         update();
     }
 
@@ -49,12 +49,10 @@ protected:
         QPainter painter(this);
         painter.setFont(font());
         painter.setPen(palette().color(QPalette::WindowText));
-        const QString text = fontMetrics().elidedText(m_fullText, Qt::ElideMiddle, width());
+        const QString text = fontMetrics().elidedText(QLabel::text(), Qt::ElideMiddle, width());
         painter.drawText(rect(), alignment() | Qt::AlignVCenter, text);
     }
 
-private:
-    QString m_fullText = QStringLiteral("-");
 };
 
 QLabel* makeElidedValueLabel(QWidget* parent)
@@ -71,15 +69,6 @@ QLabel* makeCaptionLabel(const QString& text, QWidget* parent)
     lbl->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
     lbl->setStyleSheet("QLabel { color: #57606a; }");
     lbl->setFixedWidth(44);
-    return lbl;
-}
-
-QLabel* makeStateLabel(QWidget* parent)
-{
-    QLabel* lbl = new QLabel("-", parent);
-    lbl->setAlignment(Qt::AlignCenter);
-    lbl->setMinimumHeight(24);
-    lbl->setProperty("state", QVariant(QStringLiteral("neutral")));
     return lbl;
 }
 
@@ -232,11 +221,6 @@ QToolButton:pressed {
     m_projectPathValue = makeElidedValueLabel(this);
     m_currentFileValue = makeElidedValueLabel(this);
     m_workspaceValue = makeElidedValueLabel(this);
-    m_runtimeValue = makeStateLabel(this);
-    m_buildValue = makeStateLabel(this);
-    m_monitorValue = makeStateLabel(this);
-    m_downloadValue = makeStateLabel(this);
-    m_opcValue = makeStateLabel(this);
     m_variableValue = makeElidedValueLabel(this);
     m_parameterValue = makeElidedValueLabel(this);
     m_resourceValue = makeElidedValueLabel(this);
@@ -344,7 +328,8 @@ QToolButton:pressed {
     connect(m_parameterTable, &QTableWidget::itemSelectionChanged,
             this, &InspectorPanel::onParameterSelectionChanged);
 
-    m_toggleDetailColumnsButton = new QPushButton(QStringLiteral("展开明细列 ▸"), this);
+    m_toggleDetailColumnsButton = new QPushButton(QStringLiteral("展开明细列"), this);
+    m_toggleDetailColumnsButton->setIcon(style()->standardIcon(QStyle::SP_ArrowRight));
     m_toggleDetailColumnsButton->setObjectName(QStringLiteral("ToggleDetailColumnsButton"));
     m_toggleDetailColumnsButton->setCheckable(true);
     m_toggleDetailColumnsButton->setChecked(false);
@@ -394,7 +379,8 @@ void InspectorPanel::setDetailColumnsVisible(bool visible)
     if (m_toggleDetailColumnsButton) {
         m_toggleDetailColumnsButton->blockSignals(true);
         m_toggleDetailColumnsButton->setChecked(visible);
-        m_toggleDetailColumnsButton->setText(visible ? QStringLiteral("收起明细列 ◂") : QStringLiteral("展开明细列 ▸"));
+        m_toggleDetailColumnsButton->setText(visible ? QStringLiteral("收起明细列") : QStringLiteral("展开明细列"));
+        m_toggleDetailColumnsButton->setIcon(style()->standardIcon(visible ? QStyle::SP_ArrowLeft : QStyle::SP_ArrowRight));
         m_toggleDetailColumnsButton->blockSignals(false);
     }
 }
@@ -801,9 +787,11 @@ void InspectorPanel::setSelectedObject(const QString& type, const QString& name,
     }
     if (m_selectedTypeValue) {
         m_selectedTypeValue->setText(type);
+        m_selectedTypeValue->setToolTip(type);
     }
     if (m_selectedNameValue) {
         m_selectedNameValue->setText(name);
+        m_selectedNameValue->setToolTip(name);
     }
 
     if (m_selectedPropsTable) {

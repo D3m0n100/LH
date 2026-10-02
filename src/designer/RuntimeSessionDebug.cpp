@@ -12,175 +12,94 @@
 #include <QVariantMap>
 
 namespace {
-class BackendOperationGuard
-{
+class ControllerOperationGuard {
 public:
-    BackendOperationGuard(ControllerDeviceBackend* backend, QString* errorMessage)
-        : m_backend(backend)
-        , m_locked(m_backend && m_backend->tryBeginOperation(errorMessage))
-    {
-    }
-
-    ~BackendOperationGuard()
-    {
-        if (m_locked) {
-            m_backend->endOperation();
-        }
-    }
-
-    BackendOperationGuard(const BackendOperationGuard&) = delete;
-    BackendOperationGuard& operator=(const BackendOperationGuard&) = delete;
-
+    ControllerOperationGuard(ControllerDeviceBackend* backend, QString* error)
+        : m_backend(backend), m_locked(backend && backend->tryBeginOperation(error)) {}
+    ~ControllerOperationGuard() { if (m_locked) m_backend->endOperation(); }
     bool locked() const { return m_locked; }
-
 private:
-    ControllerDeviceBackend* m_backend = nullptr;
-    bool m_locked = false;
+    ControllerDeviceBackend* m_backend;
+    bool m_locked;
 };
-} // namespace
+}
+
+bool RuntimeSessionController::requestControllerDebug(const QString& command,
+        const QVector<quint16>& arguments, int pauseState, const QString& description)
+{
+    if (m_debugCommandPending) {
+        emit runtimeError(QStringLiteral("控制器调试命令正在执行，请等待完成"));
+        return false;
+    }
+    auto* backend = controllerBackend();
+    if (!backend) {
+        if (m_demoModeActive && pauseState >= 0) {
+            setPaused(pauseState == 1);
+            emit logMessage(description);
+            return true;
+        }
+        emit runtimeError(QStringLiteral("控制器后端不可用，无法执行调试命令。"));
+        return false;
+    }
+    const quint64 generation = m_backendGeneration;
+    const quint64 operation = ++m_debugCommandGeneration;
+    const QPointer<ControllerDeviceBackend> original(backend);
+    QString error;
+    const bool admitted = backend->requestDebugCommand(command, arguments, this,
+        [this, generation, operation, original, pauseState, description](bool ok, const QString& message) {
+            if (generation != m_backendGeneration || operation != m_debugCommandGeneration || original != controllerBackend()) return;
+            setDebugCommandPending(false);
+            if (!ok) { emit runtimeError(message); return; }
+            if (pauseState >= 0) setPaused(pauseState == 1);
+            emit logMessage(QStringLiteral("[%1] %2")
+                .arg(QDateTime::currentDateTime().toString(QStringLiteral("HH:mm:ss")), description));
+        }, &error);
+    if (!admitted) emit runtimeError(error);
+    else {
+        setDebugCommandPending(true);
+        emit logMessage(QStringLiteral("控制器调试命令处理中…"));
+    }
+    return admitted;
+}
+
+void RuntimeSessionController::setDebugCommandPending(bool pending)
+{
+    if (m_debugCommandPending == pending) return;
+    m_debugCommandPending = pending;
+    emit debugCommandPendingChanged(pending);
+}
 
 bool RuntimeSessionController::pauseController()
 {
-    auto* backend = controllerBackend();
-    if (!backend) {
-        if (m_demoModeActive) {
-            setPaused(true);
-            emit logMessage(QStringLiteral("[%1] 控制器已暂停")
-                            .arg(QDateTime::currentDateTime().toString(QStringLiteral("HH:mm:ss"))));
-            return true;
-        }
-        emit runtimeError(QStringLiteral("控制器后端不可用，无法暂停。"));
-        return false;
-    }
-
-    QString errorMessage;
-    BackendOperationGuard operation(backend, &errorMessage);
-    if (!operation.locked()) {
-        emit runtimeError(errorMessage);
-        return false;
-    }
-    if (!backend->pause(&errorMessage)) {
-        emit runtimeError(errorMessage.isEmpty() ? QStringLiteral("控制器暂停失败。") : errorMessage);
-        return false;
-    }
-
-    setPaused(true);
-    emit logMessage(QStringLiteral("[%1] 控制器已暂停")
-                    .arg(QDateTime::currentDateTime().toString(QStringLiteral("HH:mm:ss"))));
-    return true;
+    return requestControllerDebug("pause", {}, 1, QStringLiteral("控制器已暂停"));
 }
 
 bool RuntimeSessionController::resumeController()
 {
-    auto* backend = controllerBackend();
-    if (!backend) {
-        if (m_demoModeActive) {
-            setPaused(false);
-            emit logMessage(QStringLiteral("[%1] 控制器已继续运行")
-                            .arg(QDateTime::currentDateTime().toString(QStringLiteral("HH:mm:ss"))));
-            return true;
-        }
-        emit runtimeError(QStringLiteral("控制器后端不可用，无法继续。"));
-        return false;
-    }
-
-    QString errorMessage;
-    BackendOperationGuard operation(backend, &errorMessage);
-    if (!operation.locked()) {
-        emit runtimeError(errorMessage);
-        return false;
-    }
-    if (!backend->resume(&errorMessage)) {
-        emit runtimeError(errorMessage.isEmpty() ? QStringLiteral("控制器继续失败。") : errorMessage);
-        return false;
-    }
-
-    setPaused(false);
-    emit logMessage(QStringLiteral("[%1] 控制器已继续运行")
-                    .arg(QDateTime::currentDateTime().toString(QStringLiteral("HH:mm:ss"))));
-    return true;
+    return requestControllerDebug("resume", {}, 0, QStringLiteral("控制器已继续运行"));
 }
 
 bool RuntimeSessionController::stepController()
 {
-    auto* backend = controllerBackend();
-    if (!backend) {
-        if (m_demoModeActive) {
-            setPaused(true);
-            emit logMessage(QStringLiteral("[%1] 控制器单步执行")
-                            .arg(QDateTime::currentDateTime().toString(QStringLiteral("HH:mm:ss"))));
-            return true;
-        }
-        emit runtimeError(QStringLiteral("控制器后端不可用，无法单步。"));
-        return false;
-    }
-
-    QString errorMessage;
-    BackendOperationGuard operation(backend, &errorMessage);
-    if (!operation.locked()) {
-        emit runtimeError(errorMessage);
-        return false;
-    }
-    if (!backend->step(&errorMessage)) {
-        emit runtimeError(errorMessage.isEmpty() ? QStringLiteral("控制器单步失败。") : errorMessage);
-        return false;
-    }
-
-    setPaused(true);
-    emit logMessage(QStringLiteral("[%1] 控制器单步执行")
-                    .arg(QDateTime::currentDateTime().toString(QStringLiteral("HH:mm:ss"))));
-    return true;
+    return requestControllerDebug("step", {}, 1, QStringLiteral("控制器单步执行"));
 }
 
 bool RuntimeSessionController::runControllerToCursor(int lineNumber)
 {
-    auto* backend = controllerBackend();
-    if (!backend) {
-        emit runtimeError(QStringLiteral("控制器后端不可用，无法运行到光标。"));
-        return false;
+    if (lineNumber < 0 || lineNumber > 65535) {
+        emit runtimeError(QStringLiteral("调试行号超出范围")); return false;
     }
-
-    QString errorMessage;
-    BackendOperationGuard operation(backend, &errorMessage);
-    if (!operation.locked()) {
-        emit runtimeError(errorMessage);
-        return false;
-    }
-    if (!backend->runToCursor(lineNumber, &errorMessage)) {
-        emit runtimeError(errorMessage.isEmpty() ? QStringLiteral("控制器运行到光标失败。") : errorMessage);
-        return false;
-    }
-
-    emit logMessage(QStringLiteral("[%1] 控制器运行到第 %2 行")
-                    .arg(QDateTime::currentDateTime().toString(QStringLiteral("HH:mm:ss")),
-                         QString::number(lineNumber)));
-    return true;
+    return requestControllerDebug("cursor", {quint16(lineNumber)}, -1,
+        QStringLiteral("控制器运行到第 %1 行").arg(lineNumber));
 }
 
 bool RuntimeSessionController::setControllerBreakpoints(int firstLine, int secondLine)
 {
-    auto* backend = controllerBackend();
-    if (!backend) {
-        emit runtimeError(QStringLiteral("控制器后端不可用，无法设置断点。"));
-        return false;
+    if (firstLine < 0 || firstLine > 65535 || secondLine < 0 || secondLine > 65535) {
+        emit runtimeError(QStringLiteral("断点行号超出范围")); return false;
     }
-
-    QString errorMessage;
-    BackendOperationGuard operation(backend, &errorMessage);
-    if (!operation.locked()) {
-        emit runtimeError(errorMessage);
-        return false;
-    }
-    if (!backend->setBreakpoints(firstLine, secondLine, &errorMessage)) {
-        emit runtimeError(errorMessage.isEmpty() ? QStringLiteral("控制器断点设置失败。") : errorMessage);
-        return false;
-    }
-
-    emit logMessage(QStringLiteral("[%1] 控制器断点已设置：%2, %3")
-                    .arg(QDateTime::currentDateTime().toString(QStringLiteral("HH:mm:ss")),
-                         QString::number(firstLine),
-                         QString::number(secondLine)));
-    return true;
+    return requestControllerDebug("breakpoints", {quint16(firstLine), quint16(secondLine)}, -1,
+        QStringLiteral("控制器断点已设置：%1, %2").arg(firstLine).arg(secondLine));
 }
 
 bool RuntimeSessionController::testControllerConnection()
@@ -199,7 +118,7 @@ bool RuntimeSessionController::testControllerConnection()
 
     ControllerConnectionDiagnostic diagnostic;
     QString errorMessage;
-    BackendOperationGuard operation(backend, &errorMessage);
+    ControllerOperationGuard operation(backend, &errorMessage);
     if (!operation.locked()) {
         emit runtimeError(errorMessage);
         return false;

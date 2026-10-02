@@ -2,6 +2,7 @@
 #define CLASSICOPCSERVER_H
 
 #include "IOpcServer.h"
+#include "OpcWriteResultState.h"
 
 #include <QHash>
 #include <QTimer>
@@ -10,12 +11,14 @@
 #include <memory>
 
 class ClassicOpcPollWorker;
+class ModbusInterface;
 
 class ClassicOpcServer : public IOpcServer
 {
     Q_OBJECT
 public:
     explicit ClassicOpcServer(QObject* parent = nullptr);
+    ClassicOpcServer(QObject* parent, std::unique_ptr<ModbusInterface> transport);
     ~ClassicOpcServer() override;
 
     bool applyConfig(const OpcServerConfig& config, QString* errorMessage = nullptr) override;
@@ -80,20 +83,11 @@ private:
     QDateTime m_lastStatusChangeTime;
     CommErrorCode m_lastErrorCode = CommErrorCode::NoError;
     QString m_lastErrorMessage;
+    OpcWriteResultState m_writeResult;
     QString m_lastWriteNodePath;
-    QString m_lastWritePointId;
     QVariant m_lastWriteValue;
-    QDateTime m_lastWriteTime;
-    bool m_lastWriteSuccess = false;
-    QString m_lastWriteMessage;
-    QDateTime m_lastSuccessfulWriteTime;
-    QDateTime m_lastFailedWriteTime;
-    QString m_lastSuccessfulWriteMessage;
-    QString m_lastFailedWriteMessage;
     int m_successfulPollCount = 0;
     int m_failedPollCount = 0;
-    int m_successfulWriteCount = 0;
-    int m_failedWriteCount = 0;
     int m_addressedPointCount = 0;
     int m_unresolvedPointCount = 0;
 };

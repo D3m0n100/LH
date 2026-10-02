@@ -12,9 +12,10 @@
 #include <initializer_list>
 #include <utility>
 
-ClassicOpcServer::ClassicOpcServer(QObject* parent)
+ClassicOpcServer::ClassicOpcServer(QObject* parent) : ClassicOpcServer(parent, {}) {}
+ClassicOpcServer::ClassicOpcServer(QObject* parent, std::unique_ptr<ModbusInterface> transport)
     : IOpcServer(parent)
-    , m_worker(new ClassicOpcPollWorker)
+    , m_worker(new ClassicOpcPollWorker(std::move(transport)))
 {
     m_worker->moveToThread(&m_ioThread);
     connect(&m_ioThread, &QThread::finished, m_worker, &QObject::deleteLater);
@@ -150,20 +151,8 @@ void ClassicOpcServer::updatePointValues(const QList<RuntimePointValue>& values)
 
 void ClassicOpcServer::recordWriteResult(const QString& pointId, bool success, const QString& message)
 {
-    m_lastWritePointId = pointId;
-    m_lastWriteSuccess = success;
-    m_lastWriteMessage = message;
-    m_lastWriteTime = QDateTime::currentDateTimeUtc();
-    m_lastStatusChangeTime = m_lastWriteTime;
-    if (success) {
-        m_lastSuccessfulWriteTime = m_lastWriteTime;
-        m_lastSuccessfulWriteMessage = message;
-        ++m_successfulWriteCount;
-    } else {
-        m_lastFailedWriteTime = m_lastWriteTime;
-        m_lastFailedWriteMessage = message;
-        ++m_failedWriteCount;
-    }
+    m_writeResult.record(pointId, success, message);
+    m_lastStatusChangeTime = m_writeResult.time;
 }
 
 BackendStatusSnapshot ClassicOpcServer::statusSnapshot() const
@@ -186,8 +175,8 @@ BackendStatusSnapshot ClassicOpcServer::statusSnapshot() const
     snapshot.extras.insert(QStringLiteral("pollInFlight"), m_pollInFlight);
     snapshot.extras.insert(QStringLiteral("successfulPollCount"), m_successfulPollCount);
     snapshot.extras.insert(QStringLiteral("failedPollCount"), m_failedPollCount);
-    snapshot.extras.insert(QStringLiteral("successfulWriteCount"), m_successfulWriteCount);
-    snapshot.extras.insert(QStringLiteral("failedWriteCount"), m_failedWriteCount);
+    snapshot.extras.insert(QStringLiteral("successfulWriteCount"), m_writeResult.successfulCount);
+    snapshot.extras.insert(QStringLiteral("failedWriteCount"), m_writeResult.failedCount);
     snapshot.extras.insert(QStringLiteral("addressedPointCount"), m_addressedPointCount);
     snapshot.extras.insert(QStringLiteral("unresolvedPointCount"), m_unresolvedPointCount);
     snapshot.extras.insert(QStringLiteral("lastPollTime"),
@@ -208,18 +197,18 @@ BackendStatusSnapshot ClassicOpcServer::statusSnapshot() const
     snapshot.extras.insert(QStringLiteral("classicServerName"), m_config.classicServerName);
     snapshot.extras.insert(QStringLiteral("exposeTagTable"), m_config.exposeTagTable);
     snapshot.extras.insert(QStringLiteral("lastWriteNodePath"), m_lastWriteNodePath);
-    snapshot.extras.insert(QStringLiteral("lastWritePointId"), m_lastWritePointId);
+    snapshot.extras.insert(QStringLiteral("lastWritePointId"), m_writeResult.pointId);
     snapshot.extras.insert(QStringLiteral("lastWriteValue"), m_lastWriteValue);
     snapshot.extras.insert(QStringLiteral("lastWriteTime"),
-                           m_lastWriteTime.isValid() ? m_lastWriteTime.toString(Qt::ISODate) : QString());
-    snapshot.extras.insert(QStringLiteral("lastWriteSuccess"), m_lastWriteSuccess);
-    snapshot.extras.insert(QStringLiteral("lastWriteMessage"), m_lastWriteMessage);
+                           m_writeResult.time.isValid() ? m_writeResult.time.toString(Qt::ISODate) : QString());
+    snapshot.extras.insert(QStringLiteral("lastWriteSuccess"), m_writeResult.success);
+    snapshot.extras.insert(QStringLiteral("lastWriteMessage"), m_writeResult.message);
     snapshot.extras.insert(QStringLiteral("lastSuccessfulWriteTime"),
-                           m_lastSuccessfulWriteTime.isValid() ? m_lastSuccessfulWriteTime.toString(Qt::ISODate) : QString());
+                           m_writeResult.successfulTime.isValid() ? m_writeResult.successfulTime.toString(Qt::ISODate) : QString());
     snapshot.extras.insert(QStringLiteral("lastFailedWriteTime"),
-                           m_lastFailedWriteTime.isValid() ? m_lastFailedWriteTime.toString(Qt::ISODate) : QString());
-    snapshot.extras.insert(QStringLiteral("lastSuccessfulWriteMessage"), m_lastSuccessfulWriteMessage);
-    snapshot.extras.insert(QStringLiteral("lastFailedWriteMessage"), m_lastFailedWriteMessage);
+                           m_writeResult.failedTime.isValid() ? m_writeResult.failedTime.toString(Qt::ISODate) : QString());
+    snapshot.extras.insert(QStringLiteral("lastSuccessfulWriteMessage"), m_writeResult.successfulMessage);
+    snapshot.extras.insert(QStringLiteral("lastFailedWriteMessage"), m_writeResult.failedMessage);
     snapshot.extras.insert(QStringLiteral("impl"), QStringLiteral("classic-modbus"));
     return snapshot;
 }
@@ -530,11 +519,11 @@ bool ClassicOpcServer::routeWriteRequest(const QString& nodePath, const QVariant
     }
 
     m_lastWriteNodePath = nodePath;
-    m_lastWritePointId = pointId;
+    m_writeResult.pointId = pointId;
     m_lastWriteValue = value;
-    m_lastWriteTime = QDateTime::currentDateTimeUtc();
-    m_lastWriteSuccess = true;
-    m_lastWriteMessage = QStringLiteral("write routed");
+    m_writeResult.time = QDateTime::currentDateTimeUtc();
+    m_writeResult.success = true;
+    m_writeResult.message = QStringLiteral("write routed");
     emit writeRequestReceived(pointId, value);
     return true;
 }

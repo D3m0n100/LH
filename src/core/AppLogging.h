@@ -6,6 +6,12 @@
 #include <QtGlobal>
 
 namespace AppLogging {
+#ifdef LH_LOGGING_TESTING
+namespace TestHooks {
+void pauseWriter(bool paused);
+bool writerWaiting();
+}
+#endif
 
 struct BusinessEvent {
     QString eventName;
@@ -24,8 +30,9 @@ bool install();
 
 // Restores the handler that was active before install() and closes the file.
 void shutdown();
-// Wait for all admitted messages to reach the sink; critical/fatal messages do this automatically.
+// The default flush budget is 1 second. A timed-out flush leaves the writer draining.
 void flush();
+bool flush(int timeoutMs);
 quint64 droppedMessageCount();
 QVariantMap overloadStatus();
 

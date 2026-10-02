@@ -71,8 +71,9 @@ public:
     void setCurrentScriptFile(const QString& scriptFile);
     bool setMainScriptFile(const QString& scriptFile);
     bool removeProjectPath(const QString& path, QString* errorMessage = nullptr);
-    QString currentMainScriptFile() const { return m_runtimeConfig.mainScriptPath; }
-    QStringList projectScriptFiles() const { return m_runtimeConfig.scriptFiles; }
+    /// 查询接口返回可直接打开的绝对路径；配置内部保留工程相对路径。
+    QString currentMainScriptFile() const;
+    QStringList projectScriptFiles() const;
     
     /// 当前是否有打开的项目
     bool hasOpenProject() const { return !m_currentProject.isEmpty(); }

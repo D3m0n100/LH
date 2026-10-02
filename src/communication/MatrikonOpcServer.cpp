@@ -604,20 +604,8 @@ void MatrikonOpcServer::updatePointValues(const QList<RuntimePointValue>& values
 
 void MatrikonOpcServer::recordWriteResult(const QString& pointId, bool success, const QString& message)
 {
-    m_lastWritePointId = pointId;
-    m_lastWriteSuccess = success;
-    m_lastWriteMessage = message;
-    m_lastWriteTime = QDateTime::currentDateTimeUtc();
-    m_lastStatusChangeTime = m_lastWriteTime;
-    if (success) {
-        m_lastSuccessfulWriteTime = m_lastWriteTime;
-        m_lastSuccessfulWriteMessage = message;
-        ++m_successfulWriteCount;
-    } else {
-        m_lastFailedWriteTime = m_lastWriteTime;
-        m_lastFailedWriteMessage = message;
-        ++m_failedWriteCount;
-    }
+    m_writeResult.record(pointId, success, message);
+    m_lastStatusChangeTime = m_writeResult.time;
 }
 
 BackendStatusSnapshot MatrikonOpcServer::statusSnapshot() const
@@ -699,6 +687,12 @@ BackendStatusSnapshot MatrikonOpcServer::statusSnapshot() const
                            m_expectedChannelVisible || m_primaryDeviceVisible || m_standardItemsVisible);
     snapshot.extras.insert(QStringLiteral("configurationProbeMessage"), m_configurationProbeMessage);
     snapshot.extras.insert(QStringLiteral("callbackCount"), m_callbackCount);
+    if (m_callbackContext) {
+        QMutexLocker lock(&m_callbackContext->mutex);
+        snapshot.extras.insert(QStringLiteral("pendingCallbackCount"), m_callbackContext->pendingCallbacks);
+        snapshot.extras.insert(QStringLiteral("pendingCallbackBytes"), m_callbackContext->pendingBytes);
+        snapshot.extras.insert(QStringLiteral("droppedCallbackCount"), QVariant::fromValue(m_callbackContext->droppedCallbacks));
+    }
     snapshot.extras.insert(QStringLiteral("lastCallbackTime"),
                            m_lastCallbackTime.isValid() ? m_lastCallbackTime.toString(Qt::ISODate) : QString());
     snapshot.extras.insert(QStringLiteral("matchedItemCount"), m_matchedItemCount);
@@ -736,21 +730,21 @@ BackendStatusSnapshot MatrikonOpcServer::statusSnapshot() const
     snapshot.extras.insert(QStringLiteral("readProbeMessage"), m_readProbeMessage);
     snapshot.extras.insert(QStringLiteral("lastStatusChangeTime"),
                            m_lastStatusChangeTime.isValid() ? m_lastStatusChangeTime.toString(Qt::ISODate) : QString());
-    snapshot.extras.insert(QStringLiteral("lastWritePointId"), m_lastWritePointId);
+    snapshot.extras.insert(QStringLiteral("lastWritePointId"), m_writeResult.pointId);
     snapshot.extras.insert(QStringLiteral("lastWriteItemId"), m_lastWriteItemId);
     snapshot.extras.insert(QStringLiteral("lastWriteValue"), m_lastWriteValue);
     snapshot.extras.insert(QStringLiteral("lastWriteTime"),
-                           m_lastWriteTime.isValid() ? m_lastWriteTime.toString(Qt::ISODate) : QString());
-    snapshot.extras.insert(QStringLiteral("lastWriteSuccess"), m_lastWriteSuccess);
-    snapshot.extras.insert(QStringLiteral("lastWriteMessage"), m_lastWriteMessage);
+                           m_writeResult.time.isValid() ? m_writeResult.time.toString(Qt::ISODate) : QString());
+    snapshot.extras.insert(QStringLiteral("lastWriteSuccess"), m_writeResult.success);
+    snapshot.extras.insert(QStringLiteral("lastWriteMessage"), m_writeResult.message);
     snapshot.extras.insert(QStringLiteral("lastSuccessfulWriteTime"),
-                           m_lastSuccessfulWriteTime.isValid() ? m_lastSuccessfulWriteTime.toString(Qt::ISODate) : QString());
+                           m_writeResult.successfulTime.isValid() ? m_writeResult.successfulTime.toString(Qt::ISODate) : QString());
     snapshot.extras.insert(QStringLiteral("lastFailedWriteTime"),
-                           m_lastFailedWriteTime.isValid() ? m_lastFailedWriteTime.toString(Qt::ISODate) : QString());
-    snapshot.extras.insert(QStringLiteral("lastSuccessfulWriteMessage"), m_lastSuccessfulWriteMessage);
-    snapshot.extras.insert(QStringLiteral("lastFailedWriteMessage"), m_lastFailedWriteMessage);
-    snapshot.extras.insert(QStringLiteral("successfulWriteCount"), m_successfulWriteCount);
-    snapshot.extras.insert(QStringLiteral("failedWriteCount"), m_failedWriteCount);
+                           m_writeResult.failedTime.isValid() ? m_writeResult.failedTime.toString(Qt::ISODate) : QString());
+    snapshot.extras.insert(QStringLiteral("lastSuccessfulWriteMessage"), m_writeResult.successfulMessage);
+    snapshot.extras.insert(QStringLiteral("lastFailedWriteMessage"), m_writeResult.failedMessage);
+    snapshot.extras.insert(QStringLiteral("successfulWriteCount"), m_writeResult.successfulCount);
+    snapshot.extras.insert(QStringLiteral("failedWriteCount"), m_writeResult.failedCount);
     snapshot.extras.insert(QStringLiteral("online"), snapshot.online);
     snapshot.extras.insert(QStringLiteral("operational"), operational);
     snapshot.extras.insert(QStringLiteral("degraded"), degraded);
@@ -1787,30 +1781,30 @@ bool MatrikonOpcServer::writeItemValue(const QString& pointId, const QVariant& v
 {
 #ifndef Q_OS_WIN
     const QString message = QStringLiteral("OPC DA write is unsupported on this platform");
-    m_lastWritePointId = pointId;
+    m_writeResult.pointId = pointId;
     m_lastWriteValue = value;
-    m_lastWriteSuccess = false;
-    m_lastWriteMessage = message;
-    m_lastWriteTime = QDateTime::currentDateTimeUtc();
-    m_lastStatusChangeTime = m_lastWriteTime;
-    m_lastFailedWriteTime = m_lastWriteTime;
-    m_lastFailedWriteMessage = message;
-    ++m_failedWriteCount;
+    m_writeResult.success = false;
+    m_writeResult.message = message;
+    m_writeResult.time = QDateTime::currentDateTimeUtc();
+    m_lastStatusChangeTime = m_writeResult.time;
+    m_writeResult.failedTime = m_writeResult.time;
+    m_writeResult.failedMessage = message;
+    ++m_writeResult.failedCount;
     if (errorMessage) {
         *errorMessage = message;
     }
     return false;
 #else
     auto recordFailure = [&](const QString& message) {
-        m_lastWritePointId = pointId;
+        m_writeResult.pointId = pointId;
         m_lastWriteValue = value;
-        m_lastWriteSuccess = false;
-        m_lastWriteMessage = message;
-        m_lastWriteTime = QDateTime::currentDateTimeUtc();
-        m_lastStatusChangeTime = m_lastWriteTime;
-        m_lastFailedWriteTime = m_lastWriteTime;
-        m_lastFailedWriteMessage = message;
-        ++m_failedWriteCount;
+        m_writeResult.success = false;
+        m_writeResult.message = message;
+        m_writeResult.time = QDateTime::currentDateTimeUtc();
+        m_lastStatusChangeTime = m_writeResult.time;
+        m_writeResult.failedTime = m_writeResult.time;
+        m_writeResult.failedMessage = message;
+        ++m_writeResult.failedCount;
         if (errorMessage) {
             *errorMessage = message;
         }
@@ -1849,26 +1843,26 @@ bool MatrikonOpcServer::writeItemValue(const QString& pointId, const QVariant& v
     }
 
     const bool ok = SUCCEEDED(hr) && SUCCEEDED(itemHr);
-    m_lastWritePointId = pointId;
+    m_writeResult.pointId = pointId;
     m_lastWriteValue = value;
-    m_lastWriteSuccess = ok;
-    m_lastWriteTime = QDateTime::currentDateTimeUtc();
-    m_lastStatusChangeTime = m_lastWriteTime;
+    m_writeResult.success = ok;
+    m_writeResult.time = QDateTime::currentDateTimeUtc();
+    m_lastStatusChangeTime = m_writeResult.time;
     if (ok) {
-        m_lastWriteMessage = QStringLiteral("OPC DA write ok");
-        m_lastSuccessfulWriteTime = m_lastWriteTime;
-        m_lastSuccessfulWriteMessage = m_lastWriteMessage;
-        ++m_successfulWriteCount;
+        m_writeResult.message = QStringLiteral("OPC DA write ok");
+        m_writeResult.successfulTime = m_writeResult.time;
+        m_writeResult.successfulMessage = m_writeResult.message;
+        ++m_writeResult.successfulCount;
         QString readbackError;
         refreshItems(&readbackError);
     } else {
-        m_lastWriteMessage = QStringLiteral("OPC DA write failed: %1 / %2")
+        m_writeResult.message = QStringLiteral("OPC DA write failed: %1 / %2")
                 .arg(hresultToString(hr), hresultToString(itemHr));
-        m_lastFailedWriteTime = m_lastWriteTime;
-        m_lastFailedWriteMessage = m_lastWriteMessage;
-        ++m_failedWriteCount;
+        m_writeResult.failedTime = m_writeResult.time;
+        m_writeResult.failedMessage = m_writeResult.message;
+        ++m_writeResult.failedCount;
         if (errorMessage) {
-            *errorMessage = m_lastWriteMessage;
+            *errorMessage = m_writeResult.message;
         }
     }
     return ok;
@@ -2008,8 +2002,33 @@ void MatrikonOpcServer::enqueueDataChange(
     if (!context) {
         return;
     }
-
-    const DataChangePayload payload = copyDataChangePayload(transactionId,
+    // Both native and test entry points hold context->mutex across this call,
+    // protecting owner lifetime. Do not lock the non-recursive mutex again.
+    // Admission occurs before copying payloads or creating queued Qt events.
+    constexpr unsigned long maxItems = 4096;
+    constexpr int maxCallbacks = 128;
+    constexpr qint64 maxBytes = 4 * 1024 * 1024;
+    qint64 bytes = qint64(count) * 256;
+#ifdef Q_OS_WIN
+    if (count <= maxItems && values) {
+        const auto* variants = static_cast<const VARIANT*>(values);
+        for (unsigned long i = 0; i < count && bytes <= maxBytes; ++i)
+            if (variants[i].vt == VT_BSTR && variants[i].bstrVal)
+                bytes += qint64(SysStringLen(variants[i].bstrVal)) * sizeof(wchar_t);
+    }
+#endif
+    {
+        if (!context->active || context->generation != generation || context->owner != this) return;
+        if (count > maxItems || bytes > maxBytes || context->pendingCallbacks >= maxCallbacks
+                || context->pendingBytes + bytes > maxBytes) {
+            ++context->droppedCallbacks;
+            return;
+        }
+        ++context->pendingCallbacks;
+        context->pendingBytes += bytes;
+    }
+    DataChangePayload payload;
+    try { payload = copyDataChangePayload(transactionId,
                                                             groupClientHandle,
                                                             masterQuality,
                                                             masterError,
@@ -2018,18 +2037,33 @@ void MatrikonOpcServer::enqueueDataChange(
                                                             values,
                                                             qualities,
                                                             timestamps,
-                                                            errors);
-    QMetaObject::invokeMethod(this,
-                              [context, generation, payload]() {
+                                                            errors); }
+    catch (...) {
+        --context->pendingCallbacks;
+        context->pendingBytes -= bytes;
+        ++context->droppedCallbacks;
+        return;
+    }
+    const bool posted = QMetaObject::invokeMethod(this,
+                              [context, generation, payload, bytes]() {
                                   QMutexLocker locker(&context->mutex);
+                                  --context->pendingCallbacks;
+                                  context->pendingBytes -= bytes;
                                   if (!context->active
                                           || context->generation != generation
                                           || !context->owner) {
                                       return;
                                   }
-                                  context->owner->applyDataChange(payload);
+                                  auto* owner = context->owner;
+                                  locker.unlock();
+                                  owner->applyDataChange(payload);
                               },
                               Qt::QueuedConnection);
+    if (!posted) {
+        --context->pendingCallbacks;
+        context->pendingBytes -= bytes;
+        ++context->droppedCallbacks;
+    }
 }
 
 void MatrikonOpcServer::applyDataChange(const DataChangePayload& payload)

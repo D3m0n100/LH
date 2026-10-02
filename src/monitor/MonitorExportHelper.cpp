@@ -30,6 +30,27 @@
 
 namespace {
 
+QVariant exactJsonIntegers(const QVariant& value)
+{
+    constexpr qlonglong limit = 9007199254740991LL;
+    if (value.type() == QVariant::LongLong) {
+        const auto number = value.toLongLong();
+        if (number < -limit || number > limit) return QString::number(number);
+    } else if (value.type() == QVariant::ULongLong) {
+        const auto number = value.toULongLong();
+        if (number > qulonglong(limit)) return QString::number(number);
+    } else if (value.type() == QVariant::Map) {
+        auto map = value.toMap();
+        for (auto it = map.begin(); it != map.end(); ++it) it.value() = exactJsonIntegers(it.value());
+        return map;
+    } else if (value.type() == QVariant::List) {
+        auto list = value.toList();
+        for (auto& item : list) item = exactJsonIntegers(item);
+        return list;
+    }
+    return value;
+}
+
 QString encodeDelimitedField(QString value,
                              const QString& separator,
                              bool protectFormula)
@@ -954,7 +975,7 @@ QByteArray MonitorExportHelper::generateCsvContent(
     
     // 写入数据行
     for (const Monitor::Sample& sample : samples) {
-        stream << field(sample.timestamp.toString(m_config.timestampFormat), false) << sep
+        stream << field(sample.timestamp.toUTC().toString(m_config.timestampFormat), false) << sep
                << field(QString::number(sample.timestamp.toMSecsSinceEpoch()), false) << sep
                << field(sample.channelName, true) << sep
                << field(sample.valueValid
@@ -1047,7 +1068,7 @@ QByteArray MonitorExportHelper::generateMultiChannelCsvContent(
         
         // 写入数据行
         for (qint64 ts : sortedTimestamps) {
-            QDateTime dt = QDateTime::fromMSecsSinceEpoch(ts);
+            QDateTime dt = QDateTime::fromMSecsSinceEpoch(ts, Qt::UTC);
             stream << field(dt.toString(m_config.timestampFormat), false) << sep
                    << field(QString::number(ts), false);
             
@@ -1086,7 +1107,7 @@ QByteArray MonitorExportHelper::generateMultiChannelCsvContent(
         for (const ExportChannelInfo& info : package.channelInfos) {
             const QList<Monitor::Sample>& samples = package.channelSamples.value(info.channelId);
             for (const Monitor::Sample& sample : samples) {
-                stream << field(sample.timestamp.toString(m_config.timestampFormat), false) << sep
+                stream << field(sample.timestamp.toUTC().toString(m_config.timestampFormat), false) << sep
                        << field(QString::number(sample.timestampMs()), false) << sep
                        << field(info.channelId, true) << sep
                        << field(info.displayName, true) << sep
@@ -1166,7 +1187,7 @@ QByteArray MonitorExportHelper::generateMultiChannelJsonContent(
     // 添加自定义字段
     for (auto it = package.metadata.customFields.constBegin();
          it != package.metadata.customFields.constEnd(); ++it) {
-        metadata[it.key()] = QJsonValue::fromVariant(it.value());
+        metadata[it.key()] = QJsonValue::fromVariant(exactJsonIntegers(it.value()));
     }
     
     root["metadata"] = metadata;
@@ -1247,7 +1268,7 @@ QByteArray MonitorExportHelper::generateTsvContent(
     
     // 写入数据行
     for (const Monitor::Sample& sample : samples) {
-        stream << field(sample.timestamp.toString(m_config.timestampFormat), false) << sep
+        stream << field(sample.timestamp.toUTC().toString(m_config.timestampFormat), false) << sep
                << field(QString::number(sample.timestampMs()), false) << sep
                << field(sample.valueValid
                                ? QString::number(sample.value, 'g', m_config.csvPrecision)
@@ -1314,7 +1335,7 @@ QByteArray MonitorExportHelper::generateMultiChannelTsvContent(
     
     // 写入数据行
     for (qint64 ts : sortedTimestamps) {
-        QDateTime dt = QDateTime::fromMSecsSinceEpoch(ts);
+        QDateTime dt = QDateTime::fromMSecsSinceEpoch(ts, Qt::UTC);
         stream << field(dt.toString(m_config.timestampFormat), false) << sep
                << field(QString::number(ts), false);
         
@@ -1528,10 +1549,19 @@ ExportResult MonitorExportHelper::exportPagedPackageToFile(
         case QVariant::Bool:
             return value.toBool() ? QByteArrayLiteral("true") : QByteArrayLiteral("false");
         case QVariant::Int:
-        case QVariant::UInt:
-        case QVariant::LongLong:
-        case QVariant::ULongLong:
             return QByteArray::number(value.toLongLong());
+        case QVariant::LongLong: {
+            const auto number = value.toLongLong();
+            return number >= -9007199254740991LL && number <= 9007199254740991LL
+                ? QByteArray::number(number) : jsonQuote(QString::number(number));
+        }
+        case QVariant::UInt:
+        case QVariant::ULongLong: {
+            const qulonglong number = value.toULongLong();
+            // Preserve exact integers beyond IEEE-754's interoperable JSON range.
+            return number <= 9007199254740991ULL ? QByteArray::number(number)
+                                                : jsonQuote(QString::number(number));
+        }
         case QVariant::Double: {
             const double number = value.toDouble();
             return std::isfinite(number)
@@ -1540,6 +1570,12 @@ ExportResult MonitorExportHelper::exportPagedPackageToFile(
         }
         case QVariant::String:
             return jsonQuote(value.toString());
+        case QVariant::Map:
+        case QVariant::List: {
+            const auto encoded = QJsonDocument(QJsonArray{QJsonValue::fromVariant(exactJsonIntegers(value))})
+                .toJson(QJsonDocument::Compact).trimmed();
+            return encoded.mid(1, encoded.size() - 2);
+        }
         default:
             return jsonQuote(value.toString());
         }
@@ -1783,7 +1819,7 @@ ExportResult MonitorExportHelper::exportPagedPackageToFile(
                     break;
                 }
 
-                QString row = field(QDateTime::fromMSecsSinceEpoch(minimumTimestamp)
+                QString row = field(QDateTime::fromMSecsSinceEpoch(minimumTimestamp, Qt::UTC)
                                         .toString(m_config.timestampFormat), false)
                             + sep + field(QString::number(minimumTimestamp), false);
                 for (ChannelState& state : states) {
@@ -1822,7 +1858,7 @@ ExportResult MonitorExportHelper::exportPagedPackageToFile(
                 const ExportChannelInfo& info = channelInfos.at(infoIndex);
                 while (ensureCurrent(state)) {
                     const Monitor::Sample sample = state.samples.at(state.index++);
-                    QString row = field(sample.timestamp.toString(m_config.timestampFormat), false)
+                QString row = field(sample.timestamp.toUTC().toString(m_config.timestampFormat), false)
                                + sep + field(QString::number(sample.timestampMs()), false)
                                + sep + field(info.channelId, true)
                                + sep + field(info.displayName, true)

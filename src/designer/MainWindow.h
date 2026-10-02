@@ -344,6 +344,7 @@ private:
     void updateToolBarForWorkspace(const QString& workspaceId);
 
     void createDslEditorSubWindow();
+    QMdiSubWindow* addDocumentSubWindow(QWidget* widget);
     void connectDslEditorSignals();
     void bindFunctionLibraryDataSource();
     

@@ -135,6 +135,7 @@ class CodeGenerator:
         self.instructions: List[Instruction] = []
         self._symbols: Dict[str, dict] = {}
         self.errors: List[str] = []
+        self.requires_target_validation = False
 
     def generate(self, program: Program) -> List[Instruction]:
         """
@@ -144,6 +145,7 @@ class CodeGenerator:
         self.memory.reset()
         self._symbols = {}
         self.errors = []
+        self.requires_target_validation = False
 
         # 1. 首先生成 _System 功能块指令 (总是在地址 0)
         self._emit_system(program)
@@ -626,7 +628,7 @@ class CodeGenerator:
         value = self._eval_expression(assign.value)
 
         if value is not None:
-            # Preserve type/range diagnostics, then reject unproven writeback.
+            # Retain type/range validation before emitting a constant block.
             self._emit_const_build(target_name, sym["type"], value, line=line)
         elif len(self.errors) > initial_errors_count:
             # 表达式求值过程中已产生具体错误（例如除零），直接返回
@@ -733,10 +735,16 @@ class CodeGenerator:
             self.errors.append(f"{line_str}不支持用于常量构建的数据类型: {data_type}")
             return
 
-        self.errors.append(
-            f"{line_str}变量 '{var_name}' 赋值写回的目标指令契约未定义，"
-            "不能用独立 ConstBuild 内存块代替变量地址写入"
-        )
+        meta = self.registry.get(fb_name)
+        if not meta or not meta.is_supported:
+            self.errors.append(f"{line_str}功能块不可用: {fb_name}")
+            return
+        address = self.memory.allocate(f"_const_{var_name}", fb_name, meta.memory_size)
+        self.instructions.append(Instruction(
+            type_id=meta.type_id, address=address, params=[param_val],
+            comment=f"{var_name} := {value} ({fb_name})",
+        ))
+        self.requires_target_validation = True
 
     def _eval_expression(self, expr: Expression) -> Any:
         """

@@ -79,6 +79,10 @@ void ControllerDebugClient::enableWorkerThread(std::function<IControllerDebugTra
     m_actorThread->start();
     QMetaObject::invokeMethod(bootstrap, [this, factory, bootstrap]() {
         m_actor = new ControllerDebugClient();
+        connect(m_actor, &ControllerDebugClient::errorOccurred, this, [this](const CommError& error) {
+            m_lastError = error;
+            emit errorOccurred(error);
+        }, Qt::QueuedConnection);
         if (factory) { m_actor->m_factoryTransport.reset(factory()); m_actor->m_transport = m_actor->m_factoryTransport.get(); m_actor->m_connectionSnapshot = m_actor->m_transport->isConnected(); }
         bootstrap->deleteLater();
     }, Qt::BlockingQueuedConnection);
@@ -95,6 +99,7 @@ void ControllerDebugClient::waitForIdle()
 }
 CommError ControllerDebugClient::lastError() const
 {
+    if (m_actor && QThread::currentThread() == thread()) return m_lastError;
     return m_actor ? dispatch([&]() { return m_actor->lastError(); }) : m_lastError;
 }
 void ControllerDebugClient::clearError()
@@ -248,6 +253,10 @@ bool ControllerDebugClient::writeRegister(ControllerSystemRegister reg, quint16 
 
 bool ControllerDebugClient::writeRegisters(ControllerSystemRegister firstReg, const QVector<quint16>& values)
 {
+    if (m_actor && QThread::currentThread() == thread()) {
+        return fail(CommErrorCode::InvalidConfig,
+                    QStringLiteral("调试写入必须通过异步命令接口提交"));
+    }
     if (m_actor) return dispatch([&]() { return m_actor->writeRegisters(firstReg, values); });
     if (!ensureTransport()) {
         return false;

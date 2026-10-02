@@ -30,6 +30,17 @@
 #include "designer/RunController.h"
 #include "monitor/MonitorManager.h"
 
+class DeferredOpcReadBackend : public VirtualDeviceBackend
+{
+public:
+    ReadCompletion pendingRead;
+    void readPointsAsync(const QStringList&, int, std::shared_ptr<std::atomic_bool>,
+                         QObject*, ReadCompletion completion) override
+    {
+        pendingRead = std::move(completion);
+    }
+};
+
 class TestOpcServer : public IOpcServer
 {
     Q_OBJECT
@@ -978,7 +989,7 @@ private slots:
         QTest::qWait(30);QCOMPARE(finished.count(),1);
     }
 
-    void downloadControllerDryRunFailureStopsBeforeWrite()
+    void downloadControllerInvalidProfileStopsBeforeWrite()
     {
         FakeRuntimeControllerTransport transport;
         ControllerDebugClient client(&transport);
@@ -1032,17 +1043,17 @@ private slots:
 
         QVERIFY(!ok);
         QCOMPARE(spy.count(), 1);
-        QVERIFY(spy.first().first().toString().contains(QStringLiteral("dry-run")));
-        bool sawDryRunDiagnostic = false;
+        QVERIFY(spy.first().first().toString().contains(QStringLiteral("dataAddress")));
+        bool sawProfileDiagnostic = false;
         for (const auto& args : diagnosticSpy) {
             const QVariantMap diagnostic = args.first().toMap();
             if (diagnostic.value(QStringLiteral("severity")).toString() == QStringLiteral("error")
-                    && diagnostic.value(QStringLiteral("stage")).toString() == QStringLiteral("dry-run")) {
-                sawDryRunDiagnostic = true;
+                    && diagnostic.value(QStringLiteral("stage")).toString() == QStringLiteral("precheck")) {
+                sawProfileDiagnostic = true;
                 break;
             }
         }
-        QVERIFY(sawDryRunDiagnostic);
+        QVERIFY(sawProfileDiagnostic);
         QCOMPARE(ctrl.downloadState(), DownloadState::PrecheckFailed);
         QCOMPARE(ctrl.state(), RuntimeSessionState::Running);
         QCOMPARE(transport.lastWriteAddress, -1);
@@ -1299,6 +1310,19 @@ private slots:
                  QStringLiteral("profiles/download_profile.json"));
         QCOMPARE(config.downloadArtifact.metadata.value(QStringLiteral("projectOwned")).toBool(), true);
         QVERIFY(!config.downloadArtifact.metadata.contains(QStringLiteral("sourceFile")));
+    }
+
+    void unverifiedExecutionCannotBeImportedAsDownload()
+    {
+        QTemporaryDir project;
+        QVERIFY(project.isValid());
+        const QString code = project.filePath("main.code");
+        QVERIFY(writeFixtureFile(code, QByteArrayLiteral(
+                "// LH-EXECUTION-UNCONFIRMED: scalar-assignment-v1\n123 123 43 1\n")));
+        ProjectRuntimeConfig config;
+        const auto report = RunController::validateDownloadArtifact(config, project.path(), code, false);
+        QVERIFY(!report.valid);
+        QVERIFY(report.errors.join(";").contains(QStringLiteral("不适用于控制器下载或运行")));
     }
 
     void staleGenerationWithoutManifestIsNotConsumed()
@@ -1781,11 +1805,14 @@ private slots:
         ctrl.setOpcServer(opc);
         ctrl.handleOpcWriteRequest(QStringLiteral("param.kp"), QVariant(3.5));
 
-        QCOMPARE(opc->m_recordCount, 1);
+        QCOMPARE(opc->m_recordCount, 0);
+        QTRY_COMPARE_WITH_TIMEOUT(opc->m_recordCount, 1, 1000);
         QVERIFY(!opc->m_lastWriteSuccess);
         QCOMPARE(opc->m_updatedValues.size(), 0);
         QCOMPARE(parameterController.parameterState(QStringLiteral("Kp")).state,
                  ParameterState::ApplyFailed);
+        QTest::qWait(30);
+        QCOMPARE(opc->m_recordCount, 1);
     }
 
     void opcWriteReadbackTimeoutDoesNotPublishGood()
@@ -1816,8 +1843,7 @@ private slots:
 
         QCOMPARE(opc->m_recordCount, 0);
         QCOMPARE(opc->m_updatedValues.size(), 0);
-        QCoreApplication::processEvents(QEventLoop::AllEvents);
-        QCOMPARE(opc->m_recordCount, 1);
+        QTRY_COMPARE_WITH_TIMEOUT(opc->m_recordCount, 1, 1000);
         QVERIFY(!opc->m_lastWriteSuccess);
         QVERIFY(opc->m_lastWriteMessage.contains(QStringLiteral("回读失败")));
         QCOMPARE(opc->m_updatedValues.size(), 0);
@@ -1838,7 +1864,7 @@ private slots:
         def.onlineEditable = true;
         parameterController.loadDefinitions({def});
 
-        VirtualDeviceBackend backend;
+        DeferredOpcReadBackend backend;
         RuntimePointDefinition point = RuntimePointConverter::fromParameter(def);
         point.access = RuntimePointAccess::ReadWrite;
         backend.loadPointDefinitions({point});
@@ -1852,21 +1878,20 @@ private slots:
 
         QCOMPARE(opc->m_recordCount, 0);
         QCOMPARE(opc->m_updatedValues.size(), 0);
+        QTRY_VERIFY_WITH_TIMEOUT(bool(backend.pendingRead), 1000);
         QCOMPARE(parameterController.parameterState(QStringLiteral("Kp")).state,
                  ParameterState::PendingReadback);
         QHash<QString, QVariant> mismatch;
         mismatch.insert(QStringLiteral("param.kp"), QVariant(999.0));
-        parameterController.onReadbackValues(mismatch);
-        QCOMPARE(opc->m_recordCount, 0);
-        QCOMPARE(opc->m_updatedValues.size(), 0);
-
-        QCoreApplication::processEvents(QEventLoop::AllEvents);
-        QCOMPARE(opc->m_recordCount, 1);
+        backend.pendingRead(true, mismatch, QString(), {}, backend.statusSnapshot());
+        QTRY_COMPARE_WITH_TIMEOUT(opc->m_recordCount, 1, 1000);
         QVERIFY(!opc->m_lastWriteSuccess);
         QVERIFY(opc->m_lastWriteMessage.contains(QStringLiteral("不匹配")));
         QCOMPARE(opc->m_updatedValues.size(), 0);
         QCOMPARE(parameterController.parameterState(QStringLiteral("Kp")).state,
                  ParameterState::Mismatch);
+        QTest::qWait(30);
+        QCOMPARE(opc->m_recordCount, 1);
     }
 
     void opcWriteReentryIsRejected()
@@ -1942,8 +1967,7 @@ private slots:
                 ctrl.stopOpcServer();
             }
             QCOMPARE(finishedSpy.count(), 0);
-            QCoreApplication::processEvents(QEventLoop::AllEvents);
-            QCOMPARE(finishedSpy.count(), 1);
+            QTRY_COMPARE_WITH_TIMEOUT(finishedSpy.count(), 1, 1000);
             QCOMPARE(finishedSpy.first().at(0).toBool(), false);
         }
     }
@@ -2094,19 +2118,19 @@ private slots:
         ctrl.setDeviceBackend(&backend);
 
         QVERIFY(ctrl.pauseController());
-        QCOMPARE(transport.lastWriteAddress, 32);
+        QTRY_COMPARE(transport.lastWriteAddress, 32);
         QCOMPARE(transport.lastWriteValues, QVector<quint16>({1}));
 
         QVERIFY(ctrl.resumeController());
+        QTRY_COMPARE(transport.lastWriteValues, QVector<quint16>({0}));
         QCOMPARE(transport.lastWriteAddress, 32);
-        QCOMPARE(transport.lastWriteValues, QVector<quint16>({0}));
 
         QVERIFY(ctrl.stepController());
-        QCOMPARE(transport.lastWriteAddress, 31);
+        QTRY_COMPARE(transport.lastWriteAddress, 31);
         QCOMPARE(transport.lastWriteValues, QVector<quint16>({1}));
 
         QVERIFY(ctrl.runControllerToCursor(77));
-        QCOMPARE(transport.lastWriteAddress, 28);
+        QTRY_COMPARE(transport.lastWriteAddress, 28);
         QCOMPARE(transport.lastWriteValues, QVector<quint16>({77}));
     }
 

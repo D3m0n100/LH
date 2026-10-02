@@ -54,14 +54,14 @@ public:
     // ========================================================================
     // Modbus Master APIs
     // ========================================================================
-    bool open(const ModbusConfig& config);
+    virtual bool open(const ModbusConfig& config);
     ModbusConfig currentConfig() const { return m_config; }
 
     // Fun3
-    bool readHoldingRegisters(int address, int count);
-    bool readInputRegisters(int address, int count);
-    bool readCoils(int address, int count);
-    bool readDiscreteInputs(int address, int count);
+    virtual bool readHoldingRegisters(int address, int count);
+    virtual bool readInputRegisters(int address, int count);
+    virtual bool readCoils(int address, int count);
+    virtual bool readDiscreteInputs(int address, int count);
 
     // Fun16 / Fun15（验收要求）
     bool writeSingleRegister(int address, quint16 value);
@@ -78,7 +78,7 @@ public:
     void setStationType(StationType type) { m_config.stationType = type; }
     StationType stationType() const { return m_config.stationType; }
 
-    void setRequestBudget(int remainingMs, const std::atomic_bool* cancelled);
+    virtual void setRequestBudget(int remainingMs, const std::atomic_bool* cancelled);
     void setResponseTimeout(int ms) { m_config.responseTimeout = ms; applyTimeoutRetry(); }
     int responseTimeout() const { return m_config.responseTimeout; }
 
@@ -89,10 +89,10 @@ public:
     void reportCommError(CommErrorCode code, const QString& message, const QString& details = QString()) { reportError(code, message, details); }
 
     // 简单缓存访问（便于上层同步读取）
-    QMap<int, QVector<quint16>> holdingRegisters() const;
-    QMap<int, QVector<quint16>> inputRegisters() const;
-    QMap<int, QVector<bool>> coils() const;
-    QMap<int, QVector<bool>> discreteInputs() const;
+    virtual QMap<int, QVector<quint16>> holdingRegisters() const;
+    virtual QMap<int, QVector<quint16>> inputRegisters() const;
+    virtual QMap<int, QVector<bool>> coils() const;
+    virtual QMap<int, QVector<bool>> discreteInputs() const;
 
 signals:
     void registerDataReceived(int address, const QVector<quint16>& values);

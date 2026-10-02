@@ -1,6 +1,7 @@
 // File: src/communication/DownloadManager.cpp
 
 #include "DownloadManager.h"
+#include "../common/CompileArtifactPolicy.h"
 
 #include "Communication.h"
 #include "ControllerBridge.h"
@@ -184,6 +185,13 @@ public slots:
             return;
         }
         const QByteArray payload = pf.readAll();
+        if (CompileArtifactPolicy::containsMarker(payload)) {
+            emit errorOccurred(DownloadManager::ErrorCode::INVALID_CONFIG,
+                               CompileArtifactPolicy::operationUnavailableMessage(),
+                               "Payload is not a controller download artifact");
+            finish();
+            return;
+        }
 
         emit statusChanged(DownloadManager::State::ConnectSerial, "Opening serial(ModbusRTU)...");
         ICommInterface* iface = Communication::createAndOpen(m_cfg.value("comm").toMap(), nullptr);

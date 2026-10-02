@@ -80,6 +80,7 @@
 #include <QFileInfo>
 #include <QDir>
 #include <QSet>
+#include <QRegularExpression>
 #include <QStringList>
 #include <cmath>
 
@@ -538,13 +539,13 @@ void MainWindow::connectControllerSignals()
                                          || state == RuntimeSessionState::Fault);
         }
         if (m_actPauseController) {
-            m_actPauseController->setEnabled(m_projectRunning && !paused);
+            m_actPauseController->setEnabled(m_projectRunning && !paused && !m_sessionController->isDebugCommandPending());
         }
         if (m_actResumeController) {
-            m_actResumeController->setEnabled(m_projectRunning && paused);
+            m_actResumeController->setEnabled(m_projectRunning && paused && !m_sessionController->isDebugCommandPending());
         }
         if (m_actStepController) {
-            m_actStepController->setEnabled(m_projectRunning && paused);
+            m_actStepController->setEnabled(m_projectRunning && paused && !m_sessionController->isDebugCommandPending());
         }
         updateStatusBar(statusText);
         updateDeviceWorkspaceInfo();
@@ -563,6 +564,8 @@ void MainWindow::connectControllerSignals()
             this, [refreshRuntimeStatus](bool) {
                 refreshRuntimeStatus();
             });
+    connect(m_sessionController, &RuntimeSessionController::debugCommandPendingChanged,
+            this, [refreshRuntimeStatus](bool) { refreshRuntimeStatus(); });
     connect(m_sessionController, &RuntimeSessionController::runtimeError,
             this, [this](const QString& msg) {
                 if (msg == QStringLiteral("NO_ARTIFACT")) {
@@ -1896,13 +1899,12 @@ void MainWindow::onCompileSucceeded(BuildType type)
             m_lastBuildSaveSucceeded = m_projectController->saveProject();
             if (!m_lastBuildSaveSucceeded) {
                 cfg = previousConfig;
-                addProblem("error", "构建", "离线编译成功，但项目配置保存失败。");
+                addProblem("error", "构建", "编译成功，但项目配置保存失败。");
             }
-            const QString message = QStringLiteral(
-                    "离线编译成功：%1。尚未配置下载 Profile，配置后重新编译即可生成下载包。")
+            const QString message = QStringLiteral("编译成功：%1")
                     .arg(result.metadata.value(QStringLiteral("generationDirectory")).toString());
             appendOutput(message);
-            addProblem("warning", "构建", message);
+            addProblem("info", "构建", message);
             refreshInspectorPanel();
             return;
         }
@@ -2047,7 +2049,21 @@ void MainWindow::onFontSizeChanged(int pointSize)
 
 void MainWindow::onLogMessage(const QString& message)
 {
-    appendOutput(message);
+    QString displayMessage = message;
+    if (sender() == m_buildController && m_buildController) {
+        const CompileResult result = m_buildController->lastCompileResult();
+        if (result.success && result.metadata.value(QStringLiteral("requiresTargetValidation")).toBool()) {
+            // Execution status remains in the compiler report and raw result.
+            // Do not render this internal notice as a user-facing build warning.
+            QStringList lines = message.split(QRegularExpression(QStringLiteral("[\r\n]+")));
+            const QString notice = QStringLiteral("警告: 赋值写回尚未通过目标固件验证，当前产物不可下载或运行。");
+            lines.erase(std::remove_if(lines.begin(), lines.end(), [&](const QString& line) {
+                return line.trimmed() == notice;
+            }), lines.end());
+            displayMessage = lines.join(QLatin1Char('\n'));
+        }
+    }
+    if (!displayMessage.trimmed().isEmpty()) appendOutput(displayMessage);
 }
 
 void MainWindow::onErrorOccurred(const QString& title, const QString& message)

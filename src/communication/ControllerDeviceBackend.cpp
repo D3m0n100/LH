@@ -42,6 +42,7 @@ ControllerDeviceBackend::ControllerDeviceBackend(QObject* parent)
 
 ControllerDeviceBackend::~ControllerDeviceBackend()
 {
+    if (m_debugCancelled) m_debugCancelled->store(true);
     cancelDownload();
     if (m_client) m_client->waitForIdle();
     disconnectBackend();
@@ -164,6 +165,10 @@ void ControllerDeviceBackend::setDebugClientForTest(ControllerDebugClient* clien
 
 bool ControllerDeviceBackend::connectBackend()
 {
+    if (m_asyncReadActive || m_asyncDownloadActive || m_disconnectPending) {
+        setFailure(CommErrorCode::DeviceBusy, QStringLiteral("控制器正在处理请求或断开连接，请等待完成"));
+        return false;
+    }
     BackendOperationGuard operation(&m_operationMutex);
     if (!operation.tryLock()) {
         const QString message = QStringLiteral("控制器后端正忙，无法连接。");
@@ -262,6 +267,33 @@ bool ControllerDeviceBackend::connectBackend()
 
 void ControllerDeviceBackend::disconnectBackend()
 {
+    if (m_debugCancelled) m_debugCancelled->store(true);
+    if (m_disconnectPending) return;
+    if (m_asyncReadActive && m_client && m_client->hasWorkerThread()
+        && QThread::currentThread() == thread()) {
+        if (m_disconnectPending.exchange(true)) return;
+        QString port;
+        bool wasClaimed, wasOnline;
+        {
+            QMutexLocker lock(&m_mutex);
+            port = m_claimedPortName;
+            wasClaimed = m_portClaimed;
+            wasOnline = m_online;
+            m_online = m_targetOnline = m_portClaimed = false;
+            m_claimedPortName.clear();
+        }
+        auto* client = m_client;
+        const auto token = m_portOwnerToken;
+        client->runAsync([this, client, port, token, wasClaimed] {
+            BackendOperationGuard operation(&m_operationMutex);
+            operation.lock();
+            client->close();
+            if (wasClaimed) Communication::releaseRtuPort(port, token);
+            m_disconnectPending = false;
+        });
+        if (wasOnline) emit connectionStateChanged(false);
+        return;
+    }
     BackendOperationGuard operation(&m_operationMutex);
     operation.lock();
 

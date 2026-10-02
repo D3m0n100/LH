@@ -36,6 +36,10 @@ from lh_compiler.frontend.ast_nodes import Program
 from lh_compiler.function_blocks.registry import FunctionBlockRegistry
 from lh_compiler.backend.codegen import CodeGenerator
 from lh_compiler.backend.emitter import CodeEmitter, CompileSupportEmitter
+from lh_compiler.backend.artifacts import artifact_paths, same_file, validate_outputs, atomic_write
+from lh_compiler.backend.artifact_policy import (
+    UNCONFIRMED_EXECUTION_MARKER, PREVIOUS_OFFLINE_MARKER, UNCONFIRMED_EXECUTION_WARNING,
+)
 
 
 class CollectingErrorListener(ErrorListener):
@@ -58,6 +62,7 @@ class CompileResult:
     instructions: List = None
     errors: List[str] = None
     output_file: Optional[str] = None
+    compile_only: bool = False
 
     def __post_init__(self):
         if self.instructions is None:
@@ -126,33 +131,18 @@ class LHCompiler:
 
         out_path = Path(output_path)
 
-        src_canon = None
-        if source_path:
-            try:
-                src_canon = Path(source_path).resolve()
-            except Exception:
-                src_canon = Path(os.path.abspath(str(source_path)))
-
         # 确定需要清理的文件集合（只清理目标产物及以其为基准的相关辅助文件，绝不递归删除目录）
-        targets_to_check: List[Path] = [out_path]
-        if out_path.suffix.lower() == '.code':
-            targets_to_check.append(out_path.with_suffix('.list'))
-            targets_to_check.append(out_path.with_suffix('.typ'))
-        elif out_path.suffix == '':
-            targets_to_check.extend([
-                out_path.with_suffix('.code'),
-                out_path.with_suffix('.list'),
-                out_path.with_suffix('.typ')
-            ])
+        paths = artifact_paths(out_path)
+        targets_to_check = [paths[key] for key in ("code", "list", "typ")]
 
         for target in targets_to_check:
-            try:
-                target_canon = target.resolve()
-            except Exception:
-                target_canon = Path(os.path.abspath(str(target)))
-
             # 安全防护：绝不删除源文件
-            if src_canon and target_canon == src_canon:
+            try:
+                if source_path and same_file(source_path, target):
+                    cleanup_errors.append(f"保护输入源文件，未清理同一文件的产物路径: {target}")
+                    continue
+            except OSError as error:
+                cleanup_errors.append(f"无法核实产物文件身份 '{target}': {error}")
                 continue
 
             if target.is_dir():
@@ -188,16 +178,13 @@ class LHCompiler:
         else:
             resolved_output = Path(output_path)
 
-        # 检查源文件与输出路径是否相同或指向同一文件别名
+        # 所有成功/失败输出都必须与输入隔离，包括硬链接别名。
         try:
-            is_same_file = source_p.resolve() == resolved_output.resolve()
-        except Exception:
-            is_same_file = os.path.abspath(str(source_p)).lower() == os.path.abspath(str(resolved_output)).lower()
-
-        if is_same_file:
+            validate_outputs(resolved_output, source_p)
+        except (OSError, ValueError) as error:
             return CompileResult(
                 success=False,
-                errors=[f"输入源文件路径与输出路径不能相同: {source_path}"]
+                errors=[str(error)] + self._cleanup_output_on_failure(str(resolved_output), str(source_p))
             )
 
         # 检查源文件
@@ -244,15 +231,13 @@ class LHCompiler:
         ast = None
         instructions = []
 
-        if source_path and output_path:
+        if output_path:
             try:
-                is_same_file = Path(source_path).resolve() == Path(output_path).resolve()
-            except Exception:
-                is_same_file = os.path.abspath(str(source_path)).lower() == os.path.abspath(str(output_path)).lower()
-            if is_same_file:
+                validate_outputs(output_path, source_path)
+            except (OSError, ValueError) as error:
                 return CompileResult(
                     success=False,
-                    errors=[f"输入源文件路径与输出路径不能相同: {source_path}"]
+                    errors=[str(error)] + self._cleanup_output_on_failure(output_path, source_path)
                 )
 
         def fail_result(step_errors: List[str], current_ast=None) -> CompileResult:
@@ -375,13 +360,16 @@ class LHCompiler:
         # 步骤5: 只有无语义错误时才输出可下载代码和 LH 附属产物
         if output_path:
             out_p = Path(output_path)
-            tmp_code_path = out_p.with_name(f"{out_p.name}.tmp.{os.getpid()}")
             try:
                 out_p.parent.mkdir(parents=True, exist_ok=True)
-
-                # 采用临时文件写入 + 原子重命名发布，避免半写或竞争
-                self.emitter.emit(instructions, str(tmp_code_path))
-                os.replace(str(tmp_code_path), str(out_p))
+                validate_outputs(output_path, source_path)
+                if self.code_generator.requires_target_validation:
+                    content = (UNCONFIRMED_EXECUTION_MARKER + "\n" + PREVIOUS_OFFLINE_MARKER
+                               + "\n// " + UNCONFIRMED_EXECUTION_WARNING + "\n"
+                               + self.emitter.to_string(instructions) + "\n")
+                    atomic_write(str(out_p), content)
+                else:
+                    self.emitter.emit(instructions, str(out_p))
 
                 self.support_emitter.emit(
                     source_path=source_path,
@@ -397,11 +385,6 @@ class LHCompiler:
                     print(f"  文件大小: {out_p.stat().st_size} 字节")
             except Exception as e:
                 # 异常时严格清理临时文件与目标文件，防止损坏或过时产物残留
-                if tmp_code_path.exists():
-                    try:
-                        tmp_code_path.unlink()
-                    except Exception:
-                        pass
                 return fail_result([f"写入输出文件失败: {e}"], current_ast=ast)
 
         # 返回结果
@@ -410,7 +393,8 @@ class LHCompiler:
             ast=ast,
             instructions=instructions,
             errors=[],
-            output_file=str(output_path) if output_path else None
+            output_file=str(output_path) if output_path else None,
+            compile_only=self.code_generator.requires_target_validation,
         )
 
     def batch_compile(self, source_files: List[str], output_dir: str = None) -> List[CompileResult]:

@@ -5,6 +5,9 @@
 #include <QCanBus>
 #include <QCanBusFrame>
 #include <QDateTime>
+#include <QDeadlineTimer>
+#include <QThread>
+#include <QPointer>
 #include "Common.h"
 
 CANInterface::CANInterface(QObject *parent)
@@ -39,7 +42,7 @@ bool CANInterface::open(const CanConfig& config)
     
     if (!config.isValid()) {
         reportError(CommErrorCode::InvalidConfig, 
-                    "无效的 CAN 配置",
+                    config.validationError.isEmpty() ? QStringLiteral("无效的 CAN 配置") : config.validationError,
                     QString("plugin=%1, interface=%2").arg(config.plugin, config.interface));
         return false;
     }
@@ -55,6 +58,15 @@ bool CANInterface::open(const CanConfig& config)
     }
     
     m_device->setConfigurationParameter(QCanBusDevice::BitRateKey, config.bitrate);
+    if (config.useFilter) {
+        QCanBusDevice::Filter filter;
+        filter.frameId = config.filterId;
+        filter.frameIdMask = config.filterMask;
+        filter.format = config.extendedFrame ? QCanBusDevice::Filter::MatchExtendedFormat
+                                             : QCanBusDevice::Filter::MatchBaseFormat;
+        m_device->setConfigurationParameter(QCanBusDevice::RawFilterKey,
+                                            QVariant::fromValue(QList<QCanBusDevice::Filter>{filter}));
+    }
     
     connect(m_device, &QCanBusDevice::framesReceived, 
             this, &CANInterface::onFramesReceived);
@@ -81,6 +93,12 @@ bool CANInterface::open(const CanConfig& config)
 
 void CANInterface::close()
 {
+    {
+        QMutexLocker locker(&m_receiveMutex);
+        m_receiveInterrupted = true;
+        m_receiveBuffer.clear();
+        m_frameAvailable.wakeAll();
+    }
     if (m_device) {
         m_device->disconnectDevice();
         delete m_device;
@@ -114,10 +132,10 @@ bool CANInterface::sendFrame(const CANMessage& frame)
         return false;
     }
     
-    if (frame.payload.size() > 8) {
-        reportError(CommErrorCode::DataTooLarge, 
-                    "CAN 数据长度超限",
-                    QString("长度=%1，最大=8").arg(frame.payload.size()));
+    if (!frame.isValid()) {
+        reportError(frame.payload.size() > 8 ? CommErrorCode::DataTooLarge : CommErrorCode::InvalidParameter,
+                    QStringLiteral("无效的 CAN 标识符、帧格式或数据长度"),
+                    QString("id=0x%1 extended=%2 length=%3").arg(frame.id, 0, 16).arg(frame.extended).arg(frame.payload.size()));
         return false;
     }
     
@@ -150,10 +168,23 @@ QByteArray CANInterface::receive(int timeout_ms)
 
 std::optional<CANMessage> CANInterface::takeFrame(int timeout_ms)
 {
+    const QDeadlineTimer deadline(qMax(0, timeout_ms));
+    QPointer<QCanBusDevice> device(m_device);
+    QPointer<CANInterface> self(this);
     QMutexLocker locker(&m_receiveMutex);
-    
-    if (m_receiveBuffer.isEmpty() && timeout_ms > 0) {
-        m_frameAvailable.wait(&m_receiveMutex, static_cast<unsigned long>(timeout_ms));
+    while (m_receiveBuffer.isEmpty() && !m_receiveInterrupted && timeout_ms > 0 && !deadline.hasExpired() && device) {
+        const auto remaining = deadline.remainingTime();
+        if (device->thread() == QThread::currentThread()) {
+            locker.unlock();
+            const bool received = device->waitForFramesReceived(int(qMin<qint64>(remaining, 20)));
+            if (!self) return std::nullopt;
+            if (device && received) onFramesReceived();
+            if (!self) return std::nullopt;
+            locker.relock();
+            if (device && device->state() != QCanBusDevice::ConnectedState) break;
+        } else {
+            m_frameAvailable.wait(&m_receiveMutex, static_cast<unsigned long>(remaining));
+        }
     }
     
     if (m_receiveBuffer.isEmpty()) {
@@ -242,10 +273,12 @@ void CANInterface::onDeviceStateChanged(QCanBusDevice::CanBusDeviceState state)
 {
     switch (state) {
         case QCanBusDevice::ConnectedState:
+            { QMutexLocker lock(&m_receiveMutex); m_receiveInterrupted = false; }
             emit connectionStateChanged(true);
             LOG_INFO("CAN 设备已连接");
             break;
         case QCanBusDevice::UnconnectedState:
+            { QMutexLocker lock(&m_receiveMutex); m_receiveInterrupted = true; m_frameAvailable.wakeAll(); }
             emit connectionStateChanged(false);
             LOG_INFO("CAN 设备已断开");
             break;

@@ -153,6 +153,13 @@ set(_lh_required_files
     "${_lh_runtime_root}/src/lh_compiler/backend/codegen.py"
     "${_lh_runtime_root}/src/lh_compiler/backend/emitter.py"
     "${_lh_runtime_root}/src/lh_compiler/backend/memory.py"
+    "${_lh_runtime_root}/src/lh_compiler/backend/artifacts.py"
+    "${_lh_runtime_root}/src/lh_compiler/backend/artifact_policy.py"
+    "${_lh_runtime_root}/src/lh_compiler/cli/__init__.py"
+    "${_lh_runtime_root}/src/lh_compiler/cli/service.py"
+    "${_lh_runtime_root}/src/lh_compiler/cli/commands.py"
+    "${_lh_runtime_root}/src/lh_compiler/utils/__init__.py"
+    "${_lh_runtime_root}/src/lh_compiler/utils/logger.py"
     "${_lh_runtime_root}/src/lh_compiler/function_blocks/__init__.py"
     "${_lh_runtime_root}/src/lh_compiler/function_blocks/registry.py"
     "${_lh_runtime_root}/src/lh_compiler/function_blocks/definitions/__init__.py"
@@ -218,7 +225,40 @@ else()
     message(STATUS "非 Windows 平台不执行 windeployqt 插件断言；Qt 动态库由平台打包流程提供。")
 endif()
 
-message(STATUS "安装布局测试通过: ${_lh_install_prefix}")
+if(NOT DEFINED LH_PUBLIC_CONSUMER_SOURCE)
+    message(FATAL_ERROR "Public consumer fixture is required for installation acceptance")
+endif()
+set(_lh_consumer_source "${_lh_build_dir}/public_consumer_source")
+set(_lh_consumer_build "${_lh_build_dir}/public_consumer_build")
+file(COPY "${LH_PUBLIC_CONSUMER_SOURCE}/" DESTINATION "${_lh_consumer_source}")
+execute_process(COMMAND "${CMAKE_COMMAND}" -S "${_lh_consumer_source}" -B "${_lh_consumer_build}"
+    -G "${LH_CONSUMER_GENERATOR}" "-DCMAKE_CXX_COMPILER=${LH_CONSUMER_COMPILER}"
+    "-DCMAKE_BUILD_TYPE=${_lh_install_config}" "-DQt5_DIR=${LH_CONSUMER_QT_DIR}"
+    "-DLH_DIR=${_lh_install_prefix}/lib/cmake/LH"
+    RESULT_VARIABLE _lh_consumer_result OUTPUT_VARIABLE _lh_consumer_stdout ERROR_VARIABLE _lh_consumer_stderr)
+file(WRITE "${_lh_consumer_build}/acceptance-configure.log" "${_lh_consumer_stdout}\n${_lh_consumer_stderr}")
+if(NOT _lh_consumer_result EQUAL 0)
+    message(FATAL_ERROR "Installed public consumer configure failed: ${_lh_consumer_stderr}")
+endif()
+execute_process(COMMAND "${CMAKE_COMMAND}" --build "${_lh_consumer_build}" --config "${_lh_install_config}"
+    RESULT_VARIABLE _lh_consumer_result OUTPUT_VARIABLE _lh_consumer_stdout ERROR_VARIABLE _lh_consumer_stderr)
+file(WRITE "${_lh_consumer_build}/acceptance-build.log" "${_lh_consumer_stdout}\n${_lh_consumer_stderr}")
+if(NOT _lh_consumer_result EQUAL 0)
+    message(FATAL_ERROR "Installed public consumer build failed: ${_lh_consumer_stderr}")
+endif()
+if(WIN32)
+    set(_lh_consumer_executable "${_lh_consumer_build}/public_consumer.exe")
+else()
+    set(_lh_consumer_executable "${_lh_consumer_build}/public_consumer")
+endif()
+if(EXISTS "${_lh_consumer_build}/${_lh_install_config}/public_consumer.exe")
+    set(_lh_consumer_executable "${_lh_consumer_build}/${_lh_install_config}/public_consumer.exe")
+endif()
+execute_process(COMMAND "${_lh_consumer_executable}" RESULT_VARIABLE _lh_consumer_result)
+if(NOT _lh_consumer_result EQUAL 0)
+    message(FATAL_ERROR "Installed public consumer run failed: ${_lh_consumer_result}")
+endif()
+message(STATUS "安装布局及独立公共接口消费者测试通过: ${_lh_install_prefix}")
 if(IS_SYMLINK "${_lh_install_prefix}")
     message(FATAL_ERROR
         "安装布局测试拒绝清理被替换为符号链接的测试前缀: ${_lh_install_prefix}"

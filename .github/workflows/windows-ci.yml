@@ -71,6 +71,10 @@ jobs:
       - name: Install and Deploy Runtime
         shell: bash
         run: |
+          # Rebuild the delivery target with all deterministic fault hooks disabled.
+          cmake -B build_current_mingw -S . -DLH_ENABLE_TEST_FAILURE_INJECTION=OFF
+          cmake --build build_current_mingw --config Release
+          ctest --test-dir build_current_mingw --output-on-failure -C Release --timeout 300
           cmake --install build_current_mingw --prefix "${{ github.workspace }}/install" --config Release
 
       - name: Verify Installed Layout & Executable Smoke Test

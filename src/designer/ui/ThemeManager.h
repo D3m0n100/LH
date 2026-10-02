@@ -18,7 +18,9 @@ public:
 
 private:
     static void applyLightPalette(QApplication* app);
+    static void applyDarkPalette(QApplication* app);
     static QString buildLightStyleSheet();
+    static QString buildDarkStyleSheet();
 };
 
 #endif // THEME_MANAGER_H

@@ -6,9 +6,16 @@
 #include <QSignalSpy>
 #include <QTemporaryDir>
 #include <QTimer>
+#include <QCoreApplication>
+#include <QThread>
 #include <QtTest/QtTest>
 
+#include <cstdio>
 #include <functional>
+#ifdef Q_OS_WIN
+#include <fcntl.h>
+#include <io.h>
+#endif
 
 #include "common/ConfigTypes.h"
 #include "common/RuntimePointTypes.h"
@@ -27,10 +34,11 @@ public:
         , m_hadPath(qEnvironmentVariableIsSet("PATH"))
         , m_previousPath(qgetenv("PATH"))
         , m_previousInterpreter(DSLCompilerInterface::s_cachedPythonInterpreter)
+        , m_previousInterpreters(DSLCompilerInterface::s_cachedPythonInterpretersByWorkDir)
     {
         qputenv("PYTHON", python);
         qputenv("PATH", path);
-        DSLCompilerInterface::s_cachedPythonInterpreter.clear();
+        DSLCompilerInterface::clearPythonInterpreterCache();
     }
 
     ~ScopedCompilerProbeEnvironment()
@@ -46,6 +54,7 @@ public:
             qunsetenv("PATH");
         }
         DSLCompilerInterface::s_cachedPythonInterpreter = m_previousInterpreter;
+        DSLCompilerInterface::s_cachedPythonInterpretersByWorkDir = m_previousInterpreters;
     }
 
 private:
@@ -54,6 +63,7 @@ private:
     bool m_hadPath;
     QByteArray m_previousPath;
     QString m_previousInterpreter;
+    QHash<QString, QString> m_previousInterpreters;
 };
 
 class DslCompilerCancellationTest : public QObject
@@ -65,30 +75,25 @@ private slots:
     {
         QTemporaryDir temporaryDir;
         QVERIFY(temporaryDir.isValid());
-        if (!QFileInfo::exists(QStringLiteral("/bin/sh"))) {
-            QSKIP("/bin/sh is unavailable on this platform");
-        }
-
         DSLCompilerInterface compiler;
-        QDir compilerDir(compiler.compilerWorkingDir());
-#ifdef Q_OS_WIN
-        const QString venvPython = compilerDir.absoluteFilePath(QStringLiteral("venv/Scripts/python.exe"));
-#else
-        const QString venvPython = compilerDir.absoluteFilePath(QStringLiteral("venv/bin/python3"));
-#endif
-        if (QFileInfo::exists(venvPython)) {
-            QSKIP("compiler venv takes precedence over PYTHON; probe timing is not controllable");
-        }
-
-        const QString probeScript = QDir(temporaryDir.path()).filePath(QStringLiteral("slow-python"));
-        QFile script(probeScript);
-        QVERIFY(script.open(QIODevice::WriteOnly | QIODevice::Text));
-        QVERIFY(script.write("#!/bin/sh\n/bin/sleep 1\ncase \"$2\" in\n*antlr4*) exit 1 ;;\nesac\nexit 0\n") >= 0);
-        script.close();
-        QVERIFY(script.setPermissions(QFile::ReadOwner | QFile::WriteOwner | QFile::ExeOwner));
-
-        const QByteArray emptyPath = QDir(temporaryDir.path()).filePath(QStringLiteral("no-python")).toUtf8();
-        ScopedCompilerProbeEnvironment probeEnvironment(probeScript.toUtf8(), emptyPath);
+        // Isolate runtime discovery from developer venvs and interpreter caches.
+        const QString bin = temporaryDir.filePath("bin");
+        const QString runtime = temporaryDir.filePath("third_party/custom_dsp_language/compile");
+        QVERIFY(QDir().mkpath(bin));
+        QVERIFY(QDir().mkpath(runtime));
+        QFile marker(bin + "/.lh_install_marker");
+        QVERIFY(marker.open(QIODevice::WriteOnly));
+        marker.close();
+        QFile entry(runtime + "/lmc.py");
+        QVERIFY(entry.open(QIODevice::WriteOnly));
+        entry.close();
+        CompilerRuntimeSearchContext context;
+        context.appDirPath = bin;
+        context.sourceDirOverride = temporaryDir.path();
+        compiler.setRuntimeSearchContext(context);
+        QCOMPARE(compiler.compilerWorkingDir(), QDir::cleanPath(runtime));
+        ScopedCompilerProbeEnvironment probeEnvironment(
+                QCoreApplication::applicationFilePath().toUtf8(), qgetenv("PATH"));
 
         const QString sourceFile = QDir(temporaryDir.path()).filePath(QStringLiteral("source.lh"));
         QFile source(sourceFile);
@@ -110,9 +115,14 @@ private slots:
         QTRY_VERIFY_WITH_TIMEOUT(eventLoopAdvanced, 250);
         QVERIFY2(timer.elapsed() < 250, "interpreter probing must not block the event loop");
         QVERIFY(compiler.m_pythonProbeProcess != nullptr);
+        QTRY_COMPARE_WITH_TIMEOUT(compiler.m_pythonProbeProcess->state(), QProcess::Running, 1000);
+        const QPointer<QProcess> cancelledProbe = compiler.m_pythonProbeProcess;
+        timer.restart();
         compiler.cancelCurrentCompile();
+        QVERIFY2(timer.elapsed() < 500, "probe cancellation must not wait for process exit");
         QCOMPARE(compiler.m_pythonProbeProcess, nullptr);
         QCOMPARE(compiler.m_process, nullptr);
+        QTRY_VERIFY_WITH_TIMEOUT(cancelledProbe.isNull(), 1500);
         QTest::qWait(2500);
         QCOMPARE(failed.count(), 0);
         QCOMPARE(finished.count(), 0);
@@ -123,10 +133,6 @@ private slots:
     {
         QTemporaryDir temporaryDir;
         QVERIFY(temporaryDir.isValid());
-        if (!QFileInfo::exists(QStringLiteral("/bin/sh"))) {
-            QSKIP("/bin/sh is unavailable on this platform");
-        }
-
         DSLCompilerInterface compiler;
         QSignalSpy finished(&compiler, &DSLCompilerInterface::compileFinishedForGeneration);
         const QString sourceFile = QDir(temporaryDir.path()).filePath(QStringLiteral("source.lh"));
@@ -135,8 +141,8 @@ private slots:
 
         compiler.startAsyncCompilerProcess(
                 QStringLiteral("cancel-test"),
-                QStringLiteral("/bin/sh"),
-                QStringList{QStringLiteral("-c"), QStringLiteral("sleep 5"), QStringLiteral("sh")},
+                QCoreApplication::applicationFilePath(),
+                QStringList{QStringLiteral("--compiler-test-helper"), QStringLiteral("sleep")},
                 temporaryDir.path(),
                 sourceFile,
                 sourceFile,
@@ -150,6 +156,7 @@ private slots:
                 41);
 
         QVERIFY(compiler.m_process != nullptr);
+        QTRY_COMPARE_WITH_TIMEOUT(compiler.m_process->state(), QProcess::Running, 1000);
         QElapsedTimer timer;
         timer.start();
         compiler.cancelCurrentCompile();
@@ -159,11 +166,10 @@ private slots:
 
         compiler.startAsyncCompilerProcess(
                 QStringLiteral("new-generation-test"),
-                QStringLiteral("/bin/sh"),
+                QCoreApplication::applicationFilePath(),
                 QStringList{
-                    QStringLiteral("-c"),
-                    QStringLiteral(": > \"$1\""),
-                    QStringLiteral("sh"),
+                    QStringLiteral("--compiler-test-helper"),
+                    QStringLiteral("write"),
                     outputFile
                 },
                 temporaryDir.path(),
@@ -188,10 +194,6 @@ private slots:
     {
         QTemporaryDir temporaryDir;
         QVERIFY(temporaryDir.isValid());
-        if (!QFileInfo::exists(QStringLiteral("/bin/sh"))) {
-            QSKIP("/bin/sh is unavailable on this platform");
-        }
-
         DSLCompilerInterface compiler;
         QSignalSpy finished(&compiler, &DSLCompilerInterface::compileFinishedForGeneration);
         const QString sourceFile = QDir(temporaryDir.path()).filePath(QStringLiteral("source.lh"));
@@ -200,11 +202,10 @@ private slots:
 
         compiler.startAsyncCompilerProcess(
                 QStringLiteral("bounded-output-test"),
-                QStringLiteral("/bin/sh"),
+                QCoreApplication::applicationFilePath(),
                 QStringList{
-                    QStringLiteral("-c"),
-                    QStringLiteral("head -c 2097152 /dev/zero; printf '\\342\\200\\223utf8-tail-sentinel\\n'"),
-                    QStringLiteral("sh")
+                    QStringLiteral("--compiler-test-helper"),
+                    QStringLiteral("output")
                 },
                 temporaryDir.path(),
                 sourceFile,
@@ -230,5 +231,37 @@ private slots:
     }
 };
 
-QTEST_MAIN(DslCompilerCancellationTest)
+int main(int argc, char** argv)
+{
+    QCoreApplication application(argc, argv);
+    const QStringList args = application.arguments();
+    // Real native child processes replace the former POSIX-only shell fixtures.
+    if (args.value(1) == "-c") {
+        QThread::msleep(1000);
+        return args.value(2).contains("antlr4") ? 1 : 0;
+    }
+    if (args.value(1) == "--compiler-test-helper") {
+        if (args.value(2) == "sleep") {
+            QThread::msleep(5000);
+            return 0;
+        }
+        if (args.value(2) == "write") {
+            QFile output(args.value(3));
+            return output.open(QIODevice::WriteOnly) ? 0 : 1;
+        }
+        if (args.value(2) == "output") {
+#ifdef Q_OS_WIN
+            _setmode(_fileno(stdout), _O_BINARY);
+#endif
+            QFile output;
+            if (!output.open(stdout, QIODevice::WriteOnly)) return 1;
+            const QByteArray bytes = QByteArray(2097152, '\0')
+                    + QByteArray("\342\200\223utf8-tail-sentinel\n");
+            return output.write(bytes) == bytes.size() && output.flush() ? 0 : 1;
+        }
+        return 1;
+    }
+    DslCompilerCancellationTest test;
+    return QTest::qExec(&test, argc, argv);
+}
 #include "dsl_compiler_cancellation_test.moc"

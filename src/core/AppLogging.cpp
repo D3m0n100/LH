@@ -11,6 +11,7 @@
 #include <QMutexLocker>
 #include <QStandardPaths>
 #include <QThread>
+#include <QCoreApplication>
 
 #include <cstdio>
 #include <cstdlib>
@@ -26,6 +27,15 @@ namespace {
 constexpr qint64 kMaxLogBytes = 4 * 1024 * 1024;
 constexpr int kMaxLineBytes = 64 * 1024;
 constexpr int kBackupCount = 2;
+#ifdef LH_LOGGING_TESTING
+struct WriterGate {
+    std::mutex mutex;
+    std::condition_variable changed;
+    bool paused = false;
+    bool waiting = false;
+};
+WriterGate writerGate;
+#endif
 
 struct LogState {
     QMutex mutex;
@@ -42,12 +52,13 @@ struct LogState {
     QDateTime lastDrop;
     bool stopping = false;
     std::atomic_bool accepting{false};
+    std::atomic_bool writerExited{true};
     QFile activeFile;
     QString directory;
     QString activePath;
     QString error;
     qint64 bytes = 0;
-    bool installed = false;
+    std::atomic_bool installed{false};
     bool available = false;
     QtMessageHandler previousHandler = nullptr;
 };
@@ -213,6 +224,14 @@ void writeBatch(LogState& logState, const std::deque<QByteArray>& batch)
 void writerLoop(LogState& logState)
 {
     for (;;) {
+#ifdef LH_LOGGING_TESTING
+        {
+            std::unique_lock<std::mutex> gateLock(writerGate.mutex);
+            writerGate.waiting = writerGate.paused;
+            writerGate.changed.wait(gateLock, [] { return !writerGate.paused; });
+            writerGate.waiting = false;
+        }
+#endif
         std::deque<QByteArray> batch;
         quint64 admittedCount = 0;
         {
@@ -240,16 +259,23 @@ void writerLoop(LogState& logState)
         }
         logState.queueChanged.notify_all();
     }
+    {
+        QMutexLocker lock(&logState.mutex);
+        logState.available = false;
+        logState.activeFile.close();
+    }
+    {
+        std::lock_guard<std::mutex> lock(logState.queueMutex);
+        logState.writerExited = true;
+    }
+    logState.queueChanged.notify_all();
 }
 
-void messageHandler(QtMsgType type, const QMessageLogContext& context, const QString& message)
+void enqueueMessage(QtMsgType type, const QMessageLogContext& context, const QString& message, bool terminal = false)
 {
     LogState& logState = state();
     const QByteArray encoded = formatLine(type, context, message);
     const bool critical = type == QtCriticalMsg || type == QtFatalMsg;
-    static const QRegularExpression terminalStatus(QStringLiteral(R"(\bstatus=(?:success|succeeded|failed|failure|canceled|cancelled|completed)\b)"));
-    const bool terminal = context.category && QByteArray(context.category) == "business_event"
-            && terminalStatus.match(message).hasMatch();
     quint64 sequence = 0;
     {
         std::unique_lock<std::mutex> lock(logState.queueMutex);
@@ -257,17 +283,12 @@ void messageHandler(QtMsgType type, const QMessageLogContext& context, const QSt
             lock.unlock(); writeStderr(encoded);
         } else {
             constexpr qint64 maxQueueBytes = 1024 * 1024;
-            if (critical) {
-                logState.queueChanged.wait(lock, [&]() {
-                    return !logState.accepting || logState.queuedBytes + encoded.size() <= maxQueueBytes;
-                });
-            }
             if (!logState.accepting) { lock.unlock(); writeStderr(encoded); }
             else if (logState.queuedBytes + encoded.size() > (terminal || critical ? maxQueueBytes : maxQueueBytes - 64 * 1024)) {
                 ++logState.dropped;
                 if (logState.unreportedDropped++ == 0) logState.firstDrop = QDateTime::currentDateTimeUtc();
                 logState.lastDrop = QDateTime::currentDateTimeUtc();
-                if (terminal) { lock.unlock(); writeStderr(encoded); }
+                if (terminal || critical) { lock.unlock(); writeStderr(encoded); }
             }
             else {
                 logState.queue.push_back(encoded);
@@ -278,10 +299,24 @@ void messageHandler(QtMsgType type, const QMessageLogContext& context, const QSt
     }
     logState.queueChanged.notify_all();
     if (critical && sequence) {
-        std::unique_lock<std::mutex> lock(logState.queueMutex);
-        logState.queueChanged.wait(lock, [&]() { return logState.completed >= sequence; });
+        const bool onUi = QCoreApplication::instance()
+            && QThread::currentThread() == QCoreApplication::instance()->thread();
+        if (onUi && type != QtFatalMsg) writeStderr(encoded);
+        else {
+            std::unique_lock<std::mutex> lock(logState.queueMutex);
+            if (!logState.queueChanged.wait_for(lock, std::chrono::milliseconds(100),
+                    [&]() { return logState.completed >= sequence; })) {
+                lock.unlock();
+                writeStderr(encoded);
+            }
+        }
     }
     if (type == QtFatalMsg) std::abort();
+}
+
+void messageHandler(QtMsgType type, const QMessageLogContext& context, const QString& message)
+{
+    enqueueMessage(type, context, message);
 }
 
 QString configuredDirectory(LogState& logState)
@@ -299,10 +334,25 @@ QString configuredDirectory(LogState& logState)
 } // namespace
 
 namespace AppLogging {
+#ifdef LH_LOGGING_TESTING
+namespace TestHooks {
+void pauseWriter(bool paused) {
+    std::lock_guard<std::mutex> lock(writerGate.mutex);
+    writerGate.paused = paused;
+    writerGate.changed.notify_all();
+}
+bool writerWaiting() {
+    std::lock_guard<std::mutex> lock(writerGate.mutex);
+    return writerGate.waiting;
+}
+}
+#endif
 
 bool install()
 {
     LogState& logState = state();
+    // A timed-out shutdown retains the process-owned sink until its OS call returns.
+    if (!logState.installed && !logState.writerExited) return false;
     QMutexLocker locker(&logState.mutex);
     if (logState.installed) {
         return logState.available;
@@ -327,6 +377,7 @@ bool install()
         std::lock_guard<std::mutex> lock(logState.queueMutex);
         logState.stopping = false;
         logState.accepting = true;
+        logState.writerExited = false;
     }
     logState.writer = std::thread([&logState]() { writerLoop(logState); });
     logState.installed = true;
@@ -340,11 +391,17 @@ bool install()
 
 void flush()
 {
+    if (!flush(1000)) writeStderr("LH logging flush exceeded 1000 ms; admitted records remain queued\n");
+}
+
+bool flush(int timeoutMs)
+{
     LogState& logState = state();
     std::unique_lock<std::mutex> lock(logState.queueMutex);
     const auto target = logState.submitted;
     logState.queueChanged.notify_all();
-    logState.queueChanged.wait(lock, [&]() { return logState.completed >= target; });
+    return logState.queueChanged.wait_for(lock, std::chrono::milliseconds(qMax(0, timeoutMs)),
+        [&]() { return logState.completed >= target; });
 }
 
 quint64 droppedMessageCount()
@@ -368,24 +425,29 @@ QVariantMap overloadStatus()
 void shutdown()
 {
     LogState& logState = state();
+    if (!logState.installed.exchange(false)) return;
+    const QtMessageHandler previousHandler = logState.previousHandler;
+    logState.previousHandler = nullptr;
+    qInstallMessageHandler(previousHandler);
     {
         std::lock_guard<std::mutex> lock(logState.queueMutex);
         logState.accepting = false;
         logState.stopping = true;
     }
     logState.queueChanged.notify_all();
-    if (logState.writer.joinable()) logState.writer.join();
-    QtMessageHandler previousHandler = nullptr;
+    bool exited;
     {
-        QMutexLocker locker(&logState.mutex);
-        if (!logState.installed) return;
-        previousHandler = logState.previousHandler;
-        logState.available = false;
-        logState.activeFile.close();
-        logState.installed = false;
-        logState.previousHandler = nullptr;
+        std::unique_lock<std::mutex> lock(logState.queueMutex);
+        exited = logState.queueChanged.wait_for(lock, std::chrono::milliseconds(1000),
+            [&] { return logState.writerExited.load(); });
     }
-    qInstallMessageHandler(previousHandler);
+    if (logState.writer.joinable()) {
+        if (exited) logState.writer.join();
+        else {
+            logState.writer.detach();
+            writeStderr("LH logging shutdown exceeded 1000 ms; process-owned sink retained for draining\n");
+        }
+    }
 }
 
 bool isAvailable()
@@ -461,7 +523,13 @@ void writeBusinessEvent(const BusinessEvent& event)
 
     const QString message = parts.join(QLatin1Char(' '));
     QMessageLogContext context(__FILE__, __LINE__, __FUNCTION__, "business_event");
-    messageHandler(event.severity, context, message);
+    // Classify from the structured status, not arbitrary target/field text.
+    // A payload containing "status=failed" must not consume terminal reserve.
+    const QString status = event.status.trimmed().toLower();
+    const bool terminal = status == "success" || status == "succeeded" || status == "failed"
+            || status == "failure" || status == "canceled" || status == "cancelled" || status == "completed"
+            || status == "confirmed";
+    enqueueMessage(event.severity, context, message, terminal);
 }
 
 void writeBusinessEvent(const QString& eventName,

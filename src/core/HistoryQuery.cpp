@@ -40,6 +40,7 @@ RuntimeHistoryPage HistoryQuery::queryHistoryPage(
     if (!RuntimeHistoryContract::validPageSize(pageSize)) {
         page.status = RuntimeHistoryPageStatus::SqlError;
         page.errorCode = QStringLiteral("INVALID_PAGE_SIZE");
+        page.errorText = QStringLiteral("History page size must be between 1 and 10000");
         return page;
     }
 
@@ -140,6 +141,9 @@ RuntimeHistoryPage HistoryQuery::queryLatestHistoryPage(
     if (!RuntimeHistoryContract::validPageSize(pageSize) || maxCount <= 0) {
         page.status = RuntimeHistoryPageStatus::SqlError;
         page.errorCode = !RuntimeHistoryContract::validPageSize(pageSize) ? QStringLiteral("INVALID_PAGE_SIZE") : QStringLiteral("INVALID_MAX_COUNT");
+        page.errorText = !RuntimeHistoryContract::validPageSize(pageSize)
+                ? QStringLiteral("History page size must be between 1 and 10000")
+                : QStringLiteral("Latest record count must be positive");
         return page;
     }
 

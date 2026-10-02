@@ -2,6 +2,7 @@
 #define MATRIKONOPCSERVER_H
 
 #include "IOpcServer.h"
+#include "OpcWriteResultState.h"
 
 #include <QDateTime>
 #include <QHash>
@@ -38,6 +39,7 @@ public:
     void updatePointValues(const QList<RuntimePointValue>& values) override;
     void recordWriteResult(const QString& pointId, bool success, const QString& message) override;
     BackendStatusSnapshot statusSnapshot() const override;
+    static bool validateConfig(const OpcServerConfig& config, QString* errorMessage);
 
 private:
     friend class MatrikonOpcDataCallback;
@@ -75,6 +77,9 @@ private:
         MatrikonOpcServer* owner = nullptr;
         quint64 generation = 0;
         bool active = false;
+        int pendingCallbacks = 0;
+        qint64 pendingBytes = 0;
+        quint64 droppedCallbacks = 0;
     };
 
     bool ensureComInitialized(QString* errorMessage);
@@ -149,7 +154,6 @@ private:
     QString itemIdForTag(const OpcTagDefinition& tag) const;
     QString pointIdForClientHandle(unsigned long clientHandle) const;
     int activeItemCount() const;
-    static bool validateConfig(const OpcServerConfig& config, QString* errorMessage);
     static QString hresultToString(long hr);
     static RuntimePointQuality qualityToRuntimeQuality(unsigned short quality);
     static QString qualityToString(unsigned short quality);
@@ -182,9 +186,6 @@ private:
     QDateTime m_lastReadTime;
     QDateTime m_lastSuccessfulReadTime;
     QDateTime m_lastFailedReadTime;
-    QDateTime m_lastWriteTime;
-    QDateTime m_lastSuccessfulWriteTime;
-    QDateTime m_lastFailedWriteTime;
     CommErrorCode m_lastErrorCode = CommErrorCode::NoError;
     QString m_lastErrorMessage;
     QStringList m_startupIssues;
@@ -215,11 +216,9 @@ private:
     unsigned short m_lastQuality = 0;
     QString m_lastQualityText;
     QString m_lastTimestampSource;
-    QString m_lastWritePointId;
+    OpcWriteResultState m_writeResult;
     QString m_lastWriteItemId;
     QVariant m_lastWriteValue;
-    bool m_lastWriteSuccess = false;
-    QString m_lastWriteMessage;
     int m_successfulReadCount = 0;
     int m_failedReadCount = 0;
     bool m_readProbeAttempted = false;
@@ -232,10 +231,6 @@ private:
     QDateTime m_readProbeTimestamp;
     QDateTime m_readProbeTime;
     QString m_readProbeMessage;
-    QString m_lastSuccessfulWriteMessage;
-    QString m_lastFailedWriteMessage;
-    int m_successfulWriteCount = 0;
-    int m_failedWriteCount = 0;
     int m_successfulItemCount = 0;
     int m_failedItemCount = 0;
     unsigned long m_nextClientHandle = 1;

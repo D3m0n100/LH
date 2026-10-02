@@ -84,6 +84,15 @@ private slots:
         QCOMPARE(invalidPageSize.status, RuntimeHistoryPageStatus::SqlError);
         QVERIFY(!invalidPageSize.errorText.isEmpty());
 
+        const auto invalidLatestPageSize = manager.queryLatestHistoryPage("v", 5, 0);
+        QCOMPARE(invalidLatestPageSize.status, RuntimeHistoryPageStatus::SqlError);
+        QCOMPARE(invalidLatestPageSize.errorCode, QStringLiteral("INVALID_PAGE_SIZE"));
+        QVERIFY(!invalidLatestPageSize.errorText.isEmpty());
+        const auto invalidLatestCount = manager.queryLatestHistoryPage("v", 0, 2);
+        QCOMPARE(invalidLatestCount.status, RuntimeHistoryPageStatus::SqlError);
+        QCOMPARE(invalidLatestCount.errorCode, QStringLiteral("INVALID_MAX_COUNT"));
+        QVERIFY(!invalidLatestCount.errorText.isEmpty());
+
         const RuntimeHistoryPage emptyPage = manager.queryHistoryPage(
             QStringLiteral("v"), last.addMSecs(1), last.addMSecs(2), 2);
         QCOMPARE(emptyPage.status, RuntimeHistoryPageStatus::Success);

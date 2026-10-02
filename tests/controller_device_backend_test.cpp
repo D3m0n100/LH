@@ -172,6 +172,7 @@ public:
 
     bool writeMultipleRegisters(int address, const QVector<quint16>& values) override
     {
+        if (beforeWrite) beforeWrite(address);
         lastWriteAddress = address;
         lastWriteValues = values;
         lastWriteStation = station;
@@ -218,6 +219,7 @@ public:
     QVector<quint16> lastWriteValues;
     QVector<WriteCall> writes;
     QVector<ReadCall> readCalls;
+    std::function<void(int)> beforeWrite;
 };
 
 class ControllerDeviceBackendTest : public QObject
@@ -225,6 +227,70 @@ class ControllerDeviceBackendTest : public QObject
     Q_OBJECT
 
 private slots:
+    void unverifiedExecutionIsRejectedBeforeTransportWrites()
+    {
+        FakeControllerTransport transport;
+        ControllerDebugClient client(&transport);
+        ControllerDeviceBackend backend;
+        backend.setDebugClientForTest(&client);
+        ProjectRuntimeConfig config;
+        config.transport.parameters.insert("port", "LH-offline-artifact-test");
+        QTemporaryDir temp;
+        QString artifact;
+        const QByteArray code = QByteArrayLiteral(
+                "// LH-EXECUTION-UNCONFIRMED: scalar-assignment-v1\n123 123 43 1\n");
+        const QByteArray profile = QByteArrayLiteral(
+                "{\"slaveId\":1,\"steps\":[{\"type\":\"sendChunk\","
+                "\"params\":{\"dataAddress\":210,\"chunkWords\":1}}]}");
+        QVERIFY(writePublishedDownloadBundle(temp.path(), code, profile, &config, &artifact));
+        QVERIFY(backend.configure(config));
+        QVERIFY(backend.connectBackend());
+        int writes = 0;
+        transport.beforeWrite = [&](int) { ++writes; };
+        QString error;
+        QVERIFY(!backend.downloadArtifact(artifact, {}, &error));
+        QVERIFY2(error.contains(QStringLiteral("不适用于控制器下载或运行")), qPrintable(error));
+        QCOMPARE(writes, 0);
+        QVERIFY(!backend.downloadArtifact(artifact, {{QStringLiteral("dryRun"), true}}, &error));
+        QVERIFY2(error.contains(QStringLiteral("不适用于控制器下载或运行")), qPrintable(error));
+        QCOMPARE(writes, 0);
+    }
+
+    void transferUsesVerifiedSnapshotAndPacketCrcAfterReplacement() {
+        FakeControllerTransport transport;
+        ControllerDebugClient client(&transport);
+        ControllerDeviceBackend backend; backend.setDebugClientForTest(&client);
+        ProjectRuntimeConfig config; config.transport.parameters.insert("port", "LH-snapshot-transfer");
+        const QByteArray original = QByteArray::fromHex("123456789abcde");
+        const QByteArray profile = R"({"slaveId":1,"steps":[{"type":"enter","params":{"address":200,"values":[1]}},{"type":"sendChunk","params":{"dataAddress":210,"chunkWords":2,"packetCrcAddress":203,"packetLengthAddress":202}}]})";
+        QTemporaryDir temp; QString artifact;
+        QVERIFY(writePublishedDownloadBundle(temp.path(), original, profile, &config, &artifact));
+        QVERIFY(backend.configure(config)); QVERIFY(backend.connectBackend());
+        bool replaced = false;
+        transport.beforeWrite = [&](int address) {
+            if (address == 200) replaced = writeFixtureFile(artifact, QByteArray::fromHex("ffffffffffffffff"));
+        };
+        QVERIFY(backend.downloadArtifact(artifact, {})); QVERIFY(replaced);
+        auto crc = [](const QByteArray& bytes) {
+            quint16 value = 0xffff;
+            for (auto byte : bytes) {
+                value ^= quint8(byte);
+                for (int bit = 0; bit < 8; ++bit) value = (value & 1) ? (value >> 1) ^ 0xa001 : value >> 1;
+            }
+            return value;
+        };
+        QVector<QVector<quint16>> payloads;
+        QVector<quint16> crcs, lengths;
+        for (const auto& call : transport.writes) {
+            if (call.address == 210) payloads.append(call.values);
+            if (call.address == 203) crcs.append(call.values.first());
+            if (call.address == 202) lengths.append(call.values.first());
+        }
+        QCOMPARE(payloads, QVector<QVector<quint16>>({{0x1234,0x5678},{0x9abc,0xde00}}));
+        QCOMPARE(lengths, QVector<quint16>({4,3}));
+        QCOMPARE(crcs, QVector<quint16>({crc(original.left(4)), crc(original.mid(4))}));
+        QCOMPARE(ArtifactSnapshot::checksum(original), config.downloadArtifact.checksum);
+    }
     void profileContractRejectsFractionalIdsAndUnsupportedExecutor()
     {
         DownloadProfile profile;

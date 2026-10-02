@@ -9,6 +9,7 @@
 #include <QString>
 #include <QStringList>
 #include <QVariantMap>
+#include <QVector>
 #include <QtGlobal>
 
 #include "../common/ConfigTypes.h"
@@ -47,6 +48,7 @@ public:
     bool isRunning() const { return state() == RuntimeSessionState::Running
                                     || state() == RuntimeSessionState::Monitoring; }
     bool isMonitoring() const { return state() == RuntimeSessionState::Monitoring; }
+    bool isDebugCommandPending() const { return m_debugCommandPending; }
     bool isPaused() const { return m_isPaused; }
     void setPaused(bool paused);
     bool isDemoMode() const { return m_demoModeActive; }
@@ -93,8 +95,12 @@ signals:
     void opcRunningChanged(bool running);
     void opcErrorOccurred(const QString& message);
     void pausedChanged(bool paused);
+    void debugCommandPendingChanged(bool pending);
 
 private:
+    void setDebugCommandPending(bool pending);
+    bool requestControllerDebug(const QString& command, const QVector<quint16>& arguments,
+                                int pauseState, const QString& description);
     void finishRunStart();
     void requestControllerDownloadAttempt(ControllerDeviceBackend* controller, const QString& path,
         const QVariantMap& options, RuntimeSessionState previousState, int attempt, int maxAttempts,
@@ -130,7 +136,7 @@ private:
     ControllerDeviceBackend* m_ownedControllerBackend = nullptr;
     IOpcServer* m_opcServer = nullptr;
     SampleDataProvider* m_sampleDataProvider = nullptr;
-    ProjectController* m_projectController = nullptr;
+    QPointer<ProjectController> m_projectController;
     BuildController* m_buildController = nullptr;
     ParameterController* m_parameterController = nullptr;
 
@@ -150,6 +156,8 @@ private:
     QString m_pendingOpcParameterName;
     QString m_pendingOpcOperationId;
     quint64 m_backendGeneration = 0;
+    quint64 m_debugCommandGeneration = 0;
+    bool m_debugCommandPending = false;
 };
 
 #endif // RUNTIMESESSIONCONTROLLER_H
