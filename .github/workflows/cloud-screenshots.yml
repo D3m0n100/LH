@@ -1,0 +1,49 @@
+name: LH cloud screenshots
+on:
+  push:
+    branches: [codex/cloud-screenshots]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  screenshots:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    env:
+      QT_QPA_PLATFORM: offscreen
+      QT_OPENGL: software
+      LIBGL_ALWAYS_SOFTWARE: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Qt and Chinese fonts
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ninja-build qtbase5-dev libqt5serialport5-dev libqt5serialbus5-dev libqt5charts5-dev libqt5svg5-dev libqt5sql5-sqlite fonts-noto-cjk
+      - name: Configure capture target
+        run: cmake -S . -B build_screenshots -G Ninja -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF -DLH_BUILD_SCREENSHOTS=ON
+      - name: Build native widgets
+        run: cmake --build build_screenshots --target lh_cloud_screenshots --parallel 2
+      - name: Capture and check simulated data
+        run: |
+          mkdir -p screenshots
+          timeout 90s build_screenshots/bin/lh_cloud_screenshots screenshots
+          python3 - <<'PY'
+          import csv, pathlib, struct
+          root = pathlib.Path("screenshots")
+          for name in ("01-communication.png", "02-multichannel-monitor.png"):
+              data = (root / name).read_bytes()
+              assert data[:8] == b"\x89PNG\r\n\x1a\n", name
+              width, height = struct.unpack(">II", data[16:24])
+              assert width >= 1200 and height >= 700, (name, width, height)
+          with (root / "03-history-query.csv").open() as stream:
+              rows = list(csv.DictReader(stream))
+          assert len(rows) >= 100, len(rows)
+          assert len({row["variable"] for row in rows}) == 4
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: LH-native-screenshots-simulated-data
+          path: screenshots/
+          if-no-files-found: warn
+          retention-days: 30

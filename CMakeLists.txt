@@ -227,3 +227,11 @@ message(STATUS "  项目配置完成")
 message(STATUS "  Qt版本: ${Qt5_VERSION}")
 message(STATUS "  编译器: ${CMAKE_CXX_COMPILER_ID}")
 message(STATUS "========================================")
+
+# Optional cloud capture harness; normal application builds are unchanged.
+option(LH_BUILD_SCREENSHOTS "Build native widget screenshot harness" OFF)
+if(LH_BUILD_SCREENSHOTS)
+    add_executable(lh_cloud_screenshots tools/cloud_screenshots.cpp resources/resources.qrc)
+    target_include_directories(lh_cloud_screenshots PRIVATE ${LX_PRIVATE_INCLUDE_DIRS} ${LX_PUBLIC_INCLUDE_DIRS})
+    target_link_libraries(lh_cloud_screenshots PRIVATE designer_module monitor core_module Qt5::Widgets Qt5::Charts)
+endif()
