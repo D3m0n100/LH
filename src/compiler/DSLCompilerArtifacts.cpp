@@ -436,6 +436,15 @@ CompileResult DSLCompilerInterface::buildCompileResult(const QString& sourceFile
                           QString::fromLatin1(CompileArtifactType::CompileReport),
                           QStringLiteral("lh_compile_report"));
 
+    QFile report(DSLCompilerInternal::outputSidecarFileForSource(sourceFile, outputDir, QStringLiteral(".rep")));
+    if (report.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        for (const auto& line : QString::fromUtf8(report.readAll()).split('\n')) {
+            if (line.startsWith(QStringLiteral("warning\t"))) {
+                const QString warning = line.mid(8).trimmed();
+                if (!result.warnings.contains(warning)) result.warnings.append(warning);
+            }
+        }
+    }
     return result;
 }
 

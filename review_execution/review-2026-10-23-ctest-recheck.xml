@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="Win32-mingw32-make"
+	tests="3"
+	failures="0"
+	disabled="0"
+	skipped="0"
+	hostname="DESKTOP-HJIINHN"
+	time="61"
+	timestamp="2026-10-23T11:45:45"
+	>
+	<testcase name="MainWindowIntegrationTest" classname="MainWindowIntegrationTest" time="46.393" status="run">
+		<properties/>
+		<system-out>2026-10-23T03:45:50.053Z [INFO] [category=business_event] [thread=0x58cc] [BUSINESS_EVENT] event=parameter_readback_started opId=op-param-rb-1792727150053 phase=readback status=started code=0 target=param.kp attempt=1 maxRetries=2 retryIntervalMs=100
+2026-10-23T03:45:50.086Z [INFO] [category=business_event] [thread=0x58cc] [BUSINESS_EVENT] event=parameter_readback_attempt opId=op-param-rb-1792727150053 phase=readback status=polling code=0 target=param.kp attempt=1 attempt=1 maxRetries=2
+2026-10-23T03:45:50.095Z [INFO] [category=business_event] [thread=0x58cc] [BUSINESS_EVENT] event=parameter_readback_succeeded opId=op-param-rb-1792727150053 phase=readback status=succeeded code=0 target=param.kp attempt=1 attempts=1 message=
+2026-10-23T03:45:51.038Z [INFO] [category=business_event] [thread=0x58cc] [BUSINESS_EVENT] event=session_state_changed opId= phase=session status=state_change code=0 target=RuntimeSessionController attempt=1 from=0 to=4
+2026-10-23T03:45:51.039Z [INFO] [category=business_event] [thread=0x58...
+[This part of the test output was removed since it exceeds the threshold of 1024 bytes.]
+</system-out>
+	</testcase>
+	<testcase name="RuntimeSessionControllerTest" classname="RuntimeSessionControllerTest" time="8.33488" status="run">
+		<properties/>
+		<system-out>2026-10-23T03:46:32.001Z [INFO] [category=business_event] [thread=0x70ec] [BUSINESS_EVENT] event=session_state_changed opId= phase=session status=state_change code=0 target=RuntimeSessionController attempt=1 from=0 to=4
+2026-10-23T03:46:32.007Z [INFO] [category=business_event] [thread=0x70ec] [BUSINESS_EVENT] event=session_state_changed opId= phase=session status=state_change code=0 target=RuntimeSessionController attempt=1 from=0 to=4
+2026-10-23T03:46:32.019Z [INFO] [category=business_event] [thread=0x70ec] [BUSINESS_EVENT] event=session_state_changed opId= phase=session status=state_change code=0 target=RuntimeSessionController attempt=1 from=0 to=3
+2026-10-23T03:46:32.021Z [INFO] [category=business_event] [thread=0x70ec] [BUSINESS_EVENT] event=download_started opId=op-dl-1792727192021-113439264 phase=precheck status=started code=0 target=C:/Users/Ryan/AppData/Local/Temp/runtime_session_controller_test.rxHCHL attempt=1 retryCount=1
+2026-10-23T03:46:32.021Z [INFO] [category=business_event] [thread=0x70ec] [B...
+[This part of the test output was removed since it exceeds the threshold of 1024 bytes.]
+</system-out>
+	</testcase>
+	<testcase name="InstallLayoutTest" classname="InstallLayoutTest" time="6.49213" status="run">
+		<properties/>
+		<system-out>-- 安装布局及独立公共接口消费者测试通过: D:/Table/LH/build_current_mingw/install_layout_test_prefix
+</system-out>
+	</testcase>
+</testsuite>

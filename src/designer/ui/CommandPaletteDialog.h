@@ -35,7 +35,7 @@ public:
     /// 供测试或外部显式刷新文件缓存
     void setFileList(const QStringList& fileList);
     static QStringList scanFiles(const QString& rootPath,
-        const std::shared_ptr<QAtomicInt>& cancelled, int limit = 5000);
+        const std::shared_ptr<QAtomicInt>& cancelled, int limit = 5000, QString* stopReason = nullptr);
 
 public slots:
     void reject() override;

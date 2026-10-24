@@ -12,6 +12,9 @@ struct ParameterStateInfo
     QString pointId;
     QString name;
     QString dataType;
+    QString minValue;
+    QString maxValue;
+    QString unit;
     ParameterState state = ParameterState::Clean;
     QString definitionValue;
     QString editedValue;

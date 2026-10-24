@@ -1,0 +1,212 @@
+********* Start testing of RuntimeSessionControllerTest *********
+Config: Using QtTest library 5.15.2, Qt 5.15.2 (x86_64-little_endian-llp64 shared (dynamic) release build; by GCC 8.1.0), windows 10
+PASS   : RuntimeSessionControllerTest::initTestCase()
+PASS   : RuntimeSessionControllerTest::initialStateIsIdle()
+PASS   : RuntimeSessionControllerTest::stateChangedSignalOnRun()
+PASS   : RuntimeSessionControllerTest::executeRunTransitionsToRunning()
+QINFO  : RuntimeSessionControllerTest::executeRunAutoDownloadWhenBackendOnline() [INFO] 11:33:05.449 [VirtualDeviceBackend] connected
+QDEBUG : RuntimeSessionControllerTest::executeRunAutoDownloadWhenBackendOnline() [MonitorManager] device backend set: VirtualDeviceBackend(0x6c2f190)
+QINFO  : RuntimeSessionControllerTest::executeRunAutoDownloadWhenBackendOnline() [INFO] 11:33:05.466 [VirtualDeviceBackend] download simulated: C:/Users/Ryan/AppData/Local/Temp/runtime_session_controller_test.IXzFYn
+PASS   : RuntimeSessionControllerTest::executeRunAutoDownloadWhenBackendOnline()
+QINFO  : RuntimeSessionControllerTest::executeRunAutoDownloadFailureDoesNotEnterRunning() [INFO] 11:33:05.468 [VirtualDeviceBackend] connected
+QDEBUG : RuntimeSessionControllerTest::executeRunAutoDownloadFailureDoesNotEnterRunning() [MonitorManager] device backend set: VirtualDeviceBackend(0x6c2f180)
+PASS   : RuntimeSessionControllerTest::executeRunAutoDownloadFailureDoesNotEnterRunning()
+QINFO  : RuntimeSessionControllerTest::executeRunAutoDownloadPrecheckFailureRestoresConnected() [INFO] 11:33:05.475 [VirtualDeviceBackend] connected
+QDEBUG : RuntimeSessionControllerTest::executeRunAutoDownloadPrecheckFailureRestoresConnected() [MonitorManager] device backend set: VirtualDeviceBackend(0x6c2f190)
+PASS   : RuntimeSessionControllerTest::executeRunAutoDownloadPrecheckFailureRestoresConnected()
+QDEBUG : RuntimeSessionControllerTest::executeRunSkipsAutoDownloadWhenBackendOffline() [MonitorManager] device backend set: VirtualDeviceBackend(0x6c2f1a0)
+PASS   : RuntimeSessionControllerTest::executeRunSkipsAutoDownloadWhenBackendOffline()
+PASS   : RuntimeSessionControllerTest::requestStopFromRunningGoesToIdle()
+QINFO  : RuntimeSessionControllerTest::requestStopDoesNotDisconnectBorrowedBackend() [INFO] 11:33:05.485 [VirtualDeviceBackend] connected
+QDEBUG : RuntimeSessionControllerTest::requestStopDoesNotDisconnectBorrowedBackend() [MonitorManager] device backend set: VirtualDeviceBackend(0x6c2f1a0)
+PASS   : RuntimeSessionControllerTest::requestStopDoesNotDisconnectBorrowedBackend()
+QINFO  : RuntimeSessionControllerTest::internalReconnectGateSuppressesMarkedDisconnect() [INFO] 11:33:05.485 [VirtualDeviceBackend] connected
+QDEBUG : RuntimeSessionControllerTest::internalReconnectGateSuppressesMarkedDisconnect() [MonitorManager] device backend set: VirtualDeviceBackend(0x6c2f1a0)
+QDEBUG : RuntimeSessionControllerTest::internalReconnectGateSuppressesMarkedDisconnect() [MonitorManager] backend connectionStateChanged: false
+QINFO  : RuntimeSessionControllerTest::internalReconnectGateSuppressesMarkedDisconnect() [INFO] 11:33:05.485 [VirtualDeviceBackend] disconnected
+QDEBUG : RuntimeSessionControllerTest::internalReconnectGateSuppressesMarkedDisconnect() [MonitorManager] backend connectionStateChanged: true
+QINFO  : RuntimeSessionControllerTest::internalReconnectGateSuppressesMarkedDisconnect() [INFO] 11:33:05.485 [VirtualDeviceBackend] connected
+PASS   : RuntimeSessionControllerTest::internalReconnectGateSuppressesMarkedDisconnect()
+QDEBUG : RuntimeSessionControllerTest::startMonitoringFromRunningGoesToMonitoring() [MonitorManager] 监控已启动
+PASS   : RuntimeSessionControllerTest::startMonitoringFromRunningGoesToMonitoring()
+PASS   : RuntimeSessionControllerTest::startMonitoringFromIdleIsRejected()
+QDEBUG : RuntimeSessionControllerTest::stopMonitoringFromMonitoringGoesToRunning() [MonitorManager] 监控已停止
+PASS   : RuntimeSessionControllerTest::stopMonitoringFromMonitoringGoesToRunning()
+PASS   : RuntimeSessionControllerTest::downloadWithoutBackendFails()
+QDEBUG : RuntimeSessionControllerTest::downloadOfflineBackendFails() [MonitorManager] device backend set: VirtualDeviceBackend(0x6c2f180)
+PASS   : RuntimeSessionControllerTest::downloadOfflineBackendFails()
+QINFO  : RuntimeSessionControllerTest::downloadSuccessRestoresState() [INFO] 11:33:05.503 [VirtualDeviceBackend] connected
+QDEBUG : RuntimeSessionControllerTest::downloadSuccessRestoresState() [MonitorManager] device backend set: VirtualDeviceBackend(0x6c2f150)
+QINFO  : RuntimeSessionControllerTest::downloadSuccessRestoresState() [INFO] 11:33:05.507 [VirtualDeviceBackend] download simulated: C:/Users/Ryan/AppData/Local/Temp/runtime_session_controller_test.IozvxT
+PASS   : RuntimeSessionControllerTest::downloadSuccessRestoresState()
+QINFO  : RuntimeSessionControllerTest::realBackendDisconnectDuringDownloadFailsTransport() [INFO] 11:33:05.510 [VirtualDeviceBackend] connected
+QDEBUG : RuntimeSessionControllerTest::realBackendDisconnectDuringDownloadFailsTransport() [MonitorManager] device backend set: VirtualDeviceBackend(0x6c2f180)
+QDEBUG : RuntimeSessionControllerTest::realBackendDisconnectDuringDownloadFailsTransport() [MonitorManager] backend connectionStateChanged: false
+QINFO  : RuntimeSessionControllerTest::realBackendDisconnectDuringDownloadFailsTransport() [INFO] 11:33:05.515 [VirtualDeviceBackend] disconnected
+PASS   : RuntimeSessionControllerTest::realBackendDisconnectDuringDownloadFailsTransport()
+QINFO  : RuntimeSessionControllerTest::downloadFaultInjectionRestoresRunning() [INFO] 11:33:05.518 [VirtualDeviceBackend] connected
+QDEBUG : RuntimeSessionControllerTest::downloadFaultInjectionRestoresRunning() [MonitorManager] device backend set: VirtualDeviceBackend(0x6c2f170)
+PASS   : RuntimeSessionControllerTest::downloadFaultInjectionRestoresRunning()
+QINFO  : RuntimeSessionControllerTest::manualDownloadFailureRestoresRunningState() [INFO] 11:33:05.524 [VirtualDeviceBackend] connected
+QDEBUG : RuntimeSessionControllerTest::manualDownloadFailureRestoresRunningState() [MonitorManager] device backend set: VirtualDeviceBackend(0x6c2f140)
+PASS   : RuntimeSessionControllerTest::manualDownloadFailureRestoresRunningState()
+QINFO  : RuntimeSessionControllerTest::stoppingDuringDownloadDoesNotRestoreRunning() [INFO] 11:33:05.531 [VirtualDeviceBackend] connected
+QDEBUG : RuntimeSessionControllerTest::stoppingDuringDownloadDoesNotRestoreRunning() [MonitorManager] device backend set: VirtualDeviceBackend(0x6c2f160)
+PASS   : RuntimeSessionControllerTest::stoppingDuringDownloadDoesNotRestoreRunning()
+QINFO  : RuntimeSessionControllerTest::backendDisconnectLeavesNoRunningOrMonitoringState() [INFO] 11:33:05.538 [VirtualDeviceBackend] connected
+QDEBUG : RuntimeSessionControllerTest::backendDisconnectLeavesNoRunningOrMonitoringState() [MonitorManager] device backend set: VirtualDeviceBackend(0x6c2f1a0)
+QDEBUG : RuntimeSessionControllerTest::backendDisconnectLeavesNoRunningOrMonitoringState() [MonitorManager] 监控已启动
+QDEBUG : RuntimeSessionControllerTest::backendDisconnectLeavesNoRunningOrMonitoringState() [MonitorManager] 监控已停止
+QDEBUG : RuntimeSessionControllerTest::backendDisconnectLeavesNoRunningOrMonitoringState() [MonitorManager] backend connectionStateChanged: false
+QINFO  : RuntimeSessionControllerTest::backendDisconnectLeavesNoRunningOrMonitoringState() [INFO] 11:33:05.539 [VirtualDeviceBackend] disconnected
+PASS   : RuntimeSessionControllerTest::backendDisconnectLeavesNoRunningOrMonitoringState()
+QINFO  : RuntimeSessionControllerTest::downloadTransportFailureClassifiesState() [INFO] 11:33:05.540 [VirtualDeviceBackend] connected
+QDEBUG : RuntimeSessionControllerTest::downloadTransportFailureClassifiesState() [MonitorManager] device backend set: VirtualDeviceBackend(0x6c2f160)
+PASS   : RuntimeSessionControllerTest::downloadTransportFailureClassifiesState()
+QINFO  : RuntimeSessionControllerTest::downloadRejectedFailureClassifiesState() [INFO] 11:33:05.541 [VirtualDeviceBackend] connected
+QDEBUG : RuntimeSessionControllerTest::downloadRejectedFailureClassifiesState() [MonitorManager] device backend set: VirtualDeviceBackend(0x6c2f160)
+PASS   : RuntimeSessionControllerTest::downloadRejectedFailureClassifiesState()
+QINFO  : RuntimeSessionControllerTest::downloadVerifyFailureClassifiesState() [INFO] 11:33:05.556 [VirtualDeviceBackend] connected
+QDEBUG : RuntimeSessionControllerTest::downloadVerifyFailureClassifiesState() [MonitorManager] device backend set: VirtualDeviceBackend(0x6c2f160)
+PASS   : RuntimeSessionControllerTest::downloadVerifyFailureClassifiesState()
+QINFO  : RuntimeSessionControllerTest::downloadRetrySucceedsOnSecondAttempt() [INFO] 11:33:05.558 [VirtualDeviceBackend] connected
+QDEBUG : RuntimeSessionControllerTest::downloadRetrySucceedsOnSecondAttempt() [MonitorManager] device backend set: VirtualDeviceBackend(0x6c2f120)
+QINFO  : RuntimeSessionControllerTest::downloadRetrySucceedsOnSecondAttempt() [INFO] 11:33:05.568 [VirtualDeviceBackend] download simulated: C:/Users/Ryan/AppData/Local/Temp/runtime_session_controller_test.PUPxDF
+PASS   : RuntimeSessionControllerTest::downloadRetrySucceedsOnSecondAttempt()
+QINFO  : RuntimeSessionControllerTest::downloadRetryExhaustedFails() [INFO] 11:33:05.570 [VirtualDeviceBackend] connected
+QDEBUG : RuntimeSessionControllerTest::downloadRetryExhaustedFails() [MonitorManager] device backend set: VirtualDeviceBackend(0x6c2f120)
+PASS   : RuntimeSessionControllerTest::downloadRetryExhaustedFails()
+QINFO  : RuntimeSessionControllerTest::downloadMissingArtifactFailsPrecheck() [INFO] 11:33:05.577 [VirtualDeviceBackend] connected
+QDEBUG : RuntimeSessionControllerTest::downloadMissingArtifactFailsPrecheck() [MonitorManager] device backend set: VirtualDeviceBackend(0x6c2f180)
+PASS   : RuntimeSessionControllerTest::downloadMissingArtifactFailsPrecheck()
+QINFO  : RuntimeSessionControllerTest::downloadChecksumMismatchFailsPrecheck() [INFO] 11:33:05.579 [VirtualDeviceBackend] connected
+QDEBUG : RuntimeSessionControllerTest::downloadChecksumMismatchFailsPrecheck() [MonitorManager] device backend set: VirtualDeviceBackend(0x6c2f080)
+QDEBUG : RuntimeSessionControllerTest::downloadChecksumMismatchFailsPrecheck() [DEBUG] 11:33:05.580 ProjectController 已创建
+QDEBUG : RuntimeSessionControllerTest::downloadChecksumMismatchFailsPrecheck() [DEBUG] 11:33:05.582 ProjectController 已销毁
+PASS   : RuntimeSessionControllerTest::downloadChecksumMismatchFailsPrecheck()
+QINFO  : RuntimeSessionControllerTest::downloadManifestMismatchFailsPrecheck() [INFO] 11:33:05.582 [VirtualDeviceBackend] connected
+QDEBUG : RuntimeSessionControllerTest::downloadManifestMismatchFailsPrecheck() [MonitorManager] device backend set: VirtualDeviceBackend(0x6c2f150)
+PASS   : RuntimeSessionControllerTest::downloadManifestMismatchFailsPrecheck()
+QDEBUG : RuntimeSessionControllerTest::formalAsyncDownloadDeadlineAndUiCancellation(late-matching-response-is-timeout) [DEBUG] 11:33:05.615 ProjectController 已创建
+QDEBUG : RuntimeSessionControllerTest::formalAsyncDownloadDeadlineAndUiCancellation(late-matching-response-is-timeout) [MonitorManager] device backend set: ControllerDeviceBackend(0x6c2ebd0)
+QDEBUG : RuntimeSessionControllerTest::formalAsyncDownloadDeadlineAndUiCancellation(late-matching-response-is-timeout) [MonitorManager] backend connectionStateChanged: false
+QDEBUG : RuntimeSessionControllerTest::formalAsyncDownloadDeadlineAndUiCancellation(late-matching-response-is-timeout) [DEBUG] 11:33:06.269 ProjectController 已销毁
+PASS   : RuntimeSessionControllerTest::formalAsyncDownloadDeadlineAndUiCancellation(late-matching-response-is-timeout)
+QDEBUG : RuntimeSessionControllerTest::formalAsyncDownloadDeadlineAndUiCancellation(cancel-from-ui-during-inflight-read) [DEBUG] 11:33:06.282 ProjectController 已创建
+QDEBUG : RuntimeSessionControllerTest::formalAsyncDownloadDeadlineAndUiCancellation(cancel-from-ui-during-inflight-read) [MonitorManager] device backend set: ControllerDeviceBackend(0x6c2ebd0)
+QDEBUG : RuntimeSessionControllerTest::formalAsyncDownloadDeadlineAndUiCancellation(cancel-from-ui-during-inflight-read) [MonitorManager] backend connectionStateChanged: false
+QDEBUG : RuntimeSessionControllerTest::formalAsyncDownloadDeadlineAndUiCancellation(cancel-from-ui-during-inflight-read) [DEBUG] 11:33:06.703 ProjectController 已销毁
+PASS   : RuntimeSessionControllerTest::formalAsyncDownloadDeadlineAndUiCancellation(cancel-from-ui-during-inflight-read)
+QDEBUG : RuntimeSessionControllerTest::formalAsyncDownloadDeadlineAndUiCancellation(automatic-run-waits-for-download) [DEBUG] 11:33:06.715 ProjectController 已创建
+QDEBUG : RuntimeSessionControllerTest::formalAsyncDownloadDeadlineAndUiCancellation(automatic-run-waits-for-download) [MonitorManager] device backend set: ControllerDeviceBackend(0x6c2ebd0)
+QDEBUG : RuntimeSessionControllerTest::formalAsyncDownloadDeadlineAndUiCancellation(automatic-run-waits-for-download) [MonitorManager] backend connectionStateChanged: false
+QDEBUG : RuntimeSessionControllerTest::formalAsyncDownloadDeadlineAndUiCancellation(automatic-run-waits-for-download) [DEBUG] 11:33:07.141 ProjectController 已销毁
+PASS   : RuntimeSessionControllerTest::formalAsyncDownloadDeadlineAndUiCancellation(automatic-run-waits-for-download)
+QDEBUG : RuntimeSessionControllerTest::downloadControllerInvalidProfileStopsBeforeWrite() [DEBUG] 11:33:07.168 ProjectController 已创建
+QDEBUG : RuntimeSessionControllerTest::downloadControllerInvalidProfileStopsBeforeWrite() [MonitorManager] device backend set: ControllerDeviceBackend(0x6c2eca0)
+QDEBUG : RuntimeSessionControllerTest::downloadControllerInvalidProfileStopsBeforeWrite() [DEBUG] 11:33:07.349 ProjectController 已销毁
+QDEBUG : RuntimeSessionControllerTest::downloadControllerInvalidProfileStopsBeforeWrite() [MonitorManager] backend connectionStateChanged: false
+PASS   : RuntimeSessionControllerTest::downloadControllerInvalidProfileStopsBeforeWrite()
+QDEBUG : RuntimeSessionControllerTest::downloadControllerMissingProfileStopsBeforeWrite() [DEBUG] 11:33:07.380 ProjectController 已创建
+QDEBUG : RuntimeSessionControllerTest::downloadControllerMissingProfileStopsBeforeWrite() [MonitorManager] device backend set: ControllerDeviceBackend(0x6c2ed80)
+QDEBUG : RuntimeSessionControllerTest::downloadControllerMissingProfileStopsBeforeWrite() [DEBUG] 11:33:07.517 ProjectController 已销毁
+QDEBUG : RuntimeSessionControllerTest::downloadControllerMissingProfileStopsBeforeWrite() [MonitorManager] backend connectionStateChanged: false
+PASS   : RuntimeSessionControllerTest::downloadControllerMissingProfileStopsBeforeWrite()
+QDEBUG : RuntimeSessionControllerTest::downloadControllerLegacyArtifactStopsBeforeWrite() [DEBUG] 11:33:07.540 ProjectController 已创建
+QDEBUG : RuntimeSessionControllerTest::downloadControllerLegacyArtifactStopsBeforeWrite() [MonitorManager] device backend set: ControllerDeviceBackend(0x6c2ecc0)
+QDEBUG : RuntimeSessionControllerTest::downloadControllerLegacyArtifactStopsBeforeWrite() [MonitorManager] backend connectionStateChanged: false
+QDEBUG : RuntimeSessionControllerTest::downloadControllerLegacyArtifactStopsBeforeWrite() [DEBUG] 11:33:07.564 ProjectController 已销毁
+PASS   : RuntimeSessionControllerTest::downloadControllerLegacyArtifactStopsBeforeWrite()
+QINFO  : RuntimeSessionControllerTest::downloadVirtualLegacyArtifactRemainsCompatible() [INFO] 11:33:07.569 [VirtualDeviceBackend] connected
+QDEBUG : RuntimeSessionControllerTest::downloadVirtualLegacyArtifactRemainsCompatible() [MonitorManager] device backend set: VirtualDeviceBackend(0x6c2f180)
+QINFO  : RuntimeSessionControllerTest::downloadVirtualLegacyArtifactRemainsCompatible() [INFO] 11:33:07.577 [VirtualDeviceBackend] download simulated: C:/Users/Ryan/AppData/Local/Temp/runtime_session_controller_test.zsxOdX
+PASS   : RuntimeSessionControllerTest::downloadVirtualLegacyArtifactRemainsCompatible()
+QDEBUG : RuntimeSessionControllerTest::downloadControllerPublishedBundleSucceeds() [DEBUG] 11:33:07.587 ProjectController 已创建
+QDEBUG : RuntimeSessionControllerTest::downloadControllerPublishedBundleSucceeds() [MonitorManager] device backend set: ControllerDeviceBackend(0x6c2eb80)
+QDEBUG : RuntimeSessionControllerTest::downloadControllerPublishedBundleSucceeds() [MonitorManager] backend connectionStateChanged: false
+QDEBUG : RuntimeSessionControllerTest::downloadControllerPublishedBundleSucceeds() [DEBUG] 11:33:08.244 ProjectController 已销毁
+PASS   : RuntimeSessionControllerTest::downloadControllerPublishedBundleSucceeds()
+PASS   : RuntimeSessionControllerTest::writeDownloadArtifactPreservesDownloadProfileMetadata()
+PASS   : RuntimeSessionControllerTest::unverifiedExecutionCannotBeImportedAsDownload()
+PASS   : RuntimeSessionControllerTest::staleGenerationWithoutManifestIsNotConsumed()
+PASS   : RuntimeSessionControllerTest::failedPublicationKeepsExistingConfigPointer()
+PASS   : RuntimeSessionControllerTest::projectRelativePublishedBundleResolvesAfterMove()
+QINFO  : RuntimeSessionControllerTest::publishedGenerationRejectsProfileOverride() [INFO] 11:33:08.792 [VirtualDeviceBackend] connected
+QDEBUG : RuntimeSessionControllerTest::publishedGenerationRejectsProfileOverride() [MonitorManager] device backend set: VirtualDeviceBackend(0x6c2f0b0)
+QDEBUG : RuntimeSessionControllerTest::publishedGenerationRejectsProfileOverride() [DEBUG] 11:33:08.792 ProjectController 已创建
+QDEBUG : RuntimeSessionControllerTest::publishedGenerationRejectsProfileOverride() [DEBUG] 11:33:08.800 ProjectController 已销毁
+PASS   : RuntimeSessionControllerTest::publishedGenerationRejectsProfileOverride()
+PASS   : RuntimeSessionControllerTest::pendingRunFlag()
+PASS   : RuntimeSessionControllerTest::skipNextBuildSaveFlag()
+PASS   : RuntimeSessionControllerTest::artifactPathInitiallyEmpty()
+PASS   : RuntimeSessionControllerTest::defaultOpcServerIsCreated()
+QDEBUG : RuntimeSessionControllerTest::syncOpcRuntimePointsAddsControllerStatusRegisters() [DEBUG] 11:33:08.813 ProjectController 已创建
+QDEBUG : RuntimeSessionControllerTest::syncOpcRuntimePointsAddsControllerStatusRegisters() [DEBUG] 11:33:08.814 ProjectController 已销毁
+PASS   : RuntimeSessionControllerTest::syncOpcRuntimePointsAddsControllerStatusRegisters()
+QDEBUG : RuntimeSessionControllerTest::setAndClearDeviceBackend() [MonitorManager] device backend set: VirtualDeviceBackend(0x6c2f1b0)
+QDEBUG : RuntimeSessionControllerTest::setAndClearDeviceBackend() [MonitorManager] device backend cleared
+PASS   : RuntimeSessionControllerTest::setAndClearDeviceBackend()
+QDEBUG : RuntimeSessionControllerTest::destroyingReplacedBackendDoesNotClearCurrentBackend() [MonitorManager] device backend set: VirtualDeviceBackend(0x7999590)
+QDEBUG : RuntimeSessionControllerTest::destroyingReplacedBackendDoesNotClearCurrentBackend() [MonitorManager] device backend set: VirtualDeviceBackend(0x7999080)
+PASS   : RuntimeSessionControllerTest::destroyingReplacedBackendDoesNotClearCurrentBackend()
+QINFO  : RuntimeSessionControllerTest::destroyingBackendDuringOpcWriteFailsOnceWithoutGoodUpdate() [INFO] 11:33:08.817 [VirtualDeviceBackend] connected
+QDEBUG : RuntimeSessionControllerTest::destroyingBackendDuringOpcWriteFailsOnceWithoutGoodUpdate() [MonitorManager] device backend set: VirtualDeviceBackend(0x7999500)
+PASS   : RuntimeSessionControllerTest::destroyingBackendDuringOpcWriteFailsOnceWithoutGoodUpdate()
+QDEBUG : RuntimeSessionControllerTest::executeRunSkipsOpcWhenDisabled() [DEBUG] 11:33:08.817 ProjectController 已创建
+QDEBUG : RuntimeSessionControllerTest::executeRunSkipsOpcWhenDisabled() [DEBUG] 11:33:08.817 ProjectController 已销毁
+PASS   : RuntimeSessionControllerTest::executeRunSkipsOpcWhenDisabled()
+QDEBUG : RuntimeSessionControllerTest::executeRunInvalidOpcConfigEmitsRuntimeError() [DEBUG] 11:33:08.824 ProjectController 已创建
+QDEBUG : RuntimeSessionControllerTest::executeRunInvalidOpcConfigEmitsRuntimeError() [DEBUG] 11:33:08.825 ProjectController 已销毁
+PASS   : RuntimeSessionControllerTest::executeRunInvalidOpcConfigEmitsRuntimeError()
+QDEBUG : RuntimeSessionControllerTest::requestStopStopsOpcServer() [DEBUG] 11:33:08.825 ProjectController 已创建
+QDEBUG : RuntimeSessionControllerTest::requestStopStopsOpcServer() [DEBUG] 11:33:08.825 ProjectController 已销毁
+PASS   : RuntimeSessionControllerTest::requestStopStopsOpcServer()
+PASS   : RuntimeSessionControllerTest::opcWriteUnknownPointRejected()
+PASS   : RuntimeSessionControllerTest::opcWriteReadOnlyRejected()
+QINFO  : RuntimeSessionControllerTest::opcWriteEditableSuccess() [INFO] 11:33:08.833 [VirtualDeviceBackend] connected
+QDEBUG : RuntimeSessionControllerTest::opcWriteEditableSuccess() [MonitorManager] device backend set: VirtualDeviceBackend(0x6c2eea0)
+PASS   : RuntimeSessionControllerTest::opcWriteEditableSuccess()
+QINFO  : RuntimeSessionControllerTest::opcWriteOnlyAppliesRequestedPoint() [INFO] 11:33:08.892 [VirtualDeviceBackend] connected
+QDEBUG : RuntimeSessionControllerTest::opcWriteOnlyAppliesRequestedPoint() [MonitorManager] device backend set: VirtualDeviceBackend(0x6c2ec80)
+PASS   : RuntimeSessionControllerTest::opcWriteOnlyAppliesRequestedPoint()
+QINFO  : RuntimeSessionControllerTest::opcWriteFailureDoesNotPublishGood() [INFO] 11:33:08.948 [VirtualDeviceBackend] connected
+QDEBUG : RuntimeSessionControllerTest::opcWriteFailureDoesNotPublishGood() [MonitorManager] device backend set: VirtualDeviceBackend(0x6c2ee80)
+PASS   : RuntimeSessionControllerTest::opcWriteFailureDoesNotPublishGood()
+QINFO  : RuntimeSessionControllerTest::opcWriteReadbackTimeoutDoesNotPublishGood() [INFO] 11:33:08.982 [VirtualDeviceBackend] connected
+QDEBUG : RuntimeSessionControllerTest::opcWriteReadbackTimeoutDoesNotPublishGood() [MonitorManager] device backend set: VirtualDeviceBackend(0x6c2ee70)
+PASS   : RuntimeSessionControllerTest::opcWriteReadbackTimeoutDoesNotPublishGood()
+QINFO  : RuntimeSessionControllerTest::opcWriteReadbackMismatchDoesNotPublishGood() [INFO] 11:33:09.041 [VirtualDeviceBackend] connected
+QDEBUG : RuntimeSessionControllerTest::opcWriteReadbackMismatchDoesNotPublishGood() [MonitorManager] device backend set: VirtualDeviceBackend(0x6c2ed10)
+PASS   : RuntimeSessionControllerTest::opcWriteReadbackMismatchDoesNotPublishGood()
+QINFO  : RuntimeSessionControllerTest::opcWriteReentryIsRejected() [INFO] 11:33:09.131 [VirtualDeviceBackend] connected
+QDEBUG : RuntimeSessionControllerTest::opcWriteReentryIsRejected() [MonitorManager] device backend set: VirtualDeviceBackend(0x6c2ecf0)
+PASS   : RuntimeSessionControllerTest::opcWriteReentryIsRejected()
+QINFO  : RuntimeSessionControllerTest::opcStopOrSwitchDoesNotCancelIndependentUiReadback() [INFO] 11:33:09.198 [VirtualDeviceBackend] connected
+QDEBUG : RuntimeSessionControllerTest::opcStopOrSwitchDoesNotCancelIndependentUiReadback() [MonitorManager] device backend set: VirtualDeviceBackend(0x6c2eee0)
+QINFO  : RuntimeSessionControllerTest::opcStopOrSwitchDoesNotCancelIndependentUiReadback() [INFO] 11:33:09.265 [VirtualDeviceBackend] connected
+QDEBUG : RuntimeSessionControllerTest::opcStopOrSwitchDoesNotCancelIndependentUiReadback() [MonitorManager] device backend set: VirtualDeviceBackend(0x6c2eee0)
+PASS   : RuntimeSessionControllerTest::opcStopOrSwitchDoesNotCancelIndependentUiReadback()
+QINFO  : RuntimeSessionControllerTest::opcPendingWriteClearsOnSessionStop() [INFO] 11:33:09.332 [VirtualDeviceBackend] connected
+QDEBUG : RuntimeSessionControllerTest::opcPendingWriteClearsOnSessionStop() [MonitorManager] device backend set: VirtualDeviceBackend(0x6c2ef40)
+PASS   : RuntimeSessionControllerTest::opcPendingWriteClearsOnSessionStop()
+QINFO  : RuntimeSessionControllerTest::opcPendingWriteClearsOnControllerSwitch() [INFO] 11:33:09.335 [VirtualDeviceBackend] connected
+QDEBUG : RuntimeSessionControllerTest::opcPendingWriteClearsOnControllerSwitch() [MonitorManager] device backend set: VirtualDeviceBackend(0x6c2ee50)
+PASS   : RuntimeSessionControllerTest::opcPendingWriteClearsOnControllerSwitch()
+QINFO  : RuntimeSessionControllerTest::opcPendingWriteClearsOnBackendSwitch() [INFO] 11:33:09.338 [VirtualDeviceBackend] connected
+QDEBUG : RuntimeSessionControllerTest::opcPendingWriteClearsOnBackendSwitch() [MonitorManager] device backend set: VirtualDeviceBackend(0x6c2ef40)
+QDEBUG : RuntimeSessionControllerTest::opcPendingWriteClearsOnBackendSwitch() [MonitorManager] device backend cleared
+PASS   : RuntimeSessionControllerTest::opcPendingWriteClearsOnBackendSwitch()
+QINFO  : RuntimeSessionControllerTest::opcPendingWriteClearsOnOpcServerSwitch() [INFO] 11:33:09.340 [VirtualDeviceBackend] connected
+QDEBUG : RuntimeSessionControllerTest::opcPendingWriteClearsOnOpcServerSwitch() [MonitorManager] device backend set: VirtualDeviceBackend(0x6c2ef40)
+PASS   : RuntimeSessionControllerTest::opcPendingWriteClearsOnOpcServerSwitch()
+QDEBUG : RuntimeSessionControllerTest::controllerDebugCommandsUseConfiguredBackend() [MonitorManager] device backend set: ControllerDeviceBackend(0x6c2ecf0)
+QDEBUG : RuntimeSessionControllerTest::controllerDebugCommandsUseConfiguredBackend() [MonitorManager] backend connectionStateChanged: false
+PASS   : RuntimeSessionControllerTest::controllerDebugCommandsUseConfiguredBackend()
+FAIL!  : RuntimeSessionControllerTest::reviewDebugOperationsHaveExactlyOnePersistentTerminal() 'AppLogging::install()' returned FALSE. ()
+D:\Table\LH\tests\runtime_session_controller_test.cpp(2142) : failure location
+PASS   : RuntimeSessionControllerTest::controllerConnectionTestUsesConfiguredBackend()
+PASS   : RuntimeSessionControllerTest::manifestSourceModificationRejectsRunBundle()
+PASS   : RuntimeSessionControllerTest::manifestMissingOrMismatchedSourceChecksumsRejectsRunBundle()
+PASS   : RuntimeSessionControllerTest::cleanupTestCase()
+Totals: 73 passed, 1 failed, 0 skipped, 0 blacklisted, 4603ms
+********* Finished testing of RuntimeSessionControllerTest *********

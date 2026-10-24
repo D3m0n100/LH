@@ -1,0 +1,204 @@
+{
+  "review_url": "https://chatgpt.com/s/cx_6adaab23b5cc819180d66504701062fe",
+  "baseline": "99f9b097161de3575cb383fee674f434f33c4c6c",
+  "date": "2026-10-23",
+  "overall_status": "blocked_external_acceptance",
+  "software_tasks_locally_verified": 17,
+  "tasks": [
+    {
+      "id": "T-F01",
+      "title": "配置事务与在线连接身份",
+      "status": "implemented_locally_verified",
+      "detail": "已实现，本地回归通过"
+    },
+    {
+      "id": "T-F03",
+      "title": "独立下载器响应身份及期限",
+      "status": "implemented_locally_verified",
+      "detail": "已实现，本地回归通过"
+    },
+    {
+      "id": "T-F05",
+      "title": "下载文件完整校验",
+      "status": "implemented_locally_verified",
+      "detail": "已实现，本地回归通过"
+    },
+    {
+      "id": "T-F07",
+      "title": "图片原子导出",
+      "status": "implemented_locally_verified",
+      "detail": "已实现，本地回归通过"
+    },
+    {
+      "id": "T-F08",
+      "title": "工程文件完整读取",
+      "status": "implemented_locally_verified",
+      "detail": "已实现，本地回归通过"
+    },
+    {
+      "id": "T-F09",
+      "title": "下载拒绝状态及终态",
+      "status": "implemented_locally_verified",
+      "detail": "已实现，本地回归通过"
+    },
+    {
+      "id": "T-F10",
+      "title": "数据库关闭准入竞态",
+      "status": "implemented_locally_verified",
+      "detail": "已实现，本地回归通过"
+    },
+    {
+      "id": "T-F11",
+      "title": "异步控制器连接",
+      "status": "implemented_locally_verified",
+      "detail": "已实现，本地回归通过"
+    },
+    {
+      "id": "T-F12",
+      "title": "最近 N 条分页复杂度",
+      "status": "implemented_locally_verified",
+      "detail": "已实现，本地回归通过"
+    },
+    {
+      "id": "T-F13",
+      "title": "数据库 PRAGMA 验证",
+      "status": "implemented_locally_verified",
+      "detail": "已实现，本地回归通过"
+    },
+    {
+      "id": "T-F15",
+      "title": "调试命令持久操作日志",
+      "status": "implemented_locally_verified",
+      "detail": "已实现，本地回归通过"
+    },
+    {
+      "id": "T-F16",
+      "title": "TCP 连接与发送积压限额",
+      "status": "implemented_locally_verified",
+      "detail": "已实现，本地回归通过"
+    },
+    {
+      "id": "T-F17",
+      "title": "快速打开扫描边界与预算",
+      "status": "implemented_locally_verified",
+      "detail": "已实现，本地回归通过"
+    },
+    {
+      "id": "T-F18",
+      "title": "延期 SQL worker 退出屏障",
+      "status": "implemented_locally_verified",
+      "detail": "已实现，本地回归通过"
+    },
+    {
+      "id": "T-F20",
+      "title": "协议/路径公共工具及向量",
+      "status": "implemented_locally_verified",
+      "detail": "已实现，本地回归通过"
+    },
+    {
+      "id": "T-F21",
+      "title": "无生产调用控制器与说明",
+      "status": "implemented_locally_verified",
+      "detail": "已实现，本地回归通过"
+    },
+    {
+      "id": "T-F23",
+      "title": "同步历史 API 错误语义",
+      "status": "implemented_locally_verified",
+      "detail": "已实现，本地回归通过"
+    },
+    {
+      "id": "V01",
+      "title": "Windows 构建、CTest、安装冒烟",
+      "status": "partially_verified_requires_msvc",
+      "detail": "MinGW 本地构建/回归/安装通过；MSVC 环境及原有注入用例仍未验证"
+    },
+    {
+      "id": "V02",
+      "title": "真实控制器/OPC 现场验收",
+      "status": "requires_target_environment",
+      "detail": "待确认设备条件，不以测试桩替代"
+    },
+    {
+      "id": "V03",
+      "title": "真实 NAS 故障及长时采集",
+      "status": "requires_target_environment",
+      "detail": "待确认现场条件，不以本机 SMB 替代"
+    }
+  ],
+  "excluded_compiler_tasks": [
+    "T-F02",
+    "T-F04",
+    "T-F06",
+    "T-F14",
+    "T-F19",
+    "T-F22",
+    "C01",
+    "C02",
+    "C03",
+    "C04",
+    "C05",
+    "C06",
+    "C07",
+    "FB01",
+    "FB02",
+    "FB03",
+    "FB04",
+    "FB05",
+    "FB06",
+    "FB07",
+    "FB08",
+    "FB09",
+    "FB10",
+    "FB11",
+    "FB12",
+    "FB13",
+    "FB14",
+    "FB15",
+    "FB16",
+    "FB17",
+    "FB18",
+    "FB19",
+    "FB20",
+    "FB21"
+  ],
+  "partial_scope": {
+    "T-F08": "Project/document reads only; DSLCompilerInput excluded"
+  },
+  "scope_boundary": {
+    "T-F19": "Build publication/auto-run use-case extraction treated as compiler integration and excluded"
+  },
+  "verification_file": "review-2026-10-23-verification.json",
+  "pending_conditions": {
+    "V01": "Windows Qt MSVC toolchain; explicit accounting of three disabled existing compiler publication injection cases",
+    "V02": "Controlled controller port/slave/firmware and OPC DA server identity",
+    "V03": "Authorized disposable real NAS target, fault controls, sampling rate and duration budgets"
+  },
+  "committed": false,
+  "pushed": false,
+  "field_requirements_document": "review-2026-10-23-field-requirements.md",
+  "additional_acceptance_evidence": {
+    "T-F10": "review-2026-10-23-admission-barrier.txt",
+    "T-F11": "review-2026-10-23-session-generation.txt"
+  },
+  "blocked_audit": {
+    "previous_goal_turn_classification": "progress",
+    "previous_progress": "Deterministic database admission barrier and three late-connection session probes added and verified",
+    "same_external_conditions_observed_in_consecutive_goal_turns": 3,
+    "remaining_tasks": [
+      "V01",
+      "V02",
+      "V03"
+    ],
+    "current_evidence": {
+      "qt_installations_observed": [
+        "C:/Qt/5.15.2/mingw81_64"
+      ],
+      "msvc_command_discovered": false,
+      "serial_ports": [],
+      "smb_mappings": [],
+      "live_build_or_ctest_processes": []
+    },
+    "required_change": "Provide the MSVC/Qt environment and controlled controller/OPC/NAS acceptance targets"
+  }
+}

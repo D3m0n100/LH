@@ -16,6 +16,8 @@
 #include <QLabel>
 #include <QtConcurrent/QtConcurrent>
 #include <QApplication>
+#include <QElapsedTimer>
+#include "common/PathSecurityUtils.h"
 
 CommandPaletteDialog::CommandPaletteDialog(MainWindow* parent, Mode mode)
     : QDialog(parent, Qt::FramelessWindowHint | Qt::Popup)
@@ -193,48 +195,71 @@ void CommandPaletteDialog::startQuickOpenScan()
     const quint64 taskId = m_scanTaskId;
     const QString sessionId = m_scanSessionId;
     auto cancelFlag = m_scanCancelled;
+    auto stopReason = std::make_shared<QString>();
 
     auto* watcher = new QFutureWatcher<QStringList>(this);
     connect(watcher, &QFutureWatcher<QStringList>::finished, this,
-            [this, watcher, taskId, sessionId, cancelFlag]() {
+            [this, watcher, taskId, sessionId, cancelFlag, stopReason]() {
         const auto files = watcher->result();
         watcher->deleteLater();
         if (cancelFlag->loadRelaxed() || !m_mainWindow
                 || taskId != m_scanTaskId || sessionId != m_mainWindow->projectSessionId()) return;
         m_scannedFiles = files;
-        m_scanStatus->setText(files.size() >= 5000
-            ? tr("已达到 5000 个文件上限，请缩小工程范围") : tr("已索引 %1 个文件").arg(files.size()));
+        m_scanStatus->setText(stopReason->isEmpty() ? tr("已索引 %1 个文件").arg(files.size())
+            : tr("已索引 %1 个文件；%2").arg(files.size()).arg(*stopReason));
         updateList(m_searchEdit->text());
     });
     // Worker owns only value data. Destroying the watcher disconnects delivery;
     // no worker ever dereferences the dialog, even while it is being destroyed.
-    watcher->setFuture(QtConcurrent::run([rootPath, cancelFlag]() {
-        return scanFiles(rootPath, cancelFlag, 5000);
+    watcher->setFuture(QtConcurrent::run([rootPath, cancelFlag, stopReason]() {
+        return scanFiles(rootPath, cancelFlag, 5000, stopReason.get());
     }));
 }
 
 QStringList CommandPaletteDialog::scanFiles(const QString& rootPath,
-        const std::shared_ptr<QAtomicInt>& cancelled, int limit)
+        const std::shared_ptr<QAtomicInt>& cancelled, int limit, QString* stopReason)
 {
+    if (stopReason) stopReason->clear();
+    const QString root = QFileInfo(rootPath).canonicalFilePath();
+    if (root.isEmpty() || limit <= 0) return {};
+    QElapsedTimer timer;
+    timer.start();
+    int entries = 0;
+    const auto contained = [&root](const QString& path) {
+        return !path.isEmpty() && PathSecurityUtils::pathWithinRoot(root, path);
+    };
+    const auto overBudget = [&]() {
+        if (timer.elapsed() < 1500 && entries < 50000) return false;
+        if (stopReason) *stopReason = QStringLiteral("扫描达到时间或条目预算，请缩小工程范围");
+        return true;
+    };
     QStringList files, pending{rootPath};
     QSet<QString> visited;
     const QSet<QString> extensions{"lh", "json", "txt", "xml", "yaml", "yml", "ini",
                                   "cpp", "c", "h", "hpp", "qss", "cmake", "md", "log"};
     while (!pending.isEmpty() && files.size() < limit) {
         if (cancelled->loadRelaxed()) return {};
+        if (overBudget()) break;
         const QString directory = pending.takeLast();
         const QString canonical = QFileInfo(directory).canonicalFilePath();
-        if (canonical.isEmpty() || visited.contains(canonical)) continue;
+        if (!contained(canonical) || visited.contains(canonical)) continue;
         visited.insert(canonical);
         QDirIterator it(directory, QDir::Files | QDir::Dirs | QDir::NoDotAndDotDot);
         while (it.hasNext() && files.size() < limit) {
             if (cancelled->loadRelaxed()) return {};
+            if (overBudget()) return files;
             it.next();
+            ++entries;
             const QFileInfo fi = it.fileInfo();
+            if (PathSecurityUtils::isLinkOrReparsePoint(fi.absoluteFilePath()) || !contained(fi.canonicalFilePath())) continue;
             if (fi.isDir()) {
                 const auto name = fi.fileName().toLower();
                 if (name.startsWith("build") || name == ".git" || name == ".cache"
                         || name == "tmp" || name == "node_modules" || name == "obj") continue;
+                if (pending.size() + visited.size() >= 4096) {
+                    if (stopReason) *stopReason = QStringLiteral("扫描达到目录预算，请缩小工程范围");
+                    return files;
+                }
                 pending.append(fi.absoluteFilePath());
             } else if (fi.isFile() && (extensions.contains(fi.suffix().toLower())
                        || fi.fileName() == "CMakeLists.txt")) {
@@ -242,6 +267,7 @@ QStringList CommandPaletteDialog::scanFiles(const QString& rootPath,
             }
         }
     }
+    if (files.size() >= limit && stopReason) *stopReason = QStringLiteral("已达到文件上限，请缩小工程范围");
     return files;
 }
 

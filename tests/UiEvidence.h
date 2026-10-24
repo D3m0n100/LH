@@ -54,6 +54,14 @@ inline QString fingerprint()
     QCryptographicHash digest(QCryptographicHash::Sha256);
     for (const auto& relative : paths) {
         QFile file(QDir(repositoryRoot()).filePath(QString::fromUtf8(relative)));
+        // ls-files includes tracked files removed by the current worktree. Record
+        // their absence explicitly so refactors can still produce attributable
+        // evidence; unreadable existing files must continue to fail the run.
+        if (!file.exists()) {
+            digest.addData(relative);
+            digest.addData("\0-1\0", 4);
+            continue;
+        }
         if (!file.open(QIODevice::ReadOnly))
             return {};
         // Length-prefixing content makes the framing unambiguous, including empty files.
@@ -102,7 +110,7 @@ inline bool initialize()
     QJsonObject meta{{QStringLiteral("runId"), runId()},
         {QStringLiteral("parentRunId"), qEnvironmentVariable("LH_UI_PARENT_RUN")},
         {QStringLiteral("gitHead"), head}, {QStringLiteral("workspaceFingerprint"), sourceHash},
-        {QStringLiteral("fingerprintAlgorithm"), QStringLiteral("SHA256(sorted unique git src/tests/resources/cmake/CMakeLists.txt: UTF8 path,NUL,decimal byte size,NUL,content)")},
+        {QStringLiteral("fingerprintAlgorithm"), QStringLiteral("SHA256-v2(sorted unique git src/tests/resources/cmake/CMakeLists.txt: UTF8 path,NUL,decimal byte size,NUL,content; missing tracked file uses size=-1 and no content)")},
         {QStringLiteral("timestampUtc"), QDateTime::currentDateTimeUtc().toString(Qt::ISODateWithMs)},
         {QStringLiteral("qtVersion"), QString::fromLatin1(qVersion())},
         {QStringLiteral("os"), QSysInfo::prettyProductName()},

@@ -1,0 +1,2358 @@
+{
+  "count": 63,
+  "statuses": {
+    "partial": 22,
+    "not_met": 27,
+    "local_met": 3,
+    "hardware_pending": 2,
+    "environment_blocked": 1,
+    "process_pending": 7,
+    "historical_context": 1
+  },
+  "requirements": [
+    {
+      "id": "L01",
+      "group": "语言及运行语义",
+      "requirement": "LM 原始装配格式和旧项目迁移",
+      "source_pages": {
+        "manual": "7-10,202-204",
+        "guide": "33-38,140-143"
+      },
+      "status": "partial",
+      "finding": "LH 使用 PROGRAM/VAR 和括号调用；Qt 只归一化 instance=_Type(...)，不能转换 _Type[instance]、::、=:、# 指令。新语法不是缺陷，但不能直接复用 LM 工程。",
+      "evidence_keys": [
+        "grammar",
+        "input"
+      ],
+      "acceptance": "迁移一个完整 LM 工程，形成逐条语义映射和等效结果；不要求沿用旧语法。",
+      "probe_ids": [
+        "legacy_assembly",
+        "legacy_include"
+      ],
+      "status_zh": "部分达到",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/grammar/LH.g4",
+          "absolute_path": "D:/Table/LH/third_party/custom_dsp_language/compile/grammar/LH.g4",
+          "line": 32,
+          "sha256": "96cfacd703ad9321e55fba00d09c11ca0e964f22b9ccb2c6d4813456dd64f443",
+          "needle": "program"
+        },
+        {
+          "path": "src/compiler/DSLCompilerInput.cpp",
+          "absolute_path": "D:/Table/LH/src/compiler/DSLCompilerInput.cpp",
+          "line": 89,
+          "sha256": "99980eba05e7266beac51573be1843a4f592fddef172771ddc06b92c86e77a92",
+          "needle": "MappedLines normalizeLegacyDslSource"
+        }
+      ]
+    },
+    {
+      "id": "L02",
+      "group": "语言及运行语义",
+      "requirement": "整型/浮点立即数、数据项引用和成员连接",
+      "source_pages": {
+        "manual": "8-13",
+        "guide": "38,42,54-55"
+      },
+      "status": "partial",
+      "finding": "立即数可编码，变量/成员引用不可用于功能块连接；无法形成传感器→算法→输出链。",
+      "evidence_keys": [
+        "refs",
+        "assignment"
+      ],
+      "acceptance": "运行变量、成员、输入/输出/双向参数连接在目标固件上得到正确值。",
+      "probe_ids": [
+        "runtime_variable_copy",
+        "member_reference",
+        "block_input_reference",
+        "block_output_reference"
+      ],
+      "status_zh": "部分达到",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "absolute_path": "D:/Table/LH/third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "line": 470,
+          "sha256": "f63e37af7d86086ab8513e8b901e6467be5ad5ea1f288935b98e469a1a5b077c",
+          "needle": "def _process_fb_call"
+        },
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "absolute_path": "D:/Table/LH/third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "line": 598,
+          "sha256": "f63e37af7d86086ab8513e8b901e6467be5ad5ea1f288935b98e469a1a5b077c",
+          "needle": "def _process_assignment"
+        }
+      ]
+    },
+    {
+      "id": "L03",
+      "group": "语言及运行语义",
+      "requirement": "IQ 与浮点的区分、Q 值和溢出语义",
+      "source_pages": {
+        "manual": "10-11,101-112,169,183",
+        "guide": "37-38"
+      },
+      "status": "not_met",
+      "finding": "IQ 类型和 14 个 IQ 功能块缺失；REAL 不能作为已证明的等价替代。",
+      "evidence_keys": [
+        "grammar",
+        "init",
+        "registry"
+      ],
+      "acceptance": "覆盖版本对应的 Q 值、缩放、范围、运算/转换、饱和或溢出规则。",
+      "probe_ids": [
+        "iq_type"
+      ],
+      "status_zh": "未达到",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/grammar/LH.g4",
+          "absolute_path": "D:/Table/LH/third_party/custom_dsp_language/compile/grammar/LH.g4",
+          "line": 32,
+          "sha256": "96cfacd703ad9321e55fba00d09c11ca0e964f22b9ccb2c6d4813456dd64f443",
+          "needle": "program"
+        },
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "absolute_path": "D:/Table/LH/third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "line": 360,
+          "sha256": "f63e37af7d86086ab8513e8b901e6467be5ad5ea1f288935b98e469a1a5b077c",
+          "needle": "def _process_variables"
+        },
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/registry.py",
+          "absolute_path": "D:/Table/LH/third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/registry.py",
+          "line": 54,
+          "sha256": "4fa84360d06ff8b8309dd81c9bb043c1e3bf87967ac17ee22069772832193374",
+          "needle": "class FunctionBlockMeta"
+        }
+      ]
+    },
+    {
+      "id": "L04",
+      "group": "语言及运行语义",
+      "requirement": "上电一次初始化、任务外和周期内执行边界",
+      "source_pages": {
+        "manual": "12-14,29-30",
+        "guide": "33,38"
+      },
+      "status": "not_met",
+      "finding": "VAR 初值被明确拒绝；标量常量写回为离线执行未确认，任务内外边界没有执行契约。",
+      "evidence_keys": [
+        "init",
+        "task",
+        "artifact_gate"
+      ],
+      "acceptance": "冷启动、复位、重新下载分别验证初始化次数和保留值。",
+      "probe_ids": [
+        "int_initializer",
+        "scalar_constant_write"
+      ],
+      "status_zh": "未达到",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "absolute_path": "D:/Table/LH/third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "line": 360,
+          "sha256": "f63e37af7d86086ab8513e8b901e6467be5ad5ea1f288935b98e469a1a5b077c",
+          "needle": "def _process_variables"
+        },
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_task.py",
+          "absolute_path": "D:/Table/LH/third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_task.py",
+          "line": 26,
+          "sha256": "a5bb16d7149388eb7535fc9e3fc8257dd1067dc2a17509017aec97d243beb389",
+          "needle": "def _define_task()"
+        },
+        {
+          "path": "src/common/CompileArtifactPolicy.h",
+          "absolute_path": "D:/Table/LH/src/common/CompileArtifactPolicy.h",
+          "line": 14,
+          "sha256": "8f31b91f2e3444a79173dac126954c50522fd41bdd5334a0cda8d3068ce4a701",
+          "needle": "inline bool containsMarker"
+        }
+      ]
+    },
+    {
+      "id": "L05",
+      "group": "语言及运行语义",
+      "requirement": "参数工程量序号、归一化、限幅及外部语义",
+      "source_pages": {
+        "manual": "11-13,47-53",
+        "guide": "41-43,54-55"
+      },
+      "status": "partial",
+      "finding": "项目点有 unit/min/max/scale/offset；未形成 LM 工程量序号匹配和参数语义激活链，通用范围字段不等于 LM 的限幅/拒绝规则。",
+      "evidence_keys": [
+        "config",
+        "points",
+        "param"
+      ],
+      "acceptance": "验证工程量关联、内部归一化/外部显示、100%-200% 限幅及超限拒绝的规定。",
+      "probe_ids": [],
+      "status_zh": "部分达到",
+      "source_evidence": [
+        {
+          "path": "src/common/ConfigTypes.h",
+          "absolute_path": "D:/Table/LH/src/common/ConfigTypes.h",
+          "line": 134,
+          "sha256": "0e116b5666fba649e283eeea96f2218c5512fc3ad4a310f714f08509c65bb186",
+          "needle": "struct ParameterDefinition"
+        },
+        {
+          "path": "src/common/RuntimePointTypes.h",
+          "absolute_path": "D:/Table/LH/src/common/RuntimePointTypes.h",
+          "line": 345,
+          "sha256": "c9496aca356ae4e52f9515b8e5286ece8f6efa4168e5820527f0b3e123581caa",
+          "needle": "fromParameter(const ParameterDefinition"
+        },
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_param.py",
+          "absolute_path": "D:/Table/LH/third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_param.py",
+          "line": 11,
+          "sha256": "d7764fabe6d586d930e7965c9c372e44ce30c375edbf3f7065d0c60ad4530c34",
+          "needle": "def get_param_blocks"
+        }
+      ]
+    },
+    {
+      "id": "L06",
+      "group": "语言及运行语义",
+      "requirement": "保存、永久保存及下载后恢复",
+      "source_pages": {
+        "manual": "12-13,28,30,49-51,199",
+        "guide": "27-28,119-122"
+      },
+      "status": "not_met",
+      "finding": "本机 JSON/SQLite 保存不等于控制器永久参数；缺少永久参数块和 IDE 备份/恢复闭环。",
+      "evidence_keys": [
+        "param",
+        "debug_client",
+        "config"
+      ],
+      "acceptance": "修改参数→掉电/复位→重刷装配→恢复永久参数，验证不同保存类别。",
+      "probe_ids": [],
+      "status_zh": "未达到",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_param.py",
+          "absolute_path": "D:/Table/LH/third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_param.py",
+          "line": 11,
+          "sha256": "d7764fabe6d586d930e7965c9c372e44ce30c375edbf3f7065d0c60ad4530c34",
+          "needle": "def get_param_blocks"
+        },
+        {
+          "path": "src/communication/ControllerDebugClient.h",
+          "absolute_path": "D:/Table/LH/src/communication/ControllerDebugClient.h",
+          "line": 90,
+          "sha256": "47e5b7f0169b3e56b14ce53ec84de3c0493ec4e28f75802fe5da29e23c9fd236",
+          "needle": "bool pause();"
+        },
+        {
+          "path": "src/common/ConfigTypes.h",
+          "absolute_path": "D:/Table/LH/src/common/ConfigTypes.h",
+          "line": 134,
+          "sha256": "0e116b5666fba649e283eeea96f2218c5512fc3ad4a310f714f08509c65bb186",
+          "needle": "struct ParameterDefinition"
+        }
+      ]
+    },
+    {
+      "id": "L07",
+      "group": "语言及运行语义",
+      "requirement": "掉电保护和累计工作状态",
+      "source_pages": {
+        "manual": "13,30,51",
+        "guide": "121-122"
+      },
+      "status": "not_met",
+      "finding": "无 ParamtPowerSave 执行链，无法证明累计工作时间等参数掉电恢复。",
+      "evidence_keys": [
+        "param",
+        "registry"
+      ],
+      "acceptance": "反复掉电和下载，按参数类别验证预期保存和重置。",
+      "probe_ids": [],
+      "status_zh": "未达到",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_param.py",
+          "absolute_path": "D:/Table/LH/third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_param.py",
+          "line": 11,
+          "sha256": "d7764fabe6d586d930e7965c9c372e44ce30c375edbf3f7065d0c60ad4530c34",
+          "needle": "def get_param_blocks"
+        },
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/registry.py",
+          "absolute_path": "D:/Table/LH/third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/registry.py",
+          "line": 54,
+          "sha256": "4fa84360d06ff8b8309dd81c9bb043c1e3bf87967ac17ee22069772832193374",
+          "needle": "class FunctionBlockMeta"
+        }
+      ]
+    },
+    {
+      "id": "L08",
+      "group": "语言及运行语义",
+      "requirement": "外部写参数唤醒任务和语义传送",
+      "source_pages": {
+        "manual": "13,36-38,52-53",
+        "guide": "76"
+      },
+      "status": "not_met",
+      "finding": "TaskDataWake incomplete；ParamtActi/ParamtMove 没有注册；读回确认与语义唤醒不同。",
+      "evidence_keys": [
+        "task",
+        "param",
+        "parameter_api"
+      ],
+      "acceptance": "外部写入触发正确优先级任务，内部写入不误触发；语义传送触发关联处理。",
+      "probe_ids": [],
+      "status_zh": "未达到",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_task.py",
+          "absolute_path": "D:/Table/LH/third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_task.py",
+          "line": 26,
+          "sha256": "a5bb16d7149388eb7535fc9e3fc8257dd1067dc2a17509017aec97d243beb389",
+          "needle": "def _define_task()"
+        },
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_param.py",
+          "absolute_path": "D:/Table/LH/third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_param.py",
+          "line": 11,
+          "sha256": "d7764fabe6d586d930e7965c9c372e44ce30c375edbf3f7065d0c60ad4530c34",
+          "needle": "def get_param_blocks"
+        },
+        {
+          "path": "src/runtime/ParameterController.h",
+          "absolute_path": "D:/Table/LH/src/runtime/ParameterController.h",
+          "line": 41,
+          "sha256": "5ece3e76cb285a30225916e0d179d279416f60469dea203b70ae625199a5dfb8",
+          "needle": "bool applyModifiedParametersWithReadbackAsync("
+        }
+      ]
+    },
+    {
+      "id": "L09",
+      "group": "语言及运行语义",
+      "requirement": "实时多任务、定时/中断/消息、锁与信号量",
+      "source_pages": {
+        "manual": "32-38",
+        "guide": "33,38,93,122"
+      },
+      "status": "not_met",
+      "finding": "任务类 10 个 LH 候选均 incomplete，9 项 LM 基线未达到；PC 异步工作线程不是控制器抢占式调度。",
+      "evidence_keys": [
+        "task"
+      ],
+      "acceptance": "验证任务号/优先级、周期、抢占、事件唯一性、锁/信号量；测量时序。不同设备先明确支持范围。",
+      "probe_ids": [
+        "task"
+      ],
+      "status_zh": "未达到",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_task.py",
+          "absolute_path": "D:/Table/LH/third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_task.py",
+          "line": 26,
+          "sha256": "a5bb16d7149388eb7535fc9e3fc8257dd1067dc2a17509017aec97d243beb389",
+          "needle": "def _define_task()"
+        }
+      ]
+    },
+    {
+      "id": "L10",
+      "group": "语言及运行语义",
+      "requirement": "IF/SWITCH/FOR/WHILE 嵌套、分支及退出",
+      "source_pages": {
+        "manual": "39-46",
+        "guide": "34-35,38,164-167"
+      },
+      "status": "not_met",
+      "finding": "AST 有结构化语法，后端对 IF/CASE/FOR/WHILE/REPEAT 明确拒绝；空定义控制块不能代替跳转实现。",
+      "evidence_keys": [
+        "flow",
+        "grammar"
+      ],
+      "acceptance": "覆盖真假分支、缺省分支、零次/多次循环、嵌套和提前退出。",
+      "probe_ids": [
+        "if_control",
+        "case_control",
+        "for_control",
+        "while_control",
+        "repeat_control"
+      ],
+      "status_zh": "未达到",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "absolute_path": "D:/Table/LH/third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "line": 456,
+          "sha256": "f63e37af7d86086ab8513e8b901e6467be5ad5ea1f288935b98e469a1a5b077c",
+          "needle": "elif isinstance(stmt, (IfStatement"
+        },
+        {
+          "path": "third_party/custom_dsp_language/compile/grammar/LH.g4",
+          "absolute_path": "D:/Table/LH/third_party/custom_dsp_language/compile/grammar/LH.g4",
+          "line": 32,
+          "sha256": "96cfacd703ad9321e55fba00d09c11ca0e964f22b9ccb2c6d4813456dd64f443",
+          "needle": "program"
+        }
+      ]
+    },
+    {
+      "id": "L11",
+      "group": "语言及运行语义",
+      "requirement": "可变数据组、数组、重复 Input/ItemEnd",
+      "source_pages": {
+        "manual": "7-10,80-84,92-93,119,129-134",
+        "guide": "67,71,134"
+      },
+      "status": "not_met",
+      "finding": "ARRAY 和下标操作被拒绝；普通重复参数被拒绝，未见 LM 灵活数据组长度/结束标记编码。",
+      "evidence_keys": [
+        "init",
+        "refs",
+        "assignment"
+      ],
+      "acceptance": "有效重复组、组长度错误、越界、动态下标和真实地址布局均有独立验收。",
+      "probe_ids": [
+        "array_layout",
+        "repeated_input_group",
+        "intbuild_parameters"
+      ],
+      "status_zh": "未达到",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "absolute_path": "D:/Table/LH/third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "line": 360,
+          "sha256": "f63e37af7d86086ab8513e8b901e6467be5ad5ea1f288935b98e469a1a5b077c",
+          "needle": "def _process_variables"
+        },
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "absolute_path": "D:/Table/LH/third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "line": 470,
+          "sha256": "f63e37af7d86086ab8513e8b901e6467be5ad5ea1f288935b98e469a1a5b077c",
+          "needle": "def _process_fb_call"
+        },
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "absolute_path": "D:/Table/LH/third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "line": 598,
+          "sha256": "f63e37af7d86086ab8513e8b901e6467be5ad5ea1f288935b98e469a1a5b077c",
+          "needle": "def _process_assignment"
+        }
+      ]
+    },
+    {
+      "id": "L12",
+      "group": "语言及运行语义",
+      "requirement": "运行时算术/逻辑、初等函数、赋值与类型转换",
+      "source_pages": {
+        "manual": "79-121",
+        "guide": "38"
+      },
+      "status": "partial",
+      "finding": "常量折叠和部分立即数写回存在；运行时表达式、变量拷贝和大部分运算块的数据接口未实现。",
+      "evidence_keys": [
+        "assignment",
+        "math"
+      ],
+      "acceptance": "同一输入流在 LM 参考模型和 LH 固件上对比，含算术顺序、整型/浮点转换及边界。",
+      "probe_ids": [
+        "runtime_expression",
+        "math_parameters",
+        "scalar_constant_write"
+      ],
+      "status_zh": "部分达到",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "absolute_path": "D:/Table/LH/third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "line": 598,
+          "sha256": "f63e37af7d86086ab8513e8b901e6467be5ad5ea1f288935b98e469a1a5b077c",
+          "needle": "def _process_assignment"
+        },
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_math.py",
+          "absolute_path": "D:/Table/LH/third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_math.py",
+          "line": 32,
+          "sha256": "64291fd76b1bbd8abbe55c9d288715df67016b684bee9f70ac99a5fbbf641516",
+          "needle": "def _define_add"
+        }
+      ]
+    },
+    {
+      "id": "L13",
+      "group": "语言及运行语义",
+      "requirement": "多文件、宏、条件编译及装置/网桥定义",
+      "source_pages": {
+        "manual": "202-204",
+        "guide": "32,140-143"
+      },
+      "status": "partial",
+      "finding": "可按 scriptFiles 合并 .lh 并生成诊断源映射；缺少 #Define/#IfDef/#Include/#NetPort/#Device 的完整 LM 迁移处理。",
+      "evidence_keys": [
+        "input",
+        "grammar"
+      ],
+      "acceptance": "多文件顺序、跨文件引用、条件配置和多装置分别得到确定产物。",
+      "probe_ids": [
+        "legacy_include"
+      ],
+      "status_zh": "部分达到",
+      "source_evidence": [
+        {
+          "path": "src/compiler/DSLCompilerInput.cpp",
+          "absolute_path": "D:/Table/LH/src/compiler/DSLCompilerInput.cpp",
+          "line": 89,
+          "sha256": "99980eba05e7266beac51573be1843a4f592fddef172771ddc06b92c86e77a92",
+          "needle": "MappedLines normalizeLegacyDslSource"
+        },
+        {
+          "path": "third_party/custom_dsp_language/compile/grammar/LH.g4",
+          "absolute_path": "D:/Table/LH/third_party/custom_dsp_language/compile/grammar/LH.g4",
+          "line": 32,
+          "sha256": "96cfacd703ad9321e55fba00d09c11ca0e964f22b9ccb2c6d4813456dd64f443",
+          "needle": "program"
+        }
+      ]
+    },
+    {
+      "id": "L14",
+      "group": "语言及运行语义",
+      "requirement": "编译目标、固件版本、指令表和布局一致性",
+      "source_pages": {
+        "manual": "24-30,169,183,202-204",
+        "guide": "134"
+      },
+      "status": "not_met",
+      "finding": "现有元数据只证明本地序列化，不能认证设备支持；140 个内置项的 runtime_fields 均为空，构造参数地址不被推测。",
+      "evidence_keys": [
+        "registry",
+        "fields",
+        "artifact_metadata"
+      ],
+      "acceptance": "提供 LH 目标/固件绑定的 ID、参数/字段、地址单位、对齐、引用、写回和无实例操作规范及实机证据。",
+      "probe_ids": [],
+      "status_zh": "未达到",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/registry.py",
+          "absolute_path": "D:/Table/LH/third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/registry.py",
+          "line": 54,
+          "sha256": "4fa84360d06ff8b8309dd81c9bb043c1e3bf87967ac17ee22069772832193374",
+          "needle": "class FunctionBlockMeta"
+        },
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/emitter.py",
+          "absolute_path": "D:/Table/LH/third_party/custom_dsp_language/compile/src/lh_compiler/backend/emitter.py",
+          "line": 206,
+          "sha256": "9d95040a090ae5b4bc1ccbe68c1721c309a2b336327b2fe1d5b09e7ed812117d",
+          "needle": "def _build_typ"
+        },
+        {
+          "path": "src/compiler/DSLCompilerArtifacts.cpp",
+          "absolute_path": "D:/Table/LH/src/compiler/DSLCompilerArtifacts.cpp",
+          "line": 397,
+          "sha256": "ec041fb95268dd40cf17a12b1a842a6805b283aef6d336faa35b4a6dad5af441",
+          "needle": "artifact.type = requiresTargetValidation"
+        }
+      ]
+    },
+    {
+      "id": "L15",
+      "group": "语言及运行语义",
+      "requirement": "LM 三套编译器和支撑文件的完整功能",
+      "source_pages": {
+        "manual": "190-191,202-207",
+        "guide": "32,85-86"
+      },
+      "status": "partial",
+      "finding": "存在 .code/.list/.typ/.rep 与参数/通信文件生成；.data 和 .xml/.tag/.act 是 LH 自有格式，文件同名不能证明 LM 工具链可消费。",
+      "evidence_keys": [
+        "fields",
+        "param_artifacts",
+        "comm_artifacts"
+      ],
+      "acceptance": "对照规范导入真实下载器、Matrikon 和 LabVIEW，或明确提供完整等效新工作流。",
+      "probe_ids": [],
+      "status_zh": "部分达到",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/emitter.py",
+          "absolute_path": "D:/Table/LH/third_party/custom_dsp_language/compile/src/lh_compiler/backend/emitter.py",
+          "line": 206,
+          "sha256": "9d95040a090ae5b4bc1ccbe68c1721c309a2b336327b2fe1d5b09e7ed812117d",
+          "needle": "def _build_typ"
+        },
+        {
+          "path": "src/designer/BuildController.cpp",
+          "absolute_path": "D:/Table/LH/src/designer/BuildController.cpp",
+          "line": 962,
+          "sha256": "67d3d6f6525f2f6583a48ccb640934a1ca0cdaf7df6657ca92a946f909eefec9",
+          "needle": "CompileResult BuildController::generateParameterArtifacts"
+        },
+        {
+          "path": "src/designer/BuildController.cpp",
+          "absolute_path": "D:/Table/LH/src/designer/BuildController.cpp",
+          "line": 1025,
+          "sha256": "67d3d6f6525f2f6583a48ccb640934a1ca0cdaf7df6657ca92a946f909eefec9",
+          "needle": "CompileResult BuildController::generateCommunicationArtifacts"
+        }
+      ]
+    },
+    {
+      "id": "L16",
+      "group": "语言及运行语义",
+      "requirement": "参数脚本：地址赋值、暂停、复位、延时、设时、保存",
+      "source_pages": {
+        "manual": "205-206",
+        "guide": "85-86"
+      },
+      "status": "partial",
+      "finding": "在线参数应用/回读已有；.data 生成 SET 名称/类型/值，不是 LM 地址命令流，缺 #Pause/#Reset/#Delay/#SetTime/#DataSave 批处理。",
+      "evidence_keys": [
+        "param_artifacts",
+        "parameter_api",
+        "debug_client"
+      ],
+      "acceptance": "一键执行等效参数事务，核验写入顺序、目标地址、延时、时钟、保存及失败处理。",
+      "probe_ids": [],
+      "status_zh": "部分达到",
+      "source_evidence": [
+        {
+          "path": "src/designer/BuildController.cpp",
+          "absolute_path": "D:/Table/LH/src/designer/BuildController.cpp",
+          "line": 962,
+          "sha256": "67d3d6f6525f2f6583a48ccb640934a1ca0cdaf7df6657ca92a946f909eefec9",
+          "needle": "CompileResult BuildController::generateParameterArtifacts"
+        },
+        {
+          "path": "src/runtime/ParameterController.h",
+          "absolute_path": "D:/Table/LH/src/runtime/ParameterController.h",
+          "line": 41,
+          "sha256": "5ece3e76cb285a30225916e0d179d279416f60469dea203b70ae625199a5dfb8",
+          "needle": "bool applyModifiedParametersWithReadbackAsync("
+        },
+        {
+          "path": "src/communication/ControllerDebugClient.h",
+          "absolute_path": "D:/Table/LH/src/communication/ControllerDebugClient.h",
+          "line": 90,
+          "sha256": "47e5b7f0169b3e56b14ce53ec84de3c0493ec4e28f75802fe5da29e23c9fd236",
+          "needle": "bool pause();"
+        }
+      ]
+    },
+    {
+      "id": "L17",
+      "group": "语言及运行语义",
+      "requirement": "多装置通信配置与 OPC/LabVIEW 产物",
+      "source_pages": {
+        "manual": "191-193,206-207",
+        "guide": "19-20,32,36-37"
+      },
+      "status": "partial",
+      "finding": "生成 lhCommunicationConfig 标签视图；没有 Matrikon XML/LabVIEW .tag 直接导入成功证据，也没有 .net/多 CFGFile 的编译语义。",
+      "evidence_keys": [
+        "comm_artifacts",
+        "opc"
+      ],
+      "acceptance": "配置多装置、多通道和数据更新率，真实工具导入、订阅、读写及质量正确。",
+      "probe_ids": [],
+      "status_zh": "部分达到",
+      "source_evidence": [
+        {
+          "path": "src/designer/BuildController.cpp",
+          "absolute_path": "D:/Table/LH/src/designer/BuildController.cpp",
+          "line": 1025,
+          "sha256": "67d3d6f6525f2f6583a48ccb640934a1ca0cdaf7df6657ca92a946f909eefec9",
+          "needle": "CompileResult BuildController::generateCommunicationArtifacts"
+        },
+        {
+          "path": "src/communication/MatrikonOpcServer.cpp",
+          "absolute_path": "D:/Table/LH/src/communication/MatrikonOpcServer.cpp",
+          "line": 796,
+          "sha256": "515e9eab8babb18809e39a392db6f3ef201cf2ece6b19e69565de3c83bbfa6db",
+          "needle": "bool MatrikonOpcServer::createServerInstance"
+        }
+      ]
+    },
+    {
+      "id": "L18",
+      "group": "语言及运行语义",
+      "requirement": "硬件外设资源占用、次数和实例校验",
+      "source_pages": {
+        "manual": "68-78",
+        "guide": "41-45,132,134,162-163"
+      },
+      "status": "partial",
+      "finding": "项目配置有资源去重和类型/范围校验；未见从 DSL 自动推出 EVA/EVB、T2/T4 冲突和驱动允许次数的完整规则。",
+      "evidence_keys": [
+        "project",
+        "io"
+      ],
+      "acceptance": "故意组合 T2 PWM/CAP/脉冲冲突和重复驱动实例，构建前按具体目标拒绝。",
+      "probe_ids": [],
+      "status_zh": "部分达到",
+      "source_evidence": [
+        {
+          "path": "src/designer/ProjectController.cpp",
+          "absolute_path": "D:/Table/LH/src/designer/ProjectController.cpp",
+          "line": 1153,
+          "sha256": "6d5069f875a34d8335b15c9ea33017bcbcc31c9c8f20e93027b8fec9bafc9780",
+          "needle": "bool ProjectController::validateConfiguration"
+        },
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_io.py",
+          "absolute_path": "D:/Table/LH/third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_io.py",
+          "line": 135,
+          "sha256": "78432a733c2a9caa517d677413477bf0b8b4ed43941580143abbf205e4108581",
+          "needle": "def _define_drvt2periodin"
+        }
+      ]
+    },
+    {
+      "id": "E01",
+      "group": "IDE 与调试",
+      "requirement": "工程、文件编辑、保存和多文件组织",
+      "source_pages": {
+        "manual": "187,196-197",
+        "guide": "17-18,31-33"
+      },
+      "status": "partial",
+      "finding": "编辑器文件保存测试通过，项目 CRUD、多文件组织和关闭/保存确认有源码；ProjectSaveCloseTest 在对话框路径受 Qt 环境崩溃阻断，工程关闭流程未完成本轮验收。",
+      "evidence_keys": [
+        "editor",
+        "project"
+      ],
+      "acceptance": "本机工程编辑/保存/重开一致；解决对话框运行环境后复测关闭/切换，正式目标目录和权限故障另行验收。",
+      "probe_ids": [],
+      "status_zh": "部分达到",
+      "source_evidence": [
+        {
+          "path": "src/designer/DslScriptEditor.cpp",
+          "absolute_path": "D:/Table/LH/src/designer/DslScriptEditor.cpp",
+          "line": 583,
+          "sha256": "bf214cd638e07fa864dac87e1201faad547e72d1104f4fb7fc97a5c8001715c9",
+          "needle": "void DslScriptEditor::setupUi"
+        },
+        {
+          "path": "src/designer/ProjectController.cpp",
+          "absolute_path": "D:/Table/LH/src/designer/ProjectController.cpp",
+          "line": 1153,
+          "sha256": "6d5069f875a34d8335b15c9ea33017bcbcc31c9c8f20e93027b8fec9bafc9780",
+          "needle": "bool ProjectController::validateConfiguration"
+        }
+      ]
+    },
+    {
+      "id": "E02",
+      "group": "IDE 与调试",
+      "requirement": "语法高亮、模板、补全、功能块插入",
+      "source_pages": {
+        "manual": "187-190",
+        "guide": "31-32"
+      },
+      "status": "local_met",
+      "finding": "编辑器及 snippet/补全可用，incomplete 项阻止插入；模板的存在不提升编译/执行能力。",
+      "evidence_keys": [
+        "editor",
+        "completion",
+        "snippets"
+      ],
+      "acceptance": "编辑器交互通过，并保证展示状态与真实编译能力一致。",
+      "probe_ids": [],
+      "status_zh": "已达到（限本机软件）",
+      "source_evidence": [
+        {
+          "path": "src/designer/DslScriptEditor.cpp",
+          "absolute_path": "D:/Table/LH/src/designer/DslScriptEditor.cpp",
+          "line": 583,
+          "sha256": "bf214cd638e07fa864dac87e1201faad547e72d1104f4fb7fc97a5c8001715c9",
+          "needle": "void DslScriptEditor::setupUi"
+        },
+        {
+          "path": "src/designer/DslCompletionEngine.cpp",
+          "absolute_path": "D:/Table/LH/src/designer/DslCompletionEngine.cpp",
+          "line": 134,
+          "sha256": "7b0ba627b67315cc0e23d68113a84e6c0d6b0315fd2c2befb8c80506d8d169b5",
+          "needle": "snippet.canInsert()"
+        },
+        {
+          "path": "src/designer/SnippetRepository.cpp",
+          "absolute_path": "D:/Table/LH/src/designer/SnippetRepository.cpp",
+          "line": 279,
+          "sha256": "f3c4470f15c0bad3833c387c0753e09ab16c7cd358bbb04054b262675d9db840",
+          "needle": "QStringLiteral(\"incompleteReason\")"
+        }
+      ]
+    },
+    {
+      "id": "E03",
+      "group": "IDE 与调试",
+      "requirement": "编译报告和错误导航",
+      "source_pages": {
+        "manual": "190-191",
+        "guide": "129-132"
+      },
+      "status": "partial",
+      "finding": "有 ProblemsPanel 和映射后的源位置，跨文件错误可追溯；完整 MainWindow 编译入口本轮崩溃，不能整体签核。",
+      "evidence_keys": [
+        "input",
+        "main_test"
+      ],
+      "acceptance": "编辑器发起编译→错误双击→正确文件/行；转换歧义不猜列号，失败无旧产物。",
+      "probe_ids": [],
+      "status_zh": "部分达到",
+      "source_evidence": [
+        {
+          "path": "src/compiler/DSLCompilerInput.cpp",
+          "absolute_path": "D:/Table/LH/src/compiler/DSLCompilerInput.cpp",
+          "line": 89,
+          "sha256": "99980eba05e7266beac51573be1843a4f592fddef172771ddc06b92c86e77a92",
+          "needle": "MappedLines normalizeLegacyDslSource"
+        },
+        {
+          "path": "tests/main_window_integration_test.cpp",
+          "absolute_path": "D:/Table/LH/tests/main_window_integration_test.cpp",
+          "line": 198,
+          "sha256": "9edd430407a0f6ce35a18f36370b1b277f7a389dd143625390e7e9c94891c631",
+          "needle": "void ordinaryCompileActionGeneratesConstantsAndClearsOldDownload"
+        }
+      ]
+    },
+    {
+      "id": "E04",
+      "group": "IDE 与调试",
+      "requirement": "装配下载、编译下载、参数应用",
+      "source_pages": {
+        "manual": "191",
+        "guide": "21-28"
+      },
+      "status": "partial",
+      "finding": "有构建、下载 Profile、校验与在线参数回读；常量写回产物被正确阻止运行，LM 标准控制程序不能形成闭环。",
+      "evidence_keys": [
+        "download",
+        "artifact_gate",
+        "parameter_api"
+      ],
+      "acceptance": "一个含真实输入/算法/输出的程序在目标上下载、重启、运行，参数应用读回一致。",
+      "probe_ids": [],
+      "status_zh": "部分达到",
+      "source_evidence": [
+        {
+          "path": "src/designer/RuntimeSessionDownload.cpp",
+          "absolute_path": "D:/Table/LH/src/designer/RuntimeSessionDownload.cpp",
+          "line": 479,
+          "sha256": "b9d2c3ec6f8914aed596337b29ce699bfc6d7e634bfd9a25ca68905eeed33df7",
+          "needle": "void RuntimeSessionController::"
+        },
+        {
+          "path": "src/common/CompileArtifactPolicy.h",
+          "absolute_path": "D:/Table/LH/src/common/CompileArtifactPolicy.h",
+          "line": 14,
+          "sha256": "8f31b91f2e3444a79173dac126954c50522fd41bdd5334a0cda8d3068ce4a701",
+          "needle": "inline bool containsMarker"
+        },
+        {
+          "path": "src/runtime/ParameterController.h",
+          "absolute_path": "D:/Table/LH/src/runtime/ParameterController.h",
+          "line": 41,
+          "sha256": "5ece3e76cb285a30225916e0d179d279416f60469dea203b70ae625199a5dfb8",
+          "needle": "bool applyModifiedParametersWithReadbackAsync("
+        }
+      ]
+    },
+    {
+      "id": "E05",
+      "group": "IDE 与调试",
+      "requirement": "暂停、继续、单步、运行到光标",
+      "source_pages": {
+        "manual": "199",
+        "guide": "21-28"
+      },
+      "status": "partial",
+      "finding": "会话和协议客户端有异步命令并有 fake transport 测试；未实机执行。运行到光标直接用编辑器行号，缺源码行到构件执行位置映射证明。",
+      "evidence_keys": [
+        "debug_ui",
+        "debug_session",
+        "debug_test"
+      ],
+      "acceptance": "多行构造、自动 System、合并文件下运行到正确构件；硬件单步/暂停状态一致。",
+      "probe_ids": [],
+      "status_zh": "部分达到",
+      "source_evidence": [
+        {
+          "path": "src/designer/MainWindow.cpp",
+          "absolute_path": "D:/Table/LH/src/designer/MainWindow.cpp",
+          "line": 1407,
+          "sha256": "ed6f857c8cf08c2b6e7a0311d0f05304ebb005a2abfb73d9c5d498e9d829fb69",
+          "needle": "void MainWindow::onRunControllerToCursor"
+        },
+        {
+          "path": "src/designer/RuntimeSessionDebug.cpp",
+          "absolute_path": "D:/Table/LH/src/designer/RuntimeSessionDebug.cpp",
+          "line": 28,
+          "sha256": "ad06cc933aeb8caf10e5f2438414c0870b292c74a16eb2c7ff595ba2615aa38b",
+          "needle": "bool RuntimeSessionController::requestControllerDebug"
+        },
+        {
+          "path": "tests/controller_debug_protocol_test.cpp",
+          "absolute_path": "D:/Table/LH/tests/controller_debug_protocol_test.cpp",
+          "line": 137,
+          "sha256": "39033c0557b99064a5808388a261dad5a731987d7efbb25b44b4ac9e294fbcdd",
+          "needle": "void debugCommandsWriteExpectedRegisters"
+        }
+      ]
+    },
+    {
+      "id": "E06",
+      "group": "IDE 与调试",
+      "requirement": "工作/调试模式及运行位置反馈",
+      "source_pages": {
+        "manual": "198-199",
+        "guide": "25-26"
+      },
+      "status": "partial",
+      "finding": "客户端有寄存器/状态数据；未见完整的工作/调试模式切换 UI 和构件序列执行位置的联动展示。",
+      "evidence_keys": [
+        "debug_protocol",
+        "debug_client",
+        "ui_actions"
+      ],
+      "acceptance": "切模式、执行、暂停均在界面展示真实模式和当前构件位置。",
+      "probe_ids": [],
+      "status_zh": "部分达到",
+      "source_evidence": [
+        {
+          "path": "src/communication/ControllerDebugProtocol.h",
+          "absolute_path": "D:/Table/LH/src/communication/ControllerDebugProtocol.h",
+          "line": 12,
+          "sha256": "f1b76f00223092c7c0c2aee14102fad050ca9a10974d8eb4881255240b4e09f9",
+          "needle": "enum class ControllerSystemRegister"
+        },
+        {
+          "path": "src/communication/ControllerDebugClient.h",
+          "absolute_path": "D:/Table/LH/src/communication/ControllerDebugClient.h",
+          "line": 90,
+          "sha256": "47e5b7f0169b3e56b14ce53ec84de3c0493ec4e28f75802fe5da29e23c9fd236",
+          "needle": "bool pause();"
+        },
+        {
+          "path": "src/designer/MainWindowUi.cpp",
+          "absolute_path": "D:/Table/LH/src/designer/MainWindowUi.cpp",
+          "line": 182,
+          "sha256": "625b1efa583ac8852ee0d83f0dffde6d180aad48bace4b3747b405ad63d78be2",
+          "needle": "m_actCompile ="
+        }
+      ]
+    },
+    {
+      "id": "E07",
+      "group": "IDE 与调试",
+      "requirement": "设置/清除断点和可调周期连续单步",
+      "source_pages": {
+        "manual": "199",
+        "guide": "21-28"
+      },
+      "status": "not_met",
+      "finding": "低层有两个断点设置接口；主界面动作列表无设置/清除断点入口，亦未见可调周期连续单步功能。",
+      "evidence_keys": [
+        "debug_client",
+        "ui_actions",
+        "debug_session"
+      ],
+      "acceptance": "从编辑器增删断点、清空断点；连续单步可调周期且正确停止。",
+      "probe_ids": [],
+      "status_zh": "未达到",
+      "source_evidence": [
+        {
+          "path": "src/communication/ControllerDebugClient.h",
+          "absolute_path": "D:/Table/LH/src/communication/ControllerDebugClient.h",
+          "line": 90,
+          "sha256": "47e5b7f0169b3e56b14ce53ec84de3c0493ec4e28f75802fe5da29e23c9fd236",
+          "needle": "bool pause();"
+        },
+        {
+          "path": "src/designer/MainWindowUi.cpp",
+          "absolute_path": "D:/Table/LH/src/designer/MainWindowUi.cpp",
+          "line": 182,
+          "sha256": "625b1efa583ac8852ee0d83f0dffde6d180aad48bace4b3747b405ad63d78be2",
+          "needle": "m_actCompile ="
+        },
+        {
+          "path": "src/designer/RuntimeSessionDebug.cpp",
+          "absolute_path": "D:/Table/LH/src/designer/RuntimeSessionDebug.cpp",
+          "line": 28,
+          "sha256": "ad06cc933aeb8caf10e5f2438414c0870b292c74a16eb2c7ff595ba2615aa38b",
+          "needle": "bool RuntimeSessionController::requestControllerDebug"
+        }
+      ]
+    },
+    {
+      "id": "E08",
+      "group": "IDE 与调试",
+      "requirement": "系统复位、保存数据、永久参数备份/恢复",
+      "source_pages": {
+        "manual": "199",
+        "guide": "25-28"
+      },
+      "status": "partial",
+      "finding": "低层 reset/saveConfiguration 存在；本次源码检索无完整 IDE 对应入口和永久备份/恢复专用闭环。",
+      "evidence_keys": [
+        "debug_client",
+        "ui_actions",
+        "param"
+      ],
+      "acceptance": "系统工具可复位、保存并按参数类别恢复备份，下载后正确校验状态。",
+      "probe_ids": [],
+      "status_zh": "部分达到",
+      "source_evidence": [
+        {
+          "path": "src/communication/ControllerDebugClient.h",
+          "absolute_path": "D:/Table/LH/src/communication/ControllerDebugClient.h",
+          "line": 90,
+          "sha256": "47e5b7f0169b3e56b14ce53ec84de3c0493ec4e28f75802fe5da29e23c9fd236",
+          "needle": "bool pause();"
+        },
+        {
+          "path": "src/designer/MainWindowUi.cpp",
+          "absolute_path": "D:/Table/LH/src/designer/MainWindowUi.cpp",
+          "line": 182,
+          "sha256": "625b1efa583ac8852ee0d83f0dffde6d180aad48bace4b3747b405ad63d78be2",
+          "needle": "m_actCompile ="
+        },
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_param.py",
+          "absolute_path": "D:/Table/LH/third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_param.py",
+          "line": 11,
+          "sha256": "d7764fabe6d586d930e7965c9c372e44ce30c375edbf3f7065d0c60ad4530c34",
+          "needle": "def get_param_blocks"
+        }
+      ]
+    },
+    {
+      "id": "E09",
+      "group": "IDE 与调试",
+      "requirement": "全部功能块字段自动浏览和实时值编辑",
+      "source_pages": {
+        "manual": "198-200",
+        "guide": "25-28,81-86"
+      },
+      "status": "partial",
+      "finding": "可浏览手动配置的 RuntimePoint 和参数，在线改值/回读可用；内置块无运行时字段布局，不能从编译产物自动展开 LM 式所有字段。",
+      "evidence_keys": [
+        "fields",
+        "config",
+        "parameter_api"
+      ],
+      "acceptance": "不手填地址即可从编译结果显示每块所有可用字段、类型、地址、值和权限。",
+      "probe_ids": [],
+      "status_zh": "部分达到",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/emitter.py",
+          "absolute_path": "D:/Table/LH/third_party/custom_dsp_language/compile/src/lh_compiler/backend/emitter.py",
+          "line": 206,
+          "sha256": "9d95040a090ae5b4bc1ccbe68c1721c309a2b336327b2fe1d5b09e7ed812117d",
+          "needle": "def _build_typ"
+        },
+        {
+          "path": "src/common/ConfigTypes.h",
+          "absolute_path": "D:/Table/LH/src/common/ConfigTypes.h",
+          "line": 134,
+          "sha256": "0e116b5666fba649e283eeea96f2218c5512fc3ad4a310f714f08509c65bb186",
+          "needle": "struct ParameterDefinition"
+        },
+        {
+          "path": "src/runtime/ParameterController.h",
+          "absolute_path": "D:/Table/LH/src/runtime/ParameterController.h",
+          "line": 41,
+          "sha256": "5ece3e76cb285a30225916e0d179d279416f60469dea203b70ae625199a5dfb8",
+          "needle": "bool applyModifiedParametersWithReadbackAsync("
+        }
+      ]
+    },
+    {
+      "id": "E10",
+      "group": "IDE 与调试",
+      "requirement": "多曲线、显隐、范围和历史缩放",
+      "source_pages": {
+        "manual": "199-200",
+        "guide": "81-84"
+      },
+      "status": "local_met",
+      "finding": "多通道曲线、显隐、范围、历史操作已有源码和本机监控 UI 测试；不能据此证明硬件采样率。",
+      "evidence_keys": [
+        "monitor",
+        "history"
+      ],
+      "acceptance": "多点信号可按单位与时间窗口查看、显隐和导出，数据保持一致。",
+      "probe_ids": [],
+      "status_zh": "已达到（限本机软件）",
+      "source_evidence": [
+        {
+          "path": "src/monitor/MonitorChartView.h",
+          "absolute_path": "D:/Table/LH/src/monitor/MonitorChartView.h",
+          "line": 115,
+          "sha256": "5ac4fda96b2c07121f8d279d67f8eac35b55167be02caae226aa76acc80dd0e8",
+          "needle": "void addChannel("
+        },
+        {
+          "path": "src/monitor/MonitorHistoryService.h",
+          "absolute_path": "D:/Table/LH/src/monitor/MonitorHistoryService.h",
+          "line": 19,
+          "sha256": "5f0de8e9e10dd2f3d724c6db43f59ef4bc8302018ae6f1fefdee2f0996846c79",
+          "needle": "class MonitorHistoryService"
+        }
+      ]
+    },
+    {
+      "id": "E11",
+      "group": "IDE 与调试",
+      "requirement": "曲线图片和时间序列导出",
+      "source_pages": {
+        "manual": "200",
+        "guide": "83-84,87"
+      },
+      "status": "local_met",
+      "finding": "CSV/JSON/TSV 和 PNG/JPG/SVG 导出本机测试通过，满足一般取数和报告需求；未声称逐字节兼容旧 BMP/.log。",
+      "evidence_keys": [
+        "monitor_export",
+        "monitor"
+      ],
+      "acceptance": "对照原始样本核验导出时间和值；若旧工具要求 BMP/.log，另做格式适配验收。",
+      "probe_ids": [],
+      "status_zh": "已达到（限本机软件）",
+      "source_evidence": [
+        {
+          "path": "src/monitor/MonitorExportHelper.cpp",
+          "absolute_path": "D:/Table/LH/src/monitor/MonitorExportHelper.cpp",
+          "line": 97,
+          "sha256": "140518ff4fcad5c9ee104800fa1a8c73accb8cd2a774bdc54bdbee3601fc1c38",
+          "needle": "bool MonitorExportHelper::"
+        },
+        {
+          "path": "src/monitor/MonitorChartView.h",
+          "absolute_path": "D:/Table/LH/src/monitor/MonitorChartView.h",
+          "line": 115,
+          "sha256": "5ac4fda96b2c07121f8d279d67f8eac35b55167be02caae226aa76acc80dd0e8",
+          "needle": "void addChannel("
+        }
+      ]
+    },
+    {
+      "id": "E12",
+      "group": "IDE 与调试",
+      "requirement": "真实设备 30ms 曲线采样与时间一致性",
+      "source_pages": {
+        "manual": "200",
+        "guide": "84"
+      },
+      "status": "hardware_pending",
+      "finding": "LH 配置周期可小于 30ms，但 QTimer 设置不等于硬件采样吞吐、抖动或同步证明。",
+      "evidence_keys": [
+        "sampling",
+        "monitor"
+      ],
+      "acceptance": "实测四变量 30ms 点间隔、丢点、延迟、抖动、时间戳和持续记录，给出原始数据。",
+      "probe_ids": [],
+      "status_zh": "待现场验收",
+      "source_evidence": [
+        {
+          "path": "src/monitor/BackendSampler.cpp",
+          "absolute_path": "D:/Table/LH/src/monitor/BackendSampler.cpp",
+          "line": 14,
+          "sha256": "036effcd36da825993f5f00ed5df0eeb1ab9b04986b5d07cbe9457c263050705",
+          "needle": "void BackendSampler::configure"
+        },
+        {
+          "path": "src/monitor/MonitorChartView.h",
+          "absolute_path": "D:/Table/LH/src/monitor/MonitorChartView.h",
+          "line": 115,
+          "sha256": "5ac4fda96b2c07121f8d279d67f8eac35b55167be02caae226aa76acc80dd0e8",
+          "needle": "void addChannel("
+        }
+      ]
+    },
+    {
+      "id": "E13",
+      "group": "IDE 与调试",
+      "requirement": "OPC 配置、连接、订阅、读写与质量",
+      "source_pages": {
+        "manual": "191-193",
+        "guide": "19-20"
+      },
+      "status": "partial",
+      "finding": "Matrikon OPC DA 适配和设置界面存在，本机配置测试通过；没有真实服务器、客户端及控制器闭环证明。",
+      "evidence_keys": [
+        "opc",
+        "opc_config"
+      ],
+      "acceptance": "真实 Matrikon 服务器订阅/读写/质量、断连恢复与多装置运行通过。",
+      "probe_ids": [],
+      "status_zh": "部分达到",
+      "source_evidence": [
+        {
+          "path": "src/communication/MatrikonOpcServer.cpp",
+          "absolute_path": "D:/Table/LH/src/communication/MatrikonOpcServer.cpp",
+          "line": 796,
+          "sha256": "515e9eab8babb18809e39a392db6f3ef201cf2ece6b19e69565de3c83bbfa6db",
+          "needle": "bool MatrikonOpcServer::createServerInstance"
+        },
+        {
+          "path": "src/designer/OpcServerSettingsDialog.cpp",
+          "absolute_path": "D:/Table/LH/src/designer/OpcServerSettingsDialog.cpp",
+          "line": 14,
+          "sha256": "680d8a54086525840a7b4a29b1087a38f6a59cf400f3090e86dd5609ddb6a5f5",
+          "needle": "OpcServerSettingsDialog::"
+        }
+      ]
+    },
+    {
+      "id": "E14",
+      "group": "IDE 与调试",
+      "requirement": "DCOM 跨计算机 OPC",
+      "source_pages": {
+        "manual": "193-195",
+        "guide": "19-20"
+      },
+      "status": "hardware_pending",
+      "finding": "当前 CoCreateInstance 使用本地服务器上下文，未见显式远端主机配置；跨机 DCOM 能力未完成验收。",
+      "evidence_keys": [
+        "opc"
+      ],
+      "acceptance": "不同计算机部署并配置 DCOM 权限，验证订阅、写入和失联恢复。",
+      "probe_ids": [],
+      "status_zh": "待现场验收",
+      "source_evidence": [
+        {
+          "path": "src/communication/MatrikonOpcServer.cpp",
+          "absolute_path": "D:/Table/LH/src/communication/MatrikonOpcServer.cpp",
+          "line": 796,
+          "sha256": "515e9eab8babb18809e39a392db6f3ef201cf2ece6b19e69565de3c83bbfa6db",
+          "needle": "bool MatrikonOpcServer::createServerInstance"
+        }
+      ]
+    },
+    {
+      "id": "E15",
+      "group": "IDE 与调试",
+      "requirement": "主窗口编译及工程关闭对话框路径验收",
+      "source_pages": {
+        "manual": "190",
+        "guide": "129-137"
+      },
+      "status": "environment_blocked",
+      "finding": "MainWindowIntegrationTest 和 ProjectSaveCloseTest 出现 0xC0000005，栈在 QMessageBox；不含 LH 对象的独立 Qt 程序在 offscreen/minimal 同样崩溃，证据指向本机 Qt 环境共性问题，尚不能归因于 LH 业务代码。",
+      "evidence_keys": [
+        "main_test"
+      ],
+      "acceptance": "修复或解释运行环境后，完整两组集成测试与实体桌面编译/关闭链都通过。",
+      "probe_ids": [],
+      "status_zh": "本机环境阻断",
+      "source_evidence": [
+        {
+          "path": "tests/main_window_integration_test.cpp",
+          "absolute_path": "D:/Table/LH/tests/main_window_integration_test.cpp",
+          "line": 198,
+          "sha256": "9edd430407a0f6ce35a18f36370b1b277f7a389dd143625390e7e9c94891c631",
+          "needle": "void ordinaryCompileActionGeneratesConstantsAndClearsOldDownload"
+        }
+      ]
+    },
+    {
+      "id": "E16",
+      "group": "IDE 与调试",
+      "requirement": "PC 与目标通信、连接诊断和现场下载链",
+      "source_pages": {
+        "manual": "191-200",
+        "guide": "21-30,133-136"
+      },
+      "status": "partial",
+      "finding": "正式 ControllerDeviceBackend 仅支持 Modbus RTU；底层 CAN/以太网类不是 LM CAN 组态执行能力。线束及真实设备链未测。",
+      "evidence_keys": [
+        "backend",
+        "download"
+      ],
+      "acceptance": "按选定设备接线、装置号和版本完成连接、下载、参数、运行和故障恢复。",
+      "probe_ids": [],
+      "status_zh": "部分达到",
+      "source_evidence": [
+        {
+          "path": "src/communication/ControllerDeviceBackend.cpp",
+          "absolute_path": "D:/Table/LH/src/communication/ControllerDeviceBackend.cpp",
+          "line": 90,
+          "sha256": "8bdbcabb75bc6c76b1cd3ea4b5474111b75261a63b8bab1cc61416bf7b78c707",
+          "needle": "const bool isRtu"
+        },
+        {
+          "path": "src/designer/RuntimeSessionDownload.cpp",
+          "absolute_path": "D:/Table/LH/src/designer/RuntimeSessionDownload.cpp",
+          "line": 479,
+          "sha256": "b9d2c3ec6f8914aed596337b29ce699bfc6d7e634bfd9a25ca68905eeed33df7",
+          "needle": "void RuntimeSessionController::"
+        }
+      ]
+    },
+    {
+      "id": "E17",
+      "group": "IDE 与调试",
+      "requirement": "可执行控制算法仿真及示例",
+      "source_pages": {
+        "manual": "190,200",
+        "guide": "33-35,72-87"
+      },
+      "status": "partial",
+      "finding": "有 VirtualDeviceBackend 和演示数据，但只是点值、故障与下载模拟，未见对完整 LM 控制程序逐周期执行的仿真器。",
+      "evidence_keys": [
+        "virtual",
+        "run"
+      ],
+      "acceptance": "同一控制程序在仿真与真实目标上使用相同输入轨迹，比较输出和状态。",
+      "probe_ids": [],
+      "status_zh": "部分达到",
+      "source_evidence": [
+        {
+          "path": "src/communication/VirtualDeviceBackend.cpp",
+          "absolute_path": "D:/Table/LH/src/communication/VirtualDeviceBackend.cpp",
+          "line": 90,
+          "sha256": "0913d1c08dc5af90511f3dcd07a7539db6654ace425ab9998d8afc6540fe266e",
+          "needle": "bool VirtualDeviceBackend::readPointsImpl"
+        },
+        {
+          "path": "src/designer/RuntimeSessionController.cpp",
+          "absolute_path": "D:/Table/LH/src/designer/RuntimeSessionController.cpp",
+          "line": 191,
+          "sha256": "b1da24ab992bdaed880aef1ac7266d8ba42796749bf5e81a9004fc1953cd4595",
+          "needle": "bool RuntimeSessionController::prepareRun"
+        }
+      ]
+    },
+    {
+      "id": "E18",
+      "group": "IDE 与调试",
+      "requirement": "安装、运行依赖、帮助及故障诊断资料",
+      "source_pages": {
+        "manual": "185-187,201",
+        "guide": "7-16,129-137"
+      },
+      "status": "partial",
+      "finding": "有 CMake 安装及运行时部署说明和诊断功能，但没有 LM 等级全部操作/功能块/目标版本指南与卸载/多机验收证据。历史 EditPlus 注册及旧路径步骤不作为 LH 必须照做的功能。",
+      "evidence_keys": [
+        "ui_actions",
+        "project"
+      ],
+      "acceptance": "干净机器完成安装、打开/构建/下载、查看帮助和卸载，按 LH 实际工具链验收。",
+      "probe_ids": [],
+      "status_zh": "部分达到",
+      "source_evidence": [
+        {
+          "path": "src/designer/MainWindowUi.cpp",
+          "absolute_path": "D:/Table/LH/src/designer/MainWindowUi.cpp",
+          "line": 182,
+          "sha256": "625b1efa583ac8852ee0d83f0dffde6d180aad48bace4b3747b405ad63d78be2",
+          "needle": "m_actCompile ="
+        },
+        {
+          "path": "src/designer/ProjectController.cpp",
+          "absolute_path": "D:/Table/LH/src/designer/ProjectController.cpp",
+          "line": 1153,
+          "sha256": "6d5069f875a34d8335b15c9ea33017bcbcc31c9c8f20e93027b8fec9bafc9780",
+          "needle": "bool ProjectController::validateConfiguration"
+        }
+      ]
+    },
+    {
+      "id": "G01",
+      "group": "指南补充能力",
+      "requirement": "正交编码器 QEP 输入",
+      "source_pages": {
+        "manual": "",
+        "guide": "45,158,162"
+      },
+      "status": "not_met",
+      "finding": "当前内置库没有 DrvQEPIn；周期输入不能自动视为正交解码等效。",
+      "evidence_keys": [
+        "io",
+        "registry"
+      ],
+      "acceptance": "方向、计数、溢出、EVA/EVB 通道和实际编码器信号验收。",
+      "probe_ids": [],
+      "status_zh": "未达到",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_io.py",
+          "absolute_path": "D:/Table/LH/third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_io.py",
+          "line": 135,
+          "sha256": "78432a733c2a9caa517d677413477bf0b8b4ed43941580143abbf205e4108581",
+          "needle": "def _define_drvt2periodin"
+        },
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/registry.py",
+          "absolute_path": "D:/Table/LH/third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/registry.py",
+          "line": 54,
+          "sha256": "4fa84360d06ff8b8309dd81c9bb043c1e3bf87967ac17ee22069772832193374",
+          "needle": "class FunctionBlockMeta"
+        }
+      ]
+    },
+    {
+      "id": "G02",
+      "group": "指南补充能力",
+      "requirement": "粗大误差滤波和传感器非线性标定",
+      "source_pages": {
+        "manual": "128-134,183-184",
+        "guide": "46,54-55"
+      },
+      "status": "not_met",
+      "finding": "FloatRoughFilter 为空参数定义，FilterBW incomplete；折线/温度转换链缺失。",
+      "evidence_keys": [
+        "filter",
+        "math",
+        "registry"
+      ],
+      "acceptance": "输入脉冲噪声及传感器曲线，核验过滤/归一化/插值误差和输出。",
+      "probe_ids": [
+        "filter"
+      ],
+      "status_zh": "未达到",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_filter.py",
+          "absolute_path": "D:/Table/LH/third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_filter.py",
+          "line": 17,
+          "sha256": "9fb09b2c328a04781620bc03d8b46035c0d3fa43f46f00bc08f788a9e75deeda",
+          "needle": "def _define_filterbw"
+        },
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_math.py",
+          "absolute_path": "D:/Table/LH/third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_math.py",
+          "line": 32,
+          "sha256": "64291fd76b1bbd8abbe55c9d288715df67016b684bee9f70ac99a5fbbf641516",
+          "needle": "def _define_add"
+        },
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/registry.py",
+          "absolute_path": "D:/Table/LH/third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/registry.py",
+          "line": 54,
+          "sha256": "4fa84360d06ff8b8309dd81c9bb043c1e3bf87967ac17ee22069772832193374",
+          "needle": "class FunctionBlockMeta"
+        }
+      ]
+    },
+    {
+      "id": "G03",
+      "group": "指南补充能力",
+      "requirement": "PWM 电流/电压、直流及步进电机输出",
+      "source_pages": {
+        "manual": "70-78",
+        "guide": "50-53"
+      },
+      "status": "partial",
+      "finding": "仅通用 DrvAO 候选，无 LM 的 PWMIO 引用和完整频率/占空比/通道契约。",
+      "evidence_keys": [
+        "io"
+      ],
+      "acceptance": "测量输出频率、占空比、电流/电压和通道屏蔽，验证资源冲突。",
+      "probe_ids": [],
+      "status_zh": "部分达到",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_io.py",
+          "absolute_path": "D:/Table/LH/third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_io.py",
+          "line": 135,
+          "sha256": "78432a733c2a9caa517d677413477bf0b8b4ed43941580143abbf205e4108581",
+          "needle": "def _define_drvt2periodin"
+        }
+      ]
+    },
+    {
+      "id": "G04",
+      "group": "指南补充能力",
+      "requirement": "按键扫描、按下/抬起/长按和显示任务",
+      "source_pages": {
+        "manual": "",
+        "guide": "34-35,64-66"
+      },
+      "status": "not_met",
+      "finding": "KeyScan、Task、SCI 显示块 incomplete，无法执行指南按键和页面刷新流程。",
+      "evidence_keys": [
+        "display",
+        "task"
+      ],
+      "acceptance": "实机按键 0..64、四种状态、长按、页面刷新和串口忙状态通过。",
+      "probe_ids": [
+        "display",
+        "task"
+      ],
+      "status_zh": "未达到",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_display.py",
+          "absolute_path": "D:/Table/LH/third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_display.py",
+          "line": 10,
+          "sha256": "44398c73bee935f289df520a83a4226fde415a45359ce0b343ff493aead041f3",
+          "needle": "def get_display_blocks"
+        },
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_task.py",
+          "absolute_path": "D:/Table/LH/third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_task.py",
+          "line": 26,
+          "sha256": "a5bb16d7149388eb7535fc9e3fc8257dd1067dc2a17509017aec97d243beb389",
+          "needle": "def _define_task()"
+        }
+      ]
+    },
+    {
+      "id": "G05",
+      "group": "指南补充能力",
+      "requirement": "串口屏握手、图片切换/裁剪/反色和文本",
+      "source_pages": {
+        "manual": "",
+        "guide": "65-70"
+      },
+      "status": "not_met",
+      "finding": "SCIDispTrans/SCIDispInit/M600TextDisp incomplete；“显示模块”入口只筛选功能块目录。",
+      "evidence_keys": [
+        "display",
+        "display_ui"
+      ],
+      "acceptance": "在兼容屏上验证握手、页面切换、裁剪、反色、颜色/字体和批量文本。",
+      "probe_ids": [
+        "display"
+      ],
+      "status_zh": "未达到",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_display.py",
+          "absolute_path": "D:/Table/LH/third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_display.py",
+          "line": 10,
+          "sha256": "44398c73bee935f289df520a83a4226fde415a45359ce0b343ff493aead041f3",
+          "needle": "def get_display_blocks"
+        },
+        {
+          "path": "src/designer/MainWindowWorkspace.cpp",
+          "absolute_path": "D:/Table/LH/src/designer/MainWindowWorkspace.cpp",
+          "line": 376,
+          "sha256": "7ed4c1278ac4b80d9115dac3dab5b6af2d2c98e18f7ff723c92214a52a9cce94",
+          "needle": "void MainWindow::onOpenDisplayBlocksWindow"
+        }
+      ]
+    },
+    {
+      "id": "G06",
+      "group": "指南补充能力",
+      "requirement": "M600 棒图和批量数据显示",
+      "source_pages": {
+        "manual": "",
+        "guide": "67-71"
+      },
+      "status": "not_met",
+      "finding": "M600ProgressBar/M600TextDisp 禁用；重复 Input/ItemEnd 和地址缓冲区未支持。",
+      "evidence_keys": [
+        "display",
+        "refs"
+      ],
+      "acceptance": "多项文本与棒图正确映射、限幅、位置/尺寸/颜色均正确。",
+      "probe_ids": [],
+      "status_zh": "未达到",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_display.py",
+          "absolute_path": "D:/Table/LH/third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_display.py",
+          "line": 10,
+          "sha256": "44398c73bee935f289df520a83a4226fde415a45359ce0b343ff493aead041f3",
+          "needle": "def get_display_blocks"
+        },
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "absolute_path": "D:/Table/LH/third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "line": 470,
+          "sha256": "f63e37af7d86086ab8513e8b901e6467be5ad5ea1f288935b98e469a1a5b077c",
+          "needle": "def _process_fb_call"
+        }
+      ]
+    },
+    {
+      "id": "G07",
+      "group": "指南补充能力",
+      "requirement": "显示图片制作、烧录、批量校验的完整工作流",
+      "source_pages": {
+        "manual": "",
+        "guide": "56-63"
+      },
+      "status": "not_met",
+      "finding": "指南借助外部绘图/串口屏工具；LH 未提供或记录与其等效的集成/外部协作流程。功能块分类页不是图片编辑/烧录器。",
+      "evidence_keys": [
+        "display_ui",
+        "display"
+      ],
+      "acceptance": "提供适用外部工具或集成入口，完成分辨率/旋转、握手、下载和校验；无需强制内置绘图。",
+      "probe_ids": [],
+      "status_zh": "未达到",
+      "source_evidence": [
+        {
+          "path": "src/designer/MainWindowWorkspace.cpp",
+          "absolute_path": "D:/Table/LH/src/designer/MainWindowWorkspace.cpp",
+          "line": 376,
+          "sha256": "7ed4c1278ac4b80d9115dac3dab5b6af2d2c98e18f7ff723c92214a52a9cce94",
+          "needle": "void MainWindow::onOpenDisplayBlocksWindow"
+        },
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_display.py",
+          "absolute_path": "D:/Table/LH/third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_display.py",
+          "line": 10,
+          "sha256": "44398c73bee935f289df520a83a4226fde415a45359ce0b343ff493aead041f3",
+          "needle": "def get_display_blocks"
+        }
+      ]
+    },
+    {
+      "id": "G08",
+      "group": "指南补充能力",
+      "requirement": "PID 完整非线性、手自动、前馈、增益调度和自整定保护",
+      "source_pages": {
+        "manual": "157-168",
+        "guide": "73-80"
+      },
+      "status": "partial",
+      "finding": "仅 PID/PIDAutoTune 构造参数和 Kp/Ki/Kd 调参工具；缺少多个 LM 运行时状态/操作参数及动态连接。",
+      "evidence_keys": [
+        "pid",
+        "parameter_api",
+        "refs"
+      ],
+      "acceptance": "闭环轨迹验证各方式、非线性、积分分离、前馈、调度、故障退出和整定结果接收。",
+      "probe_ids": [
+        "pid_literals",
+        "pid_lm_nonlinearity",
+        "block_input_reference"
+      ],
+      "status_zh": "部分达到",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_pid.py",
+          "absolute_path": "D:/Table/LH/third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_pid.py",
+          "line": 19,
+          "sha256": "015591ce365957a3173cfa9ad6932404bc2c318a342880d8113167e698d8eb2a",
+          "needle": "def _define_pid()"
+        },
+        {
+          "path": "src/runtime/ParameterController.h",
+          "absolute_path": "D:/Table/LH/src/runtime/ParameterController.h",
+          "line": 41,
+          "sha256": "5ece3e76cb285a30225916e0d179d279416f60469dea203b70ae625199a5dfb8",
+          "needle": "bool applyModifiedParametersWithReadbackAsync("
+        },
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "absolute_path": "D:/Table/LH/third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "line": 470,
+          "sha256": "f63e37af7d86086ab8513e8b901e6467be5ad5ea1f288935b98e469a1a5b077c",
+          "needle": "def _process_fb_call"
+        }
+      ]
+    },
+    {
+      "id": "G09",
+      "group": "指南补充能力",
+      "requirement": "TSO、自整定、两位继电控制",
+      "source_pages": {
+        "manual": "169-182",
+        "guide": "72-80"
+      },
+      "status": "not_met",
+      "finding": "TSO、TSOAutoTune、TwoPosition、RelayCtrl2 均 incomplete。",
+      "evidence_keys": [
+        "tso"
+      ],
+      "acceptance": "反馈、死区/滞环、限幅、整定保护和结果接收，在指定固件与对象上验收。",
+      "probe_ids": [],
+      "status_zh": "未达到",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_tso.py",
+          "absolute_path": "D:/Table/LH/third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_tso.py",
+          "line": 10,
+          "sha256": "c689c695651ad232d45403061cd30b419154a47e489f56622c2d54f1e3b5d2e4",
+          "needle": "def get_tso_blocks"
+        }
+      ]
+    },
+    {
+      "id": "G10",
+      "group": "指南应用场景",
+      "requirement": "报警灯/蜂鸣器及开关机 8 秒屏蔽",
+      "source_pages": {
+        "manual": "",
+        "guide": "95-97"
+      },
+      "status": "not_met",
+      "finding": "PC 阈值报警存在，但不是下位机灯/蜂鸣器、时序和保护流程；所依赖任务/数据/IO 链未闭合。",
+      "evidence_keys": [
+        "monitor_channel",
+        "task",
+        "io"
+      ],
+      "acceptance": "信号故障、开/关机、8 秒窗口和恢复过程分别验证实际输出。",
+      "probe_ids": [],
+      "status_zh": "未达到",
+      "source_evidence": [
+        {
+          "path": "src/monitor/MonitorChannel.cpp",
+          "absolute_path": "D:/Table/LH/src/monitor/MonitorChannel.cpp",
+          "line": 174,
+          "sha256": "56b16a08f6d18dda8c67ee3816c7296a52654c8fc367d8016b4923627dad4d11",
+          "needle": "void MonitorChannel::checkThresholds"
+        },
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_task.py",
+          "absolute_path": "D:/Table/LH/third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_task.py",
+          "line": 26,
+          "sha256": "a5bb16d7149388eb7535fc9e3fc8257dd1067dc2a17509017aec97d243beb389",
+          "needle": "def _define_task()"
+        },
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_io.py",
+          "absolute_path": "D:/Table/LH/third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_io.py",
+          "line": 135,
+          "sha256": "78432a733c2a9caa517d677413477bf0b8b4ed43941580143abbf205e4108581",
+          "needle": "def _define_drvt2periodin"
+        }
+      ]
+    },
+    {
+      "id": "G11",
+      "group": "指南应用场景",
+      "requirement": "16 项保养提示、页面切换与蜂鸣器",
+      "source_pages": {
+        "manual": "",
+        "guide": "98-99"
+      },
+      "status": "not_met",
+      "finding": "EXCATMaintain 参数表为空；工作时间保持、到期触发、显示和蜂鸣器时序均未闭合。",
+      "evidence_keys": [
+        "application",
+        "display",
+        "task"
+      ],
+      "acceptance": "多个保养项、到期/清除、启动提醒、页面恢复和 5 秒蜂鸣器流程。",
+      "probe_ids": [],
+      "status_zh": "未达到",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_application.py",
+          "absolute_path": "D:/Table/LH/third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_application.py",
+          "line": 10,
+          "sha256": "76a04ea2c33c5d0c235e257e85db9281d7bd34d162f919fe94ff26b63bfcafc4",
+          "needle": "def get_application_blocks"
+        },
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_display.py",
+          "absolute_path": "D:/Table/LH/third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_display.py",
+          "line": 10,
+          "sha256": "44398c73bee935f289df520a83a4226fde415a45359ce0b343ff493aead041f3",
+          "needle": "def get_display_blocks"
+        },
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_task.py",
+          "absolute_path": "D:/Table/LH/third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_task.py",
+          "line": 26,
+          "sha256": "a5bb16d7149388eb7535fc9e3fc8257dd1067dc2a17509017aec97d243beb389",
+          "needle": "def _define_task()"
+        }
+      ]
+    },
+    {
+      "id": "G12",
+      "group": "指南应用场景",
+      "requirement": "档位/转速自动标定",
+      "source_pages": {
+        "manual": "",
+        "guide": "100-103"
+      },
+      "status": "not_met",
+      "finding": "未见完整应用程序和可执行链；EXCA 类名称不证明指南中稳定判据、逐档标定和保存。",
+      "evidence_keys": [
+        "exca",
+        "task",
+        "assignment"
+      ],
+      "acceptance": "按指南的档位、稳定时间、偏差、退出和保存条件执行独立应用测试。",
+      "probe_ids": [],
+      "status_zh": "未达到",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_exca.py",
+          "absolute_path": "D:/Table/LH/third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_exca.py",
+          "line": 14,
+          "sha256": "d6b5aef82265e94a8170abefbf81542b33b64590d8ad615a1e81a6ccf5fada85",
+          "needle": "def get_exca_blocks"
+        },
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_task.py",
+          "absolute_path": "D:/Table/LH/third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_task.py",
+          "line": 26,
+          "sha256": "a5bb16d7149388eb7535fc9e3fc8257dd1067dc2a17509017aec97d243beb389",
+          "needle": "def _define_task()"
+        },
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "absolute_path": "D:/Table/LH/third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "line": 598,
+          "sha256": "f63e37af7d86086ab8513e8b901e6467be5ad5ea1f288935b98e469a1a5b077c",
+          "needle": "def _process_assignment"
+        }
+      ]
+    },
+    {
+      "id": "G13",
+      "group": "指南应用场景",
+      "requirement": "泵与发动机复合控制及功率模式",
+      "source_pages": {
+        "manual": "",
+        "guide": "104"
+      },
+      "status": "not_met",
+      "finding": "缺少可运行应用样例及基础选择/逼近/控制语义，不能把通用阀参数工具视为该应用已实现。",
+      "evidence_keys": [
+        "pid",
+        "registry",
+        "refs"
+      ],
+      "acceptance": "各功率模式、负载变化、泵扭矩与发动机转速轨迹对照验收。",
+      "probe_ids": [],
+      "status_zh": "未达到",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_pid.py",
+          "absolute_path": "D:/Table/LH/third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_pid.py",
+          "line": 19,
+          "sha256": "015591ce365957a3173cfa9ad6932404bc2c318a342880d8113167e698d8eb2a",
+          "needle": "def _define_pid()"
+        },
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/registry.py",
+          "absolute_path": "D:/Table/LH/third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/registry.py",
+          "line": 54,
+          "sha256": "4fa84360d06ff8b8309dd81c9bb043c1e3bf87967ac17ee22069772832193374",
+          "needle": "class FunctionBlockMeta"
+        },
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "absolute_path": "D:/Table/LH/third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "line": 470,
+          "sha256": "f63e37af7d86086ab8513e8b901e6467be5ad5ea1f288935b98e469a1a5b077c",
+          "needle": "def _process_fb_call"
+        }
+      ]
+    },
+    {
+      "id": "G14",
+      "group": "指南应用场景",
+      "requirement": "铲斗合流、回转优先、回转阻尼、动臂优先",
+      "source_pages": {
+        "manual": "",
+        "guide": "105-112"
+      },
+      "status": "not_met",
+      "finding": "未发现对应可运行应用流程和实机证据；所需折线、分支、实时输入输出链缺失。",
+      "evidence_keys": [
+        "flow",
+        "io",
+        "registry"
+      ],
+      "acceptance": "四个应用分别按压力输入、优先级、曲线和电磁阀实际输出验收。",
+      "probe_ids": [],
+      "status_zh": "未达到",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "absolute_path": "D:/Table/LH/third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "line": 456,
+          "sha256": "f63e37af7d86086ab8513e8b901e6467be5ad5ea1f288935b98e469a1a5b077c",
+          "needle": "elif isinstance(stmt, (IfStatement"
+        },
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_io.py",
+          "absolute_path": "D:/Table/LH/third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_io.py",
+          "line": 135,
+          "sha256": "78432a733c2a9caa517d677413477bf0b8b4ed43941580143abbf205e4108581",
+          "needle": "def _define_drvt2periodin"
+        },
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/registry.py",
+          "absolute_path": "D:/Table/LH/third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/registry.py",
+          "line": 54,
+          "sha256": "4fa84360d06ff8b8309dd81c9bb043c1e3bf87967ac17ee22069772832193374",
+          "needle": "class FunctionBlockMeta"
+        }
+      ]
+    },
+    {
+      "id": "G15",
+      "group": "指南应用场景",
+      "requirement": "二次增压最长 8 秒和行走高低速",
+      "source_pages": {
+        "manual": "",
+        "guide": "113-114"
+      },
+      "status": "not_met",
+      "finding": "没有相应可执行应用及定时/IO/故障验证。",
+      "evidence_keys": [
+        "task",
+        "io",
+        "registry"
+      ],
+      "acceptance": "增压时间、提前解除、高低速使能及失效安全逐一验证。",
+      "probe_ids": [],
+      "status_zh": "未达到",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_task.py",
+          "absolute_path": "D:/Table/LH/third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_task.py",
+          "line": 26,
+          "sha256": "a5bb16d7149388eb7535fc9e3fc8257dd1067dc2a17509017aec97d243beb389",
+          "needle": "def _define_task()"
+        },
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_io.py",
+          "absolute_path": "D:/Table/LH/third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_io.py",
+          "line": 135,
+          "sha256": "78432a733c2a9caa517d677413477bf0b8b4ed43941580143abbf205e4108581",
+          "needle": "def _define_drvt2periodin"
+        },
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/registry.py",
+          "absolute_path": "D:/Table/LH/third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/registry.py",
+          "line": 54,
+          "sha256": "4fa84360d06ff8b8309dd81c9bb043c1e3bf87967ac17ee22069772832193374",
+          "needle": "class FunctionBlockMeta"
+        }
+      ]
+    },
+    {
+      "id": "G16",
+      "group": "指南应用场景",
+      "requirement": "发动机电机功率保护、自动怠速/升速",
+      "source_pages": {
+        "manual": "",
+        "guide": "115-118"
+      },
+      "status": "not_met",
+      "finding": "未见完整应用；参数界面和演示曲线不能证明 0.2 秒、3 秒、档位/压力条件与电机保护。",
+      "evidence_keys": [
+        "task",
+        "tso",
+        "flow"
+      ],
+      "acceptance": "油门、转速、档位、先导压力各场景验证触发、时序和保护。",
+      "probe_ids": [],
+      "status_zh": "未达到",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_task.py",
+          "absolute_path": "D:/Table/LH/third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_task.py",
+          "line": 26,
+          "sha256": "a5bb16d7149388eb7535fc9e3fc8257dd1067dc2a17509017aec97d243beb389",
+          "needle": "def _define_task()"
+        },
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_tso.py",
+          "absolute_path": "D:/Table/LH/third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_tso.py",
+          "line": 10,
+          "sha256": "c689c695651ad232d45403061cd30b419154a47e489f56622c2d54f1e3b5d2e4",
+          "needle": "def get_tso_blocks"
+        },
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "absolute_path": "D:/Table/LH/third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "line": 456,
+          "sha256": "f63e37af7d86086ab8513e8b901e6467be5ad5ea1f288935b98e469a1a5b077c",
+          "needle": "elif isinstance(stmt, (IfStatement"
+        }
+      ]
+    },
+    {
+      "id": "G17",
+      "group": "指南应用场景",
+      "requirement": "总工作时间标定和定时持久计时",
+      "source_pages": {
+        "manual": "",
+        "guide": "119-122,163"
+      },
+      "status": "not_met",
+      "finding": "TimeInteg2 不在当前注册表；缺少累计状态、一次性标定限制、任务锁与掉电保护。",
+      "evidence_keys": [
+        "registry",
+        "param",
+        "task"
+      ],
+      "acceptance": "首次标定限制、30 小时边界、计时误差、周期保存和掉电恢复。",
+      "probe_ids": [],
+      "status_zh": "未达到",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/registry.py",
+          "absolute_path": "D:/Table/LH/third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/registry.py",
+          "line": 54,
+          "sha256": "4fa84360d06ff8b8309dd81c9bb043c1e3bf87967ac17ee22069772832193374",
+          "needle": "class FunctionBlockMeta"
+        },
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_param.py",
+          "absolute_path": "D:/Table/LH/third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_param.py",
+          "line": 11,
+          "sha256": "d7764fabe6d586d930e7965c9c372e44ce30c375edbf3f7065d0c60ad4530c34",
+          "needle": "def get_param_blocks"
+        },
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_task.py",
+          "absolute_path": "D:/Table/LH/third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_task.py",
+          "line": 26,
+          "sha256": "a5bb16d7149388eb7535fc9e3fc8257dd1067dc2a17509017aec97d243beb389",
+          "needle": "def _define_task()"
+        }
+      ]
+    },
+    {
+      "id": "G18",
+      "group": "指南应用场景",
+      "requirement": "防花屏、串口/CAN 异常局部复位与重建",
+      "source_pages": {
+        "manual": "",
+        "guide": "123-126"
+      },
+      "status": "not_met",
+      "finding": "显示/通信任务链未实现；PC 连接重试不能替代控制器端握手计数、局部复位和缓冲区重建。",
+      "evidence_keys": [
+        "display",
+        "comm",
+        "task"
+      ],
+      "acceptance": "重复屏幕启动、CAN/SCI 中断异常、复位和恢复后控制连续性。",
+      "probe_ids": [],
+      "status_zh": "未达到",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_display.py",
+          "absolute_path": "D:/Table/LH/third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_display.py",
+          "line": 10,
+          "sha256": "44398c73bee935f289df520a83a4226fde415a45359ce0b343ff493aead041f3",
+          "needle": "def get_display_blocks"
+        },
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_comm.py",
+          "absolute_path": "D:/Table/LH/third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_comm.py",
+          "line": 10,
+          "sha256": "804c008500f163c050f84cb387edf938e37ae394cf7862c576de1bcb611ea402",
+          "needle": "def get_comm_blocks"
+        },
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_task.py",
+          "absolute_path": "D:/Table/LH/third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_task.py",
+          "line": 26,
+          "sha256": "a5bb16d7149388eb7535fc9e3fc8257dd1067dc2a17509017aec97d243beb389",
+          "needle": "def _define_task()"
+        }
+      ]
+    },
+    {
+      "id": "G19",
+      "group": "指南应用场景",
+      "requirement": "两小时触发流程",
+      "source_pages": {
+        "manual": "",
+        "guide": "127-128"
+      },
+      "status": "not_met",
+      "finding": "没有对应可执行应用及运行两小时/加速等效场景记录。",
+      "evidence_keys": [
+        "task",
+        "registry",
+        "application"
+      ],
+      "acceptance": "按该示例的启用、计时、触发、解除和保存条件验证，必要时长时运行。",
+      "probe_ids": [],
+      "status_zh": "未达到",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_task.py",
+          "absolute_path": "D:/Table/LH/third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_task.py",
+          "line": 26,
+          "sha256": "a5bb16d7149388eb7535fc9e3fc8257dd1067dc2a17509017aec97d243beb389",
+          "needle": "def _define_task()"
+        },
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/registry.py",
+          "absolute_path": "D:/Table/LH/third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/registry.py",
+          "line": 54,
+          "sha256": "4fa84360d06ff8b8309dd81c9bb043c1e3bf87967ac17ee22069772832193374",
+          "needle": "class FunctionBlockMeta"
+        },
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_application.py",
+          "absolute_path": "D:/Table/LH/third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_application.py",
+          "line": 10,
+          "sha256": "76a04ea2c33c5d0c235e257e85db9281d7bd34d162f919fe94ff26b63bfcafc4",
+          "needle": "def get_application_blocks"
+        }
+      ]
+    },
+    {
+      "id": "P01",
+      "group": "工程规范与过程",
+      "requirement": "过程、IO、功能、参数、任务、文件结构六类设计表",
+      "source_pages": {
+        "manual": "14-16",
+        "guide": "88-94"
+      },
+      "status": "process_pending",
+      "finding": "项目配置可记录一部分信息，但没有针对所审产品的六表及从需求到运行点/代码的完整追踪。本条属工程交付要求。",
+      "evidence_keys": [
+        "config",
+        "project"
+      ],
+      "acceptance": "以一个真实应用提交六表，逐项链接源码/点位/目标资源和验收结果。",
+      "probe_ids": [],
+      "status_zh": "过程要求待核查",
+      "source_evidence": [
+        {
+          "path": "src/common/ConfigTypes.h",
+          "absolute_path": "D:/Table/LH/src/common/ConfigTypes.h",
+          "line": 134,
+          "sha256": "0e116b5666fba649e283eeea96f2218c5512fc3ad4a310f714f08509c65bb186",
+          "needle": "struct ParameterDefinition"
+        },
+        {
+          "path": "src/designer/ProjectController.cpp",
+          "absolute_path": "D:/Table/LH/src/designer/ProjectController.cpp",
+          "line": 1153,
+          "sha256": "6d5069f875a34d8335b15c9ea33017bcbcc31c9c8f20e93027b8fec9bafc9780",
+          "needle": "bool ProjectController::validateConfiguration"
+        }
+      ]
+    },
+    {
+      "id": "P02",
+      "group": "工程规范与过程",
+      "requirement": "目录/文件命名、变量定义和初始化组织",
+      "source_pages": {
+        "manual": "",
+        "guide": "140-143"
+      },
+      "status": "process_pending",
+      "finding": "LH 有自己的项目/脚本结构；需要制定与新语法对应的规则，不能机械照搬 .inva 目录或把旧路径当软件缺陷。",
+      "evidence_keys": [
+        "project",
+        "input"
+      ],
+      "acceptance": "评审一个应用的目录、主/子程序、定义/初始化和任务组织，保留映射说明。",
+      "probe_ids": [],
+      "status_zh": "过程要求待核查",
+      "source_evidence": [
+        {
+          "path": "src/designer/ProjectController.cpp",
+          "absolute_path": "D:/Table/LH/src/designer/ProjectController.cpp",
+          "line": 1153,
+          "sha256": "6d5069f875a34d8335b15c9ea33017bcbcc31c9c8f20e93027b8fec9bafc9780",
+          "needle": "bool ProjectController::validateConfiguration"
+        },
+        {
+          "path": "src/compiler/DSLCompilerInput.cpp",
+          "absolute_path": "D:/Table/LH/src/compiler/DSLCompilerInput.cpp",
+          "line": 89,
+          "sha256": "99980eba05e7266beac51573be1843a4f592fddef172771ddc06b92c86e77a92",
+          "needle": "MappedLines normalizeLegacyDslSource"
+        }
+      ]
+    },
+    {
+      "id": "P03",
+      "group": "工程规范与过程",
+      "requirement": "版本/版权/变更记录和可追溯性",
+      "source_pages": {
+        "manual": "",
+        "guide": "144,168-175"
+      },
+      "status": "process_pending",
+      "finding": "源码控制和审查记录存在；未按每个组态程序核验版本头及变更履历，不宣称全部符合。",
+      "evidence_keys": [
+        "project"
+      ],
+      "acceptance": "抽查与全量规则核验结合，版本记录可追溯到已测试产物和固件。",
+      "probe_ids": [],
+      "status_zh": "过程要求待核查",
+      "source_evidence": [
+        {
+          "path": "src/designer/ProjectController.cpp",
+          "absolute_path": "D:/Table/LH/src/designer/ProjectController.cpp",
+          "line": 1153,
+          "sha256": "6d5069f875a34d8335b15c9ea33017bcbcc31c9c8f20e93027b8fec9bafc9780",
+          "needle": "bool ProjectController::validateConfiguration"
+        }
+      ]
+    },
+    {
+      "id": "P04",
+      "group": "工程规范与过程",
+      "requirement": "边界、空行、缩进、注释和一致风格",
+      "source_pages": {
+        "manual": "",
+        "guide": "145-155,174-175"
+      },
+      "status": "process_pending",
+      "finding": "编辑器支持文本编辑和语法高亮；没有 LM 专门格式规范的完整自动检查证据，应用代码仍需人工审查。",
+      "evidence_keys": [
+        "editor"
+      ],
+      "acceptance": "制定 LH 编码规范并对全部正式应用按检查表完成审核。",
+      "probe_ids": [],
+      "status_zh": "过程要求待核查",
+      "source_evidence": [
+        {
+          "path": "src/designer/DslScriptEditor.cpp",
+          "absolute_path": "D:/Table/LH/src/designer/DslScriptEditor.cpp",
+          "line": 583,
+          "sha256": "bf214cd638e07fa864dac87e1201faad547e72d1104f4fb7fc97a5c8001715c9",
+          "needle": "void DslScriptEditor::setupUi"
+        }
+      ]
+    },
+    {
+      "id": "P05",
+      "group": "工程规范与过程",
+      "requirement": "有意义的英文及 IO/构件命名规则",
+      "source_pages": {
+        "manual": "",
+        "guide": "156-163,175"
+      },
+      "status": "process_pending",
+      "finding": "语法允许名称不等于符合指南的命名约定；不能将某个模板中的编号直接视为满足全产品规范。",
+      "evidence_keys": [
+        "grammar",
+        "completion"
+      ],
+      "acceptance": "对正式应用标识符与 IO/设备语义对应关系完成规则审查。",
+      "probe_ids": [],
+      "status_zh": "过程要求待核查",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/grammar/LH.g4",
+          "absolute_path": "D:/Table/LH/third_party/custom_dsp_language/compile/grammar/LH.g4",
+          "line": 32,
+          "sha256": "96cfacd703ad9321e55fba00d09c11ca0e964f22b9ccb2c6d4813456dd64f443",
+          "needle": "program"
+        },
+        {
+          "path": "src/designer/DslCompletionEngine.cpp",
+          "absolute_path": "D:/Table/LH/src/designer/DslCompletionEngine.cpp",
+          "line": 134,
+          "sha256": "7b0ba627b67315cc0e23d68113a84e6c0d6b0315fd2c2befb8c80506d8d169b5",
+          "needle": "snippet.canInsert()"
+        }
+      ]
+    },
+    {
+      "id": "P06",
+      "group": "工程规范与过程",
+      "requirement": "浮点容差、循环变量与 CASE 完整性审查",
+      "source_pages": {
+        "manual": "",
+        "guide": "164-167,175"
+      },
+      "status": "process_pending",
+      "finding": "指南此处含 C/C++ 示例，作为编码审查原则适用；不能当作 LM 新增的 C/C++ 运行语法要求。LH 目标控制流本身尚未实现。",
+      "evidence_keys": [
+        "flow",
+        "assignment"
+      ],
+      "acceptance": "在适用语言/代码层验证容差、循环边界、退出和缺省分支。",
+      "probe_ids": [],
+      "status_zh": "过程要求待核查",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "absolute_path": "D:/Table/LH/third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "line": 456,
+          "sha256": "f63e37af7d86086ab8513e8b901e6467be5ad5ea1f288935b98e469a1a5b077c",
+          "needle": "elif isinstance(stmt, (IfStatement"
+        },
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "absolute_path": "D:/Table/LH/third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "line": 598,
+          "sha256": "f63e37af7d86086ab8513e8b901e6467be5ad5ea1f288935b98e469a1a5b077c",
+          "needle": "def _process_assignment"
+        }
+      ]
+    },
+    {
+      "id": "P07",
+      "group": "工程规范与过程",
+      "requirement": "审查计划、角色、缺陷处理与回归闭环",
+      "source_pages": {
+        "manual": "",
+        "guide": "168-173"
+      },
+      "status": "process_pending",
+      "finding": "仓库有测试/审查记录，但本次非组织过程认证；未依据全部 LM 等效用例完成验收，不能签发指南的 100% 审查通过。",
+      "evidence_keys": [
+        "main_test",
+        "generated_test"
+      ],
+      "acceptance": "冻结基线/计划/责任人，逐项缺陷修复和回归，补齐硬件/性能/长时证据后签字。",
+      "probe_ids": [],
+      "status_zh": "过程要求待核查",
+      "source_evidence": [
+        {
+          "path": "tests/main_window_integration_test.cpp",
+          "absolute_path": "D:/Table/LH/tests/main_window_integration_test.cpp",
+          "line": 198,
+          "sha256": "9edd430407a0f6ce35a18f36370b1b277f7a389dd143625390e7e9c94891c631",
+          "needle": "void ordinaryCompileActionGeneratesConstantsAndClearsOldDownload"
+        },
+        {
+          "path": "tests/main_window_integration_test.cpp",
+          "absolute_path": "D:/Table/LH/tests/main_window_integration_test.cpp",
+          "line": 456,
+          "sha256": "9edd430407a0f6ce35a18f36370b1b277f7a389dd143625390e7e9c94891c631",
+          "needle": "void generatedBuildArtifactsUseLhProjectModel"
+        }
+      ]
+    },
+    {
+      "id": "P08",
+      "group": "历史环境与外部工具",
+      "requirement": "历史安装、EditPlus 注册、旧路径/线束操作",
+      "source_pages": {
+        "manual": "185-187",
+        "guide": "7-16,29-30,139"
+      },
+      "status": "historical_context",
+      "finding": "这些内容用于理解 LM 的外部工具/硬件工作流，不视为本用户授权安装、删除目录、改系统或沿用旧许可方式的指令。",
+      "evidence_keys": [
+        "project"
+      ],
+      "acceptance": "仅选择合法可用且适合 LH 目标的等效开发/部署工具；现场接线由硬件资料和实物核验。",
+      "probe_ids": [],
+      "status_zh": "历史环境参考",
+      "source_evidence": [
+        {
+          "path": "src/designer/ProjectController.cpp",
+          "absolute_path": "D:/Table/LH/src/designer/ProjectController.cpp",
+          "line": 1153,
+          "sha256": "6d5069f875a34d8335b15c9ea33017bcbcc31c9c8f20e93027b8fec9bafc9780",
+          "needle": "bool ProjectController::validateConfiguration"
+        }
+      ]
+    }
+  ]
+}

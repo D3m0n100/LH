@@ -33,6 +33,27 @@ OutputPaneController::~OutputPaneController()
     // m_textEdit 由 m_dockWidget 管理，无需手动删除
 }
 
+OutputPaneController::OutputPaneController(QTextEdit* editor, QObject* parent)
+    : QObject(parent), m_dockWidget(nullptr), m_textEdit(editor), m_autoScroll(true)
+{
+    if (m_textEdit) m_textEdit->document()->setMaximumBlockCount(OutputPaneConfig::DEFAULT_MAX_BLOCK_COUNT);
+}
+
+bool OutputPaneController::saveToPath(const QString& path, QString* error) const
+{
+    QSaveFile file(path);
+    file.setDirectWriteFallback(false);
+    const auto fail = [&] { if (error) *error = file.errorString(); file.cancelWriting(); return false; };
+    if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) return fail();
+    QTextStream stream(&file);
+    TextEncoding::setUtf8(stream);
+    stream << allText();
+    stream.flush();
+    if (stream.status() != QTextStream::Ok) return fail();
+    if (!file.commit()) return fail();
+    return true;
+}
+
 void OutputPaneController::setupUI()
 {
     if (!m_dockWidget) {
@@ -198,34 +219,9 @@ void OutputPaneController::saveToFile()
         return;
     }
 
-    QSaveFile file(fileName);
-    file.setDirectWriteFallback(false);
-    if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
-        QMessageBox::warning(nullptr, "保存失败",
-                             QString("无法打开文件: %1\n%2")
-                                 .arg(fileName, file.errorString()));
-        return;
-    }
-
-    QTextStream stream(&file);
-    TextEncoding::setUtf8(stream);
-    stream << allText();
-    stream.flush();
-    if (stream.status() != QTextStream::Ok) {
-        const QString error = file.errorString();
-        file.cancelWriting();
-        QMessageBox::warning(nullptr, "保存失败",
-                             QString("写入文件失败: %1\n%2")
-                                 .arg(fileName, error));
-        return;
-    }
-
-    if (!file.commit()) {
-        const QString error = file.errorString();
-        file.cancelWriting();
-        QMessageBox::warning(nullptr, "保存失败",
-                             QString("提交文件失败: %1\n%2")
-                                 .arg(fileName, error));
+    QString error;
+    if (!saveToPath(fileName, &error)) {
+        QMessageBox::warning(nullptr, QStringLiteral("保存失败"), error);
         return;
     }
 

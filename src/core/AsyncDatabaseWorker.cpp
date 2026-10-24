@@ -1,5 +1,6 @@
 #include "HistoryQuery.h"
 #include "AsyncDatabaseWorker.h"
+#include "../common/DeferredThreadCleanup.h"
 
 #include <QDateTime>
 #include <QDebug>
@@ -62,8 +63,10 @@ bool AsyncDatabaseWorker::startWorkerAsync(const QString& dbPath)
 
     if (m_workerThread) return false;
     m_startComplete = false;
+    m_startupError.clear();
     m_dbPath = dbPath;
     m_shutdownQueued = false;
+    { QMutexLocker lock(&m_queueMutex); m_admissionClosed = false; }
     m_stopRequested = false;
     m_cleanupCancelled = false;
 
@@ -83,7 +86,11 @@ bool AsyncDatabaseWorker::stopWorker(int drainTimeoutMs)
     if (!m_workerThread) return true;
     if (m_workerThread->isFinished()) { delete m_workerThread; m_workerThread = nullptr; return true; }
     if (m_shutdownQueued) return false;
-    m_isRunning = false; // Close admission before draining.
+    {
+        QMutexLocker lock(&m_queueMutex);
+        m_isRunning = false; // Same gate as producer admission and startup publication.
+        m_admissionClosed = true;
+    }
     m_cleanupCancelled = true;
     QElapsedTimer timer;
     timer.start();
@@ -125,7 +132,12 @@ void AsyncDatabaseWorker::deleteWhenStopped()
 {
     if (!m_workerThread || m_workerThread->isFinished()) { deleteLater(); return; }
     connect(m_workerThread, &QThread::finished, this, &QObject::deleteLater, Qt::QueuedConnection);
-    if (m_workerThread->isFinished()) deleteLater();
+    // Transfer QThread ownership to the composition-root exit barrier. The SQL
+    // worker remains alive until its own-thread connection teardown completes.
+    QThread* deferred = m_workerThread;
+    m_workerThread = nullptr;
+    DeferredThreadCleanup::retain(deferred);
+    if (deferred->isFinished()) deleteLater();
 }
 
 bool AsyncDatabaseWorker::isRunning() const
@@ -148,6 +160,7 @@ quint64 AsyncDatabaseWorker::enqueueBatch(const QList<QVariantMap>& records)
     if (!m_isRunning.load() || m_stopRequested.load() || records.isEmpty()) {
         return 0;
     }
+    beforeBatchAdmissionForTest();
 
     quint64 batchId = 0;
     int dropped = 0;
@@ -155,6 +168,7 @@ quint64 AsyncDatabaseWorker::enqueueBatch(const QList<QVariantMap>& records)
 
     {
         QMutexLocker locker(&m_queueMutex);
+        if (m_admissionClosed || !m_isRunning.load() || m_stopRequested.load()) return 0;
         batchId = m_nextBatchId++;
 
         // 队列超限保护：丢弃最旧数据保留最新
@@ -201,6 +215,9 @@ quint64 AsyncDatabaseWorker::enqueueBatch(const QList<QVariantMap>& records)
             m_pendingBatches.append(item);
             m_totalPendingRecords += recordsToQueue.size();
         }
+        // Queue delivery while admission is locked; producers never read the
+        // owner-only thread pointer which may be deleted during shutdown.
+        QMetaObject::invokeMethod(this, "processWorkQueue", Qt::QueuedConnection);
     }
 
     for (const auto& item : abandoned) emit batchAbandoned(item.first, item.second, QStringLiteral("Queue capacity exceeded"));
@@ -210,9 +227,6 @@ quint64 AsyncDatabaseWorker::enqueueBatch(const QList<QVariantMap>& records)
     }
 
     // 触发工作线程处理
-    if (m_workerThread && m_workerThread->isRunning()) {
-        QMetaObject::invokeMethod(this, "processWorkQueue", Qt::QueuedConnection);
-    }
 
     return batchId;
 }
@@ -243,13 +257,13 @@ int AsyncDatabaseWorker::maxQueueRecords() const
 
 void AsyncDatabaseWorker::requestCleanup(int retentionDays, int chunkSize)
 {
+    QMutexLocker lock(&m_queueMutex);
+    if (m_admissionClosed) return;
     if (!m_isRunning || m_cleanupScheduled.exchange(true)) return;
     m_cleanupCancelled = false;
-    if (m_workerThread && m_workerThread->isRunning()) {
-        QMetaObject::invokeMethod(this, [this, retentionDays, chunkSize]() {
-            onCleanupRequested(retentionDays, chunkSize);
-        }, Qt::QueuedConnection);
-    }
+    QMetaObject::invokeMethod(this, [this, retentionDays, chunkSize]() {
+        onCleanupRequested(retentionDays, chunkSize);
+    }, Qt::QueuedConnection);
 }
 
 void AsyncDatabaseWorker::cancelCleanup()
@@ -270,13 +284,17 @@ int AsyncDatabaseWorker::injectedStorageDelayMs() const
 void AsyncDatabaseWorker::onThreadStarted()
 {
     m_dbOpen = openDatabaseInThread();
-    m_isRunning = m_dbOpen.load() && !m_stopRequested.load();
+    {
+        QMutexLocker lock(&m_queueMutex);
+        m_isRunning = m_dbOpen.load() && !m_stopRequested.load() && !m_admissionClosed;
+    }
     {
         QMutexLocker lock(&m_startMutex);
         m_startComplete = true;
         m_startCondition.wakeAll();
     }
-    emit startupFinished(m_dbOpen.load(), m_dbOpen ? QString() : m_db.lastError().text());
+    if (!m_dbOpen && m_startupError.isEmpty()) m_startupError = m_db.lastError().text();
+    emit startupFinished(m_dbOpen.load(), m_dbOpen ? QString() : m_startupError);
 }
 
 bool AsyncDatabaseWorker::openDatabaseInThread()
@@ -290,9 +308,27 @@ bool AsyncDatabaseWorker::openDatabaseInThread()
     }
 
     QSqlQuery pragma(m_db);
-    pragma.exec(QStringLiteral("PRAGMA journal_mode = WAL;"));
-    pragma.exec(QStringLiteral("PRAGMA busy_timeout = 50;"));
-    pragma.exec(QStringLiteral("PRAGMA synchronous = NORMAL;"));
+    const QList<QPair<QString, QString>> settings{
+        {QStringLiteral("journal_mode"), QStringLiteral("WAL")},
+        {QStringLiteral("busy_timeout"), QStringLiteral("50")},
+        {QStringLiteral("synchronous"), QStringLiteral("1")}
+    };
+    for (const auto& setting : settings) {
+        if (!pragma.exec(QStringLiteral("PRAGMA %1 = %2").arg(setting.first, setting.second))) {
+            m_startupError = QStringLiteral("PRAGMA %1: %2").arg(setting.first, pragma.lastError().text());
+            emit workerError(QStringLiteral("PRAGMA ") + setting.first, m_startupError);
+            return false;
+        }
+        pragma.finish();
+        if (!pragma.exec(QStringLiteral("PRAGMA %1").arg(setting.first)) || !pragma.next()
+                || pragma.value(0).toString().compare(setting.second, Qt::CaseInsensitive) != 0) {
+            m_startupError = QStringLiteral("PRAGMA %1: required value %2 was not applied: %3")
+                .arg(setting.first, setting.second, pragma.lastError().text());
+            emit workerError(QStringLiteral("PRAGMA ") + setting.first, m_startupError);
+            return false;
+        }
+        pragma.finish();
+    }
 
     return true;
 }
@@ -348,10 +384,12 @@ void AsyncDatabaseWorker::finishActiveBatch()
 bool AsyncDatabaseWorker::submitHistoryTask(QObject* context, std::function<void()> task,
                                            std::shared_ptr<std::atomic_bool> cancelled)
 {
+    QMutexLocker admission(&m_queueMutex);
+    if (m_admissionClosed) return false;
     if (!context || !m_isRunning || m_stopRequested) return false;
     if (m_pendingHistoryTasks.fetch_add(1) >= 128) { --m_pendingHistoryTasks; return false; }
     quint64 barrier;
-    { QMutexLocker lock(&m_queueMutex); barrier = m_nextBatchId - 1; }
+    barrier = m_nextBatchId - 1;
     QPointer<QObject> guard(context);
     QMetaObject::invokeMethod(this, [this, guard, task, cancelled, barrier]() {
         if (guard) scheduleHistoryTask(guard, task, cancelled, barrier);

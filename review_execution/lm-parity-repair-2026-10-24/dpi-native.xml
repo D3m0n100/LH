@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<testsuite errors="26" failures="0" tests="3" name="MainWindowIntegrationTest">
+  <properties>
+    <property value="5.15.2" name="QTestVersion"/>
+    <property value="5.15.2" name="QtVersion"/>
+    <property value="Qt 5.15.2 (x86_64&#x002D;little_endian&#x002D;llp64 shared (dynamic) release build; by GCC 8.1.0)" name="QtBuild"/>
+  </properties>
+  <testcase result="pass" name="initTestCase"/>
+  <testcase result="pass" name="testMultiResolutionDpiMatrixV02Test">
+    <!-- message="[MonitorManager] applyConfiguration 开始 project= &quot;&quot; providers= 0 mappings= 0" type="qdebug" -->
+    <!-- message="[MonitorManager] applyConfiguration 结束 success=true channels= 0 providers= 0" type="qdebug" -->
+    <!-- message="[DEBUG] 09:20:58.382 SettingsController 已创建" type="qdebug" -->
+    <!-- message="[DEBUG] 09:20:58.384 已加载应用设置: 项目目录=C:/Users/Ryan, 自动滚动=1, 字体索引=1, 布局版本=1" type="qdebug" -->
+    <!-- message="[DEBUG] 09:20:58.385 ProjectController 已创建" type="qdebug" -->
+    <!-- message="[DEBUG] 09:20:58.385 已加载 5 个最近项目" type="qdebug" -->
+    <!-- message="[DEBUG] 09:20:58.385 BuildController created." type="qdebug" -->
+    <!-- message="[DEBUG] 09:20:58.386 控制器已创建" type="qdebug" -->
+    <!-- message="[DEBUG] 09:20:58.911 SnippetRepository 已创建" type="qdebug" -->
+    <!-- message="[DEBUG] 09:20:58.916 已加载 140 个默认 Snippets" type="qdebug" -->
+    <!-- message="[MonitorExportHelper] 导出助手已创建" type="qdebug" -->
+    <!-- message="[MonitorManager] 数据处理器已设置: 启用增量分发" type="qdebug" -->
+    <!-- message="[DEBUG] 09:20:59.236 控制器信号已连接" type="qdebug" -->
+    <!-- message="[INFO] 09:20:59.957 MainWindow 初始化完成" type="qinfo" -->
+    <!-- message="[DEBUG] 09:20:59.959 已加载应用设置: 项目目录=C:/Users/Ryan, 自动滚动=1, 字体索引=1, 布局版本=1" type="qdebug" -->
+    <!-- message="[DEBUG] 09:21:02.934 已保存应用设置" type="qdebug" -->
+    <!-- message="[DEBUG] 09:21:02.934 已保存最近项目列表" type="qdebug" -->
+    <!-- message="[INFO] 09:21:02.934 MainWindow 已销毁" type="qinfo" -->
+    <!-- message="[DEBUG] 09:21:02.945 SettingsController 已销毁" type="qdebug" -->
+    <!-- message="[DEBUG] 09:21:02.946 ProjectController 已销毁" type="qdebug" -->
+    <!-- message="[DEBUG] 09:21:02.946 BuildController destroyed." type="qdebug" -->
+    <!-- message="[MonitorManager] 数据处理器已设置: 禁用增量分发" type="qdebug" -->
+    <!-- message="[MonitorExportHelper] 导出助手已销毁" type="qdebug" -->
+    <!-- message="[DEBUG] 09:21:02.969 SnippetRepository 已销毁" type="qdebug" -->
+    <!-- message="[MonitorManager] applyConfiguration 开始 project= &quot;&quot; providers= 0 mappings= 0" type="qdebug" -->
+    <!-- message="[MonitorManager] applyConfiguration 结束 success=true channels= 0 providers= 0" type="qdebug" -->
+  </testcase>
+  <testcase result="pass" name="cleanupTestCase"/>
+  <system-err>
+<![CDATA[[MonitorManager] applyConfiguration 开始 project= "" providers= 0 mappings= 0]]>
+<![CDATA[[MonitorManager] applyConfiguration 结束 success=true channels= 0 providers= 0]]>
+<![CDATA[[DEBUG] 09:20:58.382 SettingsController 已创建]]>
+<![CDATA[[DEBUG] 09:20:58.384 已加载应用设置: 项目目录=C:/Users/Ryan, 自动滚动=1, 字体索引=1, 布局版本=1]]>
+<![CDATA[[DEBUG] 09:20:58.385 ProjectController 已创建]]>
+<![CDATA[[DEBUG] 09:20:58.385 已加载 5 个最近项目]]>
+<![CDATA[[DEBUG] 09:20:58.385 BuildController created.]]>
+<![CDATA[[DEBUG] 09:20:58.386 控制器已创建]]>
+<![CDATA[[DEBUG] 09:20:58.911 SnippetRepository 已创建]]>
+<![CDATA[[DEBUG] 09:20:58.916 已加载 140 个默认 Snippets]]>
+<![CDATA[[MonitorExportHelper] 导出助手已创建]]>
+<![CDATA[[MonitorManager] 数据处理器已设置: 启用增量分发]]>
+<![CDATA[[DEBUG] 09:20:59.236 控制器信号已连接]]>
+<![CDATA[[INFO] 09:20:59.957 MainWindow 初始化完成]]>
+<![CDATA[[DEBUG] 09:20:59.959 已加载应用设置: 项目目录=C:/Users/Ryan, 自动滚动=1, 字体索引=1, 布局版本=1]]>
+<![CDATA[[DEBUG] 09:21:02.934 已保存应用设置]]>
+<![CDATA[[DEBUG] 09:21:02.934 已保存最近项目列表]]>
+<![CDATA[[INFO] 09:21:02.934 MainWindow 已销毁]]>
+<![CDATA[[DEBUG] 09:21:02.945 SettingsController 已销毁]]>
+<![CDATA[[DEBUG] 09:21:02.946 ProjectController 已销毁]]>
+<![CDATA[[DEBUG] 09:21:02.946 BuildController destroyed.]]>
+<![CDATA[[MonitorManager] 数据处理器已设置: 禁用增量分发]]>
+<![CDATA[[MonitorExportHelper] 导出助手已销毁]]>
+<![CDATA[[DEBUG] 09:21:02.969 SnippetRepository 已销毁]]>
+<![CDATA[[MonitorManager] applyConfiguration 开始 project= "" providers= 0 mappings= 0]]>
+<![CDATA[[MonitorManager] applyConfiguration 结束 success=true channels= 0 providers= 0]]>
+  </system-err>
+</testsuite>

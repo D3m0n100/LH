@@ -4,6 +4,7 @@
  */
 
 #include "ChartWidget.h"
+#include "AtomicPixmap.h"
 #include "MonitorTypes.h"
 
 #include <QVBoxLayout>
@@ -695,7 +696,7 @@ bool ChartWidget::exportAsPng(const QString& filePath)
     if (!m_chartView) {
         return false;
     }
-    return m_chartView->grab().save(filePath, "PNG");
+    return AtomicPixmap::save(m_chartView->grab(), filePath, "PNG");
 }
 
 void ChartWidget::onExportImage()

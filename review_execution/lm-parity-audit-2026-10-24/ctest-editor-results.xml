@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="Win32-mingw32-make"
+	tests="3"
+	failures="1"
+	disabled="0"
+	skipped="0"
+	hostname="DESKTOP-HJIINHN"
+	time="6"
+	timestamp="2026-10-24T08:06:41"
+	>
+	<testcase name="DslCompletionEngineTest" classname="DslCompletionEngineTest" time="0.792074" status="run">
+		<properties/>
+		<system-out></system-out>
+	</testcase>
+	<testcase name="DslScriptEditorSaveTest" classname="DslScriptEditorSaveTest" time="1.00024" status="run">
+		<properties/>
+		<system-out></system-out>
+	</testcase>
+	<testcase name="ProjectSaveCloseTest" classname="ProjectSaveCloseTest" time="5.10556" status="fail">
+		<failure message="SEGFAULT"/>
+		<properties/>
+		<system-out>A crash occurred in D:\Table\LH\build_current_mingw\bin\project_save_close_test.exe.
+Function time: 595ms Total time: 3871ms
+
+Exception address: 0x00000000076fe3d7
+Exception code   : 0xc0000005
+Nearby symbol    : ZN11QMessageBox13buttonClickedEP15QAbstractButton
+
+Stack:
+#  1: ZN24QAbstractItemModelTester11qt_metacallEN11QMetaObject4CallEiPPv() - 0x000000006ede65f0
+#  2: UnhandledExceptionFilter() - 0x00007ffd862043f0
+#  3: memset() - 0x00007ffd885b4600
+#  4: _C_specific_handler() - 0x00007ffd8859cdb0
+#  5: _chkstk() - 0x00007ffd885b27a0
+#  6: RtlRaiseException() - 0x00007ffd885620d0
+#  7: KiUserExceptionDispatcher() - 0x00007ffd885b13a0
+#  8: ZN11QMessageBox13buttonClickedEP15QAbstractButton() - 0x00000000076fe110
+#  9: ZN11QMessageBox9showEventEP10QShowEvent() - 0x0000000007702a00
+# 10: ZN7QWidget5eventEP6QEvent() - 0x0000000007543bd0
+# 11: ZN11QMessageBox5eventEP6QEvent() - 0x00000000076fee60
+# 12: ZN19QApplicationPrivate13notify_helperEP7QObjectP6QEvent() - 0x0000000007507890
+# 13: ZN12QApplication6notifyEP7QObjectP6QEvent() - 0x000000000750e190
+# 14: ZN16QCoreApplication9sendEventEP7QObjectP6QEvent() - 0x0000000068a65bf0
+# 15: ZN14QWidgetPrivate11show_helperEv() - 0x0000000007540100
+# 16: ZN14QWidgetPrivate10setVisibleEb() - 0x0000000007543710
+# 17: ZN7QDialog10setVisibleEb() - 0x00000000076d4a40
+# 18: ZN7QDialog4execEv() - 0x00000000076d4130
+# 19: ZN11QMessageBox8criticalEP7QWidgetRK7QStringS4_iii() - 0x0000000007700ee0
+# 20: ZN11QMessageBox7warningEP7QWidgetRK7QStringS4_6QFlagsINS_14StandardButtonEES6_() - 0x0000000007701150
+# 21: Unable to obtain symbol
+# 22: Unable to obtain symbol
+# 23: Unable to obtain symbol
+# 24: Unable to obtain symbol
+# 25: Unable to obtain symbol
+# 26: Unable to obtain symbol
+# 27: Unable to obtain symbol
+# 28: Unable to obtain symbol
+# 29: Unable to obtain symbol
+# 30: ZNK11QMetaMethod6invokeEP7QObjectN2Qt14ConnectionTypeE22QGenericReturnArgument16QGenericArgumentS5_S5_S5_S5_S5_S5_S5_S5_S5_() - 0x0000000068a71880
+# 31: ZN5QTest5qInitEP7QObjectiPPc() - 0x000000006edc8250
+# 32: ZN5QTest5qInitEP7QObjectiPPc() - 0x000000006edc8250
+# 33: ZN5QTest5qInitEP7QObjectiPPc() - 0x000000006edc8250
+# 34: ZN5QTest4qRunEv() - 0x000000006edcae60
+# 35: ZN5QTest5qExecEP7QObjectiPPc() - 0x000000006edcb2c0
+# 36: Unable to obtain symbol
+# 37: Unable to obtain symbol
+# 38: Unable to obtain symbol
+# 39: BaseThreadInitThunk() - 0x00007ffd87db7360
+# 40: RtlUserThreadStart() - 0x00007ffd8855cc70
+
+</system-out>
+	</testcase>
+</testsuite>

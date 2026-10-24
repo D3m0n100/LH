@@ -149,23 +149,52 @@ RuntimeHistoryPage HistoryQuery::queryLatestHistoryPage(
 
     const QString endText = end.isValid() ? formatIsoUtc(end.toUTC()) : QString();
 
-    QString subquery = QStringLiteral("SELECT ") + RUNTIME_RECORD_SELECT_COLUMNS + QStringLiteral(
-        " FROM runtime_data WHERE variable_name = :varName ");
+    QString predicate = QStringLiteral(" FROM runtime_data WHERE variable_name = :varName ");
     if (!endText.isEmpty()) {
-        subquery += QStringLiteral("AND timestamp <= :end ");
+        predicate += QStringLiteral("AND timestamp <= :end ");
     }
     if (cursor.maxId >= 0) {
-        subquery += QStringLiteral("AND id <= :maxId ");
+        predicate += QStringLiteral("AND id <= :maxId ");
     }
-    subquery += QStringLiteral("ORDER BY timestamp DESC, id DESC LIMIT :maxCount");
-
-    QString sql = QStringLiteral("SELECT * FROM (") + subquery + QStringLiteral(") WHERE 1=1 ");
-    if (cursor.isValid()) {
-        sql += QStringLiteral("AND (timestamp > :cursorTime OR (timestamp = :cursorTime AND id > :cursorId)) ");
+    const auto bindSnapshot = [&](QSqlQuery& query) {
+        query.bindValue(QStringLiteral(":varName"), channelName);
+        if (!endText.isEmpty()) query.bindValue(QStringLiteral(":end"), endText);
+        if (cursor.maxId >= 0) query.bindValue(QStringLiteral(":maxId"), cursor.maxId);
+    };
+    QDateTime windowTime = cursor.windowStartTimestamp;
+    qint64 windowId = cursor.windowStartId;
+    if (!windowTime.isValid() || windowId <= 0) {
+        // Resolve the lower key once per traversal, then carry it in the cursor.
+        QSqlQuery boundary(m_db);
+        boundary.prepare(QStringLiteral("SELECT timestamp, id") + predicate
+            + QStringLiteral("ORDER BY timestamp DESC, id DESC LIMIT 1 OFFSET :offset"));
+        bindSnapshot(boundary);
+        boundary.bindValue(QStringLiteral(":offset"), maxCount - 1);
+        if (!boundary.exec()) {
+            page.status = RuntimeHistoryPageStatus::SqlError;
+            page.errorText = boundary.lastError().text();
+            return page;
+        }
+        if (!boundary.next()) {
+            boundary.finish();
+            boundary.prepare(QStringLiteral("SELECT timestamp, id") + predicate
+                + QStringLiteral("ORDER BY timestamp ASC, id ASC LIMIT 1"));
+            bindSnapshot(boundary);
+            if (!boundary.exec()) {
+                page.status = RuntimeHistoryPageStatus::SqlError;
+                page.errorText = boundary.lastError().text();
+                return page;
+            }
+            if (!boundary.next()) { page.status = RuntimeHistoryPageStatus::Success; return page; }
+        }
+        windowTime = QDateTime::fromString(boundary.value(0).toString(), Qt::ISODateWithMs).toUTC();
+        windowId = boundary.value(1).toLongLong();
     }
-    if (cursor.maxId >= 0) {
-        sql += QStringLiteral("AND id <= :maxId ");
-    }
+    const bool pastWindowStart = cursor.isValid() && (cursor.timestamp > windowTime
+        || (cursor.timestamp == windowTime && cursor.id >= windowId));
+    QString sql = QStringLiteral("SELECT ") + RUNTIME_RECORD_SELECT_COLUMNS + predicate
+        + (pastWindowStart ? QStringLiteral("AND (timestamp, id) > (:seekTime, :seekId) ")
+                           : QStringLiteral("AND (timestamp, id) >= (:seekTime, :seekId) "));
     sql += QStringLiteral("ORDER BY timestamp ASC, id ASC LIMIT :limit");
 
     QSqlQuery query(m_db);
@@ -174,11 +203,8 @@ RuntimeHistoryPage HistoryQuery::queryLatestHistoryPage(
     if (!endText.isEmpty()) {
         query.bindValue(QStringLiteral(":end"), endText);
     }
-    query.bindValue(QStringLiteral(":maxCount"), maxCount);
-    if (cursor.isValid()) {
-        query.bindValue(QStringLiteral(":cursorTime"), formatIsoUtc(cursor.timestamp.toUTC()));
-        query.bindValue(QStringLiteral(":cursorId"), cursor.id);
-    }
+    query.bindValue(QStringLiteral(":seekTime"), formatIsoUtc(pastWindowStart ? cursor.timestamp : windowTime));
+    query.bindValue(QStringLiteral(":seekId"), pastWindowStart ? cursor.id : windowId);
     if (cursor.maxId >= 0) {
         query.bindValue(QStringLiteral(":maxId"), cursor.maxId);
     }
@@ -205,6 +231,8 @@ RuntimeHistoryPage HistoryQuery::queryLatestHistoryPage(
     }
 
     page.nextCursor = cursor;
+    page.nextCursor.windowStartTimestamp = windowTime;
+    page.nextCursor.windowStartId = windowId;
     page.records = records;
     page.status = RuntimeHistoryPageStatus::Success;
 

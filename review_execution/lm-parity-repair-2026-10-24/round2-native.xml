@@ -1,0 +1,917 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<testsuite errors="440" failures="0" tests="15" name="ReviewRound2RegressionTest">
+  <properties>
+    <property value="5.15.2" name="QTestVersion"/>
+    <property value="5.15.2" name="QtVersion"/>
+    <property value="Qt 5.15.2 (x86_64&#x002D;little_endian&#x002D;llp64 shared (dynamic) release build; by GCC 8.1.0)" name="QtBuild"/>
+  </properties>
+  <testcase result="pass" name="initTestCase"/>
+  <testcase result="pass" name="artifactHashRejectsUnavailableFiles"/>
+  <testcase result="pass" name="historyAdaptersPreserveQueryContract">
+    <!-- tag="sync0" message="[INFO] 09:25:50.182 当前数据库版本: 0, 目标版本: 5" type="qinfo" -->
+    <!-- tag="sync0" message="[INFO] 09:25:50.189 开始 Schema 迁移: 0 &#x002D;&gt; 5" type="qinfo" -->
+    <!-- tag="sync0" message="[INFO] 09:25:50.189 执行迁移到版本 1..." type="qinfo" -->
+    <!-- tag="sync0" message="[INFO] 09:25:50.189 数据库版本已更新为: 1" type="qinfo" -->
+    <!-- tag="sync0" message="[INFO] 09:25:50.189 执行迁移到版本 2..." type="qinfo" -->
+    <!-- tag="sync0" message="[INFO] 09:25:50.189 数据库版本已更新为: 2" type="qinfo" -->
+    <!-- tag="sync0" message="[INFO] 09:25:50.189 执行迁移到版本 3..." type="qinfo" -->
+    <!-- tag="sync0" message="[INFO] 09:25:50.190 数据库版本已更新为: 3" type="qinfo" -->
+    <!-- tag="sync0" message="[INFO] 09:25:50.190 执行迁移到版本 4..." type="qinfo" -->
+    <!-- tag="sync0" message="[INFO] 09:25:50.191 数据库版本已更新为: 4" type="qinfo" -->
+    <!-- tag="sync0" message="[INFO] 09:25:50.191 执行迁移到版本 5..." type="qinfo" -->
+    <!-- tag="sync0" message="[INFO] 09:25:50.191 开始执行 Schema V5 迁移：统一历史时间存储格式为标准 UTC ISO&#x002D;8601..." type="qinfo" -->
+    <!-- tag="sync0" message="[INFO] 09:25:50.191 runtime_data 时间迁移完成: 共检查 0 条记录，更新 0 条" type="qinfo" -->
+    <!-- tag="sync0" message="[INFO] 09:25:50.192 system_logs 时间迁移完成: 共检查 0 条记录，更新 0 条" type="qinfo" -->
+    <!-- tag="sync0" message="[INFO] 09:25:50.192 Schema V5 迁移全部成功，耗时 0 ms" type="qinfo" -->
+    <!-- tag="sync0" message="[INFO] 09:25:50.192 数据库版本已更新为: 5" type="qinfo" -->
+    <!-- tag="sync0" message="[INFO] 09:25:50.193 Schema 迁移完成" type="qinfo" -->
+    <!-- tag="sync0" message="[INFO] 09:25:50.193 数据库初始化完成: C:/Users/Ryan/AppData/Local/Temp/review_round2_regression_test&#x002D;QpOUSa/sync0.db" type="qinfo" -->
+    <!-- tag="sync0" message="[DEBUG] 09:25:50.195 批量记录运行数据: 9 条成功" type="qdebug" -->
+    <!-- tag="sync0" message="[DEBUG] 09:25:50.196 批量记录运行数据: 2 条成功" type="qdebug" -->
+    <!-- tag="sync0" message="[INFO] 09:25:50.197 DataManager 正在关闭..." type="qinfo" -->
+    <!-- tag="sync0" message="[INFO] 09:25:50.201 DataManager 已关闭" type="qinfo" -->
+    <!-- tag="sync8" message="[INFO] 09:25:50.218 当前数据库版本: 0, 目标版本: 5" type="qinfo" -->
+    <!-- tag="sync8" message="[INFO] 09:25:50.218 开始 Schema 迁移: 0 &#x002D;&gt; 5" type="qinfo" -->
+    <!-- tag="sync8" message="[INFO] 09:25:50.218 执行迁移到版本 1..." type="qinfo" -->
+    <!-- tag="sync8" message="[INFO] 09:25:50.219 数据库版本已更新为: 1" type="qinfo" -->
+    <!-- tag="sync8" message="[INFO] 09:25:50.219 执行迁移到版本 2..." type="qinfo" -->
+    <!-- tag="sync8" message="[INFO] 09:25:50.219 数据库版本已更新为: 2" type="qinfo" -->
+    <!-- tag="sync8" message="[INFO] 09:25:50.219 执行迁移到版本 3..." type="qinfo" -->
+    <!-- tag="sync8" message="[INFO] 09:25:50.219 数据库版本已更新为: 3" type="qinfo" -->
+    <!-- tag="sync8" message="[INFO] 09:25:50.219 执行迁移到版本 4..." type="qinfo" -->
+    <!-- tag="sync8" message="[INFO] 09:25:50.220 数据库版本已更新为: 4" type="qinfo" -->
+    <!-- tag="sync8" message="[INFO] 09:25:50.220 执行迁移到版本 5..." type="qinfo" -->
+    <!-- tag="sync8" message="[INFO] 09:25:50.220 开始执行 Schema V5 迁移：统一历史时间存储格式为标准 UTC ISO&#x002D;8601..." type="qinfo" -->
+    <!-- tag="sync8" message="[INFO] 09:25:50.220 runtime_data 时间迁移完成: 共检查 0 条记录，更新 0 条" type="qinfo" -->
+    <!-- tag="sync8" message="[INFO] 09:25:50.220 system_logs 时间迁移完成: 共检查 0 条记录，更新 0 条" type="qinfo" -->
+    <!-- tag="sync8" message="[INFO] 09:25:50.220 Schema V5 迁移全部成功，耗时 0 ms" type="qinfo" -->
+    <!-- tag="sync8" message="[INFO] 09:25:50.220 数据库版本已更新为: 5" type="qinfo" -->
+    <!-- tag="sync8" message="[INFO] 09:25:50.222 Schema 迁移完成" type="qinfo" -->
+    <!-- tag="sync8" message="[INFO] 09:25:50.222 数据库初始化完成: C:/Users/Ryan/AppData/Local/Temp/review_round2_regression_test&#x002D;QpOUSa/sync8.db" type="qinfo" -->
+    <!-- tag="sync8" message="[DEBUG] 09:25:50.223 批量记录运行数据: 9 条成功" type="qdebug" -->
+    <!-- tag="sync8" message="[DEBUG] 09:25:50.224 批量记录运行数据: 2 条成功" type="qdebug" -->
+    <!-- tag="sync8" message="[INFO] 09:25:50.225 DataManager 正在关闭..." type="qinfo" -->
+    <!-- tag="sync8" message="[INFO] 09:25:50.228 DataManager 已关闭" type="qinfo" -->
+    <!-- tag="sync&#x002D;7" message="[INFO] 09:25:50.241 当前数据库版本: 0, 目标版本: 5" type="qinfo" -->
+    <!-- tag="sync&#x002D;7" message="[INFO] 09:25:50.241 开始 Schema 迁移: 0 &#x002D;&gt; 5" type="qinfo" -->
+    <!-- tag="sync&#x002D;7" message="[INFO] 09:25:50.241 执行迁移到版本 1..." type="qinfo" -->
+    <!-- tag="sync&#x002D;7" message="[INFO] 09:25:50.242 数据库版本已更新为: 1" type="qinfo" -->
+    <!-- tag="sync&#x002D;7" message="[INFO] 09:25:50.242 执行迁移到版本 2..." type="qinfo" -->
+    <!-- tag="sync&#x002D;7" message="[INFO] 09:25:50.242 数据库版本已更新为: 2" type="qinfo" -->
+    <!-- tag="sync&#x002D;7" message="[INFO] 09:25:50.242 执行迁移到版本 3..." type="qinfo" -->
+    <!-- tag="sync&#x002D;7" message="[INFO] 09:25:50.242 数据库版本已更新为: 3" type="qinfo" -->
+    <!-- tag="sync&#x002D;7" message="[INFO] 09:25:50.242 执行迁移到版本 4..." type="qinfo" -->
+    <!-- tag="sync&#x002D;7" message="[INFO] 09:25:50.242 数据库版本已更新为: 4" type="qinfo" -->
+    <!-- tag="sync&#x002D;7" message="[INFO] 09:25:50.242 执行迁移到版本 5..." type="qinfo" -->
+    <!-- tag="sync&#x002D;7" message="[INFO] 09:25:50.242 开始执行 Schema V5 迁移：统一历史时间存储格式为标准 UTC ISO&#x002D;8601..." type="qinfo" -->
+    <!-- tag="sync&#x002D;7" message="[INFO] 09:25:50.242 runtime_data 时间迁移完成: 共检查 0 条记录，更新 0 条" type="qinfo" -->
+    <!-- tag="sync&#x002D;7" message="[INFO] 09:25:50.242 system_logs 时间迁移完成: 共检查 0 条记录，更新 0 条" type="qinfo" -->
+    <!-- tag="sync&#x002D;7" message="[INFO] 09:25:50.243 Schema V5 迁移全部成功，耗时 0 ms" type="qinfo" -->
+    <!-- tag="sync&#x002D;7" message="[INFO] 09:25:50.243 数据库版本已更新为: 5" type="qinfo" -->
+    <!-- tag="sync&#x002D;7" message="[INFO] 09:25:50.244 Schema 迁移完成" type="qinfo" -->
+    <!-- tag="sync&#x002D;7" message="[INFO] 09:25:50.244 数据库初始化完成: C:/Users/Ryan/AppData/Local/Temp/review_round2_regression_test&#x002D;QpOUSa/sync&#x002D;7.db" type="qinfo" -->
+    <!-- tag="sync&#x002D;7" message="[DEBUG] 09:25:50.245 批量记录运行数据: 9 条成功" type="qdebug" -->
+    <!-- tag="sync&#x002D;7" message="[DEBUG] 09:25:50.246 批量记录运行数据: 2 条成功" type="qdebug" -->
+    <!-- tag="sync&#x002D;7" message="[INFO] 09:25:50.247 DataManager 正在关闭..." type="qinfo" -->
+    <!-- tag="sync&#x002D;7" message="[INFO] 09:25:50.251 DataManager 已关闭" type="qinfo" -->
+    <!-- tag="async0" message="[INFO] 09:25:50.262 当前数据库版本: 0, 目标版本: 5" type="qinfo" -->
+    <!-- tag="async0" message="[INFO] 09:25:50.262 开始 Schema 迁移: 0 &#x002D;&gt; 5" type="qinfo" -->
+    <!-- tag="async0" message="[INFO] 09:25:50.262 执行迁移到版本 1..." type="qinfo" -->
+    <!-- tag="async0" message="[INFO] 09:25:50.263 数据库版本已更新为: 1" type="qinfo" -->
+    <!-- tag="async0" message="[INFO] 09:25:50.263 执行迁移到版本 2..." type="qinfo" -->
+    <!-- tag="async0" message="[INFO] 09:25:50.263 数据库版本已更新为: 2" type="qinfo" -->
+    <!-- tag="async0" message="[INFO] 09:25:50.263 执行迁移到版本 3..." type="qinfo" -->
+    <!-- tag="async0" message="[INFO] 09:25:50.263 数据库版本已更新为: 3" type="qinfo" -->
+    <!-- tag="async0" message="[INFO] 09:25:50.263 执行迁移到版本 4..." type="qinfo" -->
+    <!-- tag="async0" message="[INFO] 09:25:50.264 数据库版本已更新为: 4" type="qinfo" -->
+    <!-- tag="async0" message="[INFO] 09:25:50.264 执行迁移到版本 5..." type="qinfo" -->
+    <!-- tag="async0" message="[INFO] 09:25:50.264 开始执行 Schema V5 迁移：统一历史时间存储格式为标准 UTC ISO&#x002D;8601..." type="qinfo" -->
+    <!-- tag="async0" message="[INFO] 09:25:50.264 runtime_data 时间迁移完成: 共检查 0 条记录，更新 0 条" type="qinfo" -->
+    <!-- tag="async0" message="[INFO] 09:25:50.264 system_logs 时间迁移完成: 共检查 0 条记录，更新 0 条" type="qinfo" -->
+    <!-- tag="async0" message="[INFO] 09:25:50.264 Schema V5 迁移全部成功，耗时 0 ms" type="qinfo" -->
+    <!-- tag="async0" message="[INFO] 09:25:50.264 数据库版本已更新为: 5" type="qinfo" -->
+    <!-- tag="async0" message="[INFO] 09:25:50.266 Schema 迁移完成" type="qinfo" -->
+    <!-- tag="async0" message="[INFO] 09:25:50.266 数据库初始化完成: C:/Users/Ryan/AppData/Local/Temp/review_round2_regression_test&#x002D;QpOUSa/async0.db" type="qinfo" -->
+    <!-- tag="async0" message="[DEBUG] 09:25:50.267 批量记录运行数据: 9 条成功" type="qdebug" -->
+    <!-- tag="async0" message="[DEBUG] 09:25:50.268 批量记录运行数据: 2 条成功" type="qdebug" -->
+    <!-- tag="async0" message="[INFO] 09:25:50.347 DataManager 正在关闭..." type="qinfo" -->
+    <!-- tag="async0" message="[INFO] 09:25:50.353 DataManager 已关闭" type="qinfo" -->
+    <!-- tag="async8" message="[INFO] 09:25:50.365 当前数据库版本: 0, 目标版本: 5" type="qinfo" -->
+    <!-- tag="async8" message="[INFO] 09:25:50.365 开始 Schema 迁移: 0 &#x002D;&gt; 5" type="qinfo" -->
+    <!-- tag="async8" message="[INFO] 09:25:50.365 执行迁移到版本 1..." type="qinfo" -->
+    <!-- tag="async8" message="[INFO] 09:25:50.366 数据库版本已更新为: 1" type="qinfo" -->
+    <!-- tag="async8" message="[INFO] 09:25:50.366 执行迁移到版本 2..." type="qinfo" -->
+    <!-- tag="async8" message="[INFO] 09:25:50.366 数据库版本已更新为: 2" type="qinfo" -->
+    <!-- tag="async8" message="[INFO] 09:25:50.366 执行迁移到版本 3..." type="qinfo" -->
+    <!-- tag="async8" message="[INFO] 09:25:50.366 数据库版本已更新为: 3" type="qinfo" -->
+    <!-- tag="async8" message="[INFO] 09:25:50.366 执行迁移到版本 4..." type="qinfo" -->
+    <!-- tag="async8" message="[INFO] 09:25:50.367 数据库版本已更新为: 4" type="qinfo" -->
+    <!-- tag="async8" message="[INFO] 09:25:50.367 执行迁移到版本 5..." type="qinfo" -->
+    <!-- tag="async8" message="[INFO] 09:25:50.367 开始执行 Schema V5 迁移：统一历史时间存储格式为标准 UTC ISO&#x002D;8601..." type="qinfo" -->
+    <!-- tag="async8" message="[INFO] 09:25:50.367 runtime_data 时间迁移完成: 共检查 0 条记录，更新 0 条" type="qinfo" -->
+    <!-- tag="async8" message="[INFO] 09:25:50.367 system_logs 时间迁移完成: 共检查 0 条记录，更新 0 条" type="qinfo" -->
+    <!-- tag="async8" message="[INFO] 09:25:50.367 Schema V5 迁移全部成功，耗时 0 ms" type="qinfo" -->
+    <!-- tag="async8" message="[INFO] 09:25:50.367 数据库版本已更新为: 5" type="qinfo" -->
+    <!-- tag="async8" message="[INFO] 09:25:50.368 Schema 迁移完成" type="qinfo" -->
+    <!-- tag="async8" message="[INFO] 09:25:50.368 数据库初始化完成: C:/Users/Ryan/AppData/Local/Temp/review_round2_regression_test&#x002D;QpOUSa/async8.db" type="qinfo" -->
+    <!-- tag="async8" message="[DEBUG] 09:25:50.370 批量记录运行数据: 9 条成功" type="qdebug" -->
+    <!-- tag="async8" message="[DEBUG] 09:25:50.370 批量记录运行数据: 2 条成功" type="qdebug" -->
+    <!-- tag="async8" message="[INFO] 09:25:50.442 DataManager 正在关闭..." type="qinfo" -->
+    <!-- tag="async8" message="[INFO] 09:25:50.446 DataManager 已关闭" type="qinfo" -->
+    <!-- tag="async&#x002D;7" message="[INFO] 09:25:50.460 当前数据库版本: 0, 目标版本: 5" type="qinfo" -->
+    <!-- tag="async&#x002D;7" message="[INFO] 09:25:50.460 开始 Schema 迁移: 0 &#x002D;&gt; 5" type="qinfo" -->
+    <!-- tag="async&#x002D;7" message="[INFO] 09:25:50.460 执行迁移到版本 1..." type="qinfo" -->
+    <!-- tag="async&#x002D;7" message="[INFO] 09:25:50.460 数据库版本已更新为: 1" type="qinfo" -->
+    <!-- tag="async&#x002D;7" message="[INFO] 09:25:50.460 执行迁移到版本 2..." type="qinfo" -->
+    <!-- tag="async&#x002D;7" message="[INFO] 09:25:50.460 数据库版本已更新为: 2" type="qinfo" -->
+    <!-- tag="async&#x002D;7" message="[INFO] 09:25:50.460 执行迁移到版本 3..." type="qinfo" -->
+    <!-- tag="async&#x002D;7" message="[INFO] 09:25:50.461 数据库版本已更新为: 3" type="qinfo" -->
+    <!-- tag="async&#x002D;7" message="[INFO] 09:25:50.461 执行迁移到版本 4..." type="qinfo" -->
+    <!-- tag="async&#x002D;7" message="[INFO] 09:25:50.461 数据库版本已更新为: 4" type="qinfo" -->
+    <!-- tag="async&#x002D;7" message="[INFO] 09:25:50.461 执行迁移到版本 5..." type="qinfo" -->
+    <!-- tag="async&#x002D;7" message="[INFO] 09:25:50.461 开始执行 Schema V5 迁移：统一历史时间存储格式为标准 UTC ISO&#x002D;8601..." type="qinfo" -->
+    <!-- tag="async&#x002D;7" message="[INFO] 09:25:50.461 runtime_data 时间迁移完成: 共检查 0 条记录，更新 0 条" type="qinfo" -->
+    <!-- tag="async&#x002D;7" message="[INFO] 09:25:50.461 system_logs 时间迁移完成: 共检查 0 条记录，更新 0 条" type="qinfo" -->
+    <!-- tag="async&#x002D;7" message="[INFO] 09:25:50.461 Schema V5 迁移全部成功，耗时 0 ms" type="qinfo" -->
+    <!-- tag="async&#x002D;7" message="[INFO] 09:25:50.461 数据库版本已更新为: 5" type="qinfo" -->
+    <!-- tag="async&#x002D;7" message="[INFO] 09:25:50.462 Schema 迁移完成" type="qinfo" -->
+    <!-- tag="async&#x002D;7" message="[INFO] 09:25:50.463 数据库初始化完成: C:/Users/Ryan/AppData/Local/Temp/review_round2_regression_test&#x002D;QpOUSa/async&#x002D;7.db" type="qinfo" -->
+    <!-- tag="async&#x002D;7" message="[DEBUG] 09:25:50.464 批量记录运行数据: 9 条成功" type="qdebug" -->
+    <!-- tag="async&#x002D;7" message="[DEBUG] 09:25:50.465 批量记录运行数据: 2 条成功" type="qdebug" -->
+    <!-- tag="async&#x002D;7" message="[INFO] 09:25:50.537 DataManager 正在关闭..." type="qinfo" -->
+    <!-- tag="async&#x002D;7" message="[INFO] 09:25:50.541 DataManager 已关闭" type="qinfo" -->
+  </testcase>
+  <testcase result="pass" name="timestampPreservesInstantAcrossZonesAndDays">
+    <!-- message="[INFO] 09:25:50.553 当前数据库版本: 0, 目标版本: 5" type="qinfo" -->
+    <!-- message="[INFO] 09:25:50.553 开始 Schema 迁移: 0 &#x002D;&gt; 5" type="qinfo" -->
+    <!-- message="[INFO] 09:25:50.553 执行迁移到版本 1..." type="qinfo" -->
+    <!-- message="[INFO] 09:25:50.553 数据库版本已更新为: 1" type="qinfo" -->
+    <!-- message="[INFO] 09:25:50.553 执行迁移到版本 2..." type="qinfo" -->
+    <!-- message="[INFO] 09:25:50.554 数据库版本已更新为: 2" type="qinfo" -->
+    <!-- message="[INFO] 09:25:50.554 执行迁移到版本 3..." type="qinfo" -->
+    <!-- message="[INFO] 09:25:50.554 数据库版本已更新为: 3" type="qinfo" -->
+    <!-- message="[INFO] 09:25:50.554 执行迁移到版本 4..." type="qinfo" -->
+    <!-- message="[INFO] 09:25:50.554 数据库版本已更新为: 4" type="qinfo" -->
+    <!-- message="[INFO] 09:25:50.554 执行迁移到版本 5..." type="qinfo" -->
+    <!-- message="[INFO] 09:25:50.554 开始执行 Schema V5 迁移：统一历史时间存储格式为标准 UTC ISO&#x002D;8601..." type="qinfo" -->
+    <!-- message="[INFO] 09:25:50.554 runtime_data 时间迁移完成: 共检查 0 条记录，更新 0 条" type="qinfo" -->
+    <!-- message="[INFO] 09:25:50.554 system_logs 时间迁移完成: 共检查 0 条记录，更新 0 条" type="qinfo" -->
+    <!-- message="[INFO] 09:25:50.554 Schema V5 迁移全部成功，耗时 0 ms" type="qinfo" -->
+    <!-- message="[INFO] 09:25:50.554 数据库版本已更新为: 5" type="qinfo" -->
+    <!-- message="[INFO] 09:25:50.556 Schema 迁移完成" type="qinfo" -->
+    <!-- message="[INFO] 09:25:50.556 数据库初始化完成: C:/Users/Ryan/AppData/Local/Temp/review_round2_regression_test&#x002D;QpOUSa/zones.db" type="qinfo" -->
+    <!-- message="[DEBUG] 09:25:50.557 批量记录运行数据: 1 条成功" type="qdebug" -->
+    <!-- message="[DEBUG] 09:25:50.558 批量记录运行数据: 1 条成功" type="qdebug" -->
+    <!-- message="[DEBUG] 09:25:50.559 批量记录运行数据: 1 条成功" type="qdebug" -->
+    <!-- message="[DEBUG] 09:25:50.560 批量记录运行数据: 1 条成功" type="qdebug" -->
+    <!-- message="[INFO] 09:25:50.560 DataManager 正在关闭..." type="qinfo" -->
+    <!-- message="[INFO] 09:25:50.564 DataManager 已关闭" type="qinfo" -->
+  </testcase>
+  <testcase result="pass" name="ambiguousMigrationRollsBackAndCanonicalReopenIsIdempotent">
+    <!-- message="[INFO] 09:25:50.576 当前数据库版本: 0, 目标版本: 5" type="qinfo" -->
+    <!-- message="[INFO] 09:25:50.576 开始 Schema 迁移: 0 &#x002D;&gt; 5" type="qinfo" -->
+    <!-- message="[INFO] 09:25:50.576 执行迁移到版本 1..." type="qinfo" -->
+    <!-- message="[INFO] 09:25:50.577 数据库版本已更新为: 1" type="qinfo" -->
+    <!-- message="[INFO] 09:25:50.577 执行迁移到版本 2..." type="qinfo" -->
+    <!-- message="[INFO] 09:25:50.578 数据库版本已更新为: 2" type="qinfo" -->
+    <!-- message="[INFO] 09:25:50.578 执行迁移到版本 3..." type="qinfo" -->
+    <!-- message="[INFO] 09:25:50.578 数据库版本已更新为: 3" type="qinfo" -->
+    <!-- message="[INFO] 09:25:50.578 执行迁移到版本 4..." type="qinfo" -->
+    <!-- message="[INFO] 09:25:50.578 数据库版本已更新为: 4" type="qinfo" -->
+    <!-- message="[INFO] 09:25:50.578 执行迁移到版本 5..." type="qinfo" -->
+    <!-- message="[INFO] 09:25:50.578 开始执行 Schema V5 迁移：统一历史时间存储格式为标准 UTC ISO&#x002D;8601..." type="qinfo" -->
+    <!-- message="[INFO] 09:25:50.578 runtime_data 时间迁移完成: 共检查 0 条记录，更新 0 条" type="qinfo" -->
+    <!-- message="[INFO] 09:25:50.578 system_logs 时间迁移完成: 共检查 0 条记录，更新 0 条" type="qinfo" -->
+    <!-- message="[INFO] 09:25:50.578 Schema V5 迁移全部成功，耗时 0 ms" type="qinfo" -->
+    <!-- message="[INFO] 09:25:50.578 数据库版本已更新为: 5" type="qinfo" -->
+    <!-- message="[INFO] 09:25:50.580 Schema 迁移完成" type="qinfo" -->
+    <!-- message="[INFO] 09:25:50.580 数据库初始化完成: C:/Users/Ryan/AppData/Local/Temp/review_round2_regression_test&#x002D;QpOUSa/ambiguous.db" type="qinfo" -->
+    <!-- message="[DEBUG] 09:25:50.581 批量记录运行数据: 1 条成功" type="qdebug" -->
+    <!-- message="[INFO] 09:25:50.581 DataManager 正在关闭..." type="qinfo" -->
+    <!-- message="[INFO] 09:25:50.583 DataManager 已关闭" type="qinfo" -->
+    <!-- message="[INFO] 09:25:50.588 当前数据库版本: 5, 目标版本: 5" type="qinfo" -->
+    <!-- message="[INFO] 09:25:50.588 数据库初始化完成: C:/Users/Ryan/AppData/Local/Temp/review_round2_regression_test&#x002D;QpOUSa/ambiguous.db" type="qinfo" -->
+    <!-- message="[INFO] 09:25:50.588 DataManager 正在关闭..." type="qinfo" -->
+    <!-- message="[INFO] 09:25:50.590 DataManager 已关闭" type="qinfo" -->
+    <!-- message="[INFO] 09:25:50.610 当前数据库版本: 4, 目标版本: 5" type="qinfo" -->
+    <!-- message="[INFO] 09:25:50.610 开始 Schema 迁移: 4 &#x002D;&gt; 5" type="qinfo" -->
+    <!-- message="[INFO] 09:25:50.610 执行迁移到版本 5..." type="qinfo" -->
+    <!-- message="[INFO] 09:25:50.610 开始执行 Schema V5 迁移：统一历史时间存储格式为标准 UTC ISO&#x002D;8601..." type="qinfo" -->
+    <!-- message="[ERROR] 09:25:50.610 Schema V5 迁移失败: runtime_data 表记录 (id=1, timestamp=&apos;2026&#x002D;09&#x002D;08T12:00:00.000&apos;) 校验失败: Ambiguous legacy timestamp timezone: 2026&#x002D;09&#x002D;08T12:00:00.000; migration requires an explicit source timezone" type="system" -->
+    <!-- message="[ERROR] 09:25:50.610 Schema 迁移失败，已回滚" type="system" -->
+    <!-- message="[ERROR] 09:25:50.610 Ambiguous legacy timestamp timezone: 2026&#x002D;09&#x002D;08T12:00:00.000; migration requires an explicit source timezone" type="system" -->
+  </testcase>
+  <testcase result="pass" name="latestSnapshotSurvivesConcurrentAppends">
+    <!-- message="[INFO] 09:25:50.625 当前数据库版本: 0, 目标版本: 5" type="qinfo" -->
+    <!-- message="[INFO] 09:25:50.625 开始 Schema 迁移: 0 &#x002D;&gt; 5" type="qinfo" -->
+    <!-- message="[INFO] 09:25:50.625 执行迁移到版本 1..." type="qinfo" -->
+    <!-- message="[INFO] 09:25:50.626 数据库版本已更新为: 1" type="qinfo" -->
+    <!-- message="[INFO] 09:25:50.626 执行迁移到版本 2..." type="qinfo" -->
+    <!-- message="[INFO] 09:25:50.626 数据库版本已更新为: 2" type="qinfo" -->
+    <!-- message="[INFO] 09:25:50.626 执行迁移到版本 3..." type="qinfo" -->
+    <!-- message="[INFO] 09:25:50.626 数据库版本已更新为: 3" type="qinfo" -->
+    <!-- message="[INFO] 09:25:50.626 执行迁移到版本 4..." type="qinfo" -->
+    <!-- message="[INFO] 09:25:50.627 数据库版本已更新为: 4" type="qinfo" -->
+    <!-- message="[INFO] 09:25:50.627 执行迁移到版本 5..." type="qinfo" -->
+    <!-- message="[INFO] 09:25:50.627 开始执行 Schema V5 迁移：统一历史时间存储格式为标准 UTC ISO&#x002D;8601..." type="qinfo" -->
+    <!-- message="[INFO] 09:25:50.627 runtime_data 时间迁移完成: 共检查 0 条记录，更新 0 条" type="qinfo" -->
+    <!-- message="[INFO] 09:25:50.627 system_logs 时间迁移完成: 共检查 0 条记录，更新 0 条" type="qinfo" -->
+    <!-- message="[INFO] 09:25:50.627 Schema V5 迁移全部成功，耗时 0 ms" type="qinfo" -->
+    <!-- message="[INFO] 09:25:50.627 数据库版本已更新为: 5" type="qinfo" -->
+    <!-- message="[INFO] 09:25:50.628 Schema 迁移完成" type="qinfo" -->
+    <!-- message="[INFO] 09:25:50.628 数据库初始化完成: C:/Users/Ryan/AppData/Local/Temp/review_round2_regression_test&#x002D;QpOUSa/snapshot.db" type="qinfo" -->
+    <!-- message="[DEBUG] 09:25:50.629 批量记录运行数据: 1 条成功" type="qdebug" -->
+    <!-- message="[DEBUG] 09:25:50.631 批量记录运行数据: 1 条成功" type="qdebug" -->
+    <!-- message="[DEBUG] 09:25:50.631 批量记录运行数据: 1 条成功" type="qdebug" -->
+    <!-- message="[DEBUG] 09:25:50.632 批量记录运行数据: 1 条成功" type="qdebug" -->
+    <!-- message="[DEBUG] 09:25:50.633 批量记录运行数据: 1 条成功" type="qdebug" -->
+    <!-- message="[DEBUG] 09:25:50.634 批量记录运行数据: 1 条成功" type="qdebug" -->
+    <!-- message="[DEBUG] 09:25:50.635 批量记录运行数据: 1 条成功" type="qdebug" -->
+    <!-- message="[DEBUG] 09:25:50.637 批量记录运行数据: 1 条成功" type="qdebug" -->
+    <!-- message="[DEBUG] 09:25:50.638 批量记录运行数据: 1 条成功" type="qdebug" -->
+    <!-- message="[DEBUG] 09:25:50.638 批量记录运行数据: 1 条成功" type="qdebug" -->
+    <!-- message="[DEBUG] 09:25:50.639 批量记录运行数据: 1 条成功" type="qdebug" -->
+    <!-- message="[DEBUG] 09:25:50.640 批量记录运行数据: 1 条成功" type="qdebug" -->
+    <!-- message="[DEBUG] 09:25:50.641 批量记录运行数据: 1 条成功" type="qdebug" -->
+    <!-- message="[DEBUG] 09:25:50.642 批量记录运行数据: 1 条成功" type="qdebug" -->
+    <!-- message="[DEBUG] 09:25:50.643 批量记录运行数据: 1 条成功" type="qdebug" -->
+    <!-- message="[DEBUG] 09:25:50.665 批量记录运行数据: 1 条成功" type="qdebug" -->
+    <!-- message="[INFO] 09:25:50.671 DataManager 正在关闭..." type="qinfo" -->
+    <!-- message="[INFO] 09:25:50.680 DataManager 已关闭" type="qinfo" -->
+  </testcase>
+  <testcase result="pass" name="retryRecoversWithoutNewEnqueueAndPermanentFailureTerminates">
+    <!-- message="[INFO] 09:25:50.692 当前数据库版本: 0, 目标版本: 5" type="qinfo" -->
+    <!-- message="[INFO] 09:25:50.692 开始 Schema 迁移: 0 &#x002D;&gt; 5" type="qinfo" -->
+    <!-- message="[INFO] 09:25:50.692 执行迁移到版本 1..." type="qinfo" -->
+    <!-- message="[INFO] 09:25:50.692 数据库版本已更新为: 1" type="qinfo" -->
+    <!-- message="[INFO] 09:25:50.692 执行迁移到版本 2..." type="qinfo" -->
+    <!-- message="[INFO] 09:25:50.692 数据库版本已更新为: 2" type="qinfo" -->
+    <!-- message="[INFO] 09:25:50.692 执行迁移到版本 3..." type="qinfo" -->
+    <!-- message="[INFO] 09:25:50.693 数据库版本已更新为: 3" type="qinfo" -->
+    <!-- message="[INFO] 09:25:50.693 执行迁移到版本 4..." type="qinfo" -->
+    <!-- message="[INFO] 09:25:50.693 数据库版本已更新为: 4" type="qinfo" -->
+    <!-- message="[INFO] 09:25:50.693 执行迁移到版本 5..." type="qinfo" -->
+    <!-- message="[INFO] 09:25:50.693 开始执行 Schema V5 迁移：统一历史时间存储格式为标准 UTC ISO&#x002D;8601..." type="qinfo" -->
+    <!-- message="[INFO] 09:25:50.693 runtime_data 时间迁移完成: 共检查 0 条记录，更新 0 条" type="qinfo" -->
+    <!-- message="[INFO] 09:25:50.693 system_logs 时间迁移完成: 共检查 0 条记录，更新 0 条" type="qinfo" -->
+    <!-- message="[INFO] 09:25:50.693 Schema V5 迁移全部成功，耗时 0 ms" type="qinfo" -->
+    <!-- message="[INFO] 09:25:50.693 数据库版本已更新为: 5" type="qinfo" -->
+    <!-- message="[INFO] 09:25:50.694 Schema 迁移完成" type="qinfo" -->
+    <!-- message="[INFO] 09:25:50.694 数据库初始化完成: C:/Users/Ryan/AppData/Local/Temp/review_round2_regression_test&#x002D;QpOUSa/retry.db" type="qinfo" -->
+    <!-- message="[INFO] 09:25:50.694 DataManager 正在关闭..." type="qinfo" -->
+    <!-- message="[INFO] 09:25:50.698 DataManager 已关闭" type="qinfo" -->
+    <!-- message="Database batch permanently failed 2 records 1 &quot;injected Unable to fetch row&quot;" type="qwarn" -->
+  </testcase>
+  <testcase result="pass" name="databaseLockRecoveryAndReadOnlyFailureAreReported">
+    <!-- message="[INFO] 09:25:51.217 当前数据库版本: 0, 目标版本: 5" type="qinfo" -->
+    <!-- message="[INFO] 09:25:51.217 开始 Schema 迁移: 0 &#x002D;&gt; 5" type="qinfo" -->
+    <!-- message="[INFO] 09:25:51.217 执行迁移到版本 1..." type="qinfo" -->
+    <!-- message="[INFO] 09:25:51.218 数据库版本已更新为: 1" type="qinfo" -->
+    <!-- message="[INFO] 09:25:51.218 执行迁移到版本 2..." type="qinfo" -->
+    <!-- message="[INFO] 09:25:51.218 数据库版本已更新为: 2" type="qinfo" -->
+    <!-- message="[INFO] 09:25:51.218 执行迁移到版本 3..." type="qinfo" -->
+    <!-- message="[INFO] 09:25:51.218 数据库版本已更新为: 3" type="qinfo" -->
+    <!-- message="[INFO] 09:25:51.218 执行迁移到版本 4..." type="qinfo" -->
+    <!-- message="[INFO] 09:25:51.219 数据库版本已更新为: 4" type="qinfo" -->
+    <!-- message="[INFO] 09:25:51.219 执行迁移到版本 5..." type="qinfo" -->
+    <!-- message="[INFO] 09:25:51.219 开始执行 Schema V5 迁移：统一历史时间存储格式为标准 UTC ISO&#x002D;8601..." type="qinfo" -->
+    <!-- message="[INFO] 09:25:51.219 runtime_data 时间迁移完成: 共检查 0 条记录，更新 0 条" type="qinfo" -->
+    <!-- message="[INFO] 09:25:51.219 system_logs 时间迁移完成: 共检查 0 条记录，更新 0 条" type="qinfo" -->
+    <!-- message="[INFO] 09:25:51.219 Schema V5 迁移全部成功，耗时 0 ms" type="qinfo" -->
+    <!-- message="[INFO] 09:25:51.219 数据库版本已更新为: 5" type="qinfo" -->
+    <!-- message="[INFO] 09:25:51.221 Schema 迁移完成" type="qinfo" -->
+    <!-- message="[INFO] 09:25:51.221 数据库初始化完成: C:/Users/Ryan/AppData/Local/Temp/review_round2_regression_test&#x002D;QpOUSa/lock.db" type="qinfo" -->
+    <!-- message="[INFO] 09:25:51.221 DataManager 正在关闭..." type="qinfo" -->
+    <!-- message="[INFO] 09:25:51.225 DataManager 已关闭" type="qinfo" -->
+    <!-- message="Database batch permanently failed 2 records 1 &quot;attempt to write a readonly database Unable to fetch row&quot;" type="qwarn" -->
+  </testcase>
+  <testcase result="pass" name="loggerOnlyAcknowledgesCommittedBatch">
+    <!-- message="[INFO] 09:25:51.820 当前数据库版本: 0, 目标版本: 5" type="qinfo" -->
+    <!-- message="[INFO] 09:25:51.820 开始 Schema 迁移: 0 &#x002D;&gt; 5" type="qinfo" -->
+    <!-- message="[INFO] 09:25:51.820 执行迁移到版本 1..." type="qinfo" -->
+    <!-- message="[INFO] 09:25:51.820 数据库版本已更新为: 1" type="qinfo" -->
+    <!-- message="[INFO] 09:25:51.820 执行迁移到版本 2..." type="qinfo" -->
+    <!-- message="[INFO] 09:25:51.820 数据库版本已更新为: 2" type="qinfo" -->
+    <!-- message="[INFO] 09:25:51.820 执行迁移到版本 3..." type="qinfo" -->
+    <!-- message="[INFO] 09:25:51.821 数据库版本已更新为: 3" type="qinfo" -->
+    <!-- message="[INFO] 09:25:51.821 执行迁移到版本 4..." type="qinfo" -->
+    <!-- message="[INFO] 09:25:51.822 数据库版本已更新为: 4" type="qinfo" -->
+    <!-- message="[INFO] 09:25:51.822 执行迁移到版本 5..." type="qinfo" -->
+    <!-- message="[INFO] 09:25:51.822 开始执行 Schema V5 迁移：统一历史时间存储格式为标准 UTC ISO&#x002D;8601..." type="qinfo" -->
+    <!-- message="[INFO] 09:25:51.822 runtime_data 时间迁移完成: 共检查 0 条记录，更新 0 条" type="qinfo" -->
+    <!-- message="[INFO] 09:25:51.822 system_logs 时间迁移完成: 共检查 0 条记录，更新 0 条" type="qinfo" -->
+    <!-- message="[INFO] 09:25:51.822 Schema V5 迁移全部成功，耗时 0 ms" type="qinfo" -->
+    <!-- message="[INFO] 09:25:51.822 数据库版本已更新为: 5" type="qinfo" -->
+    <!-- message="[INFO] 09:25:51.823 Schema 迁移完成" type="qinfo" -->
+    <!-- message="[INFO] 09:25:51.823 数据库初始化完成: C:/Users/Ryan/AppData/Local/Temp/review_round2_regression_test&#x002D;QpOUSa/logger.db" type="qinfo" -->
+    <!-- message="[INFO] 09:25:52.359 DataManager 正在关闭..." type="qinfo" -->
+    <!-- message="[INFO] 09:25:52.370 DataManager 已关闭" type="qinfo" -->
+  </testcase>
+  <testcase result="pass" name="productionManagerHistoryRequestKeepsUiResponsiveAndCanCancel">
+    <!-- message="[INFO] 09:25:52.382 当前数据库版本: 0, 目标版本: 5" type="qinfo" -->
+    <!-- message="[INFO] 09:25:52.382 开始 Schema 迁移: 0 &#x002D;&gt; 5" type="qinfo" -->
+    <!-- message="[INFO] 09:25:52.382 执行迁移到版本 1..." type="qinfo" -->
+    <!-- message="[INFO] 09:25:52.383 数据库版本已更新为: 1" type="qinfo" -->
+    <!-- message="[INFO] 09:25:52.383 执行迁移到版本 2..." type="qinfo" -->
+    <!-- message="[INFO] 09:25:52.383 数据库版本已更新为: 2" type="qinfo" -->
+    <!-- message="[INFO] 09:25:52.383 执行迁移到版本 3..." type="qinfo" -->
+    <!-- message="[INFO] 09:25:52.383 数据库版本已更新为: 3" type="qinfo" -->
+    <!-- message="[INFO] 09:25:52.383 执行迁移到版本 4..." type="qinfo" -->
+    <!-- message="[INFO] 09:25:52.383 数据库版本已更新为: 4" type="qinfo" -->
+    <!-- message="[INFO] 09:25:52.383 执行迁移到版本 5..." type="qinfo" -->
+    <!-- message="[INFO] 09:25:52.383 开始执行 Schema V5 迁移：统一历史时间存储格式为标准 UTC ISO&#x002D;8601..." type="qinfo" -->
+    <!-- message="[INFO] 09:25:52.384 runtime_data 时间迁移完成: 共检查 0 条记录，更新 0 条" type="qinfo" -->
+    <!-- message="[INFO] 09:25:52.384 system_logs 时间迁移完成: 共检查 0 条记录，更新 0 条" type="qinfo" -->
+    <!-- message="[INFO] 09:25:52.384 Schema V5 迁移全部成功，耗时 0 ms" type="qinfo" -->
+    <!-- message="[INFO] 09:25:52.384 数据库版本已更新为: 5" type="qinfo" -->
+    <!-- message="[INFO] 09:25:52.385 Schema 迁移完成" type="qinfo" -->
+    <!-- message="[INFO] 09:25:52.385 数据库初始化完成: C:/Users/Ryan/AppData/Local/Temp/review_round2_regression_test&#x002D;QpOUSa/manager.db" type="qinfo" -->
+    <!-- message="[MonitorManager] 注册通道: &quot;p&quot;" type="qdebug" -->
+    <!-- message="Production history 500ms delay heartbeat max ms 19 ticks 55" type="qinfo" -->
+    <!-- message="[INFO] 09:25:53.527 DataManager 正在关闭..." type="qinfo" -->
+    <!-- message="[INFO] 09:25:53.536 DataManager 已关闭" type="qinfo" -->
+  </testcase>
+  <testcase result="pass" name="asynchronousExportUsesCommittedSnapshotAndPreservesFileOnCancellation">
+    <!-- message="[INFO] 09:25:53.548 当前数据库版本: 0, 目标版本: 5" type="qinfo" -->
+    <!-- message="[INFO] 09:25:53.548 开始 Schema 迁移: 0 &#x002D;&gt; 5" type="qinfo" -->
+    <!-- message="[INFO] 09:25:53.548 执行迁移到版本 1..." type="qinfo" -->
+    <!-- message="[INFO] 09:25:53.549 数据库版本已更新为: 1" type="qinfo" -->
+    <!-- message="[INFO] 09:25:53.549 执行迁移到版本 2..." type="qinfo" -->
+    <!-- message="[INFO] 09:25:53.549 数据库版本已更新为: 2" type="qinfo" -->
+    <!-- message="[INFO] 09:25:53.549 执行迁移到版本 3..." type="qinfo" -->
+    <!-- message="[INFO] 09:25:53.549 数据库版本已更新为: 3" type="qinfo" -->
+    <!-- message="[INFO] 09:25:53.549 执行迁移到版本 4..." type="qinfo" -->
+    <!-- message="[INFO] 09:25:53.549 数据库版本已更新为: 4" type="qinfo" -->
+    <!-- message="[INFO] 09:25:53.550 执行迁移到版本 5..." type="qinfo" -->
+    <!-- message="[INFO] 09:25:53.550 开始执行 Schema V5 迁移：统一历史时间存储格式为标准 UTC ISO&#x002D;8601..." type="qinfo" -->
+    <!-- message="[INFO] 09:25:53.550 runtime_data 时间迁移完成: 共检查 0 条记录，更新 0 条" type="qinfo" -->
+    <!-- message="[INFO] 09:25:53.550 system_logs 时间迁移完成: 共检查 0 条记录，更新 0 条" type="qinfo" -->
+    <!-- message="[INFO] 09:25:53.550 Schema V5 迁移全部成功，耗时 0 ms" type="qinfo" -->
+    <!-- message="[INFO] 09:25:53.550 数据库版本已更新为: 5" type="qinfo" -->
+    <!-- message="[INFO] 09:25:53.551 Schema 迁移完成" type="qinfo" -->
+    <!-- message="[INFO] 09:25:53.551 数据库初始化完成: C:/Users/Ryan/AppData/Local/Temp/review_round2_regression_test&#x002D;QpOUSa/export.db" type="qinfo" -->
+    <!-- message="[MonitorManager] 注册通道: &quot;export.point&quot;" type="qdebug" -->
+    <!-- message="[MonitorExportHelper] 导出助手已创建" type="qdebug" -->
+    <!-- message="[MonitorExportHelper] 导出助手已销毁" type="qdebug" -->
+    <!-- message="[INFO] 09:25:54.136 DataManager 正在关闭..." type="qinfo" -->
+    <!-- message="[INFO] 09:25:54.143 DataManager 已关闭" type="qinfo" -->
+  </testcase>
+  <testcase result="pass" name="millionRowCleanupIsIndexedChunkedAndResponsive">
+    <!-- message="[INFO] 09:25:54.156 当前数据库版本: 0, 目标版本: 5" type="qinfo" -->
+    <!-- message="[INFO] 09:25:54.156 开始 Schema 迁移: 0 &#x002D;&gt; 5" type="qinfo" -->
+    <!-- message="[INFO] 09:25:54.156 执行迁移到版本 1..." type="qinfo" -->
+    <!-- message="[INFO] 09:25:54.157 数据库版本已更新为: 1" type="qinfo" -->
+    <!-- message="[INFO] 09:25:54.157 执行迁移到版本 2..." type="qinfo" -->
+    <!-- message="[INFO] 09:25:54.157 数据库版本已更新为: 2" type="qinfo" -->
+    <!-- message="[INFO] 09:25:54.157 执行迁移到版本 3..." type="qinfo" -->
+    <!-- message="[INFO] 09:25:54.157 数据库版本已更新为: 3" type="qinfo" -->
+    <!-- message="[INFO] 09:25:54.157 执行迁移到版本 4..." type="qinfo" -->
+    <!-- message="[INFO] 09:25:54.158 数据库版本已更新为: 4" type="qinfo" -->
+    <!-- message="[INFO] 09:25:54.158 执行迁移到版本 5..." type="qinfo" -->
+    <!-- message="[INFO] 09:25:54.158 开始执行 Schema V5 迁移：统一历史时间存储格式为标准 UTC ISO&#x002D;8601..." type="qinfo" -->
+    <!-- message="[INFO] 09:25:54.158 runtime_data 时间迁移完成: 共检查 0 条记录，更新 0 条" type="qinfo" -->
+    <!-- message="[INFO] 09:25:54.158 system_logs 时间迁移完成: 共检查 0 条记录，更新 0 条" type="qinfo" -->
+    <!-- message="[INFO] 09:25:54.158 Schema V5 迁移全部成功，耗时 0 ms" type="qinfo" -->
+    <!-- message="[INFO] 09:25:54.158 数据库版本已更新为: 5" type="qinfo" -->
+    <!-- message="[INFO] 09:25:54.160 Schema 迁移完成" type="qinfo" -->
+    <!-- message="[INFO] 09:25:54.160 数据库初始化完成: C:/Users/Ryan/AppData/Local/Temp/review_round2_regression_test&#x002D;QpOUSa/million.db" type="qinfo" -->
+    <!-- message="[INFO] 09:25:54.160 DataManager 正在关闭..." type="qinfo" -->
+    <!-- message="[INFO] 09:25:54.163 DataManager 已关闭" type="qinfo" -->
+    <!-- message="Million&#x002D;row fixture setup ms 8276" type="qinfo" -->
+    <!-- message="Million&#x002D;row cleanup ms 82 batches 5 heartbeat max ms 11 plan &quot;SEARCH TABLE runtime_data USING COVERING INDEX idx_runtime_timestamp (timestamp&lt;?)&quot;" type="qinfo" -->
+  </testcase>
+  <testcase result="pass" name="slowSnapshotExportAllowsCommitsCancellationAndShutdown">
+    <!-- tag="continuous&#x002D;commits" message="[INFO] 09:26:02.651 当前数据库版本: 0, 目标版本: 5" type="qinfo" -->
+    <!-- tag="continuous&#x002D;commits" message="[INFO] 09:26:02.651 开始 Schema 迁移: 0 &#x002D;&gt; 5" type="qinfo" -->
+    <!-- tag="continuous&#x002D;commits" message="[INFO] 09:26:02.651 执行迁移到版本 1..." type="qinfo" -->
+    <!-- tag="continuous&#x002D;commits" message="[INFO] 09:26:02.652 数据库版本已更新为: 1" type="qinfo" -->
+    <!-- tag="continuous&#x002D;commits" message="[INFO] 09:26:02.652 执行迁移到版本 2..." type="qinfo" -->
+    <!-- tag="continuous&#x002D;commits" message="[INFO] 09:26:02.652 数据库版本已更新为: 2" type="qinfo" -->
+    <!-- tag="continuous&#x002D;commits" message="[INFO] 09:26:02.652 执行迁移到版本 3..." type="qinfo" -->
+    <!-- tag="continuous&#x002D;commits" message="[INFO] 09:26:02.653 数据库版本已更新为: 3" type="qinfo" -->
+    <!-- tag="continuous&#x002D;commits" message="[INFO] 09:26:02.653 执行迁移到版本 4..." type="qinfo" -->
+    <!-- tag="continuous&#x002D;commits" message="[INFO] 09:26:02.653 数据库版本已更新为: 4" type="qinfo" -->
+    <!-- tag="continuous&#x002D;commits" message="[INFO] 09:26:02.653 执行迁移到版本 5..." type="qinfo" -->
+    <!-- tag="continuous&#x002D;commits" message="[INFO] 09:26:02.653 开始执行 Schema V5 迁移：统一历史时间存储格式为标准 UTC ISO&#x002D;8601..." type="qinfo" -->
+    <!-- tag="continuous&#x002D;commits" message="[INFO] 09:26:02.653 runtime_data 时间迁移完成: 共检查 0 条记录，更新 0 条" type="qinfo" -->
+    <!-- tag="continuous&#x002D;commits" message="[INFO] 09:26:02.653 system_logs 时间迁移完成: 共检查 0 条记录，更新 0 条" type="qinfo" -->
+    <!-- tag="continuous&#x002D;commits" message="[INFO] 09:26:02.653 Schema V5 迁移全部成功，耗时 0 ms" type="qinfo" -->
+    <!-- tag="continuous&#x002D;commits" message="[INFO] 09:26:02.653 数据库版本已更新为: 5" type="qinfo" -->
+    <!-- tag="continuous&#x002D;commits" message="[INFO] 09:26:02.654 Schema 迁移完成" type="qinfo" -->
+    <!-- tag="continuous&#x002D;commits" message="[INFO] 09:26:02.654 数据库初始化完成: C:/Users/Ryan/AppData/Local/Temp/review_round2_regression_test&#x002D;QpOUSa/slow&#x002D;export&#x002D;0&#x002D;0.db" type="qinfo" -->
+    <!-- tag="continuous&#x002D;commits" message="[MonitorExportHelper] 导出助手已创建" type="qdebug" -->
+    <!-- tag="continuous&#x002D;commits" message="[MonitorExportHelper] 导出助手已销毁" type="qdebug" -->
+    <!-- tag="continuous&#x002D;commits" message="[INFO] 09:26:03.466 DataManager 正在关闭..." type="qinfo" -->
+    <!-- tag="continuous&#x002D;commits" message="[INFO] 09:26:03.474 DataManager 已关闭" type="qinfo" -->
+    <!-- tag="cancel&#x002D;preserves&#x002D;destination" message="[INFO] 09:26:03.486 当前数据库版本: 0, 目标版本: 5" type="qinfo" -->
+    <!-- tag="cancel&#x002D;preserves&#x002D;destination" message="[INFO] 09:26:03.486 开始 Schema 迁移: 0 &#x002D;&gt; 5" type="qinfo" -->
+    <!-- tag="cancel&#x002D;preserves&#x002D;destination" message="[INFO] 09:26:03.486 执行迁移到版本 1..." type="qinfo" -->
+    <!-- tag="cancel&#x002D;preserves&#x002D;destination" message="[INFO] 09:26:03.487 数据库版本已更新为: 1" type="qinfo" -->
+    <!-- tag="cancel&#x002D;preserves&#x002D;destination" message="[INFO] 09:26:03.487 执行迁移到版本 2..." type="qinfo" -->
+    <!-- tag="cancel&#x002D;preserves&#x002D;destination" message="[INFO] 09:26:03.487 数据库版本已更新为: 2" type="qinfo" -->
+    <!-- tag="cancel&#x002D;preserves&#x002D;destination" message="[INFO] 09:26:03.487 执行迁移到版本 3..." type="qinfo" -->
+    <!-- tag="cancel&#x002D;preserves&#x002D;destination" message="[INFO] 09:26:03.487 数据库版本已更新为: 3" type="qinfo" -->
+    <!-- tag="cancel&#x002D;preserves&#x002D;destination" message="[INFO] 09:26:03.487 执行迁移到版本 4..." type="qinfo" -->
+    <!-- tag="cancel&#x002D;preserves&#x002D;destination" message="[INFO] 09:26:03.488 数据库版本已更新为: 4" type="qinfo" -->
+    <!-- tag="cancel&#x002D;preserves&#x002D;destination" message="[INFO] 09:26:03.488 执行迁移到版本 5..." type="qinfo" -->
+    <!-- tag="cancel&#x002D;preserves&#x002D;destination" message="[INFO] 09:26:03.488 开始执行 Schema V5 迁移：统一历史时间存储格式为标准 UTC ISO&#x002D;8601..." type="qinfo" -->
+    <!-- tag="cancel&#x002D;preserves&#x002D;destination" message="[INFO] 09:26:03.488 runtime_data 时间迁移完成: 共检查 0 条记录，更新 0 条" type="qinfo" -->
+    <!-- tag="cancel&#x002D;preserves&#x002D;destination" message="[INFO] 09:26:03.488 system_logs 时间迁移完成: 共检查 0 条记录，更新 0 条" type="qinfo" -->
+    <!-- tag="cancel&#x002D;preserves&#x002D;destination" message="[INFO] 09:26:03.488 Schema V5 迁移全部成功，耗时 0 ms" type="qinfo" -->
+    <!-- tag="cancel&#x002D;preserves&#x002D;destination" message="[INFO] 09:26:03.488 数据库版本已更新为: 5" type="qinfo" -->
+    <!-- tag="cancel&#x002D;preserves&#x002D;destination" message="[INFO] 09:26:03.490 Schema 迁移完成" type="qinfo" -->
+    <!-- tag="cancel&#x002D;preserves&#x002D;destination" message="[INFO] 09:26:03.490 数据库初始化完成: C:/Users/Ryan/AppData/Local/Temp/review_round2_regression_test&#x002D;QpOUSa/slow&#x002D;export&#x002D;1&#x002D;0.db" type="qinfo" -->
+    <!-- tag="cancel&#x002D;preserves&#x002D;destination" message="[MonitorExportHelper] 导出助手已创建" type="qdebug" -->
+    <!-- tag="cancel&#x002D;preserves&#x002D;destination" message="[MonitorExportHelper] 导出助手已销毁" type="qdebug" -->
+    <!-- tag="cancel&#x002D;preserves&#x002D;destination" message="[INFO] 09:26:03.835 DataManager 正在关闭..." type="qinfo" -->
+    <!-- tag="cancel&#x002D;preserves&#x002D;destination" message="[INFO] 09:26:03.850 DataManager 已关闭" type="qinfo" -->
+    <!-- tag="writer&#x002D;shutdown&#x002D;during&#x002D;export" message="[INFO] 09:26:03.862 当前数据库版本: 0, 目标版本: 5" type="qinfo" -->
+    <!-- tag="writer&#x002D;shutdown&#x002D;during&#x002D;export" message="[INFO] 09:26:03.862 开始 Schema 迁移: 0 &#x002D;&gt; 5" type="qinfo" -->
+    <!-- tag="writer&#x002D;shutdown&#x002D;during&#x002D;export" message="[INFO] 09:26:03.862 执行迁移到版本 1..." type="qinfo" -->
+    <!-- tag="writer&#x002D;shutdown&#x002D;during&#x002D;export" message="[INFO] 09:26:03.863 数据库版本已更新为: 1" type="qinfo" -->
+    <!-- tag="writer&#x002D;shutdown&#x002D;during&#x002D;export" message="[INFO] 09:26:03.863 执行迁移到版本 2..." type="qinfo" -->
+    <!-- tag="writer&#x002D;shutdown&#x002D;during&#x002D;export" message="[INFO] 09:26:03.863 数据库版本已更新为: 2" type="qinfo" -->
+    <!-- tag="writer&#x002D;shutdown&#x002D;during&#x002D;export" message="[INFO] 09:26:03.863 执行迁移到版本 3..." type="qinfo" -->
+    <!-- tag="writer&#x002D;shutdown&#x002D;during&#x002D;export" message="[INFO] 09:26:03.863 数据库版本已更新为: 3" type="qinfo" -->
+    <!-- tag="writer&#x002D;shutdown&#x002D;during&#x002D;export" message="[INFO] 09:26:03.863 执行迁移到版本 4..." type="qinfo" -->
+    <!-- tag="writer&#x002D;shutdown&#x002D;during&#x002D;export" message="[INFO] 09:26:03.864 数据库版本已更新为: 4" type="qinfo" -->
+    <!-- tag="writer&#x002D;shutdown&#x002D;during&#x002D;export" message="[INFO] 09:26:03.864 执行迁移到版本 5..." type="qinfo" -->
+    <!-- tag="writer&#x002D;shutdown&#x002D;during&#x002D;export" message="[INFO] 09:26:03.864 开始执行 Schema V5 迁移：统一历史时间存储格式为标准 UTC ISO&#x002D;8601..." type="qinfo" -->
+    <!-- tag="writer&#x002D;shutdown&#x002D;during&#x002D;export" message="[INFO] 09:26:03.864 runtime_data 时间迁移完成: 共检查 0 条记录，更新 0 条" type="qinfo" -->
+    <!-- tag="writer&#x002D;shutdown&#x002D;during&#x002D;export" message="[INFO] 09:26:03.864 system_logs 时间迁移完成: 共检查 0 条记录，更新 0 条" type="qinfo" -->
+    <!-- tag="writer&#x002D;shutdown&#x002D;during&#x002D;export" message="[INFO] 09:26:03.864 Schema V5 迁移全部成功，耗时 0 ms" type="qinfo" -->
+    <!-- tag="writer&#x002D;shutdown&#x002D;during&#x002D;export" message="[INFO] 09:26:03.864 数据库版本已更新为: 5" type="qinfo" -->
+    <!-- tag="writer&#x002D;shutdown&#x002D;during&#x002D;export" message="[INFO] 09:26:03.865 Schema 迁移完成" type="qinfo" -->
+    <!-- tag="writer&#x002D;shutdown&#x002D;during&#x002D;export" message="[INFO] 09:26:03.865 数据库初始化完成: C:/Users/Ryan/AppData/Local/Temp/review_round2_regression_test&#x002D;QpOUSa/slow&#x002D;export&#x002D;0&#x002D;1.db" type="qinfo" -->
+    <!-- tag="writer&#x002D;shutdown&#x002D;during&#x002D;export" message="[MonitorExportHelper] 导出助手已创建" type="qdebug" -->
+    <!-- tag="writer&#x002D;shutdown&#x002D;during&#x002D;export" message="[MonitorExportHelper] 导出助手已销毁" type="qdebug" -->
+    <!-- tag="writer&#x002D;shutdown&#x002D;during&#x002D;export" message="[INFO] 09:26:04.618 DataManager 正在关闭..." type="qinfo" -->
+    <!-- tag="writer&#x002D;shutdown&#x002D;during&#x002D;export" message="[INFO] 09:26:04.623 DataManager 已关闭" type="qinfo" -->
+  </testcase>
+  <testcase result="pass" name="shutdownDeadlineIncludesInflightDelay">
+    <!-- message="[INFO] 09:26:04.637 当前数据库版本: 0, 目标版本: 5" type="qinfo" -->
+    <!-- message="[INFO] 09:26:04.637 开始 Schema 迁移: 0 &#x002D;&gt; 5" type="qinfo" -->
+    <!-- message="[INFO] 09:26:04.637 执行迁移到版本 1..." type="qinfo" -->
+    <!-- message="[INFO] 09:26:04.637 数据库版本已更新为: 1" type="qinfo" -->
+    <!-- message="[INFO] 09:26:04.637 执行迁移到版本 2..." type="qinfo" -->
+    <!-- message="[INFO] 09:26:04.638 数据库版本已更新为: 2" type="qinfo" -->
+    <!-- message="[INFO] 09:26:04.638 执行迁移到版本 3..." type="qinfo" -->
+    <!-- message="[INFO] 09:26:04.638 数据库版本已更新为: 3" type="qinfo" -->
+    <!-- message="[INFO] 09:26:04.638 执行迁移到版本 4..." type="qinfo" -->
+    <!-- message="[INFO] 09:26:04.639 数据库版本已更新为: 4" type="qinfo" -->
+    <!-- message="[INFO] 09:26:04.639 执行迁移到版本 5..." type="qinfo" -->
+    <!-- message="[INFO] 09:26:04.639 开始执行 Schema V5 迁移：统一历史时间存储格式为标准 UTC ISO&#x002D;8601..." type="qinfo" -->
+    <!-- message="[INFO] 09:26:04.639 runtime_data 时间迁移完成: 共检查 0 条记录，更新 0 条" type="qinfo" -->
+    <!-- message="[INFO] 09:26:04.639 system_logs 时间迁移完成: 共检查 0 条记录，更新 0 条" type="qinfo" -->
+    <!-- message="[INFO] 09:26:04.639 Schema V5 迁移全部成功，耗时 0 ms" type="qinfo" -->
+    <!-- message="[INFO] 09:26:04.639 数据库版本已更新为: 5" type="qinfo" -->
+    <!-- message="[INFO] 09:26:04.640 Schema 迁移完成" type="qinfo" -->
+    <!-- message="[INFO] 09:26:04.640 数据库初始化完成: C:/Users/Ryan/AppData/Local/Temp/review_round2_regression_test&#x002D;QpOUSa/shutdown.db" type="qinfo" -->
+    <!-- message="Uncommitted database batch at shutdown 1 records 1" type="qwarn" -->
+    <!-- message="[INFO] 09:26:04.750 DataManager 正在关闭..." type="qinfo" -->
+    <!-- message="[INFO] 09:26:04.754 DataManager 已关闭" type="qinfo" -->
+  </testcase>
+  <testcase result="pass" name="cleanupTestCase"/>
+  <system-err>
+<![CDATA[[INFO] 09:25:50.182 当前数据库版本: 0, 目标版本: 5]]>
+<![CDATA[[INFO] 09:25:50.189 开始 Schema 迁移: 0 -> 5]]>
+<![CDATA[[INFO] 09:25:50.189 执行迁移到版本 1...]]>
+<![CDATA[[INFO] 09:25:50.189 数据库版本已更新为: 1]]>
+<![CDATA[[INFO] 09:25:50.189 执行迁移到版本 2...]]>
+<![CDATA[[INFO] 09:25:50.189 数据库版本已更新为: 2]]>
+<![CDATA[[INFO] 09:25:50.189 执行迁移到版本 3...]]>
+<![CDATA[[INFO] 09:25:50.190 数据库版本已更新为: 3]]>
+<![CDATA[[INFO] 09:25:50.190 执行迁移到版本 4...]]>
+<![CDATA[[INFO] 09:25:50.191 数据库版本已更新为: 4]]>
+<![CDATA[[INFO] 09:25:50.191 执行迁移到版本 5...]]>
+<![CDATA[[INFO] 09:25:50.191 开始执行 Schema V5 迁移：统一历史时间存储格式为标准 UTC ISO-8601...]]>
+<![CDATA[[INFO] 09:25:50.191 runtime_data 时间迁移完成: 共检查 0 条记录，更新 0 条]]>
+<![CDATA[[INFO] 09:25:50.192 system_logs 时间迁移完成: 共检查 0 条记录，更新 0 条]]>
+<![CDATA[[INFO] 09:25:50.192 Schema V5 迁移全部成功，耗时 0 ms]]>
+<![CDATA[[INFO] 09:25:50.192 数据库版本已更新为: 5]]>
+<![CDATA[[INFO] 09:25:50.193 Schema 迁移完成]]>
+<![CDATA[[INFO] 09:25:50.193 数据库初始化完成: C:/Users/Ryan/AppData/Local/Temp/review_round2_regression_test-QpOUSa/sync0.db]]>
+<![CDATA[[DEBUG] 09:25:50.195 批量记录运行数据: 9 条成功]]>
+<![CDATA[[DEBUG] 09:25:50.196 批量记录运行数据: 2 条成功]]>
+<![CDATA[[INFO] 09:25:50.197 DataManager 正在关闭...]]>
+<![CDATA[[INFO] 09:25:50.201 DataManager 已关闭]]>
+<![CDATA[[INFO] 09:25:50.218 当前数据库版本: 0, 目标版本: 5]]>
+<![CDATA[[INFO] 09:25:50.218 开始 Schema 迁移: 0 -> 5]]>
+<![CDATA[[INFO] 09:25:50.218 执行迁移到版本 1...]]>
+<![CDATA[[INFO] 09:25:50.219 数据库版本已更新为: 1]]>
+<![CDATA[[INFO] 09:25:50.219 执行迁移到版本 2...]]>
+<![CDATA[[INFO] 09:25:50.219 数据库版本已更新为: 2]]>
+<![CDATA[[INFO] 09:25:50.219 执行迁移到版本 3...]]>
+<![CDATA[[INFO] 09:25:50.219 数据库版本已更新为: 3]]>
+<![CDATA[[INFO] 09:25:50.219 执行迁移到版本 4...]]>
+<![CDATA[[INFO] 09:25:50.220 数据库版本已更新为: 4]]>
+<![CDATA[[INFO] 09:25:50.220 执行迁移到版本 5...]]>
+<![CDATA[[INFO] 09:25:50.220 开始执行 Schema V5 迁移：统一历史时间存储格式为标准 UTC ISO-8601...]]>
+<![CDATA[[INFO] 09:25:50.220 runtime_data 时间迁移完成: 共检查 0 条记录，更新 0 条]]>
+<![CDATA[[INFO] 09:25:50.220 system_logs 时间迁移完成: 共检查 0 条记录，更新 0 条]]>
+<![CDATA[[INFO] 09:25:50.220 Schema V5 迁移全部成功，耗时 0 ms]]>
+<![CDATA[[INFO] 09:25:50.220 数据库版本已更新为: 5]]>
+<![CDATA[[INFO] 09:25:50.222 Schema 迁移完成]]>
+<![CDATA[[INFO] 09:25:50.222 数据库初始化完成: C:/Users/Ryan/AppData/Local/Temp/review_round2_regression_test-QpOUSa/sync8.db]]>
+<![CDATA[[DEBUG] 09:25:50.223 批量记录运行数据: 9 条成功]]>
+<![CDATA[[DEBUG] 09:25:50.224 批量记录运行数据: 2 条成功]]>
+<![CDATA[[INFO] 09:25:50.225 DataManager 正在关闭...]]>
+<![CDATA[[INFO] 09:25:50.228 DataManager 已关闭]]>
+<![CDATA[[INFO] 09:25:50.241 当前数据库版本: 0, 目标版本: 5]]>
+<![CDATA[[INFO] 09:25:50.241 开始 Schema 迁移: 0 -> 5]]>
+<![CDATA[[INFO] 09:25:50.241 执行迁移到版本 1...]]>
+<![CDATA[[INFO] 09:25:50.242 数据库版本已更新为: 1]]>
+<![CDATA[[INFO] 09:25:50.242 执行迁移到版本 2...]]>
+<![CDATA[[INFO] 09:25:50.242 数据库版本已更新为: 2]]>
+<![CDATA[[INFO] 09:25:50.242 执行迁移到版本 3...]]>
+<![CDATA[[INFO] 09:25:50.242 数据库版本已更新为: 3]]>
+<![CDATA[[INFO] 09:25:50.242 执行迁移到版本 4...]]>
+<![CDATA[[INFO] 09:25:50.242 数据库版本已更新为: 4]]>
+<![CDATA[[INFO] 09:25:50.242 执行迁移到版本 5...]]>
+<![CDATA[[INFO] 09:25:50.242 开始执行 Schema V5 迁移：统一历史时间存储格式为标准 UTC ISO-8601...]]>
+<![CDATA[[INFO] 09:25:50.242 runtime_data 时间迁移完成: 共检查 0 条记录，更新 0 条]]>
+<![CDATA[[INFO] 09:25:50.242 system_logs 时间迁移完成: 共检查 0 条记录，更新 0 条]]>
+<![CDATA[[INFO] 09:25:50.243 Schema V5 迁移全部成功，耗时 0 ms]]>
+<![CDATA[[INFO] 09:25:50.243 数据库版本已更新为: 5]]>
+<![CDATA[[INFO] 09:25:50.244 Schema 迁移完成]]>
+<![CDATA[[INFO] 09:25:50.244 数据库初始化完成: C:/Users/Ryan/AppData/Local/Temp/review_round2_regression_test-QpOUSa/sync-7.db]]>
+<![CDATA[[DEBUG] 09:25:50.245 批量记录运行数据: 9 条成功]]>
+<![CDATA[[DEBUG] 09:25:50.246 批量记录运行数据: 2 条成功]]>
+<![CDATA[[INFO] 09:25:50.247 DataManager 正在关闭...]]>
+<![CDATA[[INFO] 09:25:50.251 DataManager 已关闭]]>
+<![CDATA[[INFO] 09:25:50.262 当前数据库版本: 0, 目标版本: 5]]>
+<![CDATA[[INFO] 09:25:50.262 开始 Schema 迁移: 0 -> 5]]>
+<![CDATA[[INFO] 09:25:50.262 执行迁移到版本 1...]]>
+<![CDATA[[INFO] 09:25:50.263 数据库版本已更新为: 1]]>
+<![CDATA[[INFO] 09:25:50.263 执行迁移到版本 2...]]>
+<![CDATA[[INFO] 09:25:50.263 数据库版本已更新为: 2]]>
+<![CDATA[[INFO] 09:25:50.263 执行迁移到版本 3...]]>
+<![CDATA[[INFO] 09:25:50.263 数据库版本已更新为: 3]]>
+<![CDATA[[INFO] 09:25:50.263 执行迁移到版本 4...]]>
+<![CDATA[[INFO] 09:25:50.264 数据库版本已更新为: 4]]>
+<![CDATA[[INFO] 09:25:50.264 执行迁移到版本 5...]]>
+<![CDATA[[INFO] 09:25:50.264 开始执行 Schema V5 迁移：统一历史时间存储格式为标准 UTC ISO-8601...]]>
+<![CDATA[[INFO] 09:25:50.264 runtime_data 时间迁移完成: 共检查 0 条记录，更新 0 条]]>
+<![CDATA[[INFO] 09:25:50.264 system_logs 时间迁移完成: 共检查 0 条记录，更新 0 条]]>
+<![CDATA[[INFO] 09:25:50.264 Schema V5 迁移全部成功，耗时 0 ms]]>
+<![CDATA[[INFO] 09:25:50.264 数据库版本已更新为: 5]]>
+<![CDATA[[INFO] 09:25:50.266 Schema 迁移完成]]>
+<![CDATA[[INFO] 09:25:50.266 数据库初始化完成: C:/Users/Ryan/AppData/Local/Temp/review_round2_regression_test-QpOUSa/async0.db]]>
+<![CDATA[[DEBUG] 09:25:50.267 批量记录运行数据: 9 条成功]]>
+<![CDATA[[DEBUG] 09:25:50.268 批量记录运行数据: 2 条成功]]>
+<![CDATA[[INFO] 09:25:50.347 DataManager 正在关闭...]]>
+<![CDATA[[INFO] 09:25:50.353 DataManager 已关闭]]>
+<![CDATA[[INFO] 09:25:50.365 当前数据库版本: 0, 目标版本: 5]]>
+<![CDATA[[INFO] 09:25:50.365 开始 Schema 迁移: 0 -> 5]]>
+<![CDATA[[INFO] 09:25:50.365 执行迁移到版本 1...]]>
+<![CDATA[[INFO] 09:25:50.366 数据库版本已更新为: 1]]>
+<![CDATA[[INFO] 09:25:50.366 执行迁移到版本 2...]]>
+<![CDATA[[INFO] 09:25:50.366 数据库版本已更新为: 2]]>
+<![CDATA[[INFO] 09:25:50.366 执行迁移到版本 3...]]>
+<![CDATA[[INFO] 09:25:50.366 数据库版本已更新为: 3]]>
+<![CDATA[[INFO] 09:25:50.366 执行迁移到版本 4...]]>
+<![CDATA[[INFO] 09:25:50.367 数据库版本已更新为: 4]]>
+<![CDATA[[INFO] 09:25:50.367 执行迁移到版本 5...]]>
+<![CDATA[[INFO] 09:25:50.367 开始执行 Schema V5 迁移：统一历史时间存储格式为标准 UTC ISO-8601...]]>
+<![CDATA[[INFO] 09:25:50.367 runtime_data 时间迁移完成: 共检查 0 条记录，更新 0 条]]>
+<![CDATA[[INFO] 09:25:50.367 system_logs 时间迁移完成: 共检查 0 条记录，更新 0 条]]>
+<![CDATA[[INFO] 09:25:50.367 Schema V5 迁移全部成功，耗时 0 ms]]>
+<![CDATA[[INFO] 09:25:50.367 数据库版本已更新为: 5]]>
+<![CDATA[[INFO] 09:25:50.368 Schema 迁移完成]]>
+<![CDATA[[INFO] 09:25:50.368 数据库初始化完成: C:/Users/Ryan/AppData/Local/Temp/review_round2_regression_test-QpOUSa/async8.db]]>
+<![CDATA[[DEBUG] 09:25:50.370 批量记录运行数据: 9 条成功]]>
+<![CDATA[[DEBUG] 09:25:50.370 批量记录运行数据: 2 条成功]]>
+<![CDATA[[INFO] 09:25:50.442 DataManager 正在关闭...]]>
+<![CDATA[[INFO] 09:25:50.446 DataManager 已关闭]]>
+<![CDATA[[INFO] 09:25:50.460 当前数据库版本: 0, 目标版本: 5]]>
+<![CDATA[[INFO] 09:25:50.460 开始 Schema 迁移: 0 -> 5]]>
+<![CDATA[[INFO] 09:25:50.460 执行迁移到版本 1...]]>
+<![CDATA[[INFO] 09:25:50.460 数据库版本已更新为: 1]]>
+<![CDATA[[INFO] 09:25:50.460 执行迁移到版本 2...]]>
+<![CDATA[[INFO] 09:25:50.460 数据库版本已更新为: 2]]>
+<![CDATA[[INFO] 09:25:50.460 执行迁移到版本 3...]]>
+<![CDATA[[INFO] 09:25:50.461 数据库版本已更新为: 3]]>
+<![CDATA[[INFO] 09:25:50.461 执行迁移到版本 4...]]>
+<![CDATA[[INFO] 09:25:50.461 数据库版本已更新为: 4]]>
+<![CDATA[[INFO] 09:25:50.461 执行迁移到版本 5...]]>
+<![CDATA[[INFO] 09:25:50.461 开始执行 Schema V5 迁移：统一历史时间存储格式为标准 UTC ISO-8601...]]>
+<![CDATA[[INFO] 09:25:50.461 runtime_data 时间迁移完成: 共检查 0 条记录，更新 0 条]]>
+<![CDATA[[INFO] 09:25:50.461 system_logs 时间迁移完成: 共检查 0 条记录，更新 0 条]]>
+<![CDATA[[INFO] 09:25:50.461 Schema V5 迁移全部成功，耗时 0 ms]]>
+<![CDATA[[INFO] 09:25:50.461 数据库版本已更新为: 5]]>
+<![CDATA[[INFO] 09:25:50.462 Schema 迁移完成]]>
+<![CDATA[[INFO] 09:25:50.463 数据库初始化完成: C:/Users/Ryan/AppData/Local/Temp/review_round2_regression_test-QpOUSa/async-7.db]]>
+<![CDATA[[DEBUG] 09:25:50.464 批量记录运行数据: 9 条成功]]>
+<![CDATA[[DEBUG] 09:25:50.465 批量记录运行数据: 2 条成功]]>
+<![CDATA[[INFO] 09:25:50.537 DataManager 正在关闭...]]>
+<![CDATA[[INFO] 09:25:50.541 DataManager 已关闭]]>
+<![CDATA[[INFO] 09:25:50.553 当前数据库版本: 0, 目标版本: 5]]>
+<![CDATA[[INFO] 09:25:50.553 开始 Schema 迁移: 0 -> 5]]>
+<![CDATA[[INFO] 09:25:50.553 执行迁移到版本 1...]]>
+<![CDATA[[INFO] 09:25:50.553 数据库版本已更新为: 1]]>
+<![CDATA[[INFO] 09:25:50.553 执行迁移到版本 2...]]>
+<![CDATA[[INFO] 09:25:50.554 数据库版本已更新为: 2]]>
+<![CDATA[[INFO] 09:25:50.554 执行迁移到版本 3...]]>
+<![CDATA[[INFO] 09:25:50.554 数据库版本已更新为: 3]]>
+<![CDATA[[INFO] 09:25:50.554 执行迁移到版本 4...]]>
+<![CDATA[[INFO] 09:25:50.554 数据库版本已更新为: 4]]>
+<![CDATA[[INFO] 09:25:50.554 执行迁移到版本 5...]]>
+<![CDATA[[INFO] 09:25:50.554 开始执行 Schema V5 迁移：统一历史时间存储格式为标准 UTC ISO-8601...]]>
+<![CDATA[[INFO] 09:25:50.554 runtime_data 时间迁移完成: 共检查 0 条记录，更新 0 条]]>
+<![CDATA[[INFO] 09:25:50.554 system_logs 时间迁移完成: 共检查 0 条记录，更新 0 条]]>
+<![CDATA[[INFO] 09:25:50.554 Schema V5 迁移全部成功，耗时 0 ms]]>
+<![CDATA[[INFO] 09:25:50.554 数据库版本已更新为: 5]]>
+<![CDATA[[INFO] 09:25:50.556 Schema 迁移完成]]>
+<![CDATA[[INFO] 09:25:50.556 数据库初始化完成: C:/Users/Ryan/AppData/Local/Temp/review_round2_regression_test-QpOUSa/zones.db]]>
+<![CDATA[[DEBUG] 09:25:50.557 批量记录运行数据: 1 条成功]]>
+<![CDATA[[DEBUG] 09:25:50.558 批量记录运行数据: 1 条成功]]>
+<![CDATA[[DEBUG] 09:25:50.559 批量记录运行数据: 1 条成功]]>
+<![CDATA[[DEBUG] 09:25:50.560 批量记录运行数据: 1 条成功]]>
+<![CDATA[[INFO] 09:25:50.560 DataManager 正在关闭...]]>
+<![CDATA[[INFO] 09:25:50.564 DataManager 已关闭]]>
+<![CDATA[[INFO] 09:25:50.576 当前数据库版本: 0, 目标版本: 5]]>
+<![CDATA[[INFO] 09:25:50.576 开始 Schema 迁移: 0 -> 5]]>
+<![CDATA[[INFO] 09:25:50.576 执行迁移到版本 1...]]>
+<![CDATA[[INFO] 09:25:50.577 数据库版本已更新为: 1]]>
+<![CDATA[[INFO] 09:25:50.577 执行迁移到版本 2...]]>
+<![CDATA[[INFO] 09:25:50.578 数据库版本已更新为: 2]]>
+<![CDATA[[INFO] 09:25:50.578 执行迁移到版本 3...]]>
+<![CDATA[[INFO] 09:25:50.578 数据库版本已更新为: 3]]>
+<![CDATA[[INFO] 09:25:50.578 执行迁移到版本 4...]]>
+<![CDATA[[INFO] 09:25:50.578 数据库版本已更新为: 4]]>
+<![CDATA[[INFO] 09:25:50.578 执行迁移到版本 5...]]>
+<![CDATA[[INFO] 09:25:50.578 开始执行 Schema V5 迁移：统一历史时间存储格式为标准 UTC ISO-8601...]]>
+<![CDATA[[INFO] 09:25:50.578 runtime_data 时间迁移完成: 共检查 0 条记录，更新 0 条]]>
+<![CDATA[[INFO] 09:25:50.578 system_logs 时间迁移完成: 共检查 0 条记录，更新 0 条]]>
+<![CDATA[[INFO] 09:25:50.578 Schema V5 迁移全部成功，耗时 0 ms]]>
+<![CDATA[[INFO] 09:25:50.578 数据库版本已更新为: 5]]>
+<![CDATA[[INFO] 09:25:50.580 Schema 迁移完成]]>
+<![CDATA[[INFO] 09:25:50.580 数据库初始化完成: C:/Users/Ryan/AppData/Local/Temp/review_round2_regression_test-QpOUSa/ambiguous.db]]>
+<![CDATA[[DEBUG] 09:25:50.581 批量记录运行数据: 1 条成功]]>
+<![CDATA[[INFO] 09:25:50.581 DataManager 正在关闭...]]>
+<![CDATA[[INFO] 09:25:50.583 DataManager 已关闭]]>
+<![CDATA[[INFO] 09:25:50.588 当前数据库版本: 5, 目标版本: 5]]>
+<![CDATA[[INFO] 09:25:50.588 数据库初始化完成: C:/Users/Ryan/AppData/Local/Temp/review_round2_regression_test-QpOUSa/ambiguous.db]]>
+<![CDATA[[INFO] 09:25:50.588 DataManager 正在关闭...]]>
+<![CDATA[[INFO] 09:25:50.590 DataManager 已关闭]]>
+<![CDATA[[INFO] 09:25:50.610 当前数据库版本: 4, 目标版本: 5]]>
+<![CDATA[[INFO] 09:25:50.610 开始 Schema 迁移: 4 -> 5]]>
+<![CDATA[[INFO] 09:25:50.610 执行迁移到版本 5...]]>
+<![CDATA[[INFO] 09:25:50.610 开始执行 Schema V5 迁移：统一历史时间存储格式为标准 UTC ISO-8601...]]>
+<![CDATA[[ERROR] 09:25:50.610 Schema V5 迁移失败: runtime_data 表记录 (id=1, timestamp='2026-09-08T12:00:00.000') 校验失败: Ambiguous legacy timestamp timezone: 2026-09-08T12:00:00.000; migration requires an explicit source timezone]]>
+<![CDATA[[ERROR] 09:25:50.610 Schema 迁移失败，已回滚]]>
+<![CDATA[[ERROR] 09:25:50.610 Ambiguous legacy timestamp timezone: 2026-09-08T12:00:00.000; migration requires an explicit source timezone]]>
+<![CDATA[[INFO] 09:25:50.625 当前数据库版本: 0, 目标版本: 5]]>
+<![CDATA[[INFO] 09:25:50.625 开始 Schema 迁移: 0 -> 5]]>
+<![CDATA[[INFO] 09:25:50.625 执行迁移到版本 1...]]>
+<![CDATA[[INFO] 09:25:50.626 数据库版本已更新为: 1]]>
+<![CDATA[[INFO] 09:25:50.626 执行迁移到版本 2...]]>
+<![CDATA[[INFO] 09:25:50.626 数据库版本已更新为: 2]]>
+<![CDATA[[INFO] 09:25:50.626 执行迁移到版本 3...]]>
+<![CDATA[[INFO] 09:25:50.626 数据库版本已更新为: 3]]>
+<![CDATA[[INFO] 09:25:50.626 执行迁移到版本 4...]]>
+<![CDATA[[INFO] 09:25:50.627 数据库版本已更新为: 4]]>
+<![CDATA[[INFO] 09:25:50.627 执行迁移到版本 5...]]>
+<![CDATA[[INFO] 09:25:50.627 开始执行 Schema V5 迁移：统一历史时间存储格式为标准 UTC ISO-8601...]]>
+<![CDATA[[INFO] 09:25:50.627 runtime_data 时间迁移完成: 共检查 0 条记录，更新 0 条]]>
+<![CDATA[[INFO] 09:25:50.627 system_logs 时间迁移完成: 共检查 0 条记录，更新 0 条]]>
+<![CDATA[[INFO] 09:25:50.627 Schema V5 迁移全部成功，耗时 0 ms]]>
+<![CDATA[[INFO] 09:25:50.627 数据库版本已更新为: 5]]>
+<![CDATA[[INFO] 09:25:50.628 Schema 迁移完成]]>
+<![CDATA[[INFO] 09:25:50.628 数据库初始化完成: C:/Users/Ryan/AppData/Local/Temp/review_round2_regression_test-QpOUSa/snapshot.db]]>
+<![CDATA[[DEBUG] 09:25:50.629 批量记录运行数据: 1 条成功]]>
+<![CDATA[[DEBUG] 09:25:50.631 批量记录运行数据: 1 条成功]]>
+<![CDATA[[DEBUG] 09:25:50.631 批量记录运行数据: 1 条成功]]>
+<![CDATA[[DEBUG] 09:25:50.632 批量记录运行数据: 1 条成功]]>
+<![CDATA[[DEBUG] 09:25:50.633 批量记录运行数据: 1 条成功]]>
+<![CDATA[[DEBUG] 09:25:50.634 批量记录运行数据: 1 条成功]]>
+<![CDATA[[DEBUG] 09:25:50.635 批量记录运行数据: 1 条成功]]>
+<![CDATA[[DEBUG] 09:25:50.637 批量记录运行数据: 1 条成功]]>
+<![CDATA[[DEBUG] 09:25:50.638 批量记录运行数据: 1 条成功]]>
+<![CDATA[[DEBUG] 09:25:50.638 批量记录运行数据: 1 条成功]]>
+<![CDATA[[DEBUG] 09:25:50.639 批量记录运行数据: 1 条成功]]>
+<![CDATA[[DEBUG] 09:25:50.640 批量记录运行数据: 1 条成功]]>
+<![CDATA[[DEBUG] 09:25:50.641 批量记录运行数据: 1 条成功]]>
+<![CDATA[[DEBUG] 09:25:50.642 批量记录运行数据: 1 条成功]]>
+<![CDATA[[DEBUG] 09:25:50.643 批量记录运行数据: 1 条成功]]>
+<![CDATA[[DEBUG] 09:25:50.665 批量记录运行数据: 1 条成功]]>
+<![CDATA[[INFO] 09:25:50.671 DataManager 正在关闭...]]>
+<![CDATA[[INFO] 09:25:50.680 DataManager 已关闭]]>
+<![CDATA[[INFO] 09:25:50.692 当前数据库版本: 0, 目标版本: 5]]>
+<![CDATA[[INFO] 09:25:50.692 开始 Schema 迁移: 0 -> 5]]>
+<![CDATA[[INFO] 09:25:50.692 执行迁移到版本 1...]]>
+<![CDATA[[INFO] 09:25:50.692 数据库版本已更新为: 1]]>
+<![CDATA[[INFO] 09:25:50.692 执行迁移到版本 2...]]>
+<![CDATA[[INFO] 09:25:50.692 数据库版本已更新为: 2]]>
+<![CDATA[[INFO] 09:25:50.692 执行迁移到版本 3...]]>
+<![CDATA[[INFO] 09:25:50.693 数据库版本已更新为: 3]]>
+<![CDATA[[INFO] 09:25:50.693 执行迁移到版本 4...]]>
+<![CDATA[[INFO] 09:25:50.693 数据库版本已更新为: 4]]>
+<![CDATA[[INFO] 09:25:50.693 执行迁移到版本 5...]]>
+<![CDATA[[INFO] 09:25:50.693 开始执行 Schema V5 迁移：统一历史时间存储格式为标准 UTC ISO-8601...]]>
+<![CDATA[[INFO] 09:25:50.693 runtime_data 时间迁移完成: 共检查 0 条记录，更新 0 条]]>
+<![CDATA[[INFO] 09:25:50.693 system_logs 时间迁移完成: 共检查 0 条记录，更新 0 条]]>
+<![CDATA[[INFO] 09:25:50.693 Schema V5 迁移全部成功，耗时 0 ms]]>
+<![CDATA[[INFO] 09:25:50.693 数据库版本已更新为: 5]]>
+<![CDATA[[INFO] 09:25:50.694 Schema 迁移完成]]>
+<![CDATA[[INFO] 09:25:50.694 数据库初始化完成: C:/Users/Ryan/AppData/Local/Temp/review_round2_regression_test-QpOUSa/retry.db]]>
+<![CDATA[[INFO] 09:25:50.694 DataManager 正在关闭...]]>
+<![CDATA[[INFO] 09:25:50.698 DataManager 已关闭]]>
+<![CDATA[Database batch permanently failed 2 records 1 "injected Unable to fetch row"]]>
+<![CDATA[[INFO] 09:25:51.217 当前数据库版本: 0, 目标版本: 5]]>
+<![CDATA[[INFO] 09:25:51.217 开始 Schema 迁移: 0 -> 5]]>
+<![CDATA[[INFO] 09:25:51.217 执行迁移到版本 1...]]>
+<![CDATA[[INFO] 09:25:51.218 数据库版本已更新为: 1]]>
+<![CDATA[[INFO] 09:25:51.218 执行迁移到版本 2...]]>
+<![CDATA[[INFO] 09:25:51.218 数据库版本已更新为: 2]]>
+<![CDATA[[INFO] 09:25:51.218 执行迁移到版本 3...]]>
+<![CDATA[[INFO] 09:25:51.218 数据库版本已更新为: 3]]>
+<![CDATA[[INFO] 09:25:51.218 执行迁移到版本 4...]]>
+<![CDATA[[INFO] 09:25:51.219 数据库版本已更新为: 4]]>
+<![CDATA[[INFO] 09:25:51.219 执行迁移到版本 5...]]>
+<![CDATA[[INFO] 09:25:51.219 开始执行 Schema V5 迁移：统一历史时间存储格式为标准 UTC ISO-8601...]]>
+<![CDATA[[INFO] 09:25:51.219 runtime_data 时间迁移完成: 共检查 0 条记录，更新 0 条]]>
+<![CDATA[[INFO] 09:25:51.219 system_logs 时间迁移完成: 共检查 0 条记录，更新 0 条]]>
+<![CDATA[[INFO] 09:25:51.219 Schema V5 迁移全部成功，耗时 0 ms]]>
+<![CDATA[[INFO] 09:25:51.219 数据库版本已更新为: 5]]>
+<![CDATA[[INFO] 09:25:51.221 Schema 迁移完成]]>
+<![CDATA[[INFO] 09:25:51.221 数据库初始化完成: C:/Users/Ryan/AppData/Local/Temp/review_round2_regression_test-QpOUSa/lock.db]]>
+<![CDATA[[INFO] 09:25:51.221 DataManager 正在关闭...]]>
+<![CDATA[[INFO] 09:25:51.225 DataManager 已关闭]]>
+<![CDATA[Database batch permanently failed 2 records 1 "attempt to write a readonly database Unable to fetch row"]]>
+<![CDATA[[INFO] 09:25:51.820 当前数据库版本: 0, 目标版本: 5]]>
+<![CDATA[[INFO] 09:25:51.820 开始 Schema 迁移: 0 -> 5]]>
+<![CDATA[[INFO] 09:25:51.820 执行迁移到版本 1...]]>
+<![CDATA[[INFO] 09:25:51.820 数据库版本已更新为: 1]]>
+<![CDATA[[INFO] 09:25:51.820 执行迁移到版本 2...]]>
+<![CDATA[[INFO] 09:25:51.820 数据库版本已更新为: 2]]>
+<![CDATA[[INFO] 09:25:51.820 执行迁移到版本 3...]]>
+<![CDATA[[INFO] 09:25:51.821 数据库版本已更新为: 3]]>
+<![CDATA[[INFO] 09:25:51.821 执行迁移到版本 4...]]>
+<![CDATA[[INFO] 09:25:51.822 数据库版本已更新为: 4]]>
+<![CDATA[[INFO] 09:25:51.822 执行迁移到版本 5...]]>
+<![CDATA[[INFO] 09:25:51.822 开始执行 Schema V5 迁移：统一历史时间存储格式为标准 UTC ISO-8601...]]>
+<![CDATA[[INFO] 09:25:51.822 runtime_data 时间迁移完成: 共检查 0 条记录，更新 0 条]]>
+<![CDATA[[INFO] 09:25:51.822 system_logs 时间迁移完成: 共检查 0 条记录，更新 0 条]]>
+<![CDATA[[INFO] 09:25:51.822 Schema V5 迁移全部成功，耗时 0 ms]]>
+<![CDATA[[INFO] 09:25:51.822 数据库版本已更新为: 5]]>
+<![CDATA[[INFO] 09:25:51.823 Schema 迁移完成]]>
+<![CDATA[[INFO] 09:25:51.823 数据库初始化完成: C:/Users/Ryan/AppData/Local/Temp/review_round2_regression_test-QpOUSa/logger.db]]>
+<![CDATA[[INFO] 09:25:52.359 DataManager 正在关闭...]]>
+<![CDATA[[INFO] 09:25:52.370 DataManager 已关闭]]>
+<![CDATA[[INFO] 09:25:52.382 当前数据库版本: 0, 目标版本: 5]]>
+<![CDATA[[INFO] 09:25:52.382 开始 Schema 迁移: 0 -> 5]]>
+<![CDATA[[INFO] 09:25:52.382 执行迁移到版本 1...]]>
+<![CDATA[[INFO] 09:25:52.383 数据库版本已更新为: 1]]>
+<![CDATA[[INFO] 09:25:52.383 执行迁移到版本 2...]]>
+<![CDATA[[INFO] 09:25:52.383 数据库版本已更新为: 2]]>
+<![CDATA[[INFO] 09:25:52.383 执行迁移到版本 3...]]>
+<![CDATA[[INFO] 09:25:52.383 数据库版本已更新为: 3]]>
+<![CDATA[[INFO] 09:25:52.383 执行迁移到版本 4...]]>
+<![CDATA[[INFO] 09:25:52.383 数据库版本已更新为: 4]]>
+<![CDATA[[INFO] 09:25:52.383 执行迁移到版本 5...]]>
+<![CDATA[[INFO] 09:25:52.383 开始执行 Schema V5 迁移：统一历史时间存储格式为标准 UTC ISO-8601...]]>
+<![CDATA[[INFO] 09:25:52.384 runtime_data 时间迁移完成: 共检查 0 条记录，更新 0 条]]>
+<![CDATA[[INFO] 09:25:52.384 system_logs 时间迁移完成: 共检查 0 条记录，更新 0 条]]>
+<![CDATA[[INFO] 09:25:52.384 Schema V5 迁移全部成功，耗时 0 ms]]>
+<![CDATA[[INFO] 09:25:52.384 数据库版本已更新为: 5]]>
+<![CDATA[[INFO] 09:25:52.385 Schema 迁移完成]]>
+<![CDATA[[INFO] 09:25:52.385 数据库初始化完成: C:/Users/Ryan/AppData/Local/Temp/review_round2_regression_test-QpOUSa/manager.db]]>
+<![CDATA[[MonitorManager] 注册通道: "p"]]>
+<![CDATA[Production history 500ms delay heartbeat max ms 19 ticks 55]]>
+<![CDATA[[INFO] 09:25:53.527 DataManager 正在关闭...]]>
+<![CDATA[[INFO] 09:25:53.536 DataManager 已关闭]]>
+<![CDATA[[INFO] 09:25:53.548 当前数据库版本: 0, 目标版本: 5]]>
+<![CDATA[[INFO] 09:25:53.548 开始 Schema 迁移: 0 -> 5]]>
+<![CDATA[[INFO] 09:25:53.548 执行迁移到版本 1...]]>
+<![CDATA[[INFO] 09:25:53.549 数据库版本已更新为: 1]]>
+<![CDATA[[INFO] 09:25:53.549 执行迁移到版本 2...]]>
+<![CDATA[[INFO] 09:25:53.549 数据库版本已更新为: 2]]>
+<![CDATA[[INFO] 09:25:53.549 执行迁移到版本 3...]]>
+<![CDATA[[INFO] 09:25:53.549 数据库版本已更新为: 3]]>
+<![CDATA[[INFO] 09:25:53.549 执行迁移到版本 4...]]>
+<![CDATA[[INFO] 09:25:53.549 数据库版本已更新为: 4]]>
+<![CDATA[[INFO] 09:25:53.550 执行迁移到版本 5...]]>
+<![CDATA[[INFO] 09:25:53.550 开始执行 Schema V5 迁移：统一历史时间存储格式为标准 UTC ISO-8601...]]>
+<![CDATA[[INFO] 09:25:53.550 runtime_data 时间迁移完成: 共检查 0 条记录，更新 0 条]]>
+<![CDATA[[INFO] 09:25:53.550 system_logs 时间迁移完成: 共检查 0 条记录，更新 0 条]]>
+<![CDATA[[INFO] 09:25:53.550 Schema V5 迁移全部成功，耗时 0 ms]]>
+<![CDATA[[INFO] 09:25:53.550 数据库版本已更新为: 5]]>
+<![CDATA[[INFO] 09:25:53.551 Schema 迁移完成]]>
+<![CDATA[[INFO] 09:25:53.551 数据库初始化完成: C:/Users/Ryan/AppData/Local/Temp/review_round2_regression_test-QpOUSa/export.db]]>
+<![CDATA[[MonitorManager] 注册通道: "export.point"]]>
+<![CDATA[[MonitorExportHelper] 导出助手已创建]]>
+<![CDATA[[MonitorExportHelper] 导出助手已销毁]]>
+<![CDATA[[INFO] 09:25:54.136 DataManager 正在关闭...]]>
+<![CDATA[[INFO] 09:25:54.143 DataManager 已关闭]]>
+<![CDATA[[INFO] 09:25:54.156 当前数据库版本: 0, 目标版本: 5]]>
+<![CDATA[[INFO] 09:25:54.156 开始 Schema 迁移: 0 -> 5]]>
+<![CDATA[[INFO] 09:25:54.156 执行迁移到版本 1...]]>
+<![CDATA[[INFO] 09:25:54.157 数据库版本已更新为: 1]]>
+<![CDATA[[INFO] 09:25:54.157 执行迁移到版本 2...]]>
+<![CDATA[[INFO] 09:25:54.157 数据库版本已更新为: 2]]>
+<![CDATA[[INFO] 09:25:54.157 执行迁移到版本 3...]]>
+<![CDATA[[INFO] 09:25:54.157 数据库版本已更新为: 3]]>
+<![CDATA[[INFO] 09:25:54.157 执行迁移到版本 4...]]>
+<![CDATA[[INFO] 09:25:54.158 数据库版本已更新为: 4]]>
+<![CDATA[[INFO] 09:25:54.158 执行迁移到版本 5...]]>
+<![CDATA[[INFO] 09:25:54.158 开始执行 Schema V5 迁移：统一历史时间存储格式为标准 UTC ISO-8601...]]>
+<![CDATA[[INFO] 09:25:54.158 runtime_data 时间迁移完成: 共检查 0 条记录，更新 0 条]]>
+<![CDATA[[INFO] 09:25:54.158 system_logs 时间迁移完成: 共检查 0 条记录，更新 0 条]]>
+<![CDATA[[INFO] 09:25:54.158 Schema V5 迁移全部成功，耗时 0 ms]]>
+<![CDATA[[INFO] 09:25:54.158 数据库版本已更新为: 5]]>
+<![CDATA[[INFO] 09:25:54.160 Schema 迁移完成]]>
+<![CDATA[[INFO] 09:25:54.160 数据库初始化完成: C:/Users/Ryan/AppData/Local/Temp/review_round2_regression_test-QpOUSa/million.db]]>
+<![CDATA[[INFO] 09:25:54.160 DataManager 正在关闭...]]>
+<![CDATA[[INFO] 09:25:54.163 DataManager 已关闭]]>
+<![CDATA[Million-row fixture setup ms 8276]]>
+<![CDATA[Million-row cleanup ms 82 batches 5 heartbeat max ms 11 plan "SEARCH TABLE runtime_data USING COVERING INDEX idx_runtime_timestamp (timestamp<?)"]]>
+<![CDATA[[INFO] 09:26:02.651 当前数据库版本: 0, 目标版本: 5]]>
+<![CDATA[[INFO] 09:26:02.651 开始 Schema 迁移: 0 -> 5]]>
+<![CDATA[[INFO] 09:26:02.651 执行迁移到版本 1...]]>
+<![CDATA[[INFO] 09:26:02.652 数据库版本已更新为: 1]]>
+<![CDATA[[INFO] 09:26:02.652 执行迁移到版本 2...]]>
+<![CDATA[[INFO] 09:26:02.652 数据库版本已更新为: 2]]>
+<![CDATA[[INFO] 09:26:02.652 执行迁移到版本 3...]]>
+<![CDATA[[INFO] 09:26:02.653 数据库版本已更新为: 3]]>
+<![CDATA[[INFO] 09:26:02.653 执行迁移到版本 4...]]>
+<![CDATA[[INFO] 09:26:02.653 数据库版本已更新为: 4]]>
+<![CDATA[[INFO] 09:26:02.653 执行迁移到版本 5...]]>
+<![CDATA[[INFO] 09:26:02.653 开始执行 Schema V5 迁移：统一历史时间存储格式为标准 UTC ISO-8601...]]>
+<![CDATA[[INFO] 09:26:02.653 runtime_data 时间迁移完成: 共检查 0 条记录，更新 0 条]]>
+<![CDATA[[INFO] 09:26:02.653 system_logs 时间迁移完成: 共检查 0 条记录，更新 0 条]]>
+<![CDATA[[INFO] 09:26:02.653 Schema V5 迁移全部成功，耗时 0 ms]]>
+<![CDATA[[INFO] 09:26:02.653 数据库版本已更新为: 5]]>
+<![CDATA[[INFO] 09:26:02.654 Schema 迁移完成]]>
+<![CDATA[[INFO] 09:26:02.654 数据库初始化完成: C:/Users/Ryan/AppData/Local/Temp/review_round2_regression_test-QpOUSa/slow-export-0-0.db]]>
+<![CDATA[[MonitorExportHelper] 导出助手已创建]]>
+<![CDATA[[MonitorExportHelper] 导出助手已销毁]]>
+<![CDATA[[INFO] 09:26:03.466 DataManager 正在关闭...]]>
+<![CDATA[[INFO] 09:26:03.474 DataManager 已关闭]]>
+<![CDATA[[INFO] 09:26:03.486 当前数据库版本: 0, 目标版本: 5]]>
+<![CDATA[[INFO] 09:26:03.486 开始 Schema 迁移: 0 -> 5]]>
+<![CDATA[[INFO] 09:26:03.486 执行迁移到版本 1...]]>
+<![CDATA[[INFO] 09:26:03.487 数据库版本已更新为: 1]]>
+<![CDATA[[INFO] 09:26:03.487 执行迁移到版本 2...]]>
+<![CDATA[[INFO] 09:26:03.487 数据库版本已更新为: 2]]>
+<![CDATA[[INFO] 09:26:03.487 执行迁移到版本 3...]]>
+<![CDATA[[INFO] 09:26:03.487 数据库版本已更新为: 3]]>
+<![CDATA[[INFO] 09:26:03.487 执行迁移到版本 4...]]>
+<![CDATA[[INFO] 09:26:03.488 数据库版本已更新为: 4]]>
+<![CDATA[[INFO] 09:26:03.488 执行迁移到版本 5...]]>
+<![CDATA[[INFO] 09:26:03.488 开始执行 Schema V5 迁移：统一历史时间存储格式为标准 UTC ISO-8601...]]>
+<![CDATA[[INFO] 09:26:03.488 runtime_data 时间迁移完成: 共检查 0 条记录，更新 0 条]]>
+<![CDATA[[INFO] 09:26:03.488 system_logs 时间迁移完成: 共检查 0 条记录，更新 0 条]]>
+<![CDATA[[INFO] 09:26:03.488 Schema V5 迁移全部成功，耗时 0 ms]]>
+<![CDATA[[INFO] 09:26:03.488 数据库版本已更新为: 5]]>
+<![CDATA[[INFO] 09:26:03.490 Schema 迁移完成]]>
+<![CDATA[[INFO] 09:26:03.490 数据库初始化完成: C:/Users/Ryan/AppData/Local/Temp/review_round2_regression_test-QpOUSa/slow-export-1-0.db]]>
+<![CDATA[[MonitorExportHelper] 导出助手已创建]]>
+<![CDATA[[MonitorExportHelper] 导出助手已销毁]]>
+<![CDATA[[INFO] 09:26:03.835 DataManager 正在关闭...]]>
+<![CDATA[[INFO] 09:26:03.850 DataManager 已关闭]]>
+<![CDATA[[INFO] 09:26:03.862 当前数据库版本: 0, 目标版本: 5]]>
+<![CDATA[[INFO] 09:26:03.862 开始 Schema 迁移: 0 -> 5]]>
+<![CDATA[[INFO] 09:26:03.862 执行迁移到版本 1...]]>
+<![CDATA[[INFO] 09:26:03.863 数据库版本已更新为: 1]]>
+<![CDATA[[INFO] 09:26:03.863 执行迁移到版本 2...]]>
+<![CDATA[[INFO] 09:26:03.863 数据库版本已更新为: 2]]>
+<![CDATA[[INFO] 09:26:03.863 执行迁移到版本 3...]]>
+<![CDATA[[INFO] 09:26:03.863 数据库版本已更新为: 3]]>
+<![CDATA[[INFO] 09:26:03.863 执行迁移到版本 4...]]>
+<![CDATA[[INFO] 09:26:03.864 数据库版本已更新为: 4]]>
+<![CDATA[[INFO] 09:26:03.864 执行迁移到版本 5...]]>
+<![CDATA[[INFO] 09:26:03.864 开始执行 Schema V5 迁移：统一历史时间存储格式为标准 UTC ISO-8601...]]>
+<![CDATA[[INFO] 09:26:03.864 runtime_data 时间迁移完成: 共检查 0 条记录，更新 0 条]]>
+<![CDATA[[INFO] 09:26:03.864 system_logs 时间迁移完成: 共检查 0 条记录，更新 0 条]]>
+<![CDATA[[INFO] 09:26:03.864 Schema V5 迁移全部成功，耗时 0 ms]]>
+<![CDATA[[INFO] 09:26:03.864 数据库版本已更新为: 5]]>
+<![CDATA[[INFO] 09:26:03.865 Schema 迁移完成]]>
+<![CDATA[[INFO] 09:26:03.865 数据库初始化完成: C:/Users/Ryan/AppData/Local/Temp/review_round2_regression_test-QpOUSa/slow-export-0-1.db]]>
+<![CDATA[[MonitorExportHelper] 导出助手已创建]]>
+<![CDATA[[MonitorExportHelper] 导出助手已销毁]]>
+<![CDATA[[INFO] 09:26:04.618 DataManager 正在关闭...]]>
+<![CDATA[[INFO] 09:26:04.623 DataManager 已关闭]]>
+<![CDATA[[INFO] 09:26:04.637 当前数据库版本: 0, 目标版本: 5]]>
+<![CDATA[[INFO] 09:26:04.637 开始 Schema 迁移: 0 -> 5]]>
+<![CDATA[[INFO] 09:26:04.637 执行迁移到版本 1...]]>
+<![CDATA[[INFO] 09:26:04.637 数据库版本已更新为: 1]]>
+<![CDATA[[INFO] 09:26:04.637 执行迁移到版本 2...]]>
+<![CDATA[[INFO] 09:26:04.638 数据库版本已更新为: 2]]>
+<![CDATA[[INFO] 09:26:04.638 执行迁移到版本 3...]]>
+<![CDATA[[INFO] 09:26:04.638 数据库版本已更新为: 3]]>
+<![CDATA[[INFO] 09:26:04.638 执行迁移到版本 4...]]>
+<![CDATA[[INFO] 09:26:04.639 数据库版本已更新为: 4]]>
+<![CDATA[[INFO] 09:26:04.639 执行迁移到版本 5...]]>
+<![CDATA[[INFO] 09:26:04.639 开始执行 Schema V5 迁移：统一历史时间存储格式为标准 UTC ISO-8601...]]>
+<![CDATA[[INFO] 09:26:04.639 runtime_data 时间迁移完成: 共检查 0 条记录，更新 0 条]]>
+<![CDATA[[INFO] 09:26:04.639 system_logs 时间迁移完成: 共检查 0 条记录，更新 0 条]]>
+<![CDATA[[INFO] 09:26:04.639 Schema V5 迁移全部成功，耗时 0 ms]]>
+<![CDATA[[INFO] 09:26:04.639 数据库版本已更新为: 5]]>
+<![CDATA[[INFO] 09:26:04.640 Schema 迁移完成]]>
+<![CDATA[[INFO] 09:26:04.640 数据库初始化完成: C:/Users/Ryan/AppData/Local/Temp/review_round2_regression_test-QpOUSa/shutdown.db]]>
+<![CDATA[Uncommitted database batch at shutdown 1 records 1]]>
+<![CDATA[[INFO] 09:26:04.750 DataManager 正在关闭...]]>
+<![CDATA[[INFO] 09:26:04.754 DataManager 已关闭]]>
+  </system-err>
+</testsuite>

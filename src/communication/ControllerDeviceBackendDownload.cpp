@@ -4,6 +4,7 @@
 #include "ControllerDeviceBackend.h"
 #include "../common/CompileArtifactPolicy.h"
 #include "ModbusLimits.h"
+#include "ProtocolUtils.h"
 #include "common/ArtifactSnapshot.h"
 
 #include "ControllerDebugProtocol.h"
@@ -50,33 +51,8 @@ QVector<quint16> variantToRegisters(const QVariant& value)
     return registers;
 }
 
-QVector<quint16> bytesToRegisters(const QByteArray& payload, bool littleEndian = false)
-{
-    QVector<quint16> words;
-    words.reserve((payload.size() + 1) / 2);
-    for (int i = 0; i < payload.size(); i += 2) {
-        const quint8 first = static_cast<quint8>(payload.at(i));
-        const quint8 second = (i + 1 < payload.size()) ? static_cast<quint8>(payload.at(i + 1)) : 0;
-        const quint8 hi = littleEndian ? second : first;
-        const quint8 lo = littleEndian ? first : second;
-        words.append(static_cast<quint16>((hi << 8) | lo));
-    }
-    return words;
-}
-
-quint16 calcCrc16Modbus(const QByteArray& bytes)
-{
-    quint16 crc = 0xFFFF;
-    for (char value : bytes) {
-        crc ^= static_cast<quint8>(value);
-        for (int i = 0; i < 8; ++i) {
-            crc = (crc & 0x0001)
-                    ? static_cast<quint16>((crc >> 1) ^ 0xA001)
-                    : static_cast<quint16>(crc >> 1);
-        }
-    }
-    return crc;
-}
+using Communication::bytesToRegisters;
+using Communication::modbusCrc16;
 
 QString profilePathFromOptions(const QVariantMap& options, const ProjectRuntimeConfig& config)
 {
@@ -1076,7 +1052,7 @@ bool ControllerDeviceBackend::executeDownloadStep(const DownloadProfile& profile
                                     static_cast<quint16>(chunkBytes.size()),
                                     QStringLiteral("包长度"))
                     || !writeHeader(packetCrcAddress,
-                                    calcCrc16Modbus(chunkBytes),
+                                    modbusCrc16(chunkBytes),
                                     QStringLiteral("包 CRC"))
                     || !writeHeader(packetOffsetAddress,
                                     static_cast<quint16>(offsetBytes),

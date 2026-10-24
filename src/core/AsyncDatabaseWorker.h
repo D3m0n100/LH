@@ -117,9 +117,11 @@ public:
                                            qint64 maxRecordId = -1);
 
     /// 获取通道最新记录（按降序排列）
+    [[deprecated("Worker-thread-only compatibility API; use structured queryLatestHistoryPage")]]
     QList<RuntimeRecord> getLatestRecords(const QString& channelName, int count);
 
     /// 查询指定时间段全部记录
+    [[deprecated("Worker-thread-only compatibility API; use structured queryHistoryPage")]]
     QList<RuntimeRecord> queryHistory(const QString& channelName,
                                       const QDateTime& start,
                                       const QDateTime& end);
@@ -157,6 +159,8 @@ private:
     void scheduleHistoryTask(QObject* context, std::function<void()> task, std::shared_ptr<std::atomic_bool> cancelled, quint64 barrier);
 protected:
     virtual bool openDatabaseInThread();
+    // Deterministic scheduling seam for the shutdown/admission regression probe.
+    virtual void beforeBatchAdmissionForTest() {}
 private:
     void closeDatabaseInThread();
     bool executeBatchInsert(const QList<QVariantMap>& records, QString& errorText);
@@ -167,6 +171,7 @@ private:
     QMutex m_startMutex;
     QWaitCondition m_startCondition;
     bool m_startComplete = false;
+    QString m_startupError;
     bool m_processing = false;
     bool m_shutdownQueued = false;
     QThread* m_ownerThread = nullptr;
@@ -180,6 +185,7 @@ private:
     QThread* m_workerThread = nullptr;
 
     mutable QMutex m_queueMutex;
+    bool m_admissionClosed = true; // guarded by m_queueMutex
     QList<BatchItem> m_pendingBatches;
     int m_totalPendingRecords = 0;
     int m_maxQueueRecords = DEFAULT_MAX_QUEUE_RECORDS;

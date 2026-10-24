@@ -77,6 +77,9 @@
 #include <QTextStream>
 #include <QFile>
 #include <QSaveFile>
+#include <QJsonDocument>
+#include <QJsonParseError>
+#include <QSignalBlocker>
 #include <QFileInfo>
 #include <QDir>
 #include <QSet>
@@ -545,8 +548,18 @@ void MainWindow::connectControllerSignals()
             m_actResumeController->setEnabled(m_projectRunning && paused && !m_sessionController->isDebugCommandPending());
         }
         if (m_actStepController) {
-            m_actStepController->setEnabled(m_projectRunning && paused && !m_sessionController->isDebugCommandPending());
+            m_actStepController->setEnabled(m_projectRunning && paused && !m_sessionController->isDebugCommandPending()
+                                                   && !m_sessionController->isContinuousStepActive());
         }
+        if (auto* action = findChild<QAction*>("actContinuousStep")) {
+            const bool active = m_sessionController->isContinuousStepActive();
+            QSignalBlocker blocker(action);
+            action->setChecked(active);
+            action->setEnabled(active || (m_projectRunning && paused && !m_sessionController->isDebugCommandPending()));
+        }
+        if (auto* action = findChild<QAction*>("actControllerBreakpoints"))
+            action->setEnabled(m_projectRunning && !m_sessionController->isDebugCommandPending()
+                               && !m_sessionController->isContinuousStepActive());
         updateStatusBar(statusText);
         updateDeviceWorkspaceInfo();
         if (m_monitorWidget) {
@@ -565,6 +578,8 @@ void MainWindow::connectControllerSignals()
                 refreshRuntimeStatus();
             });
     connect(m_sessionController, &RuntimeSessionController::debugCommandPendingChanged,
+            this, [refreshRuntimeStatus](bool) { refreshRuntimeStatus(); });
+    connect(m_sessionController, &RuntimeSessionController::continuousStepChanged,
             this, [refreshRuntimeStatus](bool) { refreshRuntimeStatus(); });
     connect(m_sessionController, &RuntimeSessionController::runtimeError,
             this, [this](const QString& msg) {
@@ -1350,14 +1365,12 @@ void MainWindow::onRunProject()
     }
 
     // 应用运行时配置
-    if (!m_sessionController->applyRuntimeConfig())
-        return;
-
-    // 执行运行
-    m_sessionController->executeRun();
-    if (m_sessionController->state() == RuntimeSessionState::Running) {
-        m_sessionController->startMonitoring();
-    }
+    m_sessionController->applyRuntimeConfigAsync([this](bool ok) {
+        if (!ok) return;
+        m_sessionController->executeRun();
+        if (m_sessionController->state() == RuntimeSessionState::Running)
+            m_sessionController->startMonitoring();
+    });
 }
 
 void MainWindow::onStopProject()
@@ -1411,8 +1424,7 @@ void MainWindow::onRunControllerToCursor()
     if (!m_sessionController) {
         return;
     }
-    const int lineNumber = m_dslEditor ? m_dslEditor->currentLineNumber() : 1;
-    m_sessionController->runControllerToCursor(lineNumber);
+    appendOutput(QStringLiteral("运行到光标不可用：缺少源码行与控制器组件位置映射。"));
 }
 
 void MainWindow::onTestControllerConnection()
@@ -1602,7 +1614,7 @@ void MainWindow::onEditParameterRequested(const QString& parameterName)
         appendOutput(QString("参数 %1 已更新为 %2").arg(parameterName, value.trimmed()));
         updateStatusBar(QString("参数 %1 已更新").arg(parameterName));
     } else {
-        appendOutput(QString("参数 %1 编辑失败").arg(parameterName));
+        appendOutput(QString("参数 %1 编辑失败：%2").arg(parameterName, m_parameterController->parameterState(parameterName).lastError));
     }
 }
 
@@ -1901,7 +1913,7 @@ void MainWindow::onCompileSucceeded(BuildType type)
                 cfg = previousConfig;
                 addProblem("error", "构建", "编译成功，但项目配置保存失败。");
             }
-            const QString message = QStringLiteral("编译成功：%1")
+            const QString message = QStringLiteral("编译成功，目标执行尚未确认（不可直接运行或下载）：%1")
                     .arg(result.metadata.value(QStringLiteral("generationDirectory")).toString());
             appendOutput(message);
             addProblem("info", "构建", message);
@@ -2178,4 +2190,58 @@ void MainWindow::closeCurrentActiveTab()
 
     // 统一由子窗口 Close 事件过滤器执行保存/放弃/取消决策。
     sub->close();
+}
+
+void MainWindow::onControllerBreakpoints()
+{
+    if (!m_sessionController) return;
+    bool accepted = false;
+    const int first = QInputDialog::getInt(this, "控制器组件断点", "第一个组件位置（0 清除该断点）", 0, 0, 65535, 1, &accepted);
+    if (!accepted) return;
+    const int second = QInputDialog::getInt(this, "控制器组件断点", "第二个组件位置（0 清除该断点）", 0, 0, 65535, 1, &accepted);
+    if (accepted) m_sessionController->setControllerBreakpoints(first, second);
+}
+
+void MainWindow::onContinuousStep()
+{
+    if (!m_sessionController) return;
+    if (m_sessionController->isContinuousStepActive()) { m_sessionController->stopContinuousStep(); return; }
+    bool accepted = false;
+    const int interval = QInputDialog::getInt(this, "连续单步", "完成上次单步后的间隔（毫秒）", 500, 50, 60000, 50, &accepted);
+    if (accepted) m_sessionController->startContinuousStep(interval);
+    if (auto* action = findChild<QAction*>("actContinuousStep")) action->setChecked(m_sessionController->isContinuousStepActive());
+}
+
+void MainWindow::onExportParameterSnapshot()
+{
+    if (!m_projectController || !m_projectController->hasOpenProject()) return;
+    const QString path = QFileDialog::getSaveFileName(this, "导出项目参数快照", m_projectController->currentProjectPath() + "/parameters.snapshot.json", "JSON (*.json)");
+    if (path.isEmpty()) return;
+    QSaveFile file(path);
+    const auto bytes = QJsonDocument(m_projectController->parameterSnapshot()).toJson();
+    if (!file.open(QIODevice::WriteOnly) || file.write(bytes) != bytes.size() || !file.commit()) {
+        addProblem("error", "参数快照", file.errorString()); return;
+    }
+    appendOutput(QStringLiteral("项目参数快照已导出：%1").arg(path));
+}
+
+void MainWindow::onRestoreParameterSnapshot()
+{
+    if (!m_projectController || !m_projectController->hasOpenProject()) return;
+    const QString path = QFileDialog::getOpenFileName(this, "恢复项目参数快照", m_projectController->currentProjectPath(), "JSON (*.json)");
+    if (path.isEmpty()) return;
+    QFile file(path);
+    if (!file.open(QIODevice::ReadOnly)) { addProblem("error", "参数快照", file.errorString()); return; }
+    QJsonParseError parseError;
+    const auto document = QJsonDocument::fromJson(file.readAll(), &parseError);
+    QStringList changes; QString error;
+    if (parseError.error != QJsonParseError::NoError || !document.isObject()
+            || !m_projectController->previewParameterSnapshot(document.object(), &changes, &error)) {
+        addProblem("error", "参数快照", error.isEmpty() ? QStringLiteral("参数快照 JSON 无效") : error); return;
+    }
+    if (QMessageBox::question(this, "恢复项目参数快照", changes.join('\n') +
+            QStringLiteral("\n\n恢复到本地项目；保存项目和下发控制器需另行操作。"), QMessageBox::Yes | QMessageBox::No, QMessageBox::No) != QMessageBox::Yes) return;
+    if (!m_projectController->restoreParameterSnapshot(document.object(), &error)) { addProblem("error", "参数快照", error); return; }
+    if (m_parameterController) { m_parameterController->clear(); m_parameterController->loadDefinitions(m_projectController->runtimeConfig().parameters); }
+    refreshInspectorPanel();
 }

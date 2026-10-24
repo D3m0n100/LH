@@ -29,6 +29,10 @@
 #include "designer/ProjectController.h"
 #include "designer/RunController.h"
 #include "monitor/MonitorManager.h"
+#include "core/AppLogging.h"
+#include <QScopeGuard>
+#include <QRegularExpression>
+#include <QSemaphore>
 
 class DeferredOpcReadBackend : public VirtualDeviceBackend
 {
@@ -2132,6 +2136,123 @@ private slots:
         QVERIFY(ctrl.runControllerToCursor(77));
         QTRY_COMPARE(transport.lastWriteAddress, 28);
         QCOMPARE(transport.lastWriteValues, QVector<quint16>({77}));
+    }
+
+    void reviewLateConnectionCannotConnectChangedSession_data()
+    {
+        QTest::addColumn<QString>("action");
+        QTest::newRow("project-switch") << QString("project-switch");
+        QTest::newRow("user-stop") << QString("user-stop");
+        QTest::newRow("configuration-change") << QString("configuration-change");
+    }
+
+    void reviewLateConnectionCannotConnectChangedSession()
+    {
+        QFETCH(QString, action);
+        struct Barrier { QSemaphore entered, resume; };
+        class LateConnectionTransport : public FakeRuntimeControllerTransport {
+        public:
+            explicit LateConnectionTransport(std::shared_ptr<Barrier> barrier) : gate(std::move(barrier)) {}
+            bool readHoldingRegisters(int address, int count) override {
+                if (firstRead) { firstRead = false; gate->entered.release(); gate->resume.acquire(); }
+                // Ignore cancellation to prove that the session rejects a late valid result.
+                return FakeRuntimeControllerTransport::readHoldingRegisters(address, count);
+            }
+            std::shared_ptr<Barrier> gate;
+            bool firstRead = true;
+        };
+        auto barrier = std::make_shared<Barrier>();
+        ProjectController originalProject, replacementProject;
+        originalProject.runtimeConfig().transport.parameters.insert("port", "review-connection-old");
+        replacementProject.runtimeConfig().transport.parameters.insert("port", "review-connection-new");
+        ControllerDebugClient client;
+        client.enableWorkerThread([barrier] { return new LateConnectionTransport(barrier); });
+        RuntimeSessionController ctrl;
+        auto* backend = new ControllerDeviceBackend(&ctrl);
+        backend->setDebugClientForTest(&client);
+        ctrl.m_ownedControllerBackend = backend;
+        ctrl.setProjectController(&originalProject);
+        const auto release = qScopeGuard([barrier] { barrier->resume.release(); });
+        QSignalSpy states(&ctrl, &RuntimeSessionController::stateChanged);
+        int completions = 0;
+        bool successful = true;
+        ctrl.ensureControllerBackendAsync([&](bool ok) { ++completions; successful = ok; });
+        QVERIFY(barrier->entered.tryAcquire(1, 1000));
+        if (action == "project-switch") ctrl.setProjectController(&replacementProject);
+        else if (action == "user-stop") ctrl.requestStop();
+        else originalProject.runtimeConfig().transport.parameters.insert("port", "review-connection-edited");
+        barrier->resume.release();
+        QTRY_COMPARE(completions, 1);
+        QVERIFY(!successful);
+        QCOMPARE(ctrl.state(), RuntimeSessionState::Idle);
+        for (const auto& event : states)
+            QVERIFY(qvariant_cast<RuntimeSessionState>(event.at(1)) != RuntimeSessionState::Connected);
+        QTRY_VERIFY(!backend->isOnline());
+        QTest::qWait(50);
+        QCOMPARE(completions, 1);
+    }
+
+    void reviewDebugOperationsHaveExactlyOnePersistentTerminal()
+    {
+        QVERIFY(AppLogging::install());
+        const auto stopLogging = qScopeGuard([] { AppLogging::shutdown(); });
+        QVERIFY(AppLogging::flush(2000));
+        const auto path = AppLogging::activeLogPath();
+        QFile log(path); QVERIFY(log.open(QIODevice::ReadOnly)); const auto offset = log.size(); log.close();
+        RuntimeSessionController ctrl;
+        FakeRuntimeControllerTransport transport;
+        ControllerDebugClient client(&transport);
+        ControllerDeviceBackend backend; backend.setDebugClientForTest(&client);
+        ProjectRuntimeConfig config; config.transport.parameters.insert("port", "review-debug-audit");
+        QVERIFY(backend.configure(config)); QVERIFY(backend.connectBackend()); ctrl.setDeviceBackend(&backend);
+        QVERIFY(ctrl.pauseController());
+        QVERIFY(!ctrl.resumeController()); // busy rejection is a distinct operation
+        QTRY_VERIFY(!ctrl.isDebugCommandPending());
+        QVERIFY(ctrl.resumeController()); QTRY_VERIFY(!ctrl.isDebugCommandPending());
+        QVERIFY(ctrl.stepController()); QTRY_VERIFY(!ctrl.isDebugCommandPending());
+        QVERIFY(ctrl.runControllerToCursor(7)); QTRY_VERIFY(!ctrl.isDebugCommandPending());
+        QVERIFY(ctrl.setControllerBreakpoints(8, 9)); QTRY_VERIFY(!ctrl.isDebugCommandPending());
+        QVERIFY(ctrl.pauseController());
+        ctrl.setDeviceBackend(nullptr); // cancellation before queued execution
+        QTest::qWait(100);
+        {
+            class LateDebugTransport : public FakeRuntimeControllerTransport {
+            public:
+                bool writeMultipleRegisters(int address, const QVector<quint16>& values) override {
+                    QThread::msleep(3100); // deliberately ignore the token to exercise late completion
+                    return FakeRuntimeControllerTransport::writeMultipleRegisters(address, values);
+                }
+            };
+            ControllerDebugClient slowClient;
+            slowClient.enableWorkerThread([] { return new LateDebugTransport; });
+            ControllerDeviceBackend slowBackend; slowBackend.setDebugClientForTest(&slowClient);
+            auto slowConfig = config;
+            slowConfig.transport.parameters.insert("port", "review-debug-timeout");
+            QVERIFY(slowBackend.configure(slowConfig)); QVERIFY(slowBackend.connectBackend());
+            ctrl.setDeviceBackend(&slowBackend);
+            QElapsedTimer timer; timer.start();
+            QVERIFY(ctrl.pauseController());
+            QTRY_VERIFY_WITH_TIMEOUT(!ctrl.isDebugCommandPending(), 4000);
+            QVERIFY(timer.elapsed() < 3800);
+            QTest::qWait(250); // the late success must not add a second terminal
+            ctrl.setDeviceBackend(nullptr);
+        }
+        QVERIFY(AppLogging::flush(2000));
+        QVERIFY(log.open(QIODevice::ReadOnly)); QVERIFY(log.seek(offset));
+        const auto text = QString::fromUtf8(log.readAll());
+        const QRegularExpression expression("event=controller_debug_(started|finished) opId=([^ ]+)");
+        QHash<QString, QPair<int,int>> counts;
+        auto match = expression.globalMatch(text);
+        while (match.hasNext()) {
+            const auto item = match.next();
+            if (item.captured(1) == "started") ++counts[item.captured(2)].first;
+            else ++counts[item.captured(2)].second;
+        }
+        QCOMPARE(counts.size(), 8);
+        for (const auto& count : counts) { QCOMPARE(count.first, 1); QCOMPARE(count.second, 1); }
+        QVERIFY(text.contains("status=rejected")); QVERIFY(text.contains("status=canceled"));
+        QVERIFY(text.contains("status=succeeded"));
+        QVERIFY(text.contains("event=controller_debug_finished") && text.contains("status=failed"));
     }
 
     void controllerConnectionTestUsesConfiguredBackend()

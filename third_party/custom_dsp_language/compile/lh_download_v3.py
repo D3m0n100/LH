@@ -39,12 +39,16 @@ def modbus_crc16(data: bytes) -> int:
 
 
 def build_write_single(device_addr, reg_0base, value):
-    pdu = struct.pack('>BBHH', device_addr, 0x06, reg_0base, value & 0xFFFF)
+    if not 1 <= device_addr <= 247 or not 0 <= reg_0base <= 65535 or not 0 <= value <= 65535:
+        raise ValueError('Invalid Modbus address or register value')
+    pdu = struct.pack('>BBHH', device_addr, 0x06, reg_0base, value)
     crc = modbus_crc16(pdu)
     return pdu + struct.pack('<H', crc)
 
 
 def build_read_single(device_addr, reg_0base):
+    if not 1 <= device_addr <= 247 or not 0 <= reg_0base <= 65535:
+        raise ValueError('Invalid Modbus address')
     pdu = struct.pack('>BBHH', device_addr, 0x03, reg_0base, 1)
     crc = modbus_crc16(pdu)
     return pdu + struct.pack('<H', crc)
@@ -56,35 +60,62 @@ class ModbusRTU:
         self.ser = serial.Serial(
             port=port, baudrate=baudrate,
             bytesize=8, parity=serial.PARITY_NONE,
-            stopbits=1, timeout=2.0
+            stopbits=1, timeout=2.0, write_timeout=2.0
         )
         time.sleep(0.2)
         self.ser.reset_input_buffer()
         print(f"[串口] 已打开 {port}，波特率 {baudrate}，设备地址 {device_addr}")
 
+    def _exchange(self, request, response_size):
+        # A single monotonic budget covers fragmented reads, including exceptions.
+        self.last_error = ''
+        timeout = self.ser.timeout
+        deadline = time.monotonic() + (timeout if timeout is not None else 2.0)
+        self.ser.reset_input_buffer()
+        try:
+            if self.ser.write(request) != len(request):
+                return None
+            response = bytearray()
+            expected = response_size
+            while len(response) < expected:
+                remaining = deadline - time.monotonic()
+                if remaining <= 0:
+                    return None
+                self.ser.timeout = remaining
+                chunk = self.ser.read(expected - len(response))
+                if not chunk:
+                    return None
+                response.extend(chunk)
+                if len(response) >= 2 and response[1] & 0x80:
+                    expected = 5
+            response = bytes(response)
+            if (len(response) == 5 and response[:2] == bytes((request[0], request[1] | 0x80))
+                    and modbus_crc16(response[:-2]) == int.from_bytes(response[-2:], 'little')):
+                self.last_error = f'Modbus exception {response[2]}'
+                return None
+            if (time.monotonic() > deadline or len(response) != response_size or response[:2] != request[:2]
+                    or modbus_crc16(response[:-2]) != int.from_bytes(response[-2:], 'little')):
+                return None
+            return response
+        except (serial.SerialException, OSError):
+            return None
+        finally:
+            self.ser.timeout = timeout
+
     def write_register(self, reg_4x, value):
         addr = reg_4x - 40001
         req  = build_write_single(self.device_addr, addr, value)
-        self.ser.reset_input_buffer()
-        self.ser.write(req)
-        time.sleep(0.05)
-        resp = self.ser.read(8)
-        if len(resp) == 8:
-            crc_recv = struct.unpack('<H', resp[6:8])[0]
-            return crc_recv == modbus_crc16(resp[:6])
-        return False
+        resp = self._exchange(req, 8)
+        if resp is not None and resp != req:
+            self.last_error = 'Register address or value echo does not match request'
+        return resp == req
 
     def read_register(self, reg_4x):
         addr = reg_4x - 40001
         req  = build_read_single(self.device_addr, addr)
-        self.ser.reset_input_buffer()
-        self.ser.write(req)
-        time.sleep(0.05)
-        resp = self.ser.read(7)
-        if len(resp) == 7:
-            crc_recv = struct.unpack('<H', resp[5:7])[0]
-            if crc_recv == modbus_crc16(resp[:5]):
-                return struct.unpack('>H', resp[3:5])[0]
+        resp = self._exchange(req, 7)
+        if resp is not None and resp[2] == 2:
+            return struct.unpack('>H', resp[3:5])[0]
         return None
 
     def close(self):
@@ -103,32 +134,29 @@ def parse_code_file(code_path):
         raise ValueError('赋值写回尚未通过目标固件验证，当前产物不可下载或运行。')
     print(f"[解析] 文件大小: {len(raw)} 字节")
 
-    text  = raw.decode('ascii', errors='replace')
-    lines = [l.strip() for l in text.splitlines() if l.strip()]
-
-    writes  = []
-    skipped = 0
-    for line in lines:
+    text = raw.decode('ascii')
+    writes = []
+    for line_number, original in enumerate(text.splitlines(), 1):
+        line = original.split('//', 1)[0].strip()
+        if not line:
+            continue
         parts = line.split()
         try:
             if len(parts) == 3:
                 reg, value = int(parts[0]), int(parts[2])
-                if 40001 <= reg <= 49999:
-                    writes.append((reg, value))
-                else:
-                    skipped += 1
+                offset = 0
             elif len(parts) == 4:
                 reg, offset, value = int(parts[0]), int(parts[2]), int(parts[3])
-                if 40001 <= reg <= 49999:
-                    writes.append((reg + offset, value))
-                else:
-                    skipped += 1
             else:
-                skipped += 1
-        except ValueError:
-            skipped += 1
+                raise ValueError('expected three or four fields')
+            if (not 0 <= int(parts[1]) <= 65535 or not 40001 <= reg <= 49999 or offset < 0
+                    or not 40001 <= reg + offset <= 49999 or not 0 <= value <= 65535):
+                raise ValueError('invalid format, address, offset or value')
+            writes.append((reg + offset, value))
+        except ValueError as exc:
+            raise ValueError(f'{code_path}:{line_number}: {exc}') from exc
 
-    print(f"[解析] {len(writes)} 条写操作，跳过 {skipped} 行")
+    print(f"[解析] {len(writes)} 条写操作")
     if writes:
         regs = [r for r, _ in writes]
         print(f"[解析] 寄存器范围: {min(regs)} ~ {max(regs)}")

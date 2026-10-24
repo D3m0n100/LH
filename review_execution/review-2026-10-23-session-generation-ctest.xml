@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="Win32-mingw32-make"
+	tests="1"
+	failures="0"
+	disabled="0"
+	skipped="0"
+	hostname="DESKTOP-HJIINHN"
+	time="8"
+	timestamp="2026-10-23T12:17:18"
+	>
+	<testcase name="RuntimeSessionControllerTest" classname="RuntimeSessionControllerTest" time="8.56262" status="run">
+		<properties/>
+		<system-out>2026-10-23T04:17:18.592Z [INFO] [category=business_event] [thread=0x41a4] [BUSINESS_EVENT] event=session_state_changed opId= phase=session status=state_change code=0 target=RuntimeSessionController attempt=1 from=0 to=4
+2026-10-23T04:17:18.601Z [INFO] [category=business_event] [thread=0x41a4] [BUSINESS_EVENT] event=session_state_changed opId= phase=session status=state_change code=0 target=RuntimeSessionController attempt=1 from=0 to=4
+2026-10-23T04:17:18.612Z [INFO] [category=business_event] [thread=0x41a4] [BUSINESS_EVENT] event=session_state_changed opId= phase=session status=state_change code=0 target=RuntimeSessionController attempt=1 from=0 to=3
+2026-10-23T04:17:18.615Z [INFO] [category=business_event] [thread=0x41a4] [BUSINESS_EVENT] event=download_started opId=op-dl-1792729038614-113570336 phase=precheck status=started code=0 target=C:/Users/Ryan/AppData/Local/Temp/runtime_session_controller_test.JfZfpd attempt=1 retryCount=1
+2026-10-23T04:17:18.616Z [INFO] [category=business_event] [thread=0x41a4] [B...
+[This part of the test output was removed since it exceeds the threshold of 1024 bytes.]
+</system-out>
+	</testcase>
+</testsuite>

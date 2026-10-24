@@ -161,6 +161,16 @@ private:
     QSettings::Format m_origSettingsFormat = QSettings::NativeFormat;
 
 private slots:
+    void parityDebugAndSnapshotActions() {
+        MainWindow window;
+        auto* cursor = window.findChild<QAction*>("actRunToCursor");
+        QVERIFY(cursor); QVERIFY(!cursor->isEnabled());
+        QVERIFY(cursor->toolTip().contains(QStringLiteral("映射")));
+        for (const auto& name : {"actControllerBreakpoints", "actContinuousStep",
+                                 "actExportParameterSnapshot", "actRestoreParameterSnapshot"})
+            QVERIFY2(window.findChild<QAction*>(name), name);
+    }
+
     void initTestCase()
     {
         QVERIFY(m_tempSettingsDir.isValid());
@@ -256,7 +266,7 @@ private slots:
         QCOMPARE(problems->errorCount(), 0);
         QCOMPARE(problems->warningCount(), 0);
         QCOMPARE(problems->infoCount(), 1);
-        QCOMPARE(problems->itemAtRow(0).message, QStringLiteral("编译成功：%1")
+        QCOMPARE(problems->itemAtRow(0).message, QStringLiteral("编译成功，目标执行尚未确认（不可直接运行或下载）：%1")
                  .arg(result.metadata.value(QStringLiteral("generationDirectory")).toString()));
         QVERIFY(output->toPlainText().contains(QStringLiteral("编译成功")));
         QVERIFY(!output->toPlainText().contains(QStringLiteral("目标固件验证")));
@@ -2847,6 +2857,10 @@ private slots:
 
         QScopedPointer<MainWindow> window(new MainWindow());
         window->setSettingsStorage(QStringLiteral("ServoValveTest"), QStringLiteral("Matrix_V02"));
+        // This matrix measures the full client viewport, including 1920x1080.
+        // Native Windows otherwise clamps a decorated client to screen minus titlebar.
+        // Chrome and normal window behavior remain covered by the other GUI cases.
+        window->setWindowFlag(Qt::FramelessWindowHint, true);
         window->show();
         auto saveMatrixPage = [&](const MatrixItem& item, const QString& page, QWidget* widget) {
             QVERIFY(widget != nullptr);

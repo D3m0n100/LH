@@ -1,0 +1,16 @@
+{
+  "sqlite_version": "3.53.1",
+  "rows": 30000,
+  "pages": 30,
+  "old_vm_steps_approx": 19515700,
+  "new_vm_steps_approx": 540900,
+  "new_query_plan": [
+    [
+      4,
+      0,
+      48,
+      "SEARCH runtime_data USING COVERING INDEX idx_runtime_var_time (variable_name=? AND (timestamp,rowid)>(?,?))"
+    ]
+  ],
+  "scope": "Synthetic SQLite, not device/NAS performance acceptance"
+}

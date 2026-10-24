@@ -1,0 +1,13 @@
+{
+  "passed": true,
+  "check_count": 553,
+  "baseline_count": 125,
+  "cross_cutting_count": 63,
+  "registry_count": 140,
+  "block_statuses": {
+    "partial": 15,
+    "not_met": 110
+  },
+  "source_unchanged_since_snapshot": true,
+  "source_pdf_hashes_verified": true
+}

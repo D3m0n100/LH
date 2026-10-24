@@ -959,12 +959,9 @@ private slots:
         ctrl.onReadbackValues(readback);
         QCOMPARE(ctrl.parameterState("Count").state, ParameterState::Confirmed);
 
-        ctrl.editParameter(QStringLiteral("Count"), QStringLiteral("7.5"));
-        QVERIFY(ctrl.applyModifiedParameters(&backend));
-        readback.clear();
-        readback.insert(QStringLiteral("param.count"), QVariant(qint16(7)));
-        ctrl.onReadbackValues(readback);
-        QCOMPARE(ctrl.parameterState("Count").state, ParameterState::Mismatch);
+        QVERIFY(!ctrl.editParameter(QStringLiteral("Count"), QStringLiteral("7.5")));
+        QCOMPARE(ctrl.parameterState("Count").state, ParameterState::Confirmed);
+        QVERIFY(!ctrl.parameterState("Count").lastError.isEmpty());
 
         ctrl.editParameter(QStringLiteral("Count"), QStringLiteral("8"));
         QVERIFY(ctrl.applyModifiedParameters(&backend));
@@ -982,12 +979,9 @@ private slots:
         ctrl.onReadbackValues(readback);
         QCOMPARE(ctrl.parameterState("Count").state, ParameterState::Confirmed);
 
-        ctrl.editParameter(QStringLiteral("Count"), QStringLiteral("-1"));
-        QVERIFY(ctrl.applyModifiedParameters(&backend));
-        readback.clear();
-        readback.insert(QStringLiteral("param.count"), QVariant(quint16(65535)));
-        ctrl.onReadbackValues(readback);
-        QCOMPARE(ctrl.parameterState("Count").state, ParameterState::Mismatch);
+        QVERIFY(!ctrl.editParameter(QStringLiteral("Count"), QStringLiteral("-1")));
+        QCOMPARE(ctrl.parameterState("Count").state, ParameterState::Confirmed);
+        QVERIFY(!ctrl.parameterState("Count").lastError.isEmpty());
     }
 
     void typedRealReadbackUsesFloat32AndRejectsInvalid()

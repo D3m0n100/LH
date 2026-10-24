@@ -38,6 +38,7 @@
 #include <QString>
 #include <QStringList>
 #include <QDateTime>
+#include <QJsonObject>
 
 #include "../common/ConfigTypes.h"
 #include "DslCompletionEngine.h"  // 需要 DslInsertRecord 的完整定义
@@ -105,6 +106,10 @@ public:
     
     /// 校验项目配置（非 const，因为校验失败时会 emit validationFailed 信号）
     bool validateConfiguration(QStringList& errors);
+    QJsonObject parameterSnapshot() const;
+    bool previewParameterSnapshot(const QJsonObject& snapshot, QStringList* changes,
+                                   QString* errorMessage = nullptr) const;
+    bool restoreParameterSnapshot(const QJsonObject& snapshot, QString* errorMessage = nullptr);
 
     // ===== DSL 映射同步 =====
     

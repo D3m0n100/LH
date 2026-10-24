@@ -1,0 +1,280 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="Win32-mingw32-make"
+	tests="47"
+	failures="2"
+	disabled="0"
+	skipped="0"
+	hostname="DESKTOP-HJIINHN"
+	time="301"
+	timestamp="2026-10-24T09:14:54"
+	>
+	<testcase name="ProjectMutationGuardTest" classname="ProjectMutationGuardTest" time="0.357847" status="run">
+		<properties/>
+		<system-out></system-out>
+	</testcase>
+	<testcase name="RuntimeSessionServiceTest" classname="RuntimeSessionServiceTest" time="0.299459" status="run">
+		<properties/>
+		<system-out>2026-10-24T01:14:55.471Z [INFO] [category=business_event] [thread=0x5754] [BUSINESS_EVENT] event=parameter_readback_started opId=op-param-rb-1792804495470 phase=readback status=started code=0 target=param.kp attempt=1 maxRetries=1 retryIntervalMs=0
+2026-10-24T01:14:55.475Z [INFO] [category=business_event] [thread=0x5754] [BUSINESS_EVENT] event=parameter_readback_attempt opId=op-param-rb-1792804495470 phase=readback status=polling code=0 target=param.kp attempt=1 attempt=1 maxRetries=1
+2026-10-24T01:14:55.476Z [INFO] [category=business_event] [thread=0x5754] [BUSINESS_EVENT] event=parameter_readback_succeeded opId=op-param-rb-1792804495470 phase=readback status=succeeded code=0 target=param.kp attempt=1 attempts=1 message=
+</system-out>
+	</testcase>
+	<testcase name="ClassicPollPlanTest" classname="ClassicPollPlanTest" time="0.233652" status="run">
+		<properties/>
+		<system-out></system-out>
+	</testcase>
+	<testcase name="ClassicOpcWorkerTest" classname="ClassicOpcWorkerTest" time="0.672088" status="run">
+		<properties/>
+		<system-out></system-out>
+	</testcase>
+	<testcase name="ModuleBoundaryCheck" classname="ModuleBoundaryCheck" time="3.87701" status="run">
+		<properties/>
+		<system-out>Module boundaries checked.
+</system-out>
+	</testcase>
+	<testcase name="ProjectCommandCoordinatorTest" classname="ProjectCommandCoordinatorTest" time="0.128728" status="run">
+		<properties/>
+		<system-out></system-out>
+	</testcase>
+	<testcase name="OptimizationAcceptanceTest" classname="OptimizationAcceptanceTest" time="4.51656" status="run">
+		<properties/>
+		<system-out></system-out>
+	</testcase>
+	<testcase name="app_logging_test" classname="app_logging_test" time="0.469921" status="run">
+		<properties/>
+		<system-out>2026-10-24T01:15:05.418Z [ERROR] [category=default] [thread=0x62dc] critical-must-be-visible
+2026-10-24T01:15:05.450Z [ERROR] [category=default] [thread=0x62dc] rotation-failure-probe
+2026-10-24T01:15:05.450Z [ERROR] [category=default] [thread=0x62dc] rotation-failure-probe
+</system-out>
+	</testcase>
+	<testcase name="AppLoggingOverloadTest" classname="AppLoggingOverloadTest" time="1.64846" status="run">
+		<properties/>
+		<system-out></system-out>
+	</testcase>
+	<testcase name="CoreDataManagerTest" classname="CoreDataManagerTest" time="2.11473" status="run">
+		<properties/>
+		<system-out></system-out>
+	</testcase>
+	<testcase name="DataManagerHistoryPagingTest" classname="DataManagerHistoryPagingTest" time="0.485668" status="run">
+		<properties/>
+		<system-out></system-out>
+	</testcase>
+	<testcase name="SnippetRepositoryTest" classname="SnippetRepositoryTest" time="0.58988" status="run">
+		<properties/>
+		<system-out></system-out>
+	</testcase>
+	<testcase name="MonitorDataProcessorTest" classname="MonitorDataProcessorTest" time="0.490444" status="run">
+		<properties/>
+		<system-out></system-out>
+	</testcase>
+	<testcase name="MonitorDataLoggerTest" classname="MonitorDataLoggerTest" time="1.25195" status="run">
+		<properties/>
+		<system-out></system-out>
+	</testcase>
+	<testcase name="AsyncDatabaseWorkerTest" classname="AsyncDatabaseWorkerTest" time="1.65765" status="run">
+		<properties/>
+		<system-out></system-out>
+	</testcase>
+	<testcase name="MonitorManagerBackendTest" classname="MonitorManagerBackendTest" time="0.747455" status="run">
+		<properties/>
+		<system-out></system-out>
+	</testcase>
+	<testcase name="MonitorWidgetUiTest" classname="MonitorWidgetUiTest" time="2.05914" status="run">
+		<properties/>
+		<system-out></system-out>
+	</testcase>
+	<testcase name="MainWindowIntegrationTest" classname="MainWindowIntegrationTest" time="87.6679" status="fail">
+		<failure message="Failed"/>
+		<properties/>
+		<system-out>2026-10-24T01:15:25.378Z [INFO] [category=business_event] [thread=0x6c34] [BUSINESS_EVENT] event=parameter_readback_started opId=op-param-rb-1792804525376 phase=readback status=started code=0 target=param.kp attempt=1 maxRetries=2 retryIntervalMs=100
+2026-10-24T01:15:25.654Z [INFO] [category=business_event] [thread=0x6c34] [BUSINESS_EVENT] event=parameter_readback_attempt opId=op-param-rb-1792804525376 phase=readback status=polling code=0 target=param.kp attempt=1 attempt=1 maxRetries=2
+2026-10-24T01:15:25.852Z [INFO] [category=business_event] [thread=0x6c34] [BUSINESS_EVENT] event=parameter_readback_succeeded opId=op-param-rb-1792804525376 phase=readback status=succeeded code=0 target=param.kp attempt=1 attempts=1 message=
+2026-10-24T01:15:28.579Z [INFO] [category=business_event] [thread=0x6c34] [BUSINESS_EVENT] event=session_state_changed opId= phase=session status=state_change code=0 target=RuntimeSessionController attempt=1 from=0 to=4
+2026-10-24T01:15:28.585Z [INFO] [category=business_event] [thread=0x6c34] [BUSINESS_EVENT] event=opc_server_stopped opId= phase=opc status=stopped code=0 target=Matrikon.OPC.Modbus attempt=1
+2026-10-24T01:15:28.595Z [INFO] [category=business_event] [thread=0x6c34] [BUSINESS_EVENT] event=session_state_changed opId= phase=session status=state_change code=0 target=RuntimeSessionController attempt=1 from=4 to=5
+2026-10-24T01:15:28.599Z [INFO] [category=business_event] [thread=0x6c34] [BUSINESS_EVENT] event=session_state_changed opId= phase=session status=state_change code=0 target=RuntimeSessionController attempt=1 from=5 to=4
+2026-10-24T01:15:28.603Z [INFO] [category=business_event] [thread=0x6c34] [BUSINESS_EVENT] event=opc_server_stopped opId= phase=opc status=stopped code=0 target=Matrikon.OPC.Modbus attempt=1
+2026-10-24T01:15:28.606Z [INFO] [category=business_event] [thread=0x6c34] [BUSINESS_EVENT] event=session_state_changed opId= phase=session status=state_change code=0 target=RuntimeSessionController attempt=1 from=4 to=0
+2026-10-24T01:15:28.680Z [INFO] [category=business_event] [thread=0x6c34] [BUSINESS_EVENT] event=session_state_changed opId= phase=session status=state_change code=0 target=RuntimeSessionController attempt=1 from=0 to=4
+2026-10-24T01:15:28.680Z [INFO] [category=business_event] [thread=0x6c34] [BUSINESS_EVENT] event=opc_server_stopped opId= phase=opc status=stopped code=0 target=Matrikon.OPC.Modbus attempt=1
+2026-10-24T01:15:29.908Z [INFO] [category=business_event] [thread=0x6c34] [BUSINESS_EVENT] event=session_state_changed opId= phase=session status=state_change code=0 target=RuntimeSessionController attempt=1 from=0 to=4
+2026-10-24T01:15:29.914Z [INFO] [category=business_event] [thread=0x6c34] [BUSINESS_EVENT] event=opc_server_stopped opId= phase=opc status=stopped code=0 target=Matrikon.OPC.Modbus attempt=1
+2026-10-24T01:15:29.916Z [INFO] [category=business_event] [thread=0x6c34] [BUSINESS_EVENT] event=opc_server_stopped opId= phase=opc status=stopped code=0 target=Matrikon.OPC.Modbus attempt=1
+2026-10-24T01:15:29.919Z [INFO] [category=business_event] [thread=0x6c34] [BUSINESS_EVENT] event=session_state_changed opId= phase=session status=state_change code=0 target=RuntimeSessionController attempt=1 from=4 to=0
+2026-10-24T01:15:31.242Z [INFO] [category=business_event] [thread=0x6c34] [BUSINESS_EVENT] event=session_state_changed opId= phase=session status=state_change code=0 target=RuntimeSessionController attempt=1 from=0 to=3
+2026-10-24T01:15:31.244Z [INFO] [category=business_event] [thread=0x6c34] [BUSINESS_EVENT] event=opc_server_stopped opId= phase=opc status=stopped code=0 target=Matrikon.OPC.Modbus attempt=1
+2026-10-24T01:15:31.246Z [INFO] [category=business_event] [thread=0x6c34] [BUSINESS_EVENT] event=session_state_changed opId= phase=session status=state_change code=0 target=RuntimeSessionController attempt=1 from=3 to=0
+2026-10-24T01:15:31.251Z [WARN] [category=business_event] [thread=0x6c34] [BUSINESS_EVENT] event=backend_connection_changed opId= phase=connection status=disconnected code=0 target=DeviceBackend attempt=1
+2026-10-24T01:15:31.251Z [INFO] [category=business_event] [thread=0x6c34] [BUSINESS_EVENT] event=backend_connection_changed opId= phase=connection status=connected code=0 target=DeviceBackend attempt=1
+2026-10-24T01:15:31.251Z [INFO] [category=business_event] [thread=0x6c34] [BUSINESS_EVENT] event=session_state_changed opId= phase=session status=state_change code=0 target=RuntimeSessionController attempt=1 from=0 to=3
+2026-10-24T01:15:31.253Z [WARN] [category=business_event] [thread=0x6c34] [BUSINESS_EVENT] event=backend_connection_changed opId= phase=connection status=disconnected code=0 target=DeviceBackend attempt=1
+2026-10-24T01:15:31.253Z [INFO] [category=business_event] [thread=0x6c34] [BUSINESS_EVENT] event=opc_server_stopped opId= phase=opc status=stopped code=0 target=Matrikon.OPC.Modbus attempt=1
+2026-10-24T01:15:31.255Z [ERROR] [category=business_event] [thread=0x6c34] [BUSINESS_EVENT] event=session_state_changed opId= phase=session status=state_change code=-1 target=RuntimeSessionController attempt=1 from=3 to=7
+2026-10-24T01:15:31.263Z [INFO] [category=business_event] [thread=0x6c34] [BUSINESS_EVENT] event=opc_server_stopped opId= phase=opc status=stopped code=0 target=Matrikon.OPC.Modbus attempt=1
+2026-10-24T01:15:31.266Z [INFO] [category=business_event] [thread=0x6c34] [BUSINESS_EVENT] event=session_state_changed opId= phase=session status=state_change code=0 target=RuntimeSessionController attempt=1 from=7 to=0
+2026-10-24T01:15:48.116Z [INFO] [category=business_event] [thread=0x6c34] [BUSINESS_EVENT] event=session_state_changed opId= phase=session status=state_change code=0 target=RuntimeSessionController attempt=1 from=0 to=3
+2026-10-24T01:15:48.118Z [INFO] [category=business_event] [thread=0x6c34] [BUSINESS_EVENT] event=session_state_changed opId= phase=session status=state_change code=0 target=RuntimeSessionController attempt=1 from=3 to=4
+2026-10-24T01:15:48.124Z [INFO] [category=business_event] [thread=0x6c34] [BUSINESS_EVENT] event=opc_server_stopped opId= phase=opc status=stopped code=0 target=Matrikon.OPC.Modbus attempt=1
+2026-10-24T01:15:48.135Z [INFO] [category=business_event] [thread=0x6c34] [BUSINESS_EVENT] event=session_state_changed opId= phase=session status=state_change code=0 target=RuntimeSessionController attempt=1 from=4 to=5
+2026-10-24T01:15:49.079Z [INFO] [category=business_event] [thread=0x6c34] [BUSINESS_EVENT] event=session_state_changed opId= phase=session status=state_change code=0 target=RuntimeSessionController attempt=1 from=5 to=4
+2026-10-24T01:15:49.086Z [INFO] [category=business_event] [thread=0x6c34] [BUSINESS_EVENT] event=opc_server_stopped opId= phase=opc status=stopped code=0 target=Matrikon.OPC.Modbus attempt=1
+2026-10-24T01:15:49.090Z [INFO] [category=business_event] [thread=0x6c34] [BUSINESS_EVENT] event=session_state_changed opId= phase=session status=state_change code=0 target=RuntimeSessionController attempt=1 from=4 to=0
+2026-10-24T01:16:13.479Z [INFO] [category=business_event] [thread=0x6c34] [BUSINESS_EVENT] event=controller_debug_started opId=8961f72b-622d-4dfe-9662-4ad685ab1e8d phase=admission status=started code=0 target=ControllerDeviceBackend attempt=1 arguments=[] backendGeneration=0 command=pause commandGeneration=2
+2026-10-24T01:16:13.479Z [WARN] [category=business_event] [thread=0x6c34] [BUSINESS_EVENT] event=controller_debug_finished opId=8961f72b-622d-4dfe-9662-4ad685ab1e8d phase=finish status=rejected code=-1 target=ControllerDeviceBackend attempt=1 arguments=[] backendGeneration=0 command=pause commandGeneration=2 message=Controller backend unavailable
+2026-10-24T01:16:13.485Z [INFO] [category=business_event] [thread=0x6c34] [BUSINESS_EVENT] event=controller_debug_started opId=670f1df9-be03-4287-9ce0-055573797366 phase=admission status=started code=0 target=ControllerDeviceBackend attempt=1 arguments=[] backendGeneration=0 command=resume commandGeneration=2
+2026-10-24T01:16:13.485Z [WARN] [category=business_event] [thread=0x6c34] [BUSINESS_EVENT] event=controller_debug_finished opId=670f1df9-be03-4287-9ce0-055573797366 phase=finish status=rejected code=-1 target=ControllerDeviceBackend attempt=1 arguments=[] backendGeneration=0 command=resume commandGeneration=2 message=Controller backend unavailable
+2026-10-24T01:16:13.491Z [INFO] [category=business_event] [thread=0x6c34] [BUSINESS_EVENT] event=controller_debug_started opId=1bb81f17-0355-4590-8471-bb72396d68ac phase=admission status=started code=0 target=ControllerDeviceBackend attempt=1 arguments=[] backendGeneration=0 command=step commandGeneration=2
+2026-10-24T01:16:13.491Z [WARN] [category=business_event] [thread=0x6c34] [BUSINESS_EVENT] event=controller_debug_finished opId=1bb81f17-0355-4590-8471-bb72396d68ac phase=finish status=rejected code=-1 target=ControllerDeviceBackend attempt=1 arguments=[] backendGeneration=0 command=step commandGeneration=2 message=Controller backend unavailable
+2026-10-24T01:16:13.502Z [INFO] [category=business_event] [thread=0x6c34] [BUSINESS_EVENT] event=session_state_changed opId= phase=session status=state_change code=0 target=RuntimeSessionController attempt=1 from=0 to=4
+2026-10-24T01:16:13.509Z [INFO] [category=business_event] [thread=0x6c34] [BUSINESS_EVENT] event=opc_server_stopped opId= phase=opc status=stopped code=0 target=Matrikon.OPC.Modbus attempt=1
+2026-10-24T01:16:13.512Z [INFO] [category=business_event] [thread=0x6c34] [BUSINESS_EVENT] event=controller_debug_started opId=8c3a5969-0b1a-4fc4-97df-0cf5cca6023e phase=admission status=started code=0 target=ControllerDeviceBackend attempt=1 arguments=[] backendGeneration=0 command=pause commandGeneration=2
+2026-10-24T01:16:13.518Z [INFO] [category=business_event] [thread=0x6c34] [BUSINESS_EVENT] event=controller_debug_finished opId=8c3a5969-0b1a-4fc4-97df-0cf5cca6023e phase=finish status=succeeded code=0 target=ControllerDeviceBackend attempt=1 arguments=[] backendGeneration=0 command=pause commandGeneration=2 message=Demo mode
+2026-10-24T01:16:13.518Z [INFO] [category=business_event] [thread=0x6c34] [BUSINESS_EVENT] event=controller_debug_started opId=89d48bf2-d1f8-437b-a70d-95fdc58b2e98 phase=admission status=started code=0 target=ControllerDeviceBackend attempt=1 arguments=[] backendGeneration=0 command=step commandGeneration=2
+2026-10-24T01:16:13.520Z [INFO] [category=business_event] [thread=0x6c34] [BUSINESS_EVENT] event=controller_debug_finished opId=89d48bf2-d1f8-437b-a70d-95fdc58b2e98 phase=finish status=succeeded code=0 target=ControllerDeviceBackend attempt=1 arguments=[] backendGeneration=0 command=step commandGeneration=2 message=Demo mode
+2026-10-24T01:16:13.620Z [INFO] [category=business_event] [thread=0x6c34] [BUSINESS_EVENT] event=controller_debug_started opId=795411b5-475e-4728-925b-401acc5b9bdd phase=admission status=started code=0 target=ControllerDeviceBackend attempt=1 arguments=[] backendGeneration=0 command=resume commandGeneration=2
+2026-10-24T01:16:13.625Z [INFO] [category=business_event] [thread=0x6c34] [BUSINESS_EVENT] event=controller_debug_finished opId=795411b5-475e-4728-925b-401acc5b9bdd phase=finish status=succeeded code=0 target=ControllerDeviceBackend attempt=1 arguments=[] backendGeneration=0 command=resume commandGeneration=2 message=Demo mode
+2026-10-24T01:16:13.626Z [INFO] [category=business_event] [thread=0x6c34] [BUSINESS_EVENT] event=opc_server_stopped opId= phase=opc status=stopped code=0 target=Matrikon.OPC.Modbus attempt=1
+2026-10-24T01:16:13.628Z [INFO] [category=business_event] [thread=0x6c34] [BUSINESS_EVENT] event=session_state_changed opId= phase=session status=state_change code=0 target=RuntimeSessionController attempt=1 from=4 to=0
+2026-10-24T01:16:19.883Z [INFO] [category=business_event] [thread=0x6c34] [BUSINESS_EVENT] event=parameter_write_started opId=op-param-write-1792804579883 phase=parameter_write status=started code=0 target=Kp attempt=1 count=1
+2026-10-24T01:16:19.940Z [INFO] [category=business_event] [thread=0x6c34] [BUSINESS_EVENT] event=parameter_write_succeeded opId=op-param-write-1792804579883 phase=parameter_write status=succeeded code=0 target=Kp attempt=1 count=1
+2026-10-24T01:16:20.036Z [INFO] [category=business_event] [thread=0x6c34] [BUSINESS_EVENT] event=parameter_write_started opId=op-param-write-1792804580036 phase=parameter_write status=started code=0 target=Kp attempt=1 count=1
+2026-10-24T01:16:20.093Z [INFO] [category=business_event] [thread=0x6c34] [BUSINESS_EVENT] event=parameter_write_succeeded opId=op-param-write-1792804580036 phase=parameter_write status=succeeded code=0 target=Kp attempt=1 count=1
+</system-out>
+	</testcase>
+	<testcase name="DownloadManagerLifecycleTest" classname="DownloadManagerLifecycleTest" time="0.945448" status="run">
+		<properties/>
+		<system-out></system-out>
+	</testcase>
+	<testcase name="DslCompletionEngineTest" classname="DslCompletionEngineTest" time="0.488151" status="fail">
+		<failure message="Failed"/>
+		<properties/>
+		<system-out></system-out>
+	</testcase>
+	<testcase name="DslScriptEditorSaveTest" classname="DslScriptEditorSaveTest" time="0.949654" status="run">
+		<properties/>
+		<system-out></system-out>
+	</testcase>
+	<testcase name="ProjectSaveCloseTest" classname="ProjectSaveCloseTest" time="10.6351" status="run">
+		<properties/>
+		<system-out></system-out>
+	</testcase>
+	<testcase name="DslCompilerCancellationTest" classname="DslCompilerCancellationTest" time="3.47084" status="run">
+		<properties/>
+		<system-out></system-out>
+	</testcase>
+	<testcase name="DslCompilerSemanticsTest" classname="DslCompilerSemanticsTest" time="11.201" status="run">
+		<properties/>
+		<system-out></system-out>
+	</testcase>
+	<testcase name="CompilerRuntimeSearchTest" classname="CompilerRuntimeSearchTest" time="0.460901" status="run">
+		<properties/>
+		<system-out></system-out>
+	</testcase>
+	<testcase name="MonitorExportTest" classname="MonitorExportTest" time="0.948461" status="run">
+		<properties/>
+		<system-out></system-out>
+	</testcase>
+	<testcase name="MonitorHistoryExportIntegrationTest" classname="MonitorHistoryExportIntegrationTest" time="0.652925" status="run">
+		<properties/>
+		<system-out></system-out>
+	</testcase>
+	<testcase name="CommunicationRoutingTest" classname="CommunicationRoutingTest" time="1.90547" status="run">
+		<properties/>
+		<system-out></system-out>
+	</testcase>
+	<testcase name="SerialInterfaceTest" classname="SerialInterfaceTest" time="0.225669" status="run">
+		<properties/>
+		<system-out></system-out>
+	</testcase>
+	<testcase name="ControllerDebugProtocolTest" classname="ControllerDebugProtocolTest" time="0.216532" status="run">
+		<properties/>
+		<system-out></system-out>
+	</testcase>
+	<testcase name="ControllerDeviceBackendTest" classname="ControllerDeviceBackendTest" time="2.66427" status="run">
+		<properties/>
+		<system-out></system-out>
+	</testcase>
+	<testcase name="RuntimePointTableTest" classname="RuntimePointTableTest" time="0.0542015" status="run">
+		<properties/>
+		<system-out></system-out>
+	</testcase>
+	<testcase name="VirtualDeviceBackendTest" classname="VirtualDeviceBackendTest" time="0.242375" status="run">
+		<properties/>
+		<system-out></system-out>
+	</testcase>
+	<testcase name="ParameterControllerTest" classname="ParameterControllerTest" time="32.4589" status="run">
+		<properties/>
+		<system-out>2026-10-24T01:17:19.471Z [INFO] [category=business_event] [thread=0x235c] [BUSINESS_EVENT] event=parameter_write_started opId=op-param-write-1792804639471 phase=parameter_write status=started code=0 target=A,B attempt=1 count=2
+2026-10-24T01:17:19.472Z [INFO] [category=business_event] [thread=0x235c] [BUSINESS_EVENT] event=parameter_write_succeeded opId=op-param-write-1792804639471 phase=parameter_write status=succeeded code=0 target=A,B attempt=1 count=2
+2026-10-24T01:17:19.508Z [INFO] [category=business_event] [thread=0x235c] [BUSINESS_EVENT] event=parameter_write_started opId=op-param-write-1792804639508 phase=parameter_write status=started code=0 target=A,B attempt=1 count=2
+2026-10-24T01:17:19.508Z [INFO] [category=business_event] [thread=0x235c] [BUSINESS_EVENT] event=parameter_write_succeeded opId=op-param-write-1792804639508 phase=parameter_write status=succeeded code=0 target=A,B attempt=1 count=2
+2026-10-24T01:17:19.538Z [INFO] [category=business_event] [thread=0x235c] [BUSINESS_EVENT] event=paramet...
+[This part of the test output was removed since it exceeds the threshold of 1024 bytes.]
+</system-out>
+	</testcase>
+	<testcase name="RuntimeSessionControllerTest" classname="RuntimeSessionControllerTest" time="8.95388" status="run">
+		<properties/>
+		<system-out>2026-10-24T01:17:52.216Z [INFO] [category=business_event] [thread=0x5ebc] [BUSINESS_EVENT] event=session_state_changed opId= phase=session status=state_change code=0 target=RuntimeSessionController attempt=1 from=0 to=4
+2026-10-24T01:17:52.218Z [INFO] [category=business_event] [thread=0x5ebc] [BUSINESS_EVENT] event=session_state_changed opId= phase=session status=state_change code=0 target=RuntimeSessionController attempt=1 from=0 to=4
+2026-10-24T01:17:52.220Z [INFO] [category=business_event] [thread=0x5ebc] [BUSINESS_EVENT] event=session_state_changed opId= phase=session status=state_change code=0 target=RuntimeSessionController attempt=1 from=0 to=3
+2026-10-24T01:17:52.223Z [INFO] [category=business_event] [thread=0x5ebc] [BUSINESS_EVENT] event=download_started opId=op-dl-1792804672223-113701392 phase=precheck status=started code=0 target=C:/Users/Ryan/AppData/Local/Temp/runtime_session_controller_test.oXhSCz attempt=1 retryCount=1
+2026-10-24T01:17:52.227Z [INFO] [category=business_event] [thread=0x5ebc] [B...
+[This part of the test output was removed since it exceeds the threshold of 1024 bytes.]
+</system-out>
+	</testcase>
+	<testcase name="OpcServerConfigTest" classname="OpcServerConfigTest" time="0.250964" status="run">
+		<properties/>
+		<system-out></system-out>
+	</testcase>
+	<testcase name="DiagnosticSnapshotTest" classname="DiagnosticSnapshotTest" time="0.310908" status="run">
+		<properties/>
+		<system-out></system-out>
+	</testcase>
+	<testcase name="InstallLayoutTest" classname="InstallLayoutTest" time="20.4553" status="run">
+		<properties/>
+		<system-out>-- 安装布局及独立公共接口消费者测试通过: D:/Table/LH/build_current_mingw/install_layout_test_prefix
+</system-out>
+	</testcase>
+	<testcase name="MonitorHistoryCoreTest" classname="MonitorHistoryCoreTest" time="0.162916" status="run">
+		<properties/>
+		<system-out></system-out>
+	</testcase>
+	<testcase name="ReviewRound2RegressionTest" classname="ReviewRound2RegressionTest" time="15.2905" status="run">
+		<properties/>
+		<system-out></system-out>
+	</testcase>
+	<testcase name="PidHistoryAsyncTest" classname="PidHistoryAsyncTest" time="1.90739" status="run">
+		<properties/>
+		<system-out></system-out>
+	</testcase>
+	<testcase name="DesignerP1RobustnessTest" classname="DesignerP1RobustnessTest" time="43.9192" status="run">
+		<properties/>
+		<system-out></system-out>
+	</testcase>
+	<testcase name="DatabaseStartupMigrationTest" classname="DatabaseStartupMigrationTest" time="3.92017" status="run">
+		<properties/>
+		<system-out></system-out>
+	</testcase>
+	<testcase name="BackendSamplerTest" classname="BackendSamplerTest" time="0.338285" status="run">
+		<properties/>
+		<system-out></system-out>
+	</testcase>
+	<testcase name="FullReviewRegressionTest" classname="FullReviewRegressionTest" time="4.71091" status="run">
+		<properties/>
+		<system-out></system-out>
+	</testcase>
+	<testcase name="Review20261023Test" classname="Review20261023Test" time="21.4838" status="run">
+		<properties/>
+		<system-out>Ϊ C:\Users\Ryan\AppData\Local\Temp\review_20261023_test-rBgIjX\external-junction &lt;&lt;===&gt;&gt; C:\Users\Ryan\AppData\Local\Temp\review_20261023_test-CHecdR [NON-UTF-8-BYTE-0xB4][NON-UTF-8-BYTE-0xB4][NON-UTF-8-BYTE-0xBD][NON-UTF-8-BYTE-0xA8][NON-UTF-8-BYTE-0xB5][NON-UTF-8-BYTE-0xC4][NON-UTF-8-BYTE-0xC1][NON-UTF-8-BYTE-0xAA][NON-UTF-8-BYTE-0xBD][NON-UTF-8-BYTE-0xD3]
+</system-out>
+	</testcase>
+	<testcase name="LmParitySoftwareTest" classname="LmParitySoftwareTest" time="2.74825" status="run">
+		<properties/>
+		<system-out>2026-10-24T01:19:54.939Z [INFO] [category=business_event] [thread=0x3700] [BUSINESS_EVENT] event=session_state_changed opId= phase=session status=state_change code=0 target=RuntimeSessionController attempt=1 from=0 to=3
+2026-10-24T01:19:54.940Z [INFO] [category=business_event] [thread=0x3700] [BUSINESS_EVENT] event=controller_debug_started opId=ef87b4e7-7dc0-481c-8406-6e1b315ddb17 phase=admission status=started code=0 target=ControllerDeviceBackend attempt=1 arguments=[] backendGeneration=1 command=step commandGeneration=2 controllerId=1 port=parity-slow-debug
+2026-10-24T01:19:55.125Z [INFO] [category=business_event] [thread=0x3700] [BUSINESS_EVENT] event=controller_debug_finished opId=ef87b4e7-7dc0-481c-8406-6e1b315ddb17 phase=finish status=succeeded code=0 target=ControllerDeviceBackend attempt=1 arguments=[] backendGeneration=1 command=step commandGeneration=2 controllerId=1 message= port=parity-slow-debug
+2026-10-24T01:19:55.190Z [INFO] [category=business_event] [thread=0x3700] [BUSINESS_EVENT] event=cont...
+[This part of the test output was removed since it exceeds the threshold of 1024 bytes.]
+</system-out>
+	</testcase>
+</testsuite>

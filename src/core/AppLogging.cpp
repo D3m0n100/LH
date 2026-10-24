@@ -528,7 +528,7 @@ void writeBusinessEvent(const BusinessEvent& event)
     const QString status = event.status.trimmed().toLower();
     const bool terminal = status == "success" || status == "succeeded" || status == "failed"
             || status == "failure" || status == "canceled" || status == "cancelled" || status == "completed"
-            || status == "confirmed";
+              || status == "confirmed" || status == "rejected";
     enqueueMessage(event.severity, context, message, terminal);
 }
 

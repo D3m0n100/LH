@@ -1,0 +1,2804 @@
+[
+  {
+    "name": "EXCATMaintain",
+    "type_id": 151,
+    "memory_size": 32,
+    "parameters": [],
+    "description": "保养功能",
+    "category": "application",
+    "status": "supported",
+    "incomplete_reason": "",
+    "runtime_fields": [],
+    "source": {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_application.py",
+      "line": 22,
+      "sha256": "76a04ea2c33c5d0c235e257e85db9281d7bd34d162f919fe94ff26b63bfcafc4"
+    },
+    "hardwareExecutionVerifiedByThisAudit": false
+  },
+  {
+    "name": "EXCAIntCheck",
+    "type_id": 152,
+    "memory_size": 24,
+    "parameters": [],
+    "description": "整型检查",
+    "category": "application",
+    "status": "supported",
+    "incomplete_reason": "",
+    "runtime_fields": [],
+    "source": {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_application.py",
+      "line": 33,
+      "sha256": "76a04ea2c33c5d0c235e257e85db9281d7bd34d162f919fe94ff26b63bfcafc4"
+    },
+    "hardwareExecutionVerifiedByThisAudit": false
+  },
+  {
+    "name": "PasswordVerify2",
+    "type_id": 153,
+    "memory_size": 32,
+    "parameters": [],
+    "description": "密码验证2",
+    "category": "application",
+    "status": "supported",
+    "incomplete_reason": "",
+    "runtime_fields": [],
+    "source": {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_application.py",
+      "line": 44,
+      "sha256": "76a04ea2c33c5d0c235e257e85db9281d7bd34d162f919fe94ff26b63bfcafc4"
+    },
+    "hardwareExecutionVerifiedByThisAudit": false
+  },
+  {
+    "name": "LockCmdGenery",
+    "type_id": 154,
+    "memory_size": 24,
+    "parameters": [],
+    "description": "锁定命令生成",
+    "category": "application",
+    "status": "supported",
+    "incomplete_reason": "",
+    "runtime_fields": [],
+    "source": {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_application.py",
+      "line": 55,
+      "sha256": "76a04ea2c33c5d0c235e257e85db9281d7bd34d162f919fe94ff26b63bfcafc4"
+    },
+    "hardwareExecutionVerifiedByThisAudit": false
+  },
+  {
+    "name": "OutRealTime3",
+    "type_id": 155,
+    "memory_size": 32,
+    "parameters": [],
+    "description": "实时输出3",
+    "category": "application",
+    "status": "supported",
+    "incomplete_reason": "",
+    "runtime_fields": [],
+    "source": {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_application.py",
+      "line": 66,
+      "sha256": "76a04ea2c33c5d0c235e257e85db9281d7bd34d162f919fe94ff26b63bfcafc4"
+    },
+    "hardwareExecutionVerifiedByThisAudit": false
+  },
+  {
+    "name": "CommCANInit",
+    "type_id": 601,
+    "memory_size": 32,
+    "parameters": [],
+    "description": "CAN总线初始化",
+    "category": "comm",
+    "status": "supported",
+    "incomplete_reason": "",
+    "runtime_fields": [],
+    "source": {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_comm.py",
+      "line": 22,
+      "sha256": "804c008500f163c050f84cb387edf938e37ae394cf7862c576de1bcb611ea402"
+    },
+    "hardwareExecutionVerifiedByThisAudit": false
+  },
+  {
+    "name": "CommGPRS",
+    "type_id": 602,
+    "memory_size": 48,
+    "parameters": [],
+    "description": "GPRS远程通信",
+    "category": "comm",
+    "status": "supported",
+    "incomplete_reason": "",
+    "runtime_fields": [],
+    "source": {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_comm.py",
+      "line": 33,
+      "sha256": "804c008500f163c050f84cb387edf938e37ae394cf7862c576de1bcb611ea402"
+    },
+    "hardwareExecutionVerifiedByThisAudit": false
+  },
+  {
+    "name": "CommJ1939Trans",
+    "type_id": 603,
+    "memory_size": 32,
+    "parameters": [],
+    "description": "J1939车载网络传输",
+    "category": "comm",
+    "status": "supported",
+    "incomplete_reason": "",
+    "runtime_fields": [],
+    "source": {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_comm.py",
+      "line": 44,
+      "sha256": "804c008500f163c050f84cb387edf938e37ae394cf7862c576de1bcb611ea402"
+    },
+    "hardwareExecutionVerifiedByThisAudit": false
+  },
+  {
+    "name": "CommTrans",
+    "type_id": 604,
+    "memory_size": 32,
+    "parameters": [],
+    "description": "通用通信传输",
+    "category": "comm",
+    "status": "supported",
+    "incomplete_reason": "",
+    "runtime_fields": [],
+    "source": {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_comm.py",
+      "line": 55,
+      "sha256": "804c008500f163c050f84cb387edf938e37ae394cf7862c576de1bcb611ea402"
+    },
+    "hardwareExecutionVerifiedByThisAudit": false
+  },
+  {
+    "name": "CommWatch",
+    "type_id": 605,
+    "memory_size": 24,
+    "parameters": [],
+    "description": "通信链路监视",
+    "category": "comm",
+    "status": "supported",
+    "incomplete_reason": "",
+    "runtime_fields": [],
+    "source": {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_comm.py",
+      "line": 66,
+      "sha256": "804c008500f163c050f84cb387edf938e37ae394cf7862c576de1bcb611ea402"
+    },
+    "hardwareExecutionVerifiedByThisAudit": false
+  },
+  {
+    "name": "GT",
+    "type_id": 241,
+    "memory_size": 16,
+    "parameters": [],
+    "description": "大于比较：Input1 > Input2",
+    "category": "compare",
+    "status": "supported",
+    "incomplete_reason": "",
+    "runtime_fields": [],
+    "source": {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_compare.py",
+      "line": 23,
+      "sha256": "874c32b3d3efda31a7e3fade99d22a287b86eb80cf4f15d809501c4709e2fd38"
+    },
+    "hardwareExecutionVerifiedByThisAudit": false
+  },
+  {
+    "name": "LT",
+    "type_id": 242,
+    "memory_size": 16,
+    "parameters": [],
+    "description": "小于比较：Input1 < Input2",
+    "category": "compare",
+    "status": "supported",
+    "incomplete_reason": "",
+    "runtime_fields": [],
+    "source": {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_compare.py",
+      "line": 34,
+      "sha256": "874c32b3d3efda31a7e3fade99d22a287b86eb80cf4f15d809501c4709e2fd38"
+    },
+    "hardwareExecutionVerifiedByThisAudit": false
+  },
+  {
+    "name": "LE",
+    "type_id": 243,
+    "memory_size": 16,
+    "parameters": [],
+    "description": "小于等于比较：Input1 <= Input2",
+    "category": "compare",
+    "status": "supported",
+    "incomplete_reason": "",
+    "runtime_fields": [],
+    "source": {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_compare.py",
+      "line": 45,
+      "sha256": "874c32b3d3efda31a7e3fade99d22a287b86eb80cf4f15d809501c4709e2fd38"
+    },
+    "hardwareExecutionVerifiedByThisAudit": false
+  },
+  {
+    "name": "GE",
+    "type_id": 244,
+    "memory_size": 16,
+    "parameters": [],
+    "description": "大于等于比较：Input1 >= Input2",
+    "category": "compare",
+    "status": "supported",
+    "incomplete_reason": "",
+    "runtime_fields": [],
+    "source": {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_compare.py",
+      "line": 56,
+      "sha256": "874c32b3d3efda31a7e3fade99d22a287b86eb80cf4f15d809501c4709e2fd38"
+    },
+    "hardwareExecutionVerifiedByThisAudit": false
+  },
+  {
+    "name": "EQ",
+    "type_id": 245,
+    "memory_size": 16,
+    "parameters": [],
+    "description": "等于比较：Input1 = Input2",
+    "category": "compare",
+    "status": "supported",
+    "incomplete_reason": "",
+    "runtime_fields": [],
+    "source": {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_compare.py",
+      "line": 67,
+      "sha256": "874c32b3d3efda31a7e3fade99d22a287b86eb80cf4f15d809501c4709e2fd38"
+    },
+    "hardwareExecutionVerifiedByThisAudit": false
+  },
+  {
+    "name": "NE",
+    "type_id": 246,
+    "memory_size": 16,
+    "parameters": [],
+    "description": "不等于比较：Input1 <> Input2",
+    "category": "compare",
+    "status": "supported",
+    "incomplete_reason": "",
+    "runtime_fields": [],
+    "source": {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_compare.py",
+      "line": 78,
+      "sha256": "874c32b3d3efda31a7e3fade99d22a287b86eb80cf4f15d809501c4709e2fd38"
+    },
+    "hardwareExecutionVerifiedByThisAudit": false
+  },
+  {
+    "name": "IntConstBuild",
+    "type_id": 121,
+    "memory_size": 16,
+    "parameters": [],
+    "description": "整数常量",
+    "category": "constant",
+    "status": "supported",
+    "incomplete_reason": "",
+    "runtime_fields": [],
+    "source": {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_constant.py",
+      "line": 20,
+      "sha256": "7abfa2565375090cda26aba2861bb8299c77638ab64d6194fc563d1c80e32228"
+    },
+    "hardwareExecutionVerifiedByThisAudit": false
+  },
+  {
+    "name": "RealConstBuild",
+    "type_id": 122,
+    "memory_size": 16,
+    "parameters": [],
+    "description": "浮点常量",
+    "category": "constant",
+    "status": "supported",
+    "incomplete_reason": "",
+    "runtime_fields": [],
+    "source": {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_constant.py",
+      "line": 31,
+      "sha256": "7abfa2565375090cda26aba2861bb8299c77638ab64d6194fc563d1c80e32228"
+    },
+    "hardwareExecutionVerifiedByThisAudit": false
+  },
+  {
+    "name": "BoolConstBuild",
+    "type_id": 123,
+    "memory_size": 8,
+    "parameters": [],
+    "description": "布尔常量",
+    "category": "constant",
+    "status": "supported",
+    "incomplete_reason": "",
+    "runtime_fields": [],
+    "source": {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_constant.py",
+      "line": 42,
+      "sha256": "7abfa2565375090cda26aba2861bb8299c77638ab64d6194fc563d1c80e32228"
+    },
+    "hardwareExecutionVerifiedByThisAudit": false
+  },
+  {
+    "name": "Switch1",
+    "type_id": 171,
+    "memory_size": 16,
+    "parameters": [],
+    "description": "单分支选择",
+    "category": "control",
+    "status": "supported",
+    "incomplete_reason": "",
+    "runtime_fields": [],
+    "source": {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_control.py",
+      "line": 37,
+      "sha256": "a4218b6dd96ca1ff0d7b5e0927bfc5202930fce5919af201be1475d5d0913c09"
+    },
+    "hardwareExecutionVerifiedByThisAudit": false
+  },
+  {
+    "name": "Switch2",
+    "type_id": 172,
+    "memory_size": 16,
+    "parameters": [],
+    "description": "双分支选择",
+    "category": "control",
+    "status": "supported",
+    "incomplete_reason": "",
+    "runtime_fields": [],
+    "source": {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_control.py",
+      "line": 48,
+      "sha256": "a4218b6dd96ca1ff0d7b5e0927bfc5202930fce5919af201be1475d5d0913c09"
+    },
+    "hardwareExecutionVerifiedByThisAudit": false
+  },
+  {
+    "name": "Switch3",
+    "type_id": 173,
+    "memory_size": 16,
+    "parameters": [],
+    "description": "三分支选择",
+    "category": "control",
+    "status": "supported",
+    "incomplete_reason": "",
+    "runtime_fields": [],
+    "source": {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_control.py",
+      "line": 59,
+      "sha256": "a4218b6dd96ca1ff0d7b5e0927bfc5202930fce5919af201be1475d5d0913c09"
+    },
+    "hardwareExecutionVerifiedByThisAudit": false
+  },
+  {
+    "name": "Switch4",
+    "type_id": 174,
+    "memory_size": 16,
+    "parameters": [],
+    "description": "四分支选择",
+    "category": "control",
+    "status": "supported",
+    "incomplete_reason": "",
+    "runtime_fields": [],
+    "source": {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_control.py",
+      "line": 70,
+      "sha256": "a4218b6dd96ca1ff0d7b5e0927bfc5202930fce5919af201be1475d5d0913c09"
+    },
+    "hardwareExecutionVerifiedByThisAudit": false
+  },
+  {
+    "name": "Switch5",
+    "type_id": 175,
+    "memory_size": 16,
+    "parameters": [],
+    "description": "五分支选择",
+    "category": "control",
+    "status": "supported",
+    "incomplete_reason": "",
+    "runtime_fields": [],
+    "source": {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_control.py",
+      "line": 81,
+      "sha256": "a4218b6dd96ca1ff0d7b5e0927bfc5202930fce5919af201be1475d5d0913c09"
+    },
+    "hardwareExecutionVerifiedByThisAudit": false
+  },
+  {
+    "name": "SwitchCase",
+    "type_id": 176,
+    "memory_size": 8,
+    "parameters": [],
+    "description": "Switch分支标记",
+    "category": "control",
+    "status": "supported",
+    "incomplete_reason": "",
+    "runtime_fields": [],
+    "source": {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_control.py",
+      "line": 92,
+      "sha256": "a4218b6dd96ca1ff0d7b5e0927bfc5202930fce5919af201be1475d5d0913c09"
+    },
+    "hardwareExecutionVerifiedByThisAudit": false
+  },
+  {
+    "name": "SwitchBreak",
+    "type_id": 177,
+    "memory_size": 8,
+    "parameters": [],
+    "description": "退出Switch",
+    "category": "control",
+    "status": "supported",
+    "incomplete_reason": "",
+    "runtime_fields": [],
+    "source": {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_control.py",
+      "line": 103,
+      "sha256": "a4218b6dd96ca1ff0d7b5e0927bfc5202930fce5919af201be1475d5d0913c09"
+    },
+    "hardwareExecutionVerifiedByThisAudit": false
+  },
+  {
+    "name": "SwitchEnd",
+    "type_id": 178,
+    "memory_size": 8,
+    "parameters": [],
+    "description": "Switch结束标志",
+    "category": "control",
+    "status": "supported",
+    "incomplete_reason": "",
+    "runtime_fields": [],
+    "source": {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_control.py",
+      "line": 114,
+      "sha256": "a4218b6dd96ca1ff0d7b5e0927bfc5202930fce5919af201be1475d5d0913c09"
+    },
+    "hardwareExecutionVerifiedByThisAudit": false
+  },
+  {
+    "name": "If1",
+    "type_id": 179,
+    "memory_size": 16,
+    "parameters": [],
+    "description": "单条件判断",
+    "category": "control",
+    "status": "supported",
+    "incomplete_reason": "",
+    "runtime_fields": [],
+    "source": {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_control.py",
+      "line": 125,
+      "sha256": "a4218b6dd96ca1ff0d7b5e0927bfc5202930fce5919af201be1475d5d0913c09"
+    },
+    "hardwareExecutionVerifiedByThisAudit": false
+  },
+  {
+    "name": "If2",
+    "type_id": 180,
+    "memory_size": 16,
+    "parameters": [],
+    "description": "双条件判断",
+    "category": "control",
+    "status": "supported",
+    "incomplete_reason": "",
+    "runtime_fields": [],
+    "source": {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_control.py",
+      "line": 136,
+      "sha256": "a4218b6dd96ca1ff0d7b5e0927bfc5202930fce5919af201be1475d5d0913c09"
+    },
+    "hardwareExecutionVerifiedByThisAudit": false
+  },
+  {
+    "name": "If3",
+    "type_id": 181,
+    "memory_size": 16,
+    "parameters": [],
+    "description": "三条件判断",
+    "category": "control",
+    "status": "supported",
+    "incomplete_reason": "",
+    "runtime_fields": [],
+    "source": {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_control.py",
+      "line": 147,
+      "sha256": "a4218b6dd96ca1ff0d7b5e0927bfc5202930fce5919af201be1475d5d0913c09"
+    },
+    "hardwareExecutionVerifiedByThisAudit": false
+  },
+  {
+    "name": "IfElse",
+    "type_id": 182,
+    "memory_size": 8,
+    "parameters": [],
+    "description": "If分支Else标记",
+    "category": "control",
+    "status": "supported",
+    "incomplete_reason": "",
+    "runtime_fields": [],
+    "source": {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_control.py",
+      "line": 158,
+      "sha256": "a4218b6dd96ca1ff0d7b5e0927bfc5202930fce5919af201be1475d5d0913c09"
+    },
+    "hardwareExecutionVerifiedByThisAudit": false
+  },
+  {
+    "name": "IfEnd",
+    "type_id": 183,
+    "memory_size": 8,
+    "parameters": [],
+    "description": "条件判断结束",
+    "category": "control",
+    "status": "supported",
+    "incomplete_reason": "",
+    "runtime_fields": [],
+    "source": {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_control.py",
+      "line": 169,
+      "sha256": "a4218b6dd96ca1ff0d7b5e0927bfc5202930fce5919af201be1475d5d0913c09"
+    },
+    "hardwareExecutionVerifiedByThisAudit": false
+  },
+  {
+    "name": "For",
+    "type_id": 184,
+    "memory_size": 24,
+    "parameters": [],
+    "description": "固定次数循环",
+    "category": "control",
+    "status": "supported",
+    "incomplete_reason": "",
+    "runtime_fields": [],
+    "source": {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_control.py",
+      "line": 180,
+      "sha256": "a4218b6dd96ca1ff0d7b5e0927bfc5202930fce5919af201be1475d5d0913c09"
+    },
+    "hardwareExecutionVerifiedByThisAudit": false
+  },
+  {
+    "name": "ForEnd",
+    "type_id": 185,
+    "memory_size": 8,
+    "parameters": [],
+    "description": "For循环结束",
+    "category": "control",
+    "status": "supported",
+    "incomplete_reason": "",
+    "runtime_fields": [],
+    "source": {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_control.py",
+      "line": 191,
+      "sha256": "a4218b6dd96ca1ff0d7b5e0927bfc5202930fce5919af201be1475d5d0913c09"
+    },
+    "hardwareExecutionVerifiedByThisAudit": false
+  },
+  {
+    "name": "While",
+    "type_id": 186,
+    "memory_size": 16,
+    "parameters": [],
+    "description": "条件循环",
+    "category": "control",
+    "status": "supported",
+    "incomplete_reason": "",
+    "runtime_fields": [],
+    "source": {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_control.py",
+      "line": 202,
+      "sha256": "a4218b6dd96ca1ff0d7b5e0927bfc5202930fce5919af201be1475d5d0913c09"
+    },
+    "hardwareExecutionVerifiedByThisAudit": false
+  },
+  {
+    "name": "WhileEnd",
+    "type_id": 187,
+    "memory_size": 8,
+    "parameters": [],
+    "description": "While循环结束",
+    "category": "control",
+    "status": "supported",
+    "incomplete_reason": "",
+    "runtime_fields": [],
+    "source": {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_control.py",
+      "line": 213,
+      "sha256": "a4218b6dd96ca1ff0d7b5e0927bfc5202930fce5919af201be1475d5d0913c09"
+    },
+    "hardwareExecutionVerifiedByThisAudit": false
+  },
+  {
+    "name": "LoopBreak",
+    "type_id": 188,
+    "memory_size": 8,
+    "parameters": [],
+    "description": "退出循环",
+    "category": "control",
+    "status": "supported",
+    "incomplete_reason": "",
+    "runtime_fields": [],
+    "source": {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_control.py",
+      "line": 224,
+      "sha256": "a4218b6dd96ca1ff0d7b5e0927bfc5202930fce5919af201be1475d5d0913c09"
+    },
+    "hardwareExecutionVerifiedByThisAudit": false
+  },
+  {
+    "name": "LoopContinue",
+    "type_id": 189,
+    "memory_size": 8,
+    "parameters": [],
+    "description": "继续下次循环",
+    "category": "control",
+    "status": "supported",
+    "incomplete_reason": "",
+    "runtime_fields": [],
+    "source": {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_control.py",
+      "line": 235,
+      "sha256": "a4218b6dd96ca1ff0d7b5e0927bfc5202930fce5919af201be1475d5d0913c09"
+    },
+    "hardwareExecutionVerifiedByThisAudit": false
+  },
+  {
+    "name": "Return",
+    "type_id": 190,
+    "memory_size": 8,
+    "parameters": [],
+    "description": "返回",
+    "category": "control",
+    "status": "supported",
+    "incomplete_reason": "",
+    "runtime_fields": [],
+    "source": {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_control.py",
+      "line": 246,
+      "sha256": "a4218b6dd96ca1ff0d7b5e0927bfc5202930fce5919af201be1475d5d0913c09"
+    },
+    "hardwareExecutionVerifiedByThisAudit": false
+  },
+  {
+    "name": "Counter",
+    "type_id": 311,
+    "memory_size": 24,
+    "parameters": [],
+    "description": "通用计数器",
+    "category": "counter",
+    "status": "supported",
+    "incomplete_reason": "",
+    "runtime_fields": [],
+    "source": {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_counter.py",
+      "line": 22,
+      "sha256": "f19dd66d5b06d5699abf59f1dd3aad5eb02ea5f14995a95d4b0ba3df8038731e"
+    },
+    "hardwareExecutionVerifiedByThisAudit": false
+  },
+  {
+    "name": "CTU",
+    "type_id": 312,
+    "memory_size": 24,
+    "parameters": [],
+    "description": "加计数器",
+    "category": "counter",
+    "status": "supported",
+    "incomplete_reason": "",
+    "runtime_fields": [],
+    "source": {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_counter.py",
+      "line": 33,
+      "sha256": "f19dd66d5b06d5699abf59f1dd3aad5eb02ea5f14995a95d4b0ba3df8038731e"
+    },
+    "hardwareExecutionVerifiedByThisAudit": false
+  },
+  {
+    "name": "CTD",
+    "type_id": 313,
+    "memory_size": 24,
+    "parameters": [],
+    "description": "减计数器",
+    "category": "counter",
+    "status": "supported",
+    "incomplete_reason": "",
+    "runtime_fields": [],
+    "source": {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_counter.py",
+      "line": 44,
+      "sha256": "f19dd66d5b06d5699abf59f1dd3aad5eb02ea5f14995a95d4b0ba3df8038731e"
+    },
+    "hardwareExecutionVerifiedByThisAudit": false
+  },
+  {
+    "name": "CTUD",
+    "type_id": 314,
+    "memory_size": 32,
+    "parameters": [],
+    "description": "加减计数器",
+    "category": "counter",
+    "status": "supported",
+    "incomplete_reason": "",
+    "runtime_fields": [],
+    "source": {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_counter.py",
+      "line": 55,
+      "sha256": "f19dd66d5b06d5699abf59f1dd3aad5eb02ea5f14995a95d4b0ba3df8038731e"
+    },
+    "hardwareExecutionVerifiedByThisAudit": false
+  },
+  {
+    "name": "CounterReset",
+    "type_id": 315,
+    "memory_size": 16,
+    "parameters": [],
+    "description": "复位计数器",
+    "category": "counter",
+    "status": "supported",
+    "incomplete_reason": "",
+    "runtime_fields": [],
+    "source": {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_counter.py",
+      "line": 66,
+      "sha256": "f19dd66d5b06d5699abf59f1dd3aad5eb02ea5f14995a95d4b0ba3df8038731e"
+    },
+    "hardwareExecutionVerifiedByThisAudit": false
+  },
+  {
+    "name": "KeyScan",
+    "type_id": 801,
+    "memory_size": 16,
+    "parameters": [],
+    "description": "按键扫描",
+    "category": "display",
+    "status": "incomplete",
+    "incomplete_reason": "已保存 LM 功能候选证据；LH 固件版本对应的指令、引用和字段布局尚未核实",
+    "runtime_fields": [],
+    "source": {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_display.py",
+      "line": 26,
+      "sha256": "44398c73bee935f289df520a83a4226fde415a45359ce0b343ff493aead041f3"
+    },
+    "hardwareExecutionVerifiedByThisAudit": false
+  },
+  {
+    "name": "SCIDispTrans",
+    "type_id": 802,
+    "memory_size": 16,
+    "parameters": [],
+    "description": "串口显示发送",
+    "category": "display",
+    "status": "incomplete",
+    "incomplete_reason": "已保存 LM 功能候选证据；LH 固件版本对应的指令、引用和字段布局尚未核实",
+    "runtime_fields": [],
+    "source": {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_display.py",
+      "line": 44,
+      "sha256": "44398c73bee935f289df520a83a4226fde415a45359ce0b343ff493aead041f3"
+    },
+    "hardwareExecutionVerifiedByThisAudit": false
+  },
+  {
+    "name": "SCIDispInit",
+    "type_id": 803,
+    "memory_size": 24,
+    "parameters": [],
+    "description": "串口显示初始化",
+    "category": "display",
+    "status": "incomplete",
+    "incomplete_reason": "已保存 LM 功能候选证据；LH 固件版本对应的指令、引用和字段布局尚未核实",
+    "runtime_fields": [],
+    "source": {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_display.py",
+      "line": 62,
+      "sha256": "44398c73bee935f289df520a83a4226fde415a45359ce0b343ff493aead041f3"
+    },
+    "hardwareExecutionVerifiedByThisAudit": false
+  },
+  {
+    "name": "M600TextDisp",
+    "type_id": 804,
+    "memory_size": 64,
+    "parameters": [],
+    "description": "M600文本显示",
+    "category": "display",
+    "status": "incomplete",
+    "incomplete_reason": "已保存 LM 功能候选证据；LH 固件版本对应的指令、引用和字段布局尚未核实",
+    "runtime_fields": [],
+    "source": {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_display.py",
+      "line": 80,
+      "sha256": "44398c73bee935f289df520a83a4226fde415a45359ce0b343ff493aead041f3"
+    },
+    "hardwareExecutionVerifiedByThisAudit": false
+  },
+  {
+    "name": "M600ProgressBar",
+    "type_id": 805,
+    "memory_size": 64,
+    "parameters": [],
+    "description": "M600进度条",
+    "category": "display",
+    "status": "incomplete",
+    "incomplete_reason": "已保存 LM 功能候选证据；LH 固件版本对应的指令、引用和字段布局尚未核实",
+    "runtime_fields": [],
+    "source": {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_display.py",
+      "line": 98,
+      "sha256": "44398c73bee935f289df520a83a4226fde415a45359ce0b343ff493aead041f3"
+    },
+    "hardwareExecutionVerifiedByThisAudit": false
+  },
+  {
+    "name": "EXCACycDisp",
+    "type_id": 806,
+    "memory_size": 32,
+    "parameters": [],
+    "description": "EXCA循环显示",
+    "category": "display",
+    "status": "incomplete",
+    "incomplete_reason": "已保存 LM 功能候选证据；LH 固件版本对应的指令、引用和字段布局尚未核实",
+    "runtime_fields": [],
+    "source": {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_display.py",
+      "line": 116,
+      "sha256": "44398c73bee935f289df520a83a4226fde415a45359ce0b343ff493aead041f3"
+    },
+    "hardwareExecutionVerifiedByThisAudit": false
+  },
+  {
+    "name": "FilterBW",
+    "type_id": 851,
+    "memory_size": 48,
+    "parameters": [],
+    "description": "巴特沃斯滤波器",
+    "category": "filter",
+    "status": "incomplete",
+    "incomplete_reason": "已保存 LM 功能候选证据；LH 固件版本对应的指令、引用和字段布局尚未核实",
+    "runtime_fields": [],
+    "source": {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_filter.py",
+      "line": 21,
+      "sha256": "9fb09b2c328a04781620bc03d8b46035c0d3fa43f46f00bc08f788a9e75deeda"
+    },
+    "hardwareExecutionVerifiedByThisAudit": false
+  },
+  {
+    "name": "DrvAI",
+    "type_id": 401,
+    "memory_size": 32,
+    "parameters": [
+      {
+        "name": "NumChannels",
+        "data_type": "INT",
+        "direction": "IN",
+        "offset": null,
+        "default_value": 1,
+        "description": ""
+      },
+      {
+        "name": "InputNum",
+        "data_type": "INT",
+        "direction": "IN",
+        "offset": null,
+        "default_value": 0,
+        "description": ""
+      },
+      {
+        "name": "DivisionNum",
+        "data_type": "INT",
+        "direction": "IN",
+        "offset": null,
+        "default_value": 4096,
+        "description": ""
+      }
+    ],
+    "description": "模拟量输入驱动",
+    "category": "io",
+    "status": "supported",
+    "incomplete_reason": "",
+    "runtime_fields": [],
+    "source": {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_io.py",
+      "line": 28,
+      "sha256": "78432a733c2a9caa517d677413477bf0b8b4ed43941580143abbf205e4108581"
+    },
+    "hardwareExecutionVerifiedByThisAudit": false
+  },
+  {
+    "name": "DrvAO",
+    "type_id": 402,
+    "memory_size": 32,
+    "parameters": [
+      {
+        "name": "channel",
+        "data_type": "INT",
+        "direction": "IN",
+        "offset": null,
+        "default_value": 0,
+        "description": ""
+      },
+      {
+        "name": "value",
+        "data_type": "REAL",
+        "direction": "IN",
+        "offset": null,
+        "default_value": 0,
+        "description": ""
+      }
+    ],
+    "description": "模拟量输出驱动",
+    "category": "io",
+    "status": "supported",
+    "incomplete_reason": "",
+    "runtime_fields": [],
+    "source": {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_io.py",
+      "line": 44,
+      "sha256": "78432a733c2a9caa517d677413477bf0b8b4ed43941580143abbf205e4108581"
+    },
+    "hardwareExecutionVerifiedByThisAudit": false
+  },
+  {
+    "name": "DrvDI",
+    "type_id": 403,
+    "memory_size": 16,
+    "parameters": [
+      {
+        "name": "Port",
+        "data_type": "INT",
+        "direction": "IN",
+        "offset": null,
+        "default_value": 0,
+        "description": ""
+      },
+      {
+        "name": "Mask",
+        "data_type": "INT",
+        "direction": "IN",
+        "offset": null,
+        "default_value": 255,
+        "description": ""
+      },
+      {
+        "name": "Action",
+        "data_type": "BOOL",
+        "direction": "IN",
+        "offset": null,
+        "default_value": 1,
+        "description": ""
+      }
+    ],
+    "description": "开关量输入驱动",
+    "category": "io",
+    "status": "supported",
+    "incomplete_reason": "",
+    "runtime_fields": [],
+    "source": {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_io.py",
+      "line": 59,
+      "sha256": "78432a733c2a9caa517d677413477bf0b8b4ed43941580143abbf205e4108581"
+    },
+    "hardwareExecutionVerifiedByThisAudit": false
+  },
+  {
+    "name": "DrvDO",
+    "type_id": 404,
+    "memory_size": 16,
+    "parameters": [
+      {
+        "name": "OutputWord",
+        "data_type": "INT",
+        "direction": "IN",
+        "offset": null,
+        "default_value": 0,
+        "description": ""
+      },
+      {
+        "name": "Port",
+        "data_type": "INT",
+        "direction": "IN",
+        "offset": null,
+        "default_value": 0,
+        "description": ""
+      },
+      {
+        "name": "Mask",
+        "data_type": "INT",
+        "direction": "IN",
+        "offset": null,
+        "default_value": 255,
+        "description": ""
+      },
+      {
+        "name": "Action",
+        "data_type": "BOOL",
+        "direction": "IN",
+        "offset": null,
+        "default_value": 1,
+        "description": ""
+      }
+    ],
+    "description": "开关量输出驱动",
+    "category": "io",
+    "status": "supported",
+    "incomplete_reason": "",
+    "runtime_fields": [],
+    "source": {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_io.py",
+      "line": 75,
+      "sha256": "78432a733c2a9caa517d677413477bf0b8b4ed43941580143abbf205e4108581"
+    },
+    "hardwareExecutionVerifiedByThisAudit": false
+  },
+  {
+    "name": "PortSet",
+    "type_id": 405,
+    "memory_size": 16,
+    "parameters": [
+      {
+        "name": "port",
+        "data_type": "INT",
+        "direction": "IN",
+        "offset": null,
+        "default_value": 0,
+        "description": ""
+      },
+      {
+        "name": "pin",
+        "data_type": "INT",
+        "direction": "IN",
+        "offset": null,
+        "default_value": 0,
+        "description": ""
+      }
+    ],
+    "description": "端口置位",
+    "category": "io",
+    "status": "supported",
+    "incomplete_reason": "",
+    "runtime_fields": [],
+    "source": {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_io.py",
+      "line": 92,
+      "sha256": "78432a733c2a9caa517d677413477bf0b8b4ed43941580143abbf205e4108581"
+    },
+    "hardwareExecutionVerifiedByThisAudit": false
+  },
+  {
+    "name": "PortReset",
+    "type_id": 406,
+    "memory_size": 16,
+    "parameters": [
+      {
+        "name": "port",
+        "data_type": "INT",
+        "direction": "IN",
+        "offset": null,
+        "default_value": 0,
+        "description": ""
+      },
+      {
+        "name": "pin",
+        "data_type": "INT",
+        "direction": "IN",
+        "offset": null,
+        "default_value": 0,
+        "description": ""
+      }
+    ],
+    "description": "端口复位",
+    "category": "io",
+    "status": "supported",
+    "incomplete_reason": "",
+    "runtime_fields": [],
+    "source": {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_io.py",
+      "line": 107,
+      "sha256": "78432a733c2a9caa517d677413477bf0b8b4ed43941580143abbf205e4108581"
+    },
+    "hardwareExecutionVerifiedByThisAudit": false
+  },
+  {
+    "name": "PortToggle",
+    "type_id": 407,
+    "memory_size": 16,
+    "parameters": [
+      {
+        "name": "port",
+        "data_type": "INT",
+        "direction": "IN",
+        "offset": null,
+        "default_value": 0,
+        "description": ""
+      },
+      {
+        "name": "pin",
+        "data_type": "INT",
+        "direction": "IN",
+        "offset": null,
+        "default_value": 0,
+        "description": ""
+      }
+    ],
+    "description": "端口翻转",
+    "category": "io",
+    "status": "supported",
+    "incomplete_reason": "",
+    "runtime_fields": [],
+    "source": {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_io.py",
+      "line": 122,
+      "sha256": "78432a733c2a9caa517d677413477bf0b8b4ed43941580143abbf205e4108581"
+    },
+    "hardwareExecutionVerifiedByThisAudit": false
+  },
+  {
+    "name": "DrvT2PeriodIn",
+    "type_id": 408,
+    "memory_size": 24,
+    "parameters": [
+      {
+        "name": "Channel",
+        "data_type": "INT",
+        "direction": "IN",
+        "offset": null,
+        "default_value": 0,
+        "description": ""
+      },
+      {
+        "name": "Mode",
+        "data_type": "INT",
+        "direction": "IN",
+        "offset": null,
+        "default_value": 0,
+        "description": ""
+      },
+      {
+        "name": "Scale",
+        "data_type": "INT",
+        "direction": "IN",
+        "offset": null,
+        "default_value": 1000,
+        "description": ""
+      },
+      {
+        "name": "Mask",
+        "data_type": "INT",
+        "direction": "IN",
+        "offset": null,
+        "default_value": 65535,
+        "description": ""
+      }
+    ],
+    "description": "周期量输入",
+    "category": "io",
+    "status": "supported",
+    "incomplete_reason": "",
+    "runtime_fields": [],
+    "source": {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_io.py",
+      "line": 137,
+      "sha256": "78432a733c2a9caa517d677413477bf0b8b4ed43941580143abbf205e4108581"
+    },
+    "hardwareExecutionVerifiedByThisAudit": false
+  },
+  {
+    "name": "DrvTimeIn",
+    "type_id": 409,
+    "memory_size": 24,
+    "parameters": [
+      {
+        "name": "Channel",
+        "data_type": "INT",
+        "direction": "IN",
+        "offset": null,
+        "default_value": 0,
+        "description": ""
+      },
+      {
+        "name": "Mode",
+        "data_type": "INT",
+        "direction": "IN",
+        "offset": null,
+        "default_value": 0,
+        "description": ""
+      },
+      {
+        "name": "Scale",
+        "data_type": "INT",
+        "direction": "IN",
+        "offset": null,
+        "default_value": 1,
+        "description": ""
+      },
+      {
+        "name": "Mask",
+        "data_type": "INT",
+        "direction": "IN",
+        "offset": null,
+        "default_value": 65535,
+        "description": ""
+      }
+    ],
+    "description": "脉冲量输入",
+    "category": "io",
+    "status": "supported",
+    "incomplete_reason": "",
+    "runtime_fields": [],
+    "source": {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_io.py",
+      "line": 154,
+      "sha256": "78432a733c2a9caa517d677413477bf0b8b4ed43941580143abbf205e4108581"
+    },
+    "hardwareExecutionVerifiedByThisAudit": false
+  },
+  {
+    "name": "And",
+    "type_id": 271,
+    "memory_size": 16,
+    "parameters": [],
+    "description": "逻辑与",
+    "category": "logic",
+    "status": "supported",
+    "incomplete_reason": "",
+    "runtime_fields": [],
+    "source": {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_logic.py",
+      "line": 25,
+      "sha256": "9e775c38403894b51a69926ff55a612410c6c12aa14e3437b324d23f355a9f41"
+    },
+    "hardwareExecutionVerifiedByThisAudit": false
+  },
+  {
+    "name": "Or",
+    "type_id": 272,
+    "memory_size": 16,
+    "parameters": [],
+    "description": "逻辑或",
+    "category": "logic",
+    "status": "supported",
+    "incomplete_reason": "",
+    "runtime_fields": [],
+    "source": {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_logic.py",
+      "line": 36,
+      "sha256": "9e775c38403894b51a69926ff55a612410c6c12aa14e3437b324d23f355a9f41"
+    },
+    "hardwareExecutionVerifiedByThisAudit": false
+  },
+  {
+    "name": "Not",
+    "type_id": 273,
+    "memory_size": 16,
+    "parameters": [],
+    "description": "逻辑非",
+    "category": "logic",
+    "status": "supported",
+    "incomplete_reason": "",
+    "runtime_fields": [],
+    "source": {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_logic.py",
+      "line": 47,
+      "sha256": "9e775c38403894b51a69926ff55a612410c6c12aa14e3437b324d23f355a9f41"
+    },
+    "hardwareExecutionVerifiedByThisAudit": false
+  },
+  {
+    "name": "Xor",
+    "type_id": 274,
+    "memory_size": 16,
+    "parameters": [],
+    "description": "异或",
+    "category": "logic",
+    "status": "supported",
+    "incomplete_reason": "",
+    "runtime_fields": [],
+    "source": {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_logic.py",
+      "line": 58,
+      "sha256": "9e775c38403894b51a69926ff55a612410c6c12aa14e3437b324d23f355a9f41"
+    },
+    "hardwareExecutionVerifiedByThisAudit": false
+  },
+  {
+    "name": "Shl",
+    "type_id": 275,
+    "memory_size": 16,
+    "parameters": [],
+    "description": "左移",
+    "category": "logic",
+    "status": "supported",
+    "incomplete_reason": "",
+    "runtime_fields": [],
+    "source": {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_logic.py",
+      "line": 69,
+      "sha256": "9e775c38403894b51a69926ff55a612410c6c12aa14e3437b324d23f355a9f41"
+    },
+    "hardwareExecutionVerifiedByThisAudit": false
+  },
+  {
+    "name": "Shr",
+    "type_id": 276,
+    "memory_size": 16,
+    "parameters": [],
+    "description": "右移",
+    "category": "logic",
+    "status": "supported",
+    "incomplete_reason": "",
+    "runtime_fields": [],
+    "source": {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_logic.py",
+      "line": 80,
+      "sha256": "9e775c38403894b51a69926ff55a612410c6c12aa14e3437b324d23f355a9f41"
+    },
+    "hardwareExecutionVerifiedByThisAudit": false
+  },
+  {
+    "name": "Rol",
+    "type_id": 277,
+    "memory_size": 16,
+    "parameters": [],
+    "description": "循环左移",
+    "category": "logic",
+    "status": "supported",
+    "incomplete_reason": "",
+    "runtime_fields": [],
+    "source": {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_logic.py",
+      "line": 91,
+      "sha256": "9e775c38403894b51a69926ff55a612410c6c12aa14e3437b324d23f355a9f41"
+    },
+    "hardwareExecutionVerifiedByThisAudit": false
+  },
+  {
+    "name": "Ror",
+    "type_id": 278,
+    "memory_size": 16,
+    "parameters": [],
+    "description": "循环右移",
+    "category": "logic",
+    "status": "supported",
+    "incomplete_reason": "",
+    "runtime_fields": [],
+    "source": {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_logic.py",
+      "line": 102,
+      "sha256": "9e775c38403894b51a69926ff55a612410c6c12aa14e3437b324d23f355a9f41"
+    },
+    "hardwareExecutionVerifiedByThisAudit": false
+  },
+  {
+    "name": "Add",
+    "type_id": 201,
+    "memory_size": 16,
+    "parameters": [],
+    "description": "加法",
+    "category": "math",
+    "status": "supported",
+    "incomplete_reason": "",
+    "runtime_fields": [],
+    "source": {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_math.py",
+      "line": 33,
+      "sha256": "64291fd76b1bbd8abbe55c9d288715df67016b684bee9f70ac99a5fbbf641516"
+    },
+    "hardwareExecutionVerifiedByThisAudit": false
+  },
+  {
+    "name": "Sub",
+    "type_id": 202,
+    "memory_size": 16,
+    "parameters": [],
+    "description": "减法",
+    "category": "math",
+    "status": "supported",
+    "incomplete_reason": "",
+    "runtime_fields": [],
+    "source": {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_math.py",
+      "line": 44,
+      "sha256": "64291fd76b1bbd8abbe55c9d288715df67016b684bee9f70ac99a5fbbf641516"
+    },
+    "hardwareExecutionVerifiedByThisAudit": false
+  },
+  {
+    "name": "Mul",
+    "type_id": 203,
+    "memory_size": 16,
+    "parameters": [],
+    "description": "乘法",
+    "category": "math",
+    "status": "supported",
+    "incomplete_reason": "",
+    "runtime_fields": [],
+    "source": {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_math.py",
+      "line": 55,
+      "sha256": "64291fd76b1bbd8abbe55c9d288715df67016b684bee9f70ac99a5fbbf641516"
+    },
+    "hardwareExecutionVerifiedByThisAudit": false
+  },
+  {
+    "name": "Div",
+    "type_id": 204,
+    "memory_size": 16,
+    "parameters": [],
+    "description": "除法",
+    "category": "math",
+    "status": "supported",
+    "incomplete_reason": "",
+    "runtime_fields": [],
+    "source": {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_math.py",
+      "line": 66,
+      "sha256": "64291fd76b1bbd8abbe55c9d288715df67016b684bee9f70ac99a5fbbf641516"
+    },
+    "hardwareExecutionVerifiedByThisAudit": false
+  },
+  {
+    "name": "Mod",
+    "type_id": 205,
+    "memory_size": 16,
+    "parameters": [],
+    "description": "取模",
+    "category": "math",
+    "status": "supported",
+    "incomplete_reason": "",
+    "runtime_fields": [],
+    "source": {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_math.py",
+      "line": 77,
+      "sha256": "64291fd76b1bbd8abbe55c9d288715df67016b684bee9f70ac99a5fbbf641516"
+    },
+    "hardwareExecutionVerifiedByThisAudit": false
+  },
+  {
+    "name": "Abs",
+    "type_id": 206,
+    "memory_size": 16,
+    "parameters": [],
+    "description": "绝对值",
+    "category": "math",
+    "status": "supported",
+    "incomplete_reason": "",
+    "runtime_fields": [],
+    "source": {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_math.py",
+      "line": 88,
+      "sha256": "64291fd76b1bbd8abbe55c9d288715df67016b684bee9f70ac99a5fbbf641516"
+    },
+    "hardwareExecutionVerifiedByThisAudit": false
+  },
+  {
+    "name": "Sqrt",
+    "type_id": 207,
+    "memory_size": 16,
+    "parameters": [],
+    "description": "平方根",
+    "category": "math",
+    "status": "supported",
+    "incomplete_reason": "",
+    "runtime_fields": [],
+    "source": {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_math.py",
+      "line": 99,
+      "sha256": "64291fd76b1bbd8abbe55c9d288715df67016b684bee9f70ac99a5fbbf641516"
+    },
+    "hardwareExecutionVerifiedByThisAudit": false
+  },
+  {
+    "name": "Exp",
+    "type_id": 208,
+    "memory_size": 16,
+    "parameters": [],
+    "description": "指数",
+    "category": "math",
+    "status": "supported",
+    "incomplete_reason": "",
+    "runtime_fields": [],
+    "source": {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_math.py",
+      "line": 110,
+      "sha256": "64291fd76b1bbd8abbe55c9d288715df67016b684bee9f70ac99a5fbbf641516"
+    },
+    "hardwareExecutionVerifiedByThisAudit": false
+  },
+  {
+    "name": "Ln",
+    "type_id": 209,
+    "memory_size": 16,
+    "parameters": [],
+    "description": "自然对数",
+    "category": "math",
+    "status": "supported",
+    "incomplete_reason": "",
+    "runtime_fields": [],
+    "source": {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_math.py",
+      "line": 121,
+      "sha256": "64291fd76b1bbd8abbe55c9d288715df67016b684bee9f70ac99a5fbbf641516"
+    },
+    "hardwareExecutionVerifiedByThisAudit": false
+  },
+  {
+    "name": "Log",
+    "type_id": 210,
+    "memory_size": 16,
+    "parameters": [],
+    "description": "常用对数",
+    "category": "math",
+    "status": "supported",
+    "incomplete_reason": "",
+    "runtime_fields": [],
+    "source": {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_math.py",
+      "line": 132,
+      "sha256": "64291fd76b1bbd8abbe55c9d288715df67016b684bee9f70ac99a5fbbf641516"
+    },
+    "hardwareExecutionVerifiedByThisAudit": false
+  },
+  {
+    "name": "Sin",
+    "type_id": 211,
+    "memory_size": 16,
+    "parameters": [],
+    "description": "正弦",
+    "category": "math",
+    "status": "supported",
+    "incomplete_reason": "",
+    "runtime_fields": [],
+    "source": {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_math.py",
+      "line": 143,
+      "sha256": "64291fd76b1bbd8abbe55c9d288715df67016b684bee9f70ac99a5fbbf641516"
+    },
+    "hardwareExecutionVerifiedByThisAudit": false
+  },
+  {
+    "name": "Cos",
+    "type_id": 212,
+    "memory_size": 16,
+    "parameters": [],
+    "description": "余弦",
+    "category": "math",
+    "status": "supported",
+    "incomplete_reason": "",
+    "runtime_fields": [],
+    "source": {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_math.py",
+      "line": 154,
+      "sha256": "64291fd76b1bbd8abbe55c9d288715df67016b684bee9f70ac99a5fbbf641516"
+    },
+    "hardwareExecutionVerifiedByThisAudit": false
+  },
+  {
+    "name": "Tan",
+    "type_id": 213,
+    "memory_size": 16,
+    "parameters": [],
+    "description": "正切",
+    "category": "math",
+    "status": "supported",
+    "incomplete_reason": "",
+    "runtime_fields": [],
+    "source": {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_math.py",
+      "line": 165,
+      "sha256": "64291fd76b1bbd8abbe55c9d288715df67016b684bee9f70ac99a5fbbf641516"
+    },
+    "hardwareExecutionVerifiedByThisAudit": false
+  },
+  {
+    "name": "Limit",
+    "type_id": 214,
+    "memory_size": 24,
+    "parameters": [],
+    "description": "限幅",
+    "category": "math",
+    "status": "supported",
+    "incomplete_reason": "",
+    "runtime_fields": [],
+    "source": {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_math.py",
+      "line": 176,
+      "sha256": "64291fd76b1bbd8abbe55c9d288715df67016b684bee9f70ac99a5fbbf641516"
+    },
+    "hardwareExecutionVerifiedByThisAudit": false
+  },
+  {
+    "name": "Min",
+    "type_id": 215,
+    "memory_size": 24,
+    "parameters": [],
+    "description": "最小值",
+    "category": "math",
+    "status": "supported",
+    "incomplete_reason": "",
+    "runtime_fields": [],
+    "source": {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_math.py",
+      "line": 187,
+      "sha256": "64291fd76b1bbd8abbe55c9d288715df67016b684bee9f70ac99a5fbbf641516"
+    },
+    "hardwareExecutionVerifiedByThisAudit": false
+  },
+  {
+    "name": "Max",
+    "type_id": 216,
+    "memory_size": 24,
+    "parameters": [],
+    "description": "最大值",
+    "category": "math",
+    "status": "supported",
+    "incomplete_reason": "",
+    "runtime_fields": [],
+    "source": {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_math.py",
+      "line": 198,
+      "sha256": "64291fd76b1bbd8abbe55c9d288715df67016b684bee9f70ac99a5fbbf641516"
+    },
+    "hardwareExecutionVerifiedByThisAudit": false
+  },
+  {
+    "name": "PID",
+    "type_id": 501,
+    "memory_size": 64,
+    "parameters": [
+      {
+        "name": "Setpoint",
+        "data_type": "REAL",
+        "direction": "IN",
+        "offset": null,
+        "default_value": 0.0,
+        "description": ""
+      },
+      {
+        "name": "Feedback",
+        "data_type": "REAL",
+        "direction": "IN",
+        "offset": null,
+        "default_value": 0.0,
+        "description": ""
+      },
+      {
+        "name": "Kp",
+        "data_type": "REAL",
+        "direction": "IN",
+        "offset": null,
+        "default_value": 1.0,
+        "description": ""
+      },
+      {
+        "name": "Ki",
+        "data_type": "REAL",
+        "direction": "IN",
+        "offset": null,
+        "default_value": 0.0,
+        "description": ""
+      },
+      {
+        "name": "Kd",
+        "data_type": "REAL",
+        "direction": "IN",
+        "offset": null,
+        "default_value": 0.0,
+        "description": ""
+      },
+      {
+        "name": "OutMax",
+        "data_type": "REAL",
+        "direction": "IN",
+        "offset": null,
+        "default_value": 100.0,
+        "description": ""
+      },
+      {
+        "name": "OutMin",
+        "data_type": "REAL",
+        "direction": "IN",
+        "offset": null,
+        "default_value": -100.0,
+        "description": ""
+      },
+      {
+        "name": "SampleTime",
+        "data_type": "INT",
+        "direction": "IN",
+        "offset": null,
+        "default_value": 1000,
+        "description": ""
+      },
+      {
+        "name": "Enable",
+        "data_type": "BOOL",
+        "direction": "IN",
+        "offset": null,
+        "default_value": 1,
+        "description": ""
+      },
+      {
+        "name": "Reset",
+        "data_type": "BOOL",
+        "direction": "IN",
+        "offset": null,
+        "default_value": 0,
+        "description": ""
+      }
+    ],
+    "description": "增量式PID控制器",
+    "category": "pid",
+    "status": "supported",
+    "incomplete_reason": "",
+    "runtime_fields": [],
+    "source": {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_pid.py",
+      "line": 25,
+      "sha256": "015591ce365957a3173cfa9ad6932404bc2c318a342880d8113167e698d8eb2a"
+    },
+    "hardwareExecutionVerifiedByThisAudit": false
+  },
+  {
+    "name": "PIDAutoTune",
+    "type_id": 502,
+    "memory_size": 64,
+    "parameters": [
+      {
+        "name": "Setpoint",
+        "data_type": "REAL",
+        "direction": "IN",
+        "offset": null,
+        "default_value": 0.0,
+        "description": ""
+      },
+      {
+        "name": "Feedback",
+        "data_type": "REAL",
+        "direction": "IN",
+        "offset": null,
+        "default_value": 0.0,
+        "description": ""
+      },
+      {
+        "name": "Amplitude",
+        "data_type": "REAL",
+        "direction": "IN",
+        "offset": null,
+        "default_value": 10.0,
+        "description": ""
+      },
+      {
+        "name": "Hysteresis",
+        "data_type": "REAL",
+        "direction": "IN",
+        "offset": null,
+        "default_value": 0.5,
+        "description": ""
+      },
+      {
+        "name": "Cycles",
+        "data_type": "INT",
+        "direction": "IN",
+        "offset": null,
+        "default_value": 5,
+        "description": ""
+      },
+      {
+        "name": "Start",
+        "data_type": "BOOL",
+        "direction": "IN",
+        "offset": null,
+        "default_value": 0,
+        "description": ""
+      }
+    ],
+    "description": "基于继电反馈法的PID自整定",
+    "category": "pid",
+    "status": "supported",
+    "incomplete_reason": "",
+    "runtime_fields": [],
+    "source": {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_pid.py",
+      "line": 52,
+      "sha256": "015591ce365957a3173cfa9ad6932404bc2c318a342880d8113167e698d8eb2a"
+    },
+    "hardwareExecutionVerifiedByThisAudit": false
+  },
+  {
+    "name": "System",
+    "type_id": 101,
+    "memory_size": 38,
+    "parameters": [
+      {
+        "name": "Author",
+        "data_type": "INT",
+        "direction": "IN",
+        "offset": null,
+        "default_value": 0,
+        "description": ""
+      },
+      {
+        "name": "Config",
+        "data_type": "INT",
+        "direction": "IN",
+        "offset": null,
+        "default_value": 0,
+        "description": ""
+      },
+      {
+        "name": "Date",
+        "data_type": "INT",
+        "direction": "IN",
+        "offset": null,
+        "default_value": 0,
+        "description": ""
+      },
+      {
+        "name": "Version",
+        "data_type": "INT",
+        "direction": "IN",
+        "offset": null,
+        "default_value": 1,
+        "description": ""
+      },
+      {
+        "name": "CycleTime",
+        "data_type": "INT",
+        "direction": "IN",
+        "offset": null,
+        "default_value": 1000,
+        "description": ""
+      }
+    ],
+    "description": "系统初始化与全局配置",
+    "category": "system",
+    "status": "supported",
+    "incomplete_reason": "",
+    "runtime_fields": [],
+    "source": {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_system.py",
+      "line": 26,
+      "sha256": "249e521e489fb53e1acfa235a4ba075fae591dff215930a3366e000e28020d90"
+    },
+    "hardwareExecutionVerifiedByThisAudit": false
+  },
+  {
+    "name": "SystemEnd",
+    "type_id": 102,
+    "memory_size": 8,
+    "parameters": [
+      {
+        "name": "Status",
+        "data_type": "INT",
+        "direction": "IN",
+        "offset": null,
+        "default_value": 0,
+        "description": ""
+      }
+    ],
+    "description": "系统结束标志",
+    "category": "system",
+    "status": "supported",
+    "incomplete_reason": "",
+    "runtime_fields": [],
+    "source": {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_system.py",
+      "line": 47,
+      "sha256": "249e521e489fb53e1acfa235a4ba075fae591dff215930a3366e000e28020d90"
+    },
+    "hardwareExecutionVerifiedByThisAudit": false
+  },
+  {
+    "name": "Exception",
+    "type_id": 103,
+    "memory_size": 16,
+    "parameters": [
+      {
+        "name": "Code",
+        "data_type": "INT",
+        "direction": "IN",
+        "offset": null,
+        "default_value": 0,
+        "description": ""
+      },
+      {
+        "name": "Action",
+        "data_type": "INT",
+        "direction": "IN",
+        "offset": null,
+        "default_value": 0,
+        "description": ""
+      },
+      {
+        "name": "Enable",
+        "data_type": "BOOL",
+        "direction": "IN",
+        "offset": null,
+        "default_value": 1,
+        "description": ""
+      }
+    ],
+    "description": "异常处理",
+    "category": "system",
+    "status": "supported",
+    "incomplete_reason": "",
+    "runtime_fields": [],
+    "source": {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_system.py",
+      "line": 64,
+      "sha256": "249e521e489fb53e1acfa235a4ba075fae591dff215930a3366e000e28020d90"
+    },
+    "hardwareExecutionVerifiedByThisAudit": false
+  },
+  {
+    "name": "Nop",
+    "type_id": 104,
+    "memory_size": 8,
+    "parameters": [],
+    "description": "空操作",
+    "category": "system",
+    "status": "supported",
+    "incomplete_reason": "",
+    "runtime_fields": [],
+    "source": {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_system.py",
+      "line": 83,
+      "sha256": "249e521e489fb53e1acfa235a4ba075fae591dff215930a3366e000e28020d90"
+    },
+    "hardwareExecutionVerifiedByThisAudit": false
+  },
+  {
+    "name": "Task",
+    "type_id": 751,
+    "memory_size": 16,
+    "parameters": [],
+    "description": "创建时间触发任务",
+    "category": "task",
+    "status": "incomplete",
+    "incomplete_reason": "已保存 LM 功能候选证据；LH 固件版本对应的指令、引用和字段布局尚未核实",
+    "runtime_fields": [],
+    "source": {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_task.py",
+      "line": 30,
+      "sha256": "a5bb16d7149388eb7535fc9e3fc8257dd1067dc2a17509017aec97d243beb389"
+    },
+    "hardwareExecutionVerifiedByThisAudit": false
+  },
+  {
+    "name": "TaskPeriodic",
+    "type_id": 752,
+    "memory_size": 16,
+    "parameters": [],
+    "description": "创建周期性任务",
+    "category": "task",
+    "status": "incomplete",
+    "incomplete_reason": "已保存 LM 功能候选证据；LH 固件版本对应的指令、引用和字段布局尚未核实",
+    "runtime_fields": [],
+    "source": {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_task.py",
+      "line": 48,
+      "sha256": "a5bb16d7149388eb7535fc9e3fc8257dd1067dc2a17509017aec97d243beb389"
+    },
+    "hardwareExecutionVerifiedByThisAudit": false
+  },
+  {
+    "name": "TaskWake",
+    "type_id": 753,
+    "memory_size": 8,
+    "parameters": [],
+    "description": "唤醒任务",
+    "category": "task",
+    "status": "incomplete",
+    "incomplete_reason": "已保存 LM 功能候选证据；LH 固件版本对应的指令、引用和字段布局尚未核实",
+    "runtime_fields": [],
+    "source": {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_task.py",
+      "line": 66,
+      "sha256": "a5bb16d7149388eb7535fc9e3fc8257dd1067dc2a17509017aec97d243beb389"
+    },
+    "hardwareExecutionVerifiedByThisAudit": false
+  },
+  {
+    "name": "TaskDataWake",
+    "type_id": 754,
+    "memory_size": 16,
+    "parameters": [],
+    "description": "数据唤醒任务",
+    "category": "task",
+    "status": "incomplete",
+    "incomplete_reason": "已保存 LM 功能候选证据；LH 固件版本对应的指令、引用和字段布局尚未核实",
+    "runtime_fields": [],
+    "source": {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_task.py",
+      "line": 84,
+      "sha256": "a5bb16d7149388eb7535fc9e3fc8257dd1067dc2a17509017aec97d243beb389"
+    },
+    "hardwareExecutionVerifiedByThisAudit": false
+  },
+  {
+    "name": "TaskLock",
+    "type_id": 755,
+    "memory_size": 8,
+    "parameters": [],
+    "description": "任务上锁",
+    "category": "task",
+    "status": "incomplete",
+    "incomplete_reason": "已保存 LM 功能候选证据；LH 固件版本对应的指令、引用和字段布局尚未核实",
+    "runtime_fields": [],
+    "source": {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_task.py",
+      "line": 102,
+      "sha256": "a5bb16d7149388eb7535fc9e3fc8257dd1067dc2a17509017aec97d243beb389"
+    },
+    "hardwareExecutionVerifiedByThisAudit": false
+  },
+  {
+    "name": "TaskUnlock",
+    "type_id": 756,
+    "memory_size": 8,
+    "parameters": [],
+    "description": "任务解锁",
+    "category": "task",
+    "status": "incomplete",
+    "incomplete_reason": "已保存 LM 功能候选证据；LH 固件版本对应的指令、引用和字段布局尚未核实",
+    "runtime_fields": [],
+    "source": {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_task.py",
+      "line": 120,
+      "sha256": "a5bb16d7149388eb7535fc9e3fc8257dd1067dc2a17509017aec97d243beb389"
+    },
+    "hardwareExecutionVerifiedByThisAudit": false
+  },
+  {
+    "name": "TaskSemDef",
+    "type_id": 757,
+    "memory_size": 16,
+    "parameters": [],
+    "description": "信号量定义",
+    "category": "task",
+    "status": "incomplete",
+    "incomplete_reason": "已保存 LM 功能候选证据；LH 固件版本对应的指令、引用和字段布局尚未核实",
+    "runtime_fields": [],
+    "source": {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_task.py",
+      "line": 138,
+      "sha256": "a5bb16d7149388eb7535fc9e3fc8257dd1067dc2a17509017aec97d243beb389"
+    },
+    "hardwareExecutionVerifiedByThisAudit": false
+  },
+  {
+    "name": "TaskSemWait",
+    "type_id": 758,
+    "memory_size": 16,
+    "parameters": [],
+    "description": "信号量等待",
+    "category": "task",
+    "status": "incomplete",
+    "incomplete_reason": "已保存 LM 功能候选证据；LH 固件版本对应的指令、引用和字段布局尚未核实",
+    "runtime_fields": [],
+    "source": {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_task.py",
+      "line": 156,
+      "sha256": "a5bb16d7149388eb7535fc9e3fc8257dd1067dc2a17509017aec97d243beb389"
+    },
+    "hardwareExecutionVerifiedByThisAudit": false
+  },
+  {
+    "name": "TaskSemPost",
+    "type_id": 759,
+    "memory_size": 16,
+    "parameters": [],
+    "description": "信号量发送",
+    "category": "task",
+    "status": "incomplete",
+    "incomplete_reason": "已保存 LM 功能候选证据；LH 固件版本对应的指令、引用和字段布局尚未核实",
+    "runtime_fields": [],
+    "source": {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_task.py",
+      "line": 174,
+      "sha256": "a5bb16d7149388eb7535fc9e3fc8257dd1067dc2a17509017aec97d243beb389"
+    },
+    "hardwareExecutionVerifiedByThisAudit": false
+  },
+  {
+    "name": "TaskEnd",
+    "type_id": 760,
+    "memory_size": 8,
+    "parameters": [],
+    "description": "任务结束标志",
+    "category": "task",
+    "status": "incomplete",
+    "incomplete_reason": "已保存 LM 功能候选证据；LH 固件版本对应的指令、引用和字段布局尚未核实",
+    "runtime_fields": [],
+    "source": {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_task.py",
+      "line": 192,
+      "sha256": "a5bb16d7149388eb7535fc9e3fc8257dd1067dc2a17509017aec97d243beb389"
+    },
+    "hardwareExecutionVerifiedByThisAudit": false
+  },
+  {
+    "name": "Timer",
+    "type_id": 301,
+    "memory_size": 24,
+    "parameters": [],
+    "description": "通用定时器",
+    "category": "timer",
+    "status": "supported",
+    "incomplete_reason": "",
+    "runtime_fields": [],
+    "source": {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_timer.py",
+      "line": 22,
+      "sha256": "11f532abeb5d9ac1a5acb2b0c2fa27918de634912aa2a470401d2fb6caa4d596"
+    },
+    "hardwareExecutionVerifiedByThisAudit": false
+  },
+  {
+    "name": "TON",
+    "type_id": 302,
+    "memory_size": 24,
+    "parameters": [],
+    "description": "接通延时",
+    "category": "timer",
+    "status": "supported",
+    "incomplete_reason": "",
+    "runtime_fields": [],
+    "source": {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_timer.py",
+      "line": 33,
+      "sha256": "11f532abeb5d9ac1a5acb2b0c2fa27918de634912aa2a470401d2fb6caa4d596"
+    },
+    "hardwareExecutionVerifiedByThisAudit": false
+  },
+  {
+    "name": "TOF",
+    "type_id": 303,
+    "memory_size": 24,
+    "parameters": [],
+    "description": "断开延时",
+    "category": "timer",
+    "status": "supported",
+    "incomplete_reason": "",
+    "runtime_fields": [],
+    "source": {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_timer.py",
+      "line": 44,
+      "sha256": "11f532abeb5d9ac1a5acb2b0c2fa27918de634912aa2a470401d2fb6caa4d596"
+    },
+    "hardwareExecutionVerifiedByThisAudit": false
+  },
+  {
+    "name": "TP",
+    "type_id": 304,
+    "memory_size": 24,
+    "parameters": [],
+    "description": "脉冲定时器",
+    "category": "timer",
+    "status": "supported",
+    "incomplete_reason": "",
+    "runtime_fields": [],
+    "source": {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_timer.py",
+      "line": 55,
+      "sha256": "11f532abeb5d9ac1a5acb2b0c2fa27918de634912aa2a470401d2fb6caa4d596"
+    },
+    "hardwareExecutionVerifiedByThisAudit": false
+  },
+  {
+    "name": "TimerStop",
+    "type_id": 305,
+    "memory_size": 16,
+    "parameters": [],
+    "description": "停止定时器",
+    "category": "timer",
+    "status": "supported",
+    "incomplete_reason": "",
+    "runtime_fields": [],
+    "source": {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_timer.py",
+      "line": 66,
+      "sha256": "11f532abeb5d9ac1a5acb2b0c2fa27918de634912aa2a470401d2fb6caa4d596"
+    },
+    "hardwareExecutionVerifiedByThisAudit": false
+  },
+  {
+    "name": "TSO",
+    "type_id": 891,
+    "memory_size": 64,
+    "parameters": [],
+    "description": "TSO控制器",
+    "category": "tso",
+    "status": "incomplete",
+    "incomplete_reason": "已保存 LM 功能候选证据；LH 固件版本对应的指令、引用和字段布局尚未核实",
+    "runtime_fields": [],
+    "source": {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_tso.py",
+      "line": 24,
+      "sha256": "c689c695651ad232d45403061cd30b419154a47e489f56622c2d54f1e3b5d2e4"
+    },
+    "hardwareExecutionVerifiedByThisAudit": false
+  },
+  {
+    "name": "TSOAutoTune",
+    "type_id": 892,
+    "memory_size": 64,
+    "parameters": [],
+    "description": "自整定TSO",
+    "category": "tso",
+    "status": "incomplete",
+    "incomplete_reason": "已保存 LM 功能候选证据；LH 固件版本对应的指令、引用和字段布局尚未核实",
+    "runtime_fields": [],
+    "source": {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_tso.py",
+      "line": 42,
+      "sha256": "c689c695651ad232d45403061cd30b419154a47e489f56622c2d54f1e3b5d2e4"
+    },
+    "hardwareExecutionVerifiedByThisAudit": false
+  },
+  {
+    "name": "TwoPosition",
+    "type_id": 893,
+    "memory_size": 32,
+    "parameters": [],
+    "description": "两位继电控制",
+    "category": "tso",
+    "status": "incomplete",
+    "incomplete_reason": "已保存 LM 功能候选证据；LH 固件版本对应的指令、引用和字段布局尚未核实",
+    "runtime_fields": [],
+    "source": {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_tso.py",
+      "line": 60,
+      "sha256": "c689c695651ad232d45403061cd30b419154a47e489f56622c2d54f1e3b5d2e4"
+    },
+    "hardwareExecutionVerifiedByThisAudit": false
+  },
+  {
+    "name": "RelayCtrl2",
+    "type_id": 894,
+    "memory_size": 32,
+    "parameters": [],
+    "description": "继电器控制2",
+    "category": "tso",
+    "status": "incomplete",
+    "incomplete_reason": "已保存 LM 功能候选证据；LH 固件版本对应的指令、引用和字段布局尚未核实",
+    "runtime_fields": [],
+    "source": {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_tso.py",
+      "line": 78,
+      "sha256": "c689c695651ad232d45403061cd30b419154a47e489f56622c2d54f1e3b5d2e4"
+    },
+    "hardwareExecutionVerifiedByThisAudit": false
+  },
+  {
+    "name": "EXCAKeyParamt",
+    "type_id": 831,
+    "memory_size": 32,
+    "parameters": [],
+    "description": "工程机械关键参数管理",
+    "category": "exca",
+    "status": "supported",
+    "incomplete_reason": "",
+    "runtime_fields": [],
+    "source": {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_exca.py",
+      "line": 29,
+      "sha256": "d6b5aef82265e94a8170abefbf81542b33b64590d8ad615a1e81a6ccf5fada85"
+    },
+    "hardwareExecutionVerifiedByThisAudit": false
+  },
+  {
+    "name": "EXCAModifyParamt",
+    "type_id": 832,
+    "memory_size": 32,
+    "parameters": [],
+    "description": "工程机械参数修改",
+    "category": "exca",
+    "status": "supported",
+    "incomplete_reason": "",
+    "runtime_fields": [],
+    "source": {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_exca.py",
+      "line": 44,
+      "sha256": "d6b5aef82265e94a8170abefbf81542b33b64590d8ad615a1e81a6ccf5fada85"
+    },
+    "hardwareExecutionVerifiedByThisAudit": false
+  },
+  {
+    "name": "EXCAOperComp",
+    "type_id": 833,
+    "memory_size": 32,
+    "parameters": [],
+    "description": "工程机械操作补偿",
+    "category": "exca",
+    "status": "supported",
+    "incomplete_reason": "",
+    "runtime_fields": [],
+    "source": {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_exca.py",
+      "line": 59,
+      "sha256": "d6b5aef82265e94a8170abefbf81542b33b64590d8ad615a1e81a6ccf5fada85"
+    },
+    "hardwareExecutionVerifiedByThisAudit": false
+  },
+  {
+    "name": "EXCASpdUnify",
+    "type_id": 834,
+    "memory_size": 32,
+    "parameters": [],
+    "description": "工程机械速度统一协调",
+    "category": "exca",
+    "status": "supported",
+    "incomplete_reason": "",
+    "runtime_fields": [],
+    "source": {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_exca.py",
+      "line": 74,
+      "sha256": "d6b5aef82265e94a8170abefbf81542b33b64590d8ad615a1e81a6ccf5fada85"
+    },
+    "hardwareExecutionVerifiedByThisAudit": false
+  },
+  {
+    "name": "IntBuild",
+    "type_id": 701,
+    "memory_size": 16,
+    "parameters": [],
+    "description": "整数数据构建",
+    "category": "data",
+    "status": "supported",
+    "incomplete_reason": "",
+    "runtime_fields": [],
+    "source": {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_data.py",
+      "line": 42,
+      "sha256": "49f6209e98ad8f5d7bb23a52a9e0a03ad684fa190fceb9976e4f4b5c4f78e200"
+    },
+    "hardwareExecutionVerifiedByThisAudit": false
+  },
+  {
+    "name": "IntDirectBuild",
+    "type_id": 702,
+    "memory_size": 16,
+    "parameters": [],
+    "description": "直接整数构建",
+    "category": "data",
+    "status": "supported",
+    "incomplete_reason": "",
+    "runtime_fields": [],
+    "source": {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_data.py",
+      "line": 54,
+      "sha256": "49f6209e98ad8f5d7bb23a52a9e0a03ad684fa190fceb9976e4f4b5c4f78e200"
+    },
+    "hardwareExecutionVerifiedByThisAudit": false
+  },
+  {
+    "name": "FloatBuild",
+    "type_id": 703,
+    "memory_size": 16,
+    "parameters": [],
+    "description": "浮点数据构建",
+    "category": "data",
+    "status": "supported",
+    "incomplete_reason": "",
+    "runtime_fields": [],
+    "source": {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_data.py",
+      "line": 66,
+      "sha256": "49f6209e98ad8f5d7bb23a52a9e0a03ad684fa190fceb9976e4f4b5c4f78e200"
+    },
+    "hardwareExecutionVerifiedByThisAudit": false
+  },
+  {
+    "name": "FloatConstBuild",
+    "type_id": 704,
+    "memory_size": 16,
+    "parameters": [],
+    "description": "浮点常量构建",
+    "category": "data",
+    "status": "supported",
+    "incomplete_reason": "",
+    "runtime_fields": [],
+    "source": {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_data.py",
+      "line": 78,
+      "sha256": "49f6209e98ad8f5d7bb23a52a9e0a03ad684fa190fceb9976e4f4b5c4f78e200"
+    },
+    "hardwareExecutionVerifiedByThisAudit": false
+  },
+  {
+    "name": "IntComp",
+    "type_id": 705,
+    "memory_size": 16,
+    "parameters": [],
+    "description": "整数比较运算",
+    "category": "data",
+    "status": "supported",
+    "incomplete_reason": "",
+    "runtime_fields": [],
+    "source": {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_data.py",
+      "line": 90,
+      "sha256": "49f6209e98ad8f5d7bb23a52a9e0a03ad684fa190fceb9976e4f4b5c4f78e200"
+    },
+    "hardwareExecutionVerifiedByThisAudit": false
+  },
+  {
+    "name": "FloatComp",
+    "type_id": 706,
+    "memory_size": 16,
+    "parameters": [],
+    "description": "浮点比较运算",
+    "category": "data",
+    "status": "supported",
+    "incomplete_reason": "",
+    "runtime_fields": [],
+    "source": {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_data.py",
+      "line": 102,
+      "sha256": "49f6209e98ad8f5d7bb23a52a9e0a03ad684fa190fceb9976e4f4b5c4f78e200"
+    },
+    "hardwareExecutionVerifiedByThisAudit": false
+  },
+  {
+    "name": "IntMax",
+    "type_id": 707,
+    "memory_size": 16,
+    "parameters": [],
+    "description": "整数最大值选择",
+    "category": "data",
+    "status": "supported",
+    "incomplete_reason": "",
+    "runtime_fields": [],
+    "source": {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_data.py",
+      "line": 114,
+      "sha256": "49f6209e98ad8f5d7bb23a52a9e0a03ad684fa190fceb9976e4f4b5c4f78e200"
+    },
+    "hardwareExecutionVerifiedByThisAudit": false
+  },
+  {
+    "name": "IntMin",
+    "type_id": 708,
+    "memory_size": 16,
+    "parameters": [],
+    "description": "整数最小值选择",
+    "category": "data",
+    "status": "supported",
+    "incomplete_reason": "",
+    "runtime_fields": [],
+    "source": {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_data.py",
+      "line": 126,
+      "sha256": "49f6209e98ad8f5d7bb23a52a9e0a03ad684fa190fceb9976e4f4b5c4f78e200"
+    },
+    "hardwareExecutionVerifiedByThisAudit": false
+  },
+  {
+    "name": "FloatMax",
+    "type_id": 709,
+    "memory_size": 16,
+    "parameters": [],
+    "description": "浮点最大值选择",
+    "category": "data",
+    "status": "supported",
+    "incomplete_reason": "",
+    "runtime_fields": [],
+    "source": {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_data.py",
+      "line": 138,
+      "sha256": "49f6209e98ad8f5d7bb23a52a9e0a03ad684fa190fceb9976e4f4b5c4f78e200"
+    },
+    "hardwareExecutionVerifiedByThisAudit": false
+  },
+  {
+    "name": "FloatMin",
+    "type_id": 710,
+    "memory_size": 16,
+    "parameters": [],
+    "description": "浮点最小值选择",
+    "category": "data",
+    "status": "supported",
+    "incomplete_reason": "",
+    "runtime_fields": [],
+    "source": {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_data.py",
+      "line": 150,
+      "sha256": "49f6209e98ad8f5d7bb23a52a9e0a03ad684fa190fceb9976e4f4b5c4f78e200"
+    },
+    "hardwareExecutionVerifiedByThisAudit": false
+  },
+  {
+    "name": "IntLimt",
+    "type_id": 711,
+    "memory_size": 16,
+    "parameters": [],
+    "description": "整数限幅功能",
+    "category": "data",
+    "status": "supported",
+    "incomplete_reason": "",
+    "runtime_fields": [],
+    "source": {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_data.py",
+      "line": 162,
+      "sha256": "49f6209e98ad8f5d7bb23a52a9e0a03ad684fa190fceb9976e4f4b5c4f78e200"
+    },
+    "hardwareExecutionVerifiedByThisAudit": false
+  },
+  {
+    "name": "FloatLimt",
+    "type_id": 712,
+    "memory_size": 16,
+    "parameters": [],
+    "description": "浮点限幅功能",
+    "category": "data",
+    "status": "supported",
+    "incomplete_reason": "",
+    "runtime_fields": [],
+    "source": {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_data.py",
+      "line": 174,
+      "sha256": "49f6209e98ad8f5d7bb23a52a9e0a03ad684fa190fceb9976e4f4b5c4f78e200"
+    },
+    "hardwareExecutionVerifiedByThisAudit": false
+  },
+  {
+    "name": "FloatVariLimt",
+    "type_id": 713,
+    "memory_size": 24,
+    "parameters": [],
+    "description": "浮点可变限幅功能",
+    "category": "data",
+    "status": "supported",
+    "incomplete_reason": "",
+    "runtime_fields": [],
+    "source": {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_data.py",
+      "line": 186,
+      "sha256": "49f6209e98ad8f5d7bb23a52a9e0a03ad684fa190fceb9976e4f4b5c4f78e200"
+    },
+    "hardwareExecutionVerifiedByThisAudit": false
+  },
+  {
+    "name": "IntBuffOper",
+    "type_id": 714,
+    "memory_size": 32,
+    "parameters": [],
+    "description": "整数缓冲区操作",
+    "category": "data",
+    "status": "supported",
+    "incomplete_reason": "",
+    "runtime_fields": [],
+    "source": {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_data.py",
+      "line": 198,
+      "sha256": "49f6209e98ad8f5d7bb23a52a9e0a03ad684fa190fceb9976e4f4b5c4f78e200"
+    },
+    "hardwareExecutionVerifiedByThisAudit": false
+  },
+  {
+    "name": "FloatBuffOper",
+    "type_id": 715,
+    "memory_size": 32,
+    "parameters": [],
+    "description": "浮点缓冲区操作",
+    "category": "data",
+    "status": "supported",
+    "incomplete_reason": "",
+    "runtime_fields": [],
+    "source": {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_data.py",
+      "line": 210,
+      "sha256": "49f6209e98ad8f5d7bb23a52a9e0a03ad684fa190fceb9976e4f4b5c4f78e200"
+    },
+    "hardwareExecutionVerifiedByThisAudit": false
+  },
+  {
+    "name": "IntBuffLogicOper",
+    "type_id": 716,
+    "memory_size": 32,
+    "parameters": [],
+    "description": "整数逻辑缓冲区操作",
+    "category": "data",
+    "status": "supported",
+    "incomplete_reason": "",
+    "runtime_fields": [],
+    "source": {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_data.py",
+      "line": 222,
+      "sha256": "49f6209e98ad8f5d7bb23a52a9e0a03ad684fa190fceb9976e4f4b5c4f78e200"
+    },
+    "hardwareExecutionVerifiedByThisAudit": false
+  },
+  {
+    "name": "IntModOper",
+    "type_id": 717,
+    "memory_size": 16,
+    "parameters": [],
+    "description": "整数模运算",
+    "category": "data",
+    "status": "supported",
+    "incomplete_reason": "",
+    "runtime_fields": [],
+    "source": {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_data.py",
+      "line": 234,
+      "sha256": "49f6209e98ad8f5d7bb23a52a9e0a03ad684fa190fceb9976e4f4b5c4f78e200"
+    },
+    "hardwareExecutionVerifiedByThisAudit": false
+  },
+  {
+    "name": "FloatRoughFilter",
+    "type_id": 718,
+    "memory_size": 24,
+    "parameters": [],
+    "description": "浮点粗滤波",
+    "category": "data",
+    "status": "supported",
+    "incomplete_reason": "",
+    "runtime_fields": [],
+    "source": {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_data.py",
+      "line": 246,
+      "sha256": "49f6209e98ad8f5d7bb23a52a9e0a03ad684fa190fceb9976e4f4b5c4f78e200"
+    },
+    "hardwareExecutionVerifiedByThisAudit": false
+  },
+  {
+    "name": "DataRedundancy",
+    "type_id": 719,
+    "memory_size": 32,
+    "parameters": [],
+    "description": "数据冗余处理",
+    "category": "data",
+    "status": "supported",
+    "incomplete_reason": "",
+    "runtime_fields": [],
+    "source": {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_data.py",
+      "line": 258,
+      "sha256": "49f6209e98ad8f5d7bb23a52a9e0a03ad684fa190fceb9976e4f4b5c4f78e200"
+    },
+    "hardwareExecutionVerifiedByThisAudit": false
+  },
+  {
+    "name": "DealInUnify",
+    "type_id": 720,
+    "memory_size": 24,
+    "parameters": [],
+    "description": "输入数据统一处理",
+    "category": "data",
+    "status": "supported",
+    "incomplete_reason": "",
+    "runtime_fields": [],
+    "source": {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_data.py",
+      "line": 270,
+      "sha256": "49f6209e98ad8f5d7bb23a52a9e0a03ad684fa190fceb9976e4f4b5c4f78e200"
+    },
+    "hardwareExecutionVerifiedByThisAudit": false
+  },
+  {
+    "name": "DealOutUnify",
+    "type_id": 721,
+    "memory_size": 24,
+    "parameters": [],
+    "description": "输出数据统一处理",
+    "category": "data",
+    "status": "supported",
+    "incomplete_reason": "",
+    "runtime_fields": [],
+    "source": {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_data.py",
+      "line": 282,
+      "sha256": "49f6209e98ad8f5d7bb23a52a9e0a03ad684fa190fceb9976e4f4b5c4f78e200"
+    },
+    "hardwareExecutionVerifiedByThisAudit": false
+  },
+  {
+    "name": "DealToData",
+    "type_id": 722,
+    "memory_size": 16,
+    "parameters": [],
+    "description": "切换到数据模式",
+    "category": "data",
+    "status": "supported",
+    "incomplete_reason": "",
+    "runtime_fields": [],
+    "source": {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_data.py",
+      "line": 294,
+      "sha256": "49f6209e98ad8f5d7bb23a52a9e0a03ad684fa190fceb9976e4f4b5c4f78e200"
+    },
+    "hardwareExecutionVerifiedByThisAudit": false
+  },
+  {
+    "name": "DealToSwit",
+    "type_id": 723,
+    "memory_size": 16,
+    "parameters": [],
+    "description": "切换到开关模式",
+    "category": "data",
+    "status": "supported",
+    "incomplete_reason": "",
+    "runtime_fields": [],
+    "source": {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_data.py",
+      "line": 306,
+      "sha256": "49f6209e98ad8f5d7bb23a52a9e0a03ad684fa190fceb9976e4f4b5c4f78e200"
+    },
+    "hardwareExecutionVerifiedByThisAudit": false
+  },
+  {
+    "name": "FloatBelowWatch",
+    "type_id": 781,
+    "memory_size": 24,
+    "parameters": [],
+    "description": "浮点数下限监视",
+    "category": "safety",
+    "status": "supported",
+    "incomplete_reason": "",
+    "runtime_fields": [],
+    "source": {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_safety.py",
+      "line": 22,
+      "sha256": "2ea3a070bd83bb40b930d10654e2c0591940c604dacf586542a4230fe4ddd0ea"
+    },
+    "hardwareExecutionVerifiedByThisAudit": false
+  },
+  {
+    "name": "FloatOverWatch",
+    "type_id": 782,
+    "memory_size": 24,
+    "parameters": [],
+    "description": "浮点数上限监视",
+    "category": "safety",
+    "status": "supported",
+    "incomplete_reason": "",
+    "runtime_fields": [],
+    "source": {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_safety.py",
+      "line": 33,
+      "sha256": "2ea3a070bd83bb40b930d10654e2c0591940c604dacf586542a4230fe4ddd0ea"
+    },
+    "hardwareExecutionVerifiedByThisAudit": false
+  },
+  {
+    "name": "EXCASFC",
+    "type_id": 783,
+    "memory_size": 32,
+    "parameters": [],
+    "description": "工程机械安全功能控制",
+    "category": "safety",
+    "status": "supported",
+    "incomplete_reason": "",
+    "runtime_fields": [],
+    "source": {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_safety.py",
+      "line": 44,
+      "sha256": "2ea3a070bd83bb40b930d10654e2c0591940c604dacf586542a4230fe4ddd0ea"
+    },
+    "hardwareExecutionVerifiedByThisAudit": false
+  },
+  {
+    "name": "ParamtEngBuild",
+    "type_id": 871,
+    "memory_size": 32,
+    "parameters": [],
+    "description": "工程参数引擎构建",
+    "category": "param",
+    "status": "supported",
+    "incomplete_reason": "",
+    "runtime_fields": [],
+    "source": {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_param.py",
+      "line": 20,
+      "sha256": "d7764fabe6d586d930e7965c9c372e44ce30c375edbf3f7065d0c60ad4530c34"
+    },
+    "hardwareExecutionVerifiedByThisAudit": false
+  }
+]

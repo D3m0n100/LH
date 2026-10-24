@@ -1,0 +1,4731 @@
+{
+  "baseline": "LM2007 chapter 2 declared 125 blocks; chapter 3-5 detailed formats",
+  "count": 125,
+  "status_warning": "Not an execution coverage percentage. Registration, successful emission and physical execution are distinct.",
+  "by_category": [
+    {
+      "category": "系统功能",
+      "count": 4,
+      "statuses": {
+        "partial": 4
+      }
+    },
+    {
+      "category": "任务控制",
+      "count": 9,
+      "statuses": {
+        "not_met": 9
+      }
+    },
+    {
+      "category": "流程控制",
+      "count": 13,
+      "statuses": {
+        "not_met": 13
+      }
+    },
+    {
+      "category": "参数特征修改",
+      "count": 8,
+      "statuses": {
+        "not_met": 8
+      }
+    },
+    {
+      "category": "系统通信",
+      "count": 4,
+      "statuses": {
+        "not_met": 4
+      }
+    },
+    {
+      "category": "输入输出驱动",
+      "count": 8,
+      "statuses": {
+        "partial": 7,
+        "not_met": 1
+      }
+    },
+    {
+      "category": "整型量运算",
+      "count": 12,
+      "statuses": {
+        "not_met": 11,
+        "partial": 1
+      }
+    },
+    {
+      "category": "浮点数运算",
+      "count": 14,
+      "statuses": {
+        "not_met": 13,
+        "partial": 1
+      }
+    },
+    {
+      "category": "IQ 数运算",
+      "count": 14,
+      "statuses": {
+        "not_met": 14
+      }
+    },
+    {
+      "category": "数据转换处理",
+      "count": 7,
+      "statuses": {
+        "not_met": 7
+      }
+    },
+    {
+      "category": "选择函数",
+      "count": 5,
+      "statuses": {
+        "not_met": 5
+      }
+    },
+    {
+      "category": "逼近函数",
+      "count": 3,
+      "statuses": {
+        "not_met": 3
+      }
+    },
+    {
+      "category": "时间函数",
+      "count": 6,
+      "statuses": {
+        "not_met": 6
+      }
+    },
+    {
+      "category": "过程量处理",
+      "count": 3,
+      "statuses": {
+        "not_met": 3
+      }
+    },
+    {
+      "category": "控制典型环节",
+      "count": 9,
+      "statuses": {
+        "not_met": 9
+      }
+    },
+    {
+      "category": "PID 控制器",
+      "count": 2,
+      "statuses": {
+        "partial": 2
+      }
+    },
+    {
+      "category": "TSO 控制器",
+      "count": 3,
+      "statuses": {
+        "not_met": 3
+      }
+    },
+    {
+      "category": "滤波器",
+      "count": 1,
+      "statuses": {
+        "not_met": 1
+      }
+    }
+  ],
+  "blocks": [
+    {
+      "id": "LM-FB-001",
+      "category": "系统功能",
+      "lm_name": "System",
+      "requirement": "系统定义与状态、时钟、启动管理",
+      "manual": {
+        "source_key": "manual",
+        "pdf_page": 24,
+        "printed_page": 19,
+        "section_pdf_pages": "23-31"
+      },
+      "lh_candidates": [
+        "System"
+      ],
+      "candidate_mapping_certified": false,
+      "exact_name_registered": true,
+      "lh_registry": [
+        {
+          "name": "System",
+          "status": "supported",
+          "parameter_count": 5,
+          "runtime_field_count": 0
+        }
+      ],
+      "status": "partial",
+      "status_zh": "部分达到",
+      "finding": "LH 仅有 Author/Config/Date/Version/CycleTime 构造参数；LM 的系统状态、时钟、启动模式、异常及保存语义和字段布局没有完整对应。",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_system.py",
+          "line": 26
+        },
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "line": 351
+        }
+      ],
+      "acceptance": "以手册 PDF 第 24 页的装配格式及本节参数/状态表构造有效程序，验证系统定义与状态、时钟、启动管理、边界及错误行为；绑定固件版本并完成实机测试。",
+      "hardware_tested_by_this_audit": false
+    },
+    {
+      "id": "LM-FB-002",
+      "category": "系统功能",
+      "lm_name": "SystemEnd",
+      "requirement": "系统结束边界",
+      "manual": {
+        "source_key": "manual",
+        "pdf_page": 24,
+        "printed_page": 19,
+        "section_pdf_pages": "23-31"
+      },
+      "lh_candidates": [
+        "SystemEnd"
+      ],
+      "candidate_mapping_certified": false,
+      "exact_name_registered": true,
+      "lh_registry": [
+        {
+          "name": "SystemEnd",
+          "status": "supported",
+          "parameter_count": 1,
+          "runtime_field_count": 0
+        }
+      ],
+      "status": "partial",
+      "status_zh": "部分达到",
+      "finding": "存在结束标记的本地编码；LH 附带 Status 参数和实例地址，尚无 LM 式无实例边界及启动后一次初始化/调度的执行证据。",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_system.py",
+          "line": 47
+        },
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "line": 351
+        }
+      ],
+      "acceptance": "以手册 PDF 第 24 页的装配格式及本节参数/状态表构造有效程序，验证系统结束边界、边界及错误行为；绑定固件版本并完成实机测试。",
+      "hardware_tested_by_this_audit": false
+    },
+    {
+      "id": "LM-FB-003",
+      "category": "系统功能",
+      "lm_name": "SystemExceptDeal",
+      "requirement": "异常事件处理",
+      "manual": {
+        "source_key": "manual",
+        "pdf_page": 31,
+        "printed_page": 26,
+        "section_pdf_pages": "23-31"
+      },
+      "lh_candidates": [
+        "Exception"
+      ],
+      "candidate_mapping_certified": false,
+      "exact_name_registered": false,
+      "lh_registry": [
+        {
+          "name": "Exception",
+          "status": "supported",
+          "parameter_count": 3,
+          "runtime_field_count": 0
+        }
+      ],
+      "status": "partial",
+      "status_zh": "部分达到",
+      "finding": "Exception(Code/Action/Enable) 是候选；LM 的 ExceptMesg 数据引用、ExceptValue 和处理形式未建立等价契约。",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_system.py",
+          "line": 64
+        },
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "line": 351
+        }
+      ],
+      "acceptance": "以手册 PDF 第 31 页的装配格式及本节参数/状态表构造有效程序，验证异常事件处理、边界及错误行为；绑定固件版本并完成实机测试。",
+      "hardware_tested_by_this_audit": false
+    },
+    {
+      "id": "LM-FB-004",
+      "category": "系统功能",
+      "lm_name": "SystemNop",
+      "requirement": "空操作",
+      "manual": {
+        "source_key": "manual",
+        "pdf_page": 31,
+        "printed_page": 26,
+        "section_pdf_pages": "23-31"
+      },
+      "lh_candidates": [
+        "Nop"
+      ],
+      "candidate_mapping_certified": false,
+      "exact_name_registered": false,
+      "lh_registry": [
+        {
+          "name": "Nop",
+          "status": "supported",
+          "parameter_count": 0,
+          "runtime_field_count": 0
+        }
+      ],
+      "status": "partial",
+      "status_zh": "部分达到",
+      "finding": "Nop 有本地空操作编码；名称、指令号及带实例地址的形式未与目标固件认证。空参数对无数据项功能本身不是缺陷。",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_system.py",
+          "line": 83
+        },
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "line": 351
+        }
+      ],
+      "acceptance": "以手册 PDF 第 31 页的装配格式及本节参数/状态表构造有效程序，验证空操作、边界及错误行为；绑定固件版本并完成实机测试。",
+      "hardware_tested_by_this_audit": false
+    },
+    {
+      "id": "LM-FB-005",
+      "category": "任务控制",
+      "lm_name": "Task",
+      "requirement": "任务创建、消息与优先级",
+      "manual": {
+        "source_key": "manual",
+        "pdf_page": 33,
+        "printed_page": 28,
+        "section_pdf_pages": "32-38"
+      },
+      "lh_candidates": [
+        "Task"
+      ],
+      "candidate_mapping_certified": false,
+      "exact_name_registered": true,
+      "lh_registry": [
+        {
+          "name": "Task",
+          "status": "incomplete",
+          "parameter_count": 0,
+          "runtime_field_count": 0
+        }
+      ],
+      "status": "not_met",
+      "status_zh": "未达到",
+      "finding": "对应候选明确标记 incomplete，编译器拒绝生成；仅保留历史契约线索，不能运行。",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_task.py",
+          "line": 30
+        },
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "line": 351
+        }
+      ],
+      "acceptance": "以手册 PDF 第 33 页的装配格式及本节参数/状态表构造有效程序，验证任务创建、消息与优先级、边界及错误行为；绑定固件版本并完成实机测试。",
+      "hardware_tested_by_this_audit": false
+    },
+    {
+      "id": "LM-FB-006",
+      "category": "任务控制",
+      "lm_name": "TaskEnd",
+      "requirement": "任务体结束",
+      "manual": {
+        "source_key": "manual",
+        "pdf_page": 33,
+        "printed_page": 28,
+        "section_pdf_pages": "32-38"
+      },
+      "lh_candidates": [
+        "TaskEnd"
+      ],
+      "candidate_mapping_certified": false,
+      "exact_name_registered": true,
+      "lh_registry": [
+        {
+          "name": "TaskEnd",
+          "status": "incomplete",
+          "parameter_count": 0,
+          "runtime_field_count": 0
+        }
+      ],
+      "status": "not_met",
+      "status_zh": "未达到",
+      "finding": "对应候选明确标记 incomplete，编译器拒绝生成；仅保留历史契约线索，不能运行。",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_task.py",
+          "line": 192
+        },
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "line": 351
+        }
+      ],
+      "acceptance": "以手册 PDF 第 33 页的装配格式及本节参数/状态表构造有效程序，验证任务体结束、边界及错误行为；绑定固件版本并完成实机测试。",
+      "hardware_tested_by_this_audit": false
+    },
+    {
+      "id": "LM-FB-007",
+      "category": "任务控制",
+      "lm_name": "TaskCompnt",
+      "requirement": "功能块消息唤醒任务",
+      "manual": {
+        "source_key": "manual",
+        "pdf_page": 36,
+        "printed_page": 31,
+        "section_pdf_pages": "32-38"
+      },
+      "lh_candidates": [
+        "TaskWake"
+      ],
+      "candidate_mapping_certified": false,
+      "exact_name_registered": false,
+      "lh_registry": [
+        {
+          "name": "TaskWake",
+          "status": "incomplete",
+          "parameter_count": 0,
+          "runtime_field_count": 0
+        }
+      ],
+      "status": "not_met",
+      "status_zh": "未达到",
+      "finding": "对应候选明确标记 incomplete，编译器拒绝生成；仅保留历史契约线索，不能运行。",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_task.py",
+          "line": 66
+        },
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "line": 351
+        }
+      ],
+      "acceptance": "以手册 PDF 第 36 页的装配格式及本节参数/状态表构造有效程序，验证功能块消息唤醒任务、边界及错误行为；绑定固件版本并完成实机测试。",
+      "hardware_tested_by_this_audit": false
+    },
+    {
+      "id": "LM-FB-008",
+      "category": "任务控制",
+      "lm_name": "TaskParamt",
+      "requirement": "外部参数写入唤醒任务",
+      "manual": {
+        "source_key": "manual",
+        "pdf_page": 36,
+        "printed_page": 31,
+        "section_pdf_pages": "32-38"
+      },
+      "lh_candidates": [
+        "TaskDataWake"
+      ],
+      "candidate_mapping_certified": false,
+      "exact_name_registered": false,
+      "lh_registry": [
+        {
+          "name": "TaskDataWake",
+          "status": "incomplete",
+          "parameter_count": 0,
+          "runtime_field_count": 0
+        }
+      ],
+      "status": "not_met",
+      "status_zh": "未达到",
+      "finding": "对应候选明确标记 incomplete，编译器拒绝生成；仅保留历史契约线索，不能运行。",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_task.py",
+          "line": 84
+        },
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "line": 351
+        }
+      ],
+      "acceptance": "以手册 PDF 第 36 页的装配格式及本节参数/状态表构造有效程序，验证外部参数写入唤醒任务、边界及错误行为；绑定固件版本并完成实机测试。",
+      "hardware_tested_by_this_audit": false
+    },
+    {
+      "id": "LM-FB-009",
+      "category": "任务控制",
+      "lm_name": "TaskLock",
+      "requirement": "任务锁定",
+      "manual": {
+        "source_key": "manual",
+        "pdf_page": 37,
+        "printed_page": 32,
+        "section_pdf_pages": "32-38"
+      },
+      "lh_candidates": [
+        "TaskLock"
+      ],
+      "candidate_mapping_certified": false,
+      "exact_name_registered": true,
+      "lh_registry": [
+        {
+          "name": "TaskLock",
+          "status": "incomplete",
+          "parameter_count": 0,
+          "runtime_field_count": 0
+        }
+      ],
+      "status": "not_met",
+      "status_zh": "未达到",
+      "finding": "对应候选明确标记 incomplete，编译器拒绝生成；仅保留历史契约线索，不能运行。",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_task.py",
+          "line": 102
+        },
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "line": 351
+        }
+      ],
+      "acceptance": "以手册 PDF 第 37 页的装配格式及本节参数/状态表构造有效程序，验证任务锁定、边界及错误行为；绑定固件版本并完成实机测试。",
+      "hardware_tested_by_this_audit": false
+    },
+    {
+      "id": "LM-FB-010",
+      "category": "任务控制",
+      "lm_name": "TaskUnlock",
+      "requirement": "任务解锁",
+      "manual": {
+        "source_key": "manual",
+        "pdf_page": 37,
+        "printed_page": 32,
+        "section_pdf_pages": "32-38"
+      },
+      "lh_candidates": [
+        "TaskUnlock"
+      ],
+      "candidate_mapping_certified": false,
+      "exact_name_registered": true,
+      "lh_registry": [
+        {
+          "name": "TaskUnlock",
+          "status": "incomplete",
+          "parameter_count": 0,
+          "runtime_field_count": 0
+        }
+      ],
+      "status": "not_met",
+      "status_zh": "未达到",
+      "finding": "对应候选明确标记 incomplete，编译器拒绝生成；仅保留历史契约线索，不能运行。",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_task.py",
+          "line": 120
+        },
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "line": 351
+        }
+      ],
+      "acceptance": "以手册 PDF 第 37 页的装配格式及本节参数/状态表构造有效程序，验证任务解锁、边界及错误行为；绑定固件版本并完成实机测试。",
+      "hardware_tested_by_this_audit": false
+    },
+    {
+      "id": "LM-FB-011",
+      "category": "任务控制",
+      "lm_name": "SemaDef",
+      "requirement": "信号量定义",
+      "manual": {
+        "source_key": "manual",
+        "pdf_page": 37,
+        "printed_page": 32,
+        "section_pdf_pages": "32-38"
+      },
+      "lh_candidates": [
+        "TaskSemDef"
+      ],
+      "candidate_mapping_certified": false,
+      "exact_name_registered": false,
+      "lh_registry": [
+        {
+          "name": "TaskSemDef",
+          "status": "incomplete",
+          "parameter_count": 0,
+          "runtime_field_count": 0
+        }
+      ],
+      "status": "not_met",
+      "status_zh": "未达到",
+      "finding": "对应候选明确标记 incomplete，编译器拒绝生成；仅保留历史契约线索，不能运行。",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_task.py",
+          "line": 138
+        },
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "line": 351
+        }
+      ],
+      "acceptance": "以手册 PDF 第 37 页的装配格式及本节参数/状态表构造有效程序，验证信号量定义、边界及错误行为；绑定固件版本并完成实机测试。",
+      "hardware_tested_by_this_audit": false
+    },
+    {
+      "id": "LM-FB-012",
+      "category": "任务控制",
+      "lm_name": "SemaPOper",
+      "requirement": "信号量 P 操作",
+      "manual": {
+        "source_key": "manual",
+        "pdf_page": 38,
+        "printed_page": 33,
+        "section_pdf_pages": "32-38"
+      },
+      "lh_candidates": [
+        "TaskSemWait"
+      ],
+      "candidate_mapping_certified": false,
+      "exact_name_registered": false,
+      "lh_registry": [
+        {
+          "name": "TaskSemWait",
+          "status": "incomplete",
+          "parameter_count": 0,
+          "runtime_field_count": 0
+        }
+      ],
+      "status": "not_met",
+      "status_zh": "未达到",
+      "finding": "对应候选明确标记 incomplete，编译器拒绝生成；仅保留历史契约线索，不能运行。",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_task.py",
+          "line": 156
+        },
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "line": 351
+        }
+      ],
+      "acceptance": "以手册 PDF 第 38 页的装配格式及本节参数/状态表构造有效程序，验证信号量 P 操作、边界及错误行为；绑定固件版本并完成实机测试。",
+      "hardware_tested_by_this_audit": false
+    },
+    {
+      "id": "LM-FB-013",
+      "category": "任务控制",
+      "lm_name": "SemaVOper",
+      "requirement": "信号量 V 操作",
+      "manual": {
+        "source_key": "manual",
+        "pdf_page": 38,
+        "printed_page": 33,
+        "section_pdf_pages": "32-38"
+      },
+      "lh_candidates": [
+        "TaskSemPost"
+      ],
+      "candidate_mapping_certified": false,
+      "exact_name_registered": false,
+      "lh_registry": [
+        {
+          "name": "TaskSemPost",
+          "status": "incomplete",
+          "parameter_count": 0,
+          "runtime_field_count": 0
+        }
+      ],
+      "status": "not_met",
+      "status_zh": "未达到",
+      "finding": "对应候选明确标记 incomplete，编译器拒绝生成；仅保留历史契约线索，不能运行。",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_task.py",
+          "line": 174
+        },
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "line": 351
+        }
+      ],
+      "acceptance": "以手册 PDF 第 38 页的装配格式及本节参数/状态表构造有效程序，验证信号量 V 操作、边界及错误行为；绑定固件版本并完成实机测试。",
+      "hardware_tested_by_this_audit": false
+    },
+    {
+      "id": "LM-FB-014",
+      "category": "流程控制",
+      "lm_name": "Switch",
+      "requirement": "多分支入口",
+      "manual": {
+        "source_key": "manual",
+        "pdf_page": 40,
+        "printed_page": 35,
+        "section_pdf_pages": "39-46"
+      },
+      "lh_candidates": [
+        "Switch1",
+        "Switch2",
+        "Switch3",
+        "Switch4",
+        "Switch5"
+      ],
+      "candidate_mapping_certified": false,
+      "exact_name_registered": false,
+      "lh_registry": [
+        {
+          "name": "Switch1",
+          "status": "supported",
+          "parameter_count": 0,
+          "runtime_field_count": 0
+        },
+        {
+          "name": "Switch2",
+          "status": "supported",
+          "parameter_count": 0,
+          "runtime_field_count": 0
+        },
+        {
+          "name": "Switch3",
+          "status": "supported",
+          "parameter_count": 0,
+          "runtime_field_count": 0
+        },
+        {
+          "name": "Switch4",
+          "status": "supported",
+          "parameter_count": 0,
+          "runtime_field_count": 0
+        },
+        {
+          "name": "Switch5",
+          "status": "supported",
+          "parameter_count": 0,
+          "runtime_field_count": 0
+        }
+      ],
+      "status": "not_met",
+      "status_zh": "未达到",
+      "finding": "结构化 IF/CASE/FOR/WHILE 后端明确拒绝；同名/近名控制块即使注册也只有空参数，未形成跳转、配对及嵌套执行契约。",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_control.py",
+          "line": 37
+        },
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_control.py",
+          "line": 48
+        },
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_control.py",
+          "line": 59
+        },
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_control.py",
+          "line": 70
+        },
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_control.py",
+          "line": 81
+        },
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "line": 351
+        }
+      ],
+      "acceptance": "以手册 PDF 第 40 页的装配格式及本节参数/状态表构造有效程序，验证多分支入口、边界及错误行为；绑定固件版本并完成实机测试。",
+      "hardware_tested_by_this_audit": false
+    },
+    {
+      "id": "LM-FB-015",
+      "category": "流程控制",
+      "lm_name": "SwitchCase",
+      "requirement": "分支项",
+      "manual": {
+        "source_key": "manual",
+        "pdf_page": 40,
+        "printed_page": 35,
+        "section_pdf_pages": "39-46"
+      },
+      "lh_candidates": [
+        "SwitchCase"
+      ],
+      "candidate_mapping_certified": false,
+      "exact_name_registered": true,
+      "lh_registry": [
+        {
+          "name": "SwitchCase",
+          "status": "supported",
+          "parameter_count": 0,
+          "runtime_field_count": 0
+        }
+      ],
+      "status": "not_met",
+      "status_zh": "未达到",
+      "finding": "结构化 IF/CASE/FOR/WHILE 后端明确拒绝；同名/近名控制块即使注册也只有空参数，未形成跳转、配对及嵌套执行契约。",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_control.py",
+          "line": 92
+        },
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "line": 351
+        }
+      ],
+      "acceptance": "以手册 PDF 第 40 页的装配格式及本节参数/状态表构造有效程序，验证分支项、边界及错误行为；绑定固件版本并完成实机测试。",
+      "hardware_tested_by_this_audit": false
+    },
+    {
+      "id": "LM-FB-016",
+      "category": "流程控制",
+      "lm_name": "SwitchDefault",
+      "requirement": "缺省分支",
+      "manual": {
+        "source_key": "manual",
+        "pdf_page": 40,
+        "printed_page": 35,
+        "section_pdf_pages": "39-46"
+      },
+      "lh_candidates": [],
+      "candidate_mapping_certified": false,
+      "exact_name_registered": false,
+      "lh_registry": [],
+      "status": "not_met",
+      "status_zh": "未达到",
+      "finding": "结构化 IF/CASE/FOR/WHILE 后端明确拒绝；同名/近名控制块即使注册也只有空参数，未形成跳转、配对及嵌套执行契约。",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "line": 351
+        }
+      ],
+      "acceptance": "以手册 PDF 第 40 页的装配格式及本节参数/状态表构造有效程序，验证缺省分支、边界及错误行为；绑定固件版本并完成实机测试。",
+      "hardware_tested_by_this_audit": false
+    },
+    {
+      "id": "LM-FB-017",
+      "category": "流程控制",
+      "lm_name": "SwitchBreak",
+      "requirement": "结束当前分支",
+      "manual": {
+        "source_key": "manual",
+        "pdf_page": 40,
+        "printed_page": 35,
+        "section_pdf_pages": "39-46"
+      },
+      "lh_candidates": [
+        "SwitchBreak"
+      ],
+      "candidate_mapping_certified": false,
+      "exact_name_registered": true,
+      "lh_registry": [
+        {
+          "name": "SwitchBreak",
+          "status": "supported",
+          "parameter_count": 0,
+          "runtime_field_count": 0
+        }
+      ],
+      "status": "not_met",
+      "status_zh": "未达到",
+      "finding": "结构化 IF/CASE/FOR/WHILE 后端明确拒绝；同名/近名控制块即使注册也只有空参数，未形成跳转、配对及嵌套执行契约。",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_control.py",
+          "line": 103
+        },
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "line": 351
+        }
+      ],
+      "acceptance": "以手册 PDF 第 40 页的装配格式及本节参数/状态表构造有效程序，验证结束当前分支、边界及错误行为；绑定固件版本并完成实机测试。",
+      "hardware_tested_by_this_audit": false
+    },
+    {
+      "id": "LM-FB-018",
+      "category": "流程控制",
+      "lm_name": "SwitchEnd",
+      "requirement": "多分支结束",
+      "manual": {
+        "source_key": "manual",
+        "pdf_page": 40,
+        "printed_page": 35,
+        "section_pdf_pages": "39-46"
+      },
+      "lh_candidates": [
+        "SwitchEnd"
+      ],
+      "candidate_mapping_certified": false,
+      "exact_name_registered": true,
+      "lh_registry": [
+        {
+          "name": "SwitchEnd",
+          "status": "supported",
+          "parameter_count": 0,
+          "runtime_field_count": 0
+        }
+      ],
+      "status": "not_met",
+      "status_zh": "未达到",
+      "finding": "结构化 IF/CASE/FOR/WHILE 后端明确拒绝；同名/近名控制块即使注册也只有空参数，未形成跳转、配对及嵌套执行契约。",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_control.py",
+          "line": 114
+        },
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "line": 351
+        }
+      ],
+      "acceptance": "以手册 PDF 第 40 页的装配格式及本节参数/状态表构造有效程序，验证多分支结束、边界及错误行为；绑定固件版本并完成实机测试。",
+      "hardware_tested_by_this_audit": false
+    },
+    {
+      "id": "LM-FB-019",
+      "category": "流程控制",
+      "lm_name": "If",
+      "requirement": "条件分支入口",
+      "manual": {
+        "source_key": "manual",
+        "pdf_page": 42,
+        "printed_page": 37,
+        "section_pdf_pages": "39-46"
+      },
+      "lh_candidates": [
+        "If1",
+        "If2",
+        "If3"
+      ],
+      "candidate_mapping_certified": false,
+      "exact_name_registered": false,
+      "lh_registry": [
+        {
+          "name": "If1",
+          "status": "supported",
+          "parameter_count": 0,
+          "runtime_field_count": 0
+        },
+        {
+          "name": "If2",
+          "status": "supported",
+          "parameter_count": 0,
+          "runtime_field_count": 0
+        },
+        {
+          "name": "If3",
+          "status": "supported",
+          "parameter_count": 0,
+          "runtime_field_count": 0
+        }
+      ],
+      "status": "not_met",
+      "status_zh": "未达到",
+      "finding": "结构化 IF/CASE/FOR/WHILE 后端明确拒绝；同名/近名控制块即使注册也只有空参数，未形成跳转、配对及嵌套执行契约。",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_control.py",
+          "line": 125
+        },
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_control.py",
+          "line": 136
+        },
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_control.py",
+          "line": 147
+        },
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "line": 351
+        }
+      ],
+      "acceptance": "以手册 PDF 第 42 页的装配格式及本节参数/状态表构造有效程序，验证条件分支入口、边界及错误行为；绑定固件版本并完成实机测试。",
+      "hardware_tested_by_this_audit": false
+    },
+    {
+      "id": "LM-FB-020",
+      "category": "流程控制",
+      "lm_name": "IfElse",
+      "requirement": "条件分支另一分支",
+      "manual": {
+        "source_key": "manual",
+        "pdf_page": 42,
+        "printed_page": 37,
+        "section_pdf_pages": "39-46"
+      },
+      "lh_candidates": [
+        "IfElse"
+      ],
+      "candidate_mapping_certified": false,
+      "exact_name_registered": true,
+      "lh_registry": [
+        {
+          "name": "IfElse",
+          "status": "supported",
+          "parameter_count": 0,
+          "runtime_field_count": 0
+        }
+      ],
+      "status": "not_met",
+      "status_zh": "未达到",
+      "finding": "结构化 IF/CASE/FOR/WHILE 后端明确拒绝；同名/近名控制块即使注册也只有空参数，未形成跳转、配对及嵌套执行契约。",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_control.py",
+          "line": 158
+        },
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "line": 351
+        }
+      ],
+      "acceptance": "以手册 PDF 第 42 页的装配格式及本节参数/状态表构造有效程序，验证条件分支另一分支、边界及错误行为；绑定固件版本并完成实机测试。",
+      "hardware_tested_by_this_audit": false
+    },
+    {
+      "id": "LM-FB-021",
+      "category": "流程控制",
+      "lm_name": "IfEnd",
+      "requirement": "条件分支结束",
+      "manual": {
+        "source_key": "manual",
+        "pdf_page": 42,
+        "printed_page": 37,
+        "section_pdf_pages": "39-46"
+      },
+      "lh_candidates": [
+        "IfEnd"
+      ],
+      "candidate_mapping_certified": false,
+      "exact_name_registered": true,
+      "lh_registry": [
+        {
+          "name": "IfEnd",
+          "status": "supported",
+          "parameter_count": 0,
+          "runtime_field_count": 0
+        }
+      ],
+      "status": "not_met",
+      "status_zh": "未达到",
+      "finding": "结构化 IF/CASE/FOR/WHILE 后端明确拒绝；同名/近名控制块即使注册也只有空参数，未形成跳转、配对及嵌套执行契约。",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_control.py",
+          "line": 169
+        },
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "line": 351
+        }
+      ],
+      "acceptance": "以手册 PDF 第 42 页的装配格式及本节参数/状态表构造有效程序，验证条件分支结束、边界及错误行为；绑定固件版本并完成实机测试。",
+      "hardware_tested_by_this_audit": false
+    },
+    {
+      "id": "LM-FB-022",
+      "category": "流程控制",
+      "lm_name": "For",
+      "requirement": "可数循环入口",
+      "manual": {
+        "source_key": "manual",
+        "pdf_page": 43,
+        "printed_page": 38,
+        "section_pdf_pages": "39-46"
+      },
+      "lh_candidates": [
+        "For"
+      ],
+      "candidate_mapping_certified": false,
+      "exact_name_registered": true,
+      "lh_registry": [
+        {
+          "name": "For",
+          "status": "supported",
+          "parameter_count": 0,
+          "runtime_field_count": 0
+        }
+      ],
+      "status": "not_met",
+      "status_zh": "未达到",
+      "finding": "结构化 IF/CASE/FOR/WHILE 后端明确拒绝；同名/近名控制块即使注册也只有空参数，未形成跳转、配对及嵌套执行契约。",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_control.py",
+          "line": 180
+        },
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "line": 351
+        }
+      ],
+      "acceptance": "以手册 PDF 第 43 页的装配格式及本节参数/状态表构造有效程序，验证可数循环入口、边界及错误行为；绑定固件版本并完成实机测试。",
+      "hardware_tested_by_this_audit": false
+    },
+    {
+      "id": "LM-FB-023",
+      "category": "流程控制",
+      "lm_name": "ForEnd",
+      "requirement": "可数循环结束",
+      "manual": {
+        "source_key": "manual",
+        "pdf_page": 44,
+        "printed_page": 39,
+        "section_pdf_pages": "39-46"
+      },
+      "lh_candidates": [
+        "ForEnd"
+      ],
+      "candidate_mapping_certified": false,
+      "exact_name_registered": true,
+      "lh_registry": [
+        {
+          "name": "ForEnd",
+          "status": "supported",
+          "parameter_count": 0,
+          "runtime_field_count": 0
+        }
+      ],
+      "status": "not_met",
+      "status_zh": "未达到",
+      "finding": "结构化 IF/CASE/FOR/WHILE 后端明确拒绝；同名/近名控制块即使注册也只有空参数，未形成跳转、配对及嵌套执行契约。",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_control.py",
+          "line": 191
+        },
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "line": 351
+        }
+      ],
+      "acceptance": "以手册 PDF 第 44 页的装配格式及本节参数/状态表构造有效程序，验证可数循环结束、边界及错误行为；绑定固件版本并完成实机测试。",
+      "hardware_tested_by_this_audit": false
+    },
+    {
+      "id": "LM-FB-024",
+      "category": "流程控制",
+      "lm_name": "ForExit",
+      "requirement": "提前退出循环",
+      "manual": {
+        "source_key": "manual",
+        "pdf_page": 45,
+        "printed_page": 40,
+        "section_pdf_pages": "39-46"
+      },
+      "lh_candidates": [
+        "LoopBreak"
+      ],
+      "candidate_mapping_certified": false,
+      "exact_name_registered": false,
+      "lh_registry": [
+        {
+          "name": "LoopBreak",
+          "status": "supported",
+          "parameter_count": 0,
+          "runtime_field_count": 0
+        }
+      ],
+      "status": "not_met",
+      "status_zh": "未达到",
+      "finding": "结构化 IF/CASE/FOR/WHILE 后端明确拒绝；同名/近名控制块即使注册也只有空参数，未形成跳转、配对及嵌套执行契约。",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_control.py",
+          "line": 224
+        },
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "line": 351
+        }
+      ],
+      "acceptance": "以手册 PDF 第 45 页的装配格式及本节参数/状态表构造有效程序，验证提前退出循环、边界及错误行为；绑定固件版本并完成实机测试。",
+      "hardware_tested_by_this_audit": false
+    },
+    {
+      "id": "LM-FB-025",
+      "category": "流程控制",
+      "lm_name": "While",
+      "requirement": "条件循环入口",
+      "manual": {
+        "source_key": "manual",
+        "pdf_page": 45,
+        "printed_page": 40,
+        "section_pdf_pages": "39-46"
+      },
+      "lh_candidates": [
+        "While"
+      ],
+      "candidate_mapping_certified": false,
+      "exact_name_registered": true,
+      "lh_registry": [
+        {
+          "name": "While",
+          "status": "supported",
+          "parameter_count": 0,
+          "runtime_field_count": 0
+        }
+      ],
+      "status": "not_met",
+      "status_zh": "未达到",
+      "finding": "结构化 IF/CASE/FOR/WHILE 后端明确拒绝；同名/近名控制块即使注册也只有空参数，未形成跳转、配对及嵌套执行契约。",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_control.py",
+          "line": 202
+        },
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "line": 351
+        }
+      ],
+      "acceptance": "以手册 PDF 第 45 页的装配格式及本节参数/状态表构造有效程序，验证条件循环入口、边界及错误行为；绑定固件版本并完成实机测试。",
+      "hardware_tested_by_this_audit": false
+    },
+    {
+      "id": "LM-FB-026",
+      "category": "流程控制",
+      "lm_name": "WhileEnd",
+      "requirement": "条件循环结束",
+      "manual": {
+        "source_key": "manual",
+        "pdf_page": 46,
+        "printed_page": 41,
+        "section_pdf_pages": "39-46"
+      },
+      "lh_candidates": [
+        "WhileEnd"
+      ],
+      "candidate_mapping_certified": false,
+      "exact_name_registered": true,
+      "lh_registry": [
+        {
+          "name": "WhileEnd",
+          "status": "supported",
+          "parameter_count": 0,
+          "runtime_field_count": 0
+        }
+      ],
+      "status": "not_met",
+      "status_zh": "未达到",
+      "finding": "结构化 IF/CASE/FOR/WHILE 后端明确拒绝；同名/近名控制块即使注册也只有空参数，未形成跳转、配对及嵌套执行契约。",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_control.py",
+          "line": 213
+        },
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "line": 351
+        }
+      ],
+      "acceptance": "以手册 PDF 第 46 页的装配格式及本节参数/状态表构造有效程序，验证条件循环结束、边界及错误行为；绑定固件版本并完成实机测试。",
+      "hardware_tested_by_this_audit": false
+    },
+    {
+      "id": "LM-FB-027",
+      "category": "参数特征修改",
+      "lm_name": "ParamtEngBuild",
+      "requirement": "工程量空间及上下限",
+      "manual": {
+        "source_key": "manual",
+        "pdf_page": 48,
+        "printed_page": 43,
+        "section_pdf_pages": "47-53"
+      },
+      "lh_candidates": [
+        "ParamtEngBuild"
+      ],
+      "candidate_mapping_certified": false,
+      "exact_name_registered": true,
+      "lh_registry": [
+        {
+          "name": "ParamtEngBuild",
+          "status": "supported",
+          "parameter_count": 0,
+          "runtime_field_count": 0
+        }
+      ],
+      "status": "not_met",
+      "status_zh": "未达到",
+      "finding": "存在同名或近名注册项但参数表为空；实际所需数据项、可变组/引用、字段和算法执行未实现或未认证。",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_param.py",
+          "line": 20
+        },
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "line": 351
+        }
+      ],
+      "acceptance": "以手册 PDF 第 48 页的装配格式及本节参数/状态表构造有效程序，验证工程量空间及上下限、边界及错误行为；绑定固件版本并完成实机测试。",
+      "hardware_tested_by_this_audit": false
+    },
+    {
+      "id": "LM-FB-028",
+      "category": "参数特征修改",
+      "lm_name": "ParamtEngNum",
+      "requirement": "关联参数与工程量序号",
+      "manual": {
+        "source_key": "manual",
+        "pdf_page": 49,
+        "printed_page": 44,
+        "section_pdf_pages": "47-53"
+      },
+      "lh_candidates": [],
+      "candidate_mapping_certified": false,
+      "exact_name_registered": false,
+      "lh_registry": [],
+      "status": "not_met",
+      "status_zh": "未达到",
+      "finding": "当前生产编译器无对应注册项；也未找到能完成本项 LM 语义的后端替代实现。",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "line": 351
+        }
+      ],
+      "acceptance": "以手册 PDF 第 49 页的装配格式及本节参数/状态表构造有效程序，验证关联参数与工程量序号、边界及错误行为；绑定固件版本并完成实机测试。",
+      "hardware_tested_by_this_audit": false
+    },
+    {
+      "id": "LM-FB-029",
+      "category": "参数特征修改",
+      "lm_name": "ParamtClrSave",
+      "requirement": "清除保存特征",
+      "manual": {
+        "source_key": "manual",
+        "pdf_page": 49,
+        "printed_page": 44,
+        "section_pdf_pages": "47-53"
+      },
+      "lh_candidates": [],
+      "candidate_mapping_certified": false,
+      "exact_name_registered": false,
+      "lh_registry": [],
+      "status": "not_met",
+      "status_zh": "未达到",
+      "finding": "当前生产编译器无对应注册项；也未找到能完成本项 LM 语义的后端替代实现。",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "line": 351
+        }
+      ],
+      "acceptance": "以手册 PDF 第 49 页的装配格式及本节参数/状态表构造有效程序，验证清除保存特征、边界及错误行为；绑定固件版本并完成实机测试。",
+      "hardware_tested_by_this_audit": false
+    },
+    {
+      "id": "LM-FB-030",
+      "category": "参数特征修改",
+      "lm_name": "ParamtDeal",
+      "requirement": "清除参数语义",
+      "manual": {
+        "source_key": "manual",
+        "pdf_page": 50,
+        "printed_page": 45,
+        "section_pdf_pages": "47-53"
+      },
+      "lh_candidates": [],
+      "candidate_mapping_certified": false,
+      "exact_name_registered": false,
+      "lh_registry": [],
+      "status": "not_met",
+      "status_zh": "未达到",
+      "finding": "当前生产编译器无对应注册项；也未找到能完成本项 LM 语义的后端替代实现。",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "line": 351
+        }
+      ],
+      "acceptance": "以手册 PDF 第 50 页的装配格式及本节参数/状态表构造有效程序，验证清除参数语义、边界及错误行为；绑定固件版本并完成实机测试。",
+      "hardware_tested_by_this_audit": false
+    },
+    {
+      "id": "LM-FB-031",
+      "category": "参数特征修改",
+      "lm_name": "ParamtPermntSave",
+      "requirement": "定义永久参数",
+      "manual": {
+        "source_key": "manual",
+        "pdf_page": 51,
+        "printed_page": 46,
+        "section_pdf_pages": "47-53"
+      },
+      "lh_candidates": [],
+      "candidate_mapping_certified": false,
+      "exact_name_registered": false,
+      "lh_registry": [],
+      "status": "not_met",
+      "status_zh": "未达到",
+      "finding": "当前生产编译器无对应注册项；也未找到能完成本项 LM 语义的后端替代实现。",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "line": 351
+        }
+      ],
+      "acceptance": "以手册 PDF 第 51 页的装配格式及本节参数/状态表构造有效程序，验证定义永久参数、边界及错误行为；绑定固件版本并完成实机测试。",
+      "hardware_tested_by_this_audit": false
+    },
+    {
+      "id": "LM-FB-032",
+      "category": "参数特征修改",
+      "lm_name": "ParamtPowerSave",
+      "requirement": "掉电保护参数",
+      "manual": {
+        "source_key": "manual",
+        "pdf_page": 51,
+        "printed_page": 46,
+        "section_pdf_pages": "47-53"
+      },
+      "lh_candidates": [],
+      "candidate_mapping_certified": false,
+      "exact_name_registered": false,
+      "lh_registry": [],
+      "status": "not_met",
+      "status_zh": "未达到",
+      "finding": "当前生产编译器无对应注册项；也未找到能完成本项 LM 语义的后端替代实现。",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "line": 351
+        }
+      ],
+      "acceptance": "以手册 PDF 第 51 页的装配格式及本节参数/状态表构造有效程序，验证掉电保护参数、边界及错误行为；绑定固件版本并完成实机测试。",
+      "hardware_tested_by_this_audit": false
+    },
+    {
+      "id": "LM-FB-033",
+      "category": "参数特征修改",
+      "lm_name": "ParamtActi",
+      "requirement": "激活参数语义",
+      "manual": {
+        "source_key": "manual",
+        "pdf_page": 52,
+        "printed_page": 47,
+        "section_pdf_pages": "47-53"
+      },
+      "lh_candidates": [],
+      "candidate_mapping_certified": false,
+      "exact_name_registered": false,
+      "lh_registry": [],
+      "status": "not_met",
+      "status_zh": "未达到",
+      "finding": "当前生产编译器无对应注册项；也未找到能完成本项 LM 语义的后端替代实现。",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "line": 351
+        }
+      ],
+      "acceptance": "以手册 PDF 第 52 页的装配格式及本节参数/状态表构造有效程序，验证激活参数语义、边界及错误行为；绑定固件版本并完成实机测试。",
+      "hardware_tested_by_this_audit": false
+    },
+    {
+      "id": "LM-FB-034",
+      "category": "参数特征修改",
+      "lm_name": "ParamtMove",
+      "requirement": "语义参数传送",
+      "manual": {
+        "source_key": "manual",
+        "pdf_page": 53,
+        "printed_page": 48,
+        "section_pdf_pages": "47-53"
+      },
+      "lh_candidates": [],
+      "candidate_mapping_certified": false,
+      "exact_name_registered": false,
+      "lh_registry": [],
+      "status": "not_met",
+      "status_zh": "未达到",
+      "finding": "当前生产编译器无对应注册项；也未找到能完成本项 LM 语义的后端替代实现。",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "line": 351
+        }
+      ],
+      "acceptance": "以手册 PDF 第 53 页的装配格式及本节参数/状态表构造有效程序，验证语义参数传送、边界及错误行为；绑定固件版本并完成实机测试。",
+      "hardware_tested_by_this_audit": false
+    },
+    {
+      "id": "LM-FB-035",
+      "category": "系统通信",
+      "lm_name": "CommCANInit",
+      "requirement": "CAN 初始化与装置号、波特率",
+      "manual": {
+        "source_key": "manual",
+        "pdf_page": 55,
+        "printed_page": 50,
+        "section_pdf_pages": "54-67"
+      },
+      "lh_candidates": [
+        "CommCANInit"
+      ],
+      "candidate_mapping_certified": false,
+      "exact_name_registered": true,
+      "lh_registry": [
+        {
+          "name": "CommCANInit",
+          "status": "supported",
+          "parameter_count": 0,
+          "runtime_field_count": 0
+        }
+      ],
+      "status": "not_met",
+      "status_zh": "未达到",
+      "finding": "存在同名或近名注册项但参数表为空；实际所需数据项、可变组/引用、字段和算法执行未实现或未认证。",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_comm.py",
+          "line": 22
+        },
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "line": 351
+        }
+      ],
+      "acceptance": "以手册 PDF 第 55 页的装配格式及本节参数/状态表构造有效程序，验证CAN 初始化与装置号、波特率、边界及错误行为；绑定固件版本并完成实机测试。",
+      "hardware_tested_by_this_audit": false
+    },
+    {
+      "id": "LM-FB-036",
+      "category": "系统通信",
+      "lm_name": "CommTrans",
+      "requirement": "带优先级、目标地址及数据组的发送",
+      "manual": {
+        "source_key": "manual",
+        "pdf_page": 64,
+        "printed_page": 59,
+        "section_pdf_pages": "54-67"
+      },
+      "lh_candidates": [
+        "CommTrans"
+      ],
+      "candidate_mapping_certified": false,
+      "exact_name_registered": true,
+      "lh_registry": [
+        {
+          "name": "CommTrans",
+          "status": "supported",
+          "parameter_count": 0,
+          "runtime_field_count": 0
+        }
+      ],
+      "status": "not_met",
+      "status_zh": "未达到",
+      "finding": "存在同名或近名注册项但参数表为空；实际所需数据项、可变组/引用、字段和算法执行未实现或未认证。",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_comm.py",
+          "line": 55
+        },
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "line": 351
+        }
+      ],
+      "acceptance": "以手册 PDF 第 64 页的装配格式及本节参数/状态表构造有效程序，验证带优先级、目标地址及数据组的发送、边界及错误行为；绑定固件版本并完成实机测试。",
+      "hardware_tested_by_this_audit": false
+    },
+    {
+      "id": "LM-FB-037",
+      "category": "系统通信",
+      "lm_name": "CommVariTrans",
+      "requirement": "数据变化触发发送",
+      "manual": {
+        "source_key": "manual",
+        "pdf_page": 66,
+        "printed_page": 61,
+        "section_pdf_pages": "54-67"
+      },
+      "lh_candidates": [],
+      "candidate_mapping_certified": false,
+      "exact_name_registered": false,
+      "lh_registry": [],
+      "status": "not_met",
+      "status_zh": "未达到",
+      "finding": "当前生产编译器无对应注册项；也未找到能完成本项 LM 语义的后端替代实现。",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "line": 351
+        }
+      ],
+      "acceptance": "以手册 PDF 第 66 页的装配格式及本节参数/状态表构造有效程序，验证数据变化触发发送、边界及错误行为；绑定固件版本并完成实机测试。",
+      "hardware_tested_by_this_audit": false
+    },
+    {
+      "id": "LM-FB-038",
+      "category": "系统通信",
+      "lm_name": "CommReciveBuff",
+      "requirement": "接收缓冲区与地址",
+      "manual": {
+        "source_key": "manual",
+        "pdf_page": 67,
+        "printed_page": 62,
+        "section_pdf_pages": "54-67"
+      },
+      "lh_candidates": [],
+      "candidate_mapping_certified": false,
+      "exact_name_registered": false,
+      "lh_registry": [],
+      "status": "not_met",
+      "status_zh": "未达到",
+      "finding": "当前生产编译器无对应注册项；也未找到能完成本项 LM 语义的后端替代实现。",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "line": 351
+        }
+      ],
+      "acceptance": "以手册 PDF 第 67 页的装配格式及本节参数/状态表构造有效程序，验证接收缓冲区与地址、边界及错误行为；绑定固件版本并完成实机测试。",
+      "hardware_tested_by_this_audit": false
+    },
+    {
+      "id": "LM-FB-039",
+      "category": "输入输出驱动",
+      "lm_name": "DrvAI",
+      "requirement": "多通道 ADC 采样、平均",
+      "manual": {
+        "source_key": "manual",
+        "pdf_page": 69,
+        "printed_page": 64,
+        "section_pdf_pages": "68-78"
+      },
+      "lh_candidates": [
+        "DrvAI"
+      ],
+      "candidate_mapping_certified": false,
+      "exact_name_registered": true,
+      "lh_registry": [
+        {
+          "name": "DrvAI",
+          "status": "supported",
+          "parameter_count": 3,
+          "runtime_field_count": 0
+        }
+      ],
+      "status": "partial",
+      "status_zh": "部分达到",
+      "finding": "有三个构造参数，但 LM 的可变通道参数区、输出字段、DivNum 平均语义与 LH NumChannels/InputNum/DivisionNum 没有完整映射。",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_io.py",
+          "line": 28
+        },
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "line": 351
+        }
+      ],
+      "acceptance": "以手册 PDF 第 69 页的装配格式及本节参数/状态表构造有效程序，验证多通道 ADC 采样、平均、边界及错误行为；绑定固件版本并完成实机测试。",
+      "hardware_tested_by_this_audit": false
+    },
+    {
+      "id": "LM-FB-040",
+      "category": "输入输出驱动",
+      "lm_name": "DrvT1PWMAO",
+      "requirement": "T1 PWM 模拟输出",
+      "manual": {
+        "source_key": "manual",
+        "pdf_page": 70,
+        "printed_page": 65,
+        "section_pdf_pages": "68-78"
+      },
+      "lh_candidates": [
+        "DrvAO"
+      ],
+      "candidate_mapping_certified": false,
+      "exact_name_registered": false,
+      "lh_registry": [
+        {
+          "name": "DrvAO",
+          "status": "supported",
+          "parameter_count": 2,
+          "runtime_field_count": 0
+        }
+      ],
+      "status": "partial",
+      "status_zh": "部分达到",
+      "finding": "DrvAO(channel,value) 只有通用候选；缺少 LM 的 Chann/DOMax/PWMIO 数据结构引用/DOMask/Act 和 EVA/EVB 资源契约。",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_io.py",
+          "line": 44
+        },
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "line": 351
+        }
+      ],
+      "acceptance": "以手册 PDF 第 70 页的装配格式及本节参数/状态表构造有效程序，验证T1 PWM 模拟输出、边界及错误行为；绑定固件版本并完成实机测试。",
+      "hardware_tested_by_this_audit": false
+    },
+    {
+      "id": "LM-FB-041",
+      "category": "输入输出驱动",
+      "lm_name": "DrvT2PWMAO",
+      "requirement": "T2 PWM 模拟输出扩展",
+      "manual": {
+        "source_key": "manual",
+        "pdf_page": 71,
+        "printed_page": 66,
+        "section_pdf_pages": "68-78"
+      },
+      "lh_candidates": [
+        "DrvAO"
+      ],
+      "candidate_mapping_certified": false,
+      "exact_name_registered": false,
+      "lh_registry": [
+        {
+          "name": "DrvAO",
+          "status": "supported",
+          "parameter_count": 2,
+          "runtime_field_count": 0
+        }
+      ],
+      "status": "partial",
+      "status_zh": "部分达到",
+      "finding": "DrvAO 不能证明 T2 扩展输出；未见 T2/T4 与 CAP/脉冲输入的自动互斥契约。",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_io.py",
+          "line": 44
+        },
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "line": 351
+        }
+      ],
+      "acceptance": "以手册 PDF 第 71 页的装配格式及本节参数/状态表构造有效程序，验证T2 PWM 模拟输出扩展、边界及错误行为；绑定固件版本并完成实机测试。",
+      "hardware_tested_by_this_audit": false
+    },
+    {
+      "id": "LM-FB-042",
+      "category": "输入输出驱动",
+      "lm_name": "DrvT2PeriodIn",
+      "requirement": "CAP 周期、频率输入",
+      "manual": {
+        "source_key": "manual",
+        "pdf_page": 72,
+        "printed_page": 67,
+        "section_pdf_pages": "68-78"
+      },
+      "lh_candidates": [
+        "DrvT2PeriodIn"
+      ],
+      "candidate_mapping_certified": false,
+      "exact_name_registered": true,
+      "lh_registry": [
+        {
+          "name": "DrvT2PeriodIn",
+          "status": "supported",
+          "parameter_count": 4,
+          "runtime_field_count": 0
+        }
+      ],
+      "status": "partial",
+      "status_zh": "部分达到",
+      "finding": "LM Scale=0..7 且表示 2^Scale，LH 默认 1000 并可通过；默认 Mask=65535 却被 INT 范围校验拒绝，导致默认调用失败。TI1..TI3/Tp 字段亦未定义。",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_io.py",
+          "line": 137
+        },
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "line": 351
+        }
+      ],
+      "acceptance": "以手册 PDF 第 72 页的装配格式及本节参数/状态表构造有效程序，验证CAP 周期、频率输入、边界及错误行为；绑定固件版本并完成实机测试。",
+      "hardware_tested_by_this_audit": false
+    },
+    {
+      "id": "LM-FB-043",
+      "category": "输入输出驱动",
+      "lm_name": "DrvT2PulseIn",
+      "requirement": "脉冲计数输入",
+      "manual": {
+        "source_key": "manual",
+        "pdf_page": 74,
+        "printed_page": 69,
+        "section_pdf_pages": "68-78"
+      },
+      "lh_candidates": [
+        "DrvTimeIn"
+      ],
+      "candidate_mapping_certified": false,
+      "exact_name_registered": false,
+      "lh_registry": [
+        {
+          "name": "DrvTimeIn",
+          "status": "supported",
+          "parameter_count": 4,
+          "runtime_field_count": 0
+        }
+      ],
+      "status": "partial",
+      "status_zh": "部分达到",
+      "finding": "DrvTimeIn 是候选，但默认 Mask=65535 被 INT 范围校验拒绝；T2/T4 脉冲计数、输出字段和外设占用契约未证明等效。",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_io.py",
+          "line": 154
+        },
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "line": 351
+        }
+      ],
+      "acceptance": "以手册 PDF 第 74 页的装配格式及本节参数/状态表构造有效程序，验证脉冲计数输入、边界及错误行为；绑定固件版本并完成实机测试。",
+      "hardware_tested_by_this_audit": false
+    },
+    {
+      "id": "LM-FB-044",
+      "category": "输入输出驱动",
+      "lm_name": "DrvDI",
+      "requirement": "端口、通道屏蔽和正反作用输入",
+      "manual": {
+        "source_key": "manual",
+        "pdf_page": 75,
+        "printed_page": 70,
+        "section_pdf_pages": "68-78"
+      },
+      "lh_candidates": [
+        "DrvDI"
+      ],
+      "candidate_mapping_certified": false,
+      "exact_name_registered": true,
+      "lh_registry": [
+        {
+          "name": "DrvDI",
+          "status": "supported",
+          "parameter_count": 3,
+          "runtime_field_count": 0
+        }
+      ],
+      "status": "partial",
+      "status_zh": "部分达到",
+      "finding": "端口/屏蔽/Action 构造参数存在；16#FFFF 屏蔽值被 INT 范围校验拒绝，且端口状态字段、枚举和实际电平行为未证明等效。",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_io.py",
+          "line": 59
+        },
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "line": 351
+        }
+      ],
+      "acceptance": "以手册 PDF 第 75 页的装配格式及本节参数/状态表构造有效程序，验证端口、通道屏蔽和正反作用输入、边界及错误行为；绑定固件版本并完成实机测试。",
+      "hardware_tested_by_this_audit": false
+    },
+    {
+      "id": "LM-FB-045",
+      "category": "输入输出驱动",
+      "lm_name": "DrvDO",
+      "requirement": "引用数据驱动的数字输出",
+      "manual": {
+        "source_key": "manual",
+        "pdf_page": 76,
+        "printed_page": 71,
+        "section_pdf_pages": "68-78"
+      },
+      "lh_candidates": [
+        "DrvDO"
+      ],
+      "candidate_mapping_certified": false,
+      "exact_name_registered": true,
+      "lh_registry": [
+        {
+          "name": "DrvDO",
+          "status": "supported",
+          "parameter_count": 4,
+          "runtime_field_count": 0
+        }
+      ],
+      "status": "partial",
+      "status_zh": "部分达到",
+      "finding": "OutputWord 只接受编译期立即数，动态数据源引用不支持；不能完成 LM DOWord=:Memb 的实时链路。",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_io.py",
+          "line": 75
+        },
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "line": 351
+        }
+      ],
+      "acceptance": "以手册 PDF 第 76 页的装配格式及本节参数/状态表构造有效程序，验证引用数据驱动的数字输出、边界及错误行为；绑定固件版本并完成实机测试。",
+      "hardware_tested_by_this_audit": false
+    },
+    {
+      "id": "LM-FB-046",
+      "category": "输入输出驱动",
+      "lm_name": "DrvSWPWMOut",
+      "requirement": "开关量 PWM 输出",
+      "manual": {
+        "source_key": "manual",
+        "pdf_page": 77,
+        "printed_page": 72,
+        "section_pdf_pages": "68-78"
+      },
+      "lh_candidates": [],
+      "candidate_mapping_certified": false,
+      "exact_name_registered": false,
+      "lh_registry": [],
+      "status": "not_met",
+      "status_zh": "未达到",
+      "finding": "当前生产编译器无对应注册项；也未找到能完成本项 LM 语义的后端替代实现。",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "line": 351
+        }
+      ],
+      "acceptance": "以手册 PDF 第 77 页的装配格式及本节参数/状态表构造有效程序，验证开关量 PWM 输出、边界及错误行为；绑定固件版本并完成实机测试。",
+      "hardware_tested_by_this_audit": false
+    },
+    {
+      "id": "LM-FB-047",
+      "category": "整型量运算",
+      "lm_name": "IntBuild",
+      "requirement": "开辟可变长度整型变量组",
+      "manual": {
+        "source_key": "manual",
+        "pdf_page": 80,
+        "printed_page": 75,
+        "section_pdf_pages": "79-88"
+      },
+      "lh_candidates": [
+        "IntBuild"
+      ],
+      "candidate_mapping_certified": false,
+      "exact_name_registered": true,
+      "lh_registry": [
+        {
+          "name": "IntBuild",
+          "status": "supported",
+          "parameter_count": 0,
+          "runtime_field_count": 0
+        }
+      ],
+      "status": "not_met",
+      "status_zh": "未达到",
+      "finding": "存在同名或近名注册项但参数表为空；实际所需数据项、可变组/引用、字段和算法执行未实现或未认证。",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_data.py",
+          "line": 42
+        },
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "line": 351
+        }
+      ],
+      "acceptance": "以手册 PDF 第 80 页的装配格式及本节参数/状态表构造有效程序，验证开辟可变长度整型变量组、边界及错误行为；绑定固件版本并完成实机测试。",
+      "hardware_tested_by_this_audit": false
+    },
+    {
+      "id": "LM-FB-048",
+      "category": "整型量运算",
+      "lm_name": "IntConstBuild",
+      "requirement": "开辟整型常量组",
+      "manual": {
+        "source_key": "manual",
+        "pdf_page": 81,
+        "printed_page": 76,
+        "section_pdf_pages": "79-88"
+      },
+      "lh_candidates": [
+        "IntConstBuild"
+      ],
+      "candidate_mapping_certified": false,
+      "exact_name_registered": true,
+      "lh_registry": [
+        {
+          "name": "IntConstBuild",
+          "status": "supported",
+          "parameter_count": 0,
+          "runtime_field_count": 0
+        }
+      ],
+      "status": "not_met",
+      "status_zh": "未达到",
+      "finding": "存在同名或近名注册项但参数表为空；实际所需数据项、可变组/引用、字段和算法执行未实现或未认证。",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_constant.py",
+          "line": 20
+        },
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "line": 351
+        }
+      ],
+      "acceptance": "以手册 PDF 第 81 页的装配格式及本节参数/状态表构造有效程序，验证开辟整型常量组、边界及错误行为；绑定固件版本并完成实机测试。",
+      "hardware_tested_by_this_audit": false
+    },
+    {
+      "id": "LM-FB-049",
+      "category": "整型量运算",
+      "lm_name": "IntOutOper",
+      "requirement": "整型四则运算输出",
+      "manual": {
+        "source_key": "manual",
+        "pdf_page": 82,
+        "printed_page": 77,
+        "section_pdf_pages": "79-88"
+      },
+      "lh_candidates": [
+        "Add",
+        "Sub",
+        "Mul",
+        "Div",
+        "Mod"
+      ],
+      "candidate_mapping_certified": false,
+      "exact_name_registered": false,
+      "lh_registry": [
+        {
+          "name": "Add",
+          "status": "supported",
+          "parameter_count": 0,
+          "runtime_field_count": 0
+        },
+        {
+          "name": "Sub",
+          "status": "supported",
+          "parameter_count": 0,
+          "runtime_field_count": 0
+        },
+        {
+          "name": "Mul",
+          "status": "supported",
+          "parameter_count": 0,
+          "runtime_field_count": 0
+        },
+        {
+          "name": "Div",
+          "status": "supported",
+          "parameter_count": 0,
+          "runtime_field_count": 0
+        },
+        {
+          "name": "Mod",
+          "status": "supported",
+          "parameter_count": 0,
+          "runtime_field_count": 0
+        }
+      ],
+      "status": "not_met",
+      "status_zh": "未达到",
+      "finding": "存在同名或近名注册项但参数表为空；实际所需数据项、可变组/引用、字段和算法执行未实现或未认证。",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_math.py",
+          "line": 33
+        },
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_math.py",
+          "line": 44
+        },
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_math.py",
+          "line": 55
+        },
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_math.py",
+          "line": 66
+        },
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_math.py",
+          "line": 77
+        },
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "line": 351
+        }
+      ],
+      "acceptance": "以手册 PDF 第 82 页的装配格式及本节参数/状态表构造有效程序，验证整型四则运算输出、边界及错误行为；绑定固件版本并完成实机测试。",
+      "hardware_tested_by_this_audit": false
+    },
+    {
+      "id": "LM-FB-050",
+      "category": "整型量运算",
+      "lm_name": "IntBuffOper",
+      "requirement": "整型四则运算缓冲",
+      "manual": {
+        "source_key": "manual",
+        "pdf_page": 82,
+        "printed_page": 77,
+        "section_pdf_pages": "79-88"
+      },
+      "lh_candidates": [
+        "IntBuffOper"
+      ],
+      "candidate_mapping_certified": false,
+      "exact_name_registered": true,
+      "lh_registry": [
+        {
+          "name": "IntBuffOper",
+          "status": "supported",
+          "parameter_count": 0,
+          "runtime_field_count": 0
+        }
+      ],
+      "status": "not_met",
+      "status_zh": "未达到",
+      "finding": "存在同名或近名注册项但参数表为空；实际所需数据项、可变组/引用、字段和算法执行未实现或未认证。",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_data.py",
+          "line": 198
+        },
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "line": 351
+        }
+      ],
+      "acceptance": "以手册 PDF 第 82 页的装配格式及本节参数/状态表构造有效程序，验证整型四则运算缓冲、边界及错误行为；绑定固件版本并完成实机测试。",
+      "hardware_tested_by_this_audit": false
+    },
+    {
+      "id": "LM-FB-051",
+      "category": "整型量运算",
+      "lm_name": "IntOutLogicOper",
+      "requirement": "整型位逻辑运算输出",
+      "manual": {
+        "source_key": "manual",
+        "pdf_page": 83,
+        "printed_page": 78,
+        "section_pdf_pages": "79-88"
+      },
+      "lh_candidates": [
+        "And",
+        "Or",
+        "Xor",
+        "Not"
+      ],
+      "candidate_mapping_certified": false,
+      "exact_name_registered": false,
+      "lh_registry": [
+        {
+          "name": "And",
+          "status": "supported",
+          "parameter_count": 0,
+          "runtime_field_count": 0
+        },
+        {
+          "name": "Or",
+          "status": "supported",
+          "parameter_count": 0,
+          "runtime_field_count": 0
+        },
+        {
+          "name": "Xor",
+          "status": "supported",
+          "parameter_count": 0,
+          "runtime_field_count": 0
+        },
+        {
+          "name": "Not",
+          "status": "supported",
+          "parameter_count": 0,
+          "runtime_field_count": 0
+        }
+      ],
+      "status": "not_met",
+      "status_zh": "未达到",
+      "finding": "存在同名或近名注册项但参数表为空；实际所需数据项、可变组/引用、字段和算法执行未实现或未认证。",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_logic.py",
+          "line": 25
+        },
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_logic.py",
+          "line": 36
+        },
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_logic.py",
+          "line": 58
+        },
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_logic.py",
+          "line": 47
+        },
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "line": 351
+        }
+      ],
+      "acceptance": "以手册 PDF 第 83 页的装配格式及本节参数/状态表构造有效程序，验证整型位逻辑运算输出、边界及错误行为；绑定固件版本并完成实机测试。",
+      "hardware_tested_by_this_audit": false
+    },
+    {
+      "id": "LM-FB-052",
+      "category": "整型量运算",
+      "lm_name": "IntBuffLogicOper",
+      "requirement": "整型位逻辑运算缓冲",
+      "manual": {
+        "source_key": "manual",
+        "pdf_page": 83,
+        "printed_page": 78,
+        "section_pdf_pages": "79-88"
+      },
+      "lh_candidates": [
+        "IntBuffLogicOper"
+      ],
+      "candidate_mapping_certified": false,
+      "exact_name_registered": true,
+      "lh_registry": [
+        {
+          "name": "IntBuffLogicOper",
+          "status": "supported",
+          "parameter_count": 0,
+          "runtime_field_count": 0
+        }
+      ],
+      "status": "not_met",
+      "status_zh": "未达到",
+      "finding": "存在同名或近名注册项但参数表为空；实际所需数据项、可变组/引用、字段和算法执行未实现或未认证。",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_data.py",
+          "line": 222
+        },
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "line": 351
+        }
+      ],
+      "acceptance": "以手册 PDF 第 83 页的装配格式及本节参数/状态表构造有效程序，验证整型位逻辑运算缓冲、边界及错误行为；绑定固件版本并完成实机测试。",
+      "hardware_tested_by_this_audit": false
+    },
+    {
+      "id": "LM-FB-053",
+      "category": "整型量运算",
+      "lm_name": "IntValuate",
+      "requirement": "整型初始化与运行时赋值组",
+      "manual": {
+        "source_key": "manual",
+        "pdf_page": 84,
+        "printed_page": 79,
+        "section_pdf_pages": "79-88"
+      },
+      "lh_candidates": [],
+      "candidate_mapping_certified": false,
+      "exact_name_registered": false,
+      "lh_registry": [],
+      "status": "partial",
+      "status_zh": "部分达到",
+      "finding": "标量常量赋值可以生成，但标记为执行未确认并禁止下载/运行；初始化、成组赋值和运行时拷贝仍缺失。",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "line": 351
+        }
+      ],
+      "acceptance": "以手册 PDF 第 84 页的装配格式及本节参数/状态表构造有效程序，验证整型初始化与运行时赋值组、边界及错误行为；绑定固件版本并完成实机测试。",
+      "hardware_tested_by_this_audit": false
+    },
+    {
+      "id": "LM-FB-054",
+      "category": "整型量运算",
+      "lm_name": "IntMax",
+      "requirement": "整型高选",
+      "manual": {
+        "source_key": "manual",
+        "pdf_page": 85,
+        "printed_page": 80,
+        "section_pdf_pages": "79-88"
+      },
+      "lh_candidates": [
+        "IntMax"
+      ],
+      "candidate_mapping_certified": false,
+      "exact_name_registered": true,
+      "lh_registry": [
+        {
+          "name": "IntMax",
+          "status": "supported",
+          "parameter_count": 0,
+          "runtime_field_count": 0
+        }
+      ],
+      "status": "not_met",
+      "status_zh": "未达到",
+      "finding": "存在同名或近名注册项但参数表为空；实际所需数据项、可变组/引用、字段和算法执行未实现或未认证。",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_data.py",
+          "line": 114
+        },
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "line": 351
+        }
+      ],
+      "acceptance": "以手册 PDF 第 85 页的装配格式及本节参数/状态表构造有效程序，验证整型高选、边界及错误行为；绑定固件版本并完成实机测试。",
+      "hardware_tested_by_this_audit": false
+    },
+    {
+      "id": "LM-FB-055",
+      "category": "整型量运算",
+      "lm_name": "IntMin",
+      "requirement": "整型低选",
+      "manual": {
+        "source_key": "manual",
+        "pdf_page": 85,
+        "printed_page": 80,
+        "section_pdf_pages": "79-88"
+      },
+      "lh_candidates": [
+        "IntMin"
+      ],
+      "candidate_mapping_certified": false,
+      "exact_name_registered": true,
+      "lh_registry": [
+        {
+          "name": "IntMin",
+          "status": "supported",
+          "parameter_count": 0,
+          "runtime_field_count": 0
+        }
+      ],
+      "status": "not_met",
+      "status_zh": "未达到",
+      "finding": "存在同名或近名注册项但参数表为空；实际所需数据项、可变组/引用、字段和算法执行未实现或未认证。",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_data.py",
+          "line": 126
+        },
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "line": 351
+        }
+      ],
+      "acceptance": "以手册 PDF 第 85 页的装配格式及本节参数/状态表构造有效程序，验证整型低选、边界及错误行为；绑定固件版本并完成实机测试。",
+      "hardware_tested_by_this_audit": false
+    },
+    {
+      "id": "LM-FB-056",
+      "category": "整型量运算",
+      "lm_name": "IntLimt",
+      "requirement": "整型限幅与限幅标志",
+      "manual": {
+        "source_key": "manual",
+        "pdf_page": 86,
+        "printed_page": 81,
+        "section_pdf_pages": "79-88"
+      },
+      "lh_candidates": [
+        "IntLimt"
+      ],
+      "candidate_mapping_certified": false,
+      "exact_name_registered": true,
+      "lh_registry": [
+        {
+          "name": "IntLimt",
+          "status": "supported",
+          "parameter_count": 0,
+          "runtime_field_count": 0
+        }
+      ],
+      "status": "not_met",
+      "status_zh": "未达到",
+      "finding": "存在同名或近名注册项但参数表为空；实际所需数据项、可变组/引用、字段和算法执行未实现或未认证。",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_data.py",
+          "line": 162
+        },
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "line": 351
+        }
+      ],
+      "acceptance": "以手册 PDF 第 86 页的装配格式及本节参数/状态表构造有效程序，验证整型限幅与限幅标志、边界及错误行为；绑定固件版本并完成实机测试。",
+      "hardware_tested_by_this_audit": false
+    },
+    {
+      "id": "LM-FB-057",
+      "category": "整型量运算",
+      "lm_name": "IntComp",
+      "requirement": "整型比较",
+      "manual": {
+        "source_key": "manual",
+        "pdf_page": 87,
+        "printed_page": 82,
+        "section_pdf_pages": "79-88"
+      },
+      "lh_candidates": [
+        "IntComp"
+      ],
+      "candidate_mapping_certified": false,
+      "exact_name_registered": true,
+      "lh_registry": [
+        {
+          "name": "IntComp",
+          "status": "supported",
+          "parameter_count": 0,
+          "runtime_field_count": 0
+        }
+      ],
+      "status": "not_met",
+      "status_zh": "未达到",
+      "finding": "存在同名或近名注册项但参数表为空；实际所需数据项、可变组/引用、字段和算法执行未实现或未认证。",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_data.py",
+          "line": 90
+        },
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "line": 351
+        }
+      ],
+      "acceptance": "以手册 PDF 第 87 页的装配格式及本节参数/状态表构造有效程序，验证整型比较、边界及错误行为；绑定固件版本并完成实机测试。",
+      "hardware_tested_by_this_audit": false
+    },
+    {
+      "id": "LM-FB-058",
+      "category": "整型量运算",
+      "lm_name": "IntWatch",
+      "requirement": "整型量监视",
+      "manual": {
+        "source_key": "manual",
+        "pdf_page": 88,
+        "printed_page": 83,
+        "section_pdf_pages": "79-88"
+      },
+      "lh_candidates": [],
+      "candidate_mapping_certified": false,
+      "exact_name_registered": false,
+      "lh_registry": [],
+      "status": "not_met",
+      "status_zh": "未达到",
+      "finding": "当前生产编译器无对应注册项；也未找到能完成本项 LM 语义的后端替代实现。",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "line": 351
+        }
+      ],
+      "acceptance": "以手册 PDF 第 88 页的装配格式及本节参数/状态表构造有效程序，验证整型量监视、边界及错误行为；绑定固件版本并完成实机测试。",
+      "hardware_tested_by_this_audit": false
+    },
+    {
+      "id": "LM-FB-059",
+      "category": "浮点数运算",
+      "lm_name": "FloatBuild",
+      "requirement": "开辟浮点变量组",
+      "manual": {
+        "source_key": "manual",
+        "pdf_page": 90,
+        "printed_page": 85,
+        "section_pdf_pages": "89-100"
+      },
+      "lh_candidates": [
+        "FloatBuild"
+      ],
+      "candidate_mapping_certified": false,
+      "exact_name_registered": true,
+      "lh_registry": [
+        {
+          "name": "FloatBuild",
+          "status": "supported",
+          "parameter_count": 0,
+          "runtime_field_count": 0
+        }
+      ],
+      "status": "not_met",
+      "status_zh": "未达到",
+      "finding": "存在同名或近名注册项但参数表为空；实际所需数据项、可变组/引用、字段和算法执行未实现或未认证。",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_data.py",
+          "line": 66
+        },
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "line": 351
+        }
+      ],
+      "acceptance": "以手册 PDF 第 90 页的装配格式及本节参数/状态表构造有效程序，验证开辟浮点变量组、边界及错误行为；绑定固件版本并完成实机测试。",
+      "hardware_tested_by_this_audit": false
+    },
+    {
+      "id": "LM-FB-060",
+      "category": "浮点数运算",
+      "lm_name": "FloatConstBuild",
+      "requirement": "开辟浮点常量组",
+      "manual": {
+        "source_key": "manual",
+        "pdf_page": 91,
+        "printed_page": 86,
+        "section_pdf_pages": "89-100"
+      },
+      "lh_candidates": [
+        "FloatConstBuild"
+      ],
+      "candidate_mapping_certified": false,
+      "exact_name_registered": true,
+      "lh_registry": [
+        {
+          "name": "FloatConstBuild",
+          "status": "supported",
+          "parameter_count": 0,
+          "runtime_field_count": 0
+        }
+      ],
+      "status": "not_met",
+      "status_zh": "未达到",
+      "finding": "存在同名或近名注册项但参数表为空；实际所需数据项、可变组/引用、字段和算法执行未实现或未认证。",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_data.py",
+          "line": 78
+        },
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "line": 351
+        }
+      ],
+      "acceptance": "以手册 PDF 第 91 页的装配格式及本节参数/状态表构造有效程序，验证开辟浮点常量组、边界及错误行为；绑定固件版本并完成实机测试。",
+      "hardware_tested_by_this_audit": false
+    },
+    {
+      "id": "LM-FB-061",
+      "category": "浮点数运算",
+      "lm_name": "FloatOutOper",
+      "requirement": "浮点初等运算输出",
+      "manual": {
+        "source_key": "manual",
+        "pdf_page": 92,
+        "printed_page": 87,
+        "section_pdf_pages": "89-100"
+      },
+      "lh_candidates": [
+        "Add",
+        "Sub",
+        "Mul",
+        "Div",
+        "Abs",
+        "Sqrt",
+        "Exp",
+        "Ln",
+        "Sin",
+        "Cos",
+        "Tan"
+      ],
+      "candidate_mapping_certified": false,
+      "exact_name_registered": false,
+      "lh_registry": [
+        {
+          "name": "Add",
+          "status": "supported",
+          "parameter_count": 0,
+          "runtime_field_count": 0
+        },
+        {
+          "name": "Sub",
+          "status": "supported",
+          "parameter_count": 0,
+          "runtime_field_count": 0
+        },
+        {
+          "name": "Mul",
+          "status": "supported",
+          "parameter_count": 0,
+          "runtime_field_count": 0
+        },
+        {
+          "name": "Div",
+          "status": "supported",
+          "parameter_count": 0,
+          "runtime_field_count": 0
+        },
+        {
+          "name": "Abs",
+          "status": "supported",
+          "parameter_count": 0,
+          "runtime_field_count": 0
+        },
+        {
+          "name": "Sqrt",
+          "status": "supported",
+          "parameter_count": 0,
+          "runtime_field_count": 0
+        },
+        {
+          "name": "Exp",
+          "status": "supported",
+          "parameter_count": 0,
+          "runtime_field_count": 0
+        },
+        {
+          "name": "Ln",
+          "status": "supported",
+          "parameter_count": 0,
+          "runtime_field_count": 0
+        },
+        {
+          "name": "Sin",
+          "status": "supported",
+          "parameter_count": 0,
+          "runtime_field_count": 0
+        },
+        {
+          "name": "Cos",
+          "status": "supported",
+          "parameter_count": 0,
+          "runtime_field_count": 0
+        },
+        {
+          "name": "Tan",
+          "status": "supported",
+          "parameter_count": 0,
+          "runtime_field_count": 0
+        }
+      ],
+      "status": "not_met",
+      "status_zh": "未达到",
+      "finding": "存在同名或近名注册项但参数表为空；实际所需数据项、可变组/引用、字段和算法执行未实现或未认证。",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_math.py",
+          "line": 33
+        },
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_math.py",
+          "line": 44
+        },
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_math.py",
+          "line": 55
+        },
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_math.py",
+          "line": 66
+        },
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_math.py",
+          "line": 88
+        },
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_math.py",
+          "line": 99
+        },
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_math.py",
+          "line": 110
+        },
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_math.py",
+          "line": 121
+        },
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_math.py",
+          "line": 143
+        },
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_math.py",
+          "line": 154
+        },
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_math.py",
+          "line": 165
+        },
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "line": 351
+        }
+      ],
+      "acceptance": "以手册 PDF 第 92 页的装配格式及本节参数/状态表构造有效程序，验证浮点初等运算输出、边界及错误行为；绑定固件版本并完成实机测试。",
+      "hardware_tested_by_this_audit": false
+    },
+    {
+      "id": "LM-FB-062",
+      "category": "浮点数运算",
+      "lm_name": "FloatBuffOper",
+      "requirement": "浮点初等运算缓冲",
+      "manual": {
+        "source_key": "manual",
+        "pdf_page": 92,
+        "printed_page": 87,
+        "section_pdf_pages": "89-100"
+      },
+      "lh_candidates": [
+        "FloatBuffOper"
+      ],
+      "candidate_mapping_certified": false,
+      "exact_name_registered": true,
+      "lh_registry": [
+        {
+          "name": "FloatBuffOper",
+          "status": "supported",
+          "parameter_count": 0,
+          "runtime_field_count": 0
+        }
+      ],
+      "status": "not_met",
+      "status_zh": "未达到",
+      "finding": "存在同名或近名注册项但参数表为空；实际所需数据项、可变组/引用、字段和算法执行未实现或未认证。",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_data.py",
+          "line": 210
+        },
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "line": 351
+        }
+      ],
+      "acceptance": "以手册 PDF 第 92 页的装配格式及本节参数/状态表构造有效程序，验证浮点初等运算缓冲、边界及错误行为；绑定固件版本并完成实机测试。",
+      "hardware_tested_by_this_audit": false
+    },
+    {
+      "id": "LM-FB-063",
+      "category": "浮点数运算",
+      "lm_name": "FloatValuate",
+      "requirement": "浮点初始化与运行时赋值组",
+      "manual": {
+        "source_key": "manual",
+        "pdf_page": 93,
+        "printed_page": 88,
+        "section_pdf_pages": "89-100"
+      },
+      "lh_candidates": [],
+      "candidate_mapping_certified": false,
+      "exact_name_registered": false,
+      "lh_registry": [],
+      "status": "partial",
+      "status_zh": "部分达到",
+      "finding": "REAL 常量写回可以生成离线产物；初始化、引用/运行时表达式写回及 LM 高低字成组赋值未达到。",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "line": 351
+        }
+      ],
+      "acceptance": "以手册 PDF 第 93 页的装配格式及本节参数/状态表构造有效程序，验证浮点初始化与运行时赋值组、边界及错误行为；绑定固件版本并完成实机测试。",
+      "hardware_tested_by_this_audit": false
+    },
+    {
+      "id": "LM-FB-064",
+      "category": "浮点数运算",
+      "lm_name": "FloatMax",
+      "requirement": "浮点高选",
+      "manual": {
+        "source_key": "manual",
+        "pdf_page": 94,
+        "printed_page": 89,
+        "section_pdf_pages": "89-100"
+      },
+      "lh_candidates": [
+        "FloatMax"
+      ],
+      "candidate_mapping_certified": false,
+      "exact_name_registered": true,
+      "lh_registry": [
+        {
+          "name": "FloatMax",
+          "status": "supported",
+          "parameter_count": 0,
+          "runtime_field_count": 0
+        }
+      ],
+      "status": "not_met",
+      "status_zh": "未达到",
+      "finding": "存在同名或近名注册项但参数表为空；实际所需数据项、可变组/引用、字段和算法执行未实现或未认证。",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_data.py",
+          "line": 138
+        },
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "line": 351
+        }
+      ],
+      "acceptance": "以手册 PDF 第 94 页的装配格式及本节参数/状态表构造有效程序，验证浮点高选、边界及错误行为；绑定固件版本并完成实机测试。",
+      "hardware_tested_by_this_audit": false
+    },
+    {
+      "id": "LM-FB-065",
+      "category": "浮点数运算",
+      "lm_name": "FloatMin",
+      "requirement": "浮点低选",
+      "manual": {
+        "source_key": "manual",
+        "pdf_page": 94,
+        "printed_page": 89,
+        "section_pdf_pages": "89-100"
+      },
+      "lh_candidates": [
+        "FloatMin"
+      ],
+      "candidate_mapping_certified": false,
+      "exact_name_registered": true,
+      "lh_registry": [
+        {
+          "name": "FloatMin",
+          "status": "supported",
+          "parameter_count": 0,
+          "runtime_field_count": 0
+        }
+      ],
+      "status": "not_met",
+      "status_zh": "未达到",
+      "finding": "存在同名或近名注册项但参数表为空；实际所需数据项、可变组/引用、字段和算法执行未实现或未认证。",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_data.py",
+          "line": 150
+        },
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "line": 351
+        }
+      ],
+      "acceptance": "以手册 PDF 第 94 页的装配格式及本节参数/状态表构造有效程序，验证浮点低选、边界及错误行为；绑定固件版本并完成实机测试。",
+      "hardware_tested_by_this_audit": false
+    },
+    {
+      "id": "LM-FB-066",
+      "category": "浮点数运算",
+      "lm_name": "FloatLimt",
+      "requirement": "浮点限幅",
+      "manual": {
+        "source_key": "manual",
+        "pdf_page": 95,
+        "printed_page": 90,
+        "section_pdf_pages": "89-100"
+      },
+      "lh_candidates": [
+        "FloatLimt"
+      ],
+      "candidate_mapping_certified": false,
+      "exact_name_registered": true,
+      "lh_registry": [
+        {
+          "name": "FloatLimt",
+          "status": "supported",
+          "parameter_count": 0,
+          "runtime_field_count": 0
+        }
+      ],
+      "status": "not_met",
+      "status_zh": "未达到",
+      "finding": "存在同名或近名注册项但参数表为空；实际所需数据项、可变组/引用、字段和算法执行未实现或未认证。",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_data.py",
+          "line": 174
+        },
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "line": 351
+        }
+      ],
+      "acceptance": "以手册 PDF 第 95 页的装配格式及本节参数/状态表构造有效程序，验证浮点限幅、边界及错误行为；绑定固件版本并完成实机测试。",
+      "hardware_tested_by_this_audit": false
+    },
+    {
+      "id": "LM-FB-067",
+      "category": "浮点数运算",
+      "lm_name": "FloatPureLimt",
+      "requirement": "浮点绝对值限幅",
+      "manual": {
+        "source_key": "manual",
+        "pdf_page": 96,
+        "printed_page": 91,
+        "section_pdf_pages": "89-100"
+      },
+      "lh_candidates": [],
+      "candidate_mapping_certified": false,
+      "exact_name_registered": false,
+      "lh_registry": [],
+      "status": "not_met",
+      "status_zh": "未达到",
+      "finding": "当前生产编译器无对应注册项；也未找到能完成本项 LM 语义的后端替代实现。",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "line": 351
+        }
+      ],
+      "acceptance": "以手册 PDF 第 96 页的装配格式及本节参数/状态表构造有效程序，验证浮点绝对值限幅、边界及错误行为；绑定固件版本并完成实机测试。",
+      "hardware_tested_by_this_audit": false
+    },
+    {
+      "id": "LM-FB-068",
+      "category": "浮点数运算",
+      "lm_name": "FloatComp",
+      "requirement": "浮点比较",
+      "manual": {
+        "source_key": "manual",
+        "pdf_page": 97,
+        "printed_page": 92,
+        "section_pdf_pages": "89-100"
+      },
+      "lh_candidates": [
+        "FloatComp"
+      ],
+      "candidate_mapping_certified": false,
+      "exact_name_registered": true,
+      "lh_registry": [
+        {
+          "name": "FloatComp",
+          "status": "supported",
+          "parameter_count": 0,
+          "runtime_field_count": 0
+        }
+      ],
+      "status": "not_met",
+      "status_zh": "未达到",
+      "finding": "存在同名或近名注册项但参数表为空；实际所需数据项、可变组/引用、字段和算法执行未实现或未认证。",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_data.py",
+          "line": 102
+        },
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "line": 351
+        }
+      ],
+      "acceptance": "以手册 PDF 第 97 页的装配格式及本节参数/状态表构造有效程序，验证浮点比较、边界及错误行为；绑定固件版本并完成实机测试。",
+      "hardware_tested_by_this_audit": false
+    },
+    {
+      "id": "LM-FB-069",
+      "category": "浮点数运算",
+      "lm_name": "FloatSignCut",
+      "requirement": "浮点小信号切除",
+      "manual": {
+        "source_key": "manual",
+        "pdf_page": 97,
+        "printed_page": 92,
+        "section_pdf_pages": "89-100"
+      },
+      "lh_candidates": [],
+      "candidate_mapping_certified": false,
+      "exact_name_registered": false,
+      "lh_registry": [],
+      "status": "not_met",
+      "status_zh": "未达到",
+      "finding": "当前生产编译器无对应注册项；也未找到能完成本项 LM 语义的后端替代实现。",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "line": 351
+        }
+      ],
+      "acceptance": "以手册 PDF 第 97 页的装配格式及本节参数/状态表构造有效程序，验证浮点小信号切除、边界及错误行为；绑定固件版本并完成实机测试。",
+      "hardware_tested_by_this_audit": false
+    },
+    {
+      "id": "LM-FB-070",
+      "category": "浮点数运算",
+      "lm_name": "FloatVariLimt",
+      "requirement": "浮点变化率限制",
+      "manual": {
+        "source_key": "manual",
+        "pdf_page": 98,
+        "printed_page": 93,
+        "section_pdf_pages": "89-100"
+      },
+      "lh_candidates": [
+        "FloatVariLimt"
+      ],
+      "candidate_mapping_certified": false,
+      "exact_name_registered": true,
+      "lh_registry": [
+        {
+          "name": "FloatVariLimt",
+          "status": "supported",
+          "parameter_count": 0,
+          "runtime_field_count": 0
+        }
+      ],
+      "status": "not_met",
+      "status_zh": "未达到",
+      "finding": "存在同名或近名注册项但参数表为空；实际所需数据项、可变组/引用、字段和算法执行未实现或未认证。",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_data.py",
+          "line": 186
+        },
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "line": 351
+        }
+      ],
+      "acceptance": "以手册 PDF 第 98 页的装配格式及本节参数/状态表构造有效程序，验证浮点变化率限制、边界及错误行为；绑定固件版本并完成实机测试。",
+      "hardware_tested_by_this_audit": false
+    },
+    {
+      "id": "LM-FB-071",
+      "category": "浮点数运算",
+      "lm_name": "FloatOverWatch",
+      "requirement": "浮点高值监视",
+      "manual": {
+        "source_key": "manual",
+        "pdf_page": 99,
+        "printed_page": 94,
+        "section_pdf_pages": "89-100"
+      },
+      "lh_candidates": [
+        "FloatOverWatch"
+      ],
+      "candidate_mapping_certified": false,
+      "exact_name_registered": true,
+      "lh_registry": [
+        {
+          "name": "FloatOverWatch",
+          "status": "supported",
+          "parameter_count": 0,
+          "runtime_field_count": 0
+        }
+      ],
+      "status": "not_met",
+      "status_zh": "未达到",
+      "finding": "存在同名或近名注册项但参数表为空；实际所需数据项、可变组/引用、字段和算法执行未实现或未认证。",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_safety.py",
+          "line": 33
+        },
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "line": 351
+        }
+      ],
+      "acceptance": "以手册 PDF 第 99 页的装配格式及本节参数/状态表构造有效程序，验证浮点高值监视、边界及错误行为；绑定固件版本并完成实机测试。",
+      "hardware_tested_by_this_audit": false
+    },
+    {
+      "id": "LM-FB-072",
+      "category": "浮点数运算",
+      "lm_name": "FloatBelowWatch",
+      "requirement": "浮点低值监视",
+      "manual": {
+        "source_key": "manual",
+        "pdf_page": 100,
+        "printed_page": 95,
+        "section_pdf_pages": "89-100"
+      },
+      "lh_candidates": [
+        "FloatBelowWatch"
+      ],
+      "candidate_mapping_certified": false,
+      "exact_name_registered": true,
+      "lh_registry": [
+        {
+          "name": "FloatBelowWatch",
+          "status": "supported",
+          "parameter_count": 0,
+          "runtime_field_count": 0
+        }
+      ],
+      "status": "not_met",
+      "status_zh": "未达到",
+      "finding": "存在同名或近名注册项但参数表为空；实际所需数据项、可变组/引用、字段和算法执行未实现或未认证。",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_safety.py",
+          "line": 22
+        },
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "line": 351
+        }
+      ],
+      "acceptance": "以手册 PDF 第 100 页的装配格式及本节参数/状态表构造有效程序，验证浮点低值监视、边界及错误行为；绑定固件版本并完成实机测试。",
+      "hardware_tested_by_this_audit": false,
+      "manual_spelling_note": "本类总览 PDF90 写 FloatUnderWatch，正文 PDF100 写 FloatBelowWatch；按同一低值监视功能合并为一项。"
+    },
+    {
+      "id": "LM-FB-073",
+      "category": "IQ 数运算",
+      "lm_name": "IQBuild",
+      "requirement": "开辟 IQ 变量",
+      "manual": {
+        "source_key": "manual",
+        "pdf_page": 102,
+        "printed_page": 97,
+        "section_pdf_pages": "101-112"
+      },
+      "lh_candidates": [],
+      "candidate_mapping_certified": false,
+      "exact_name_registered": false,
+      "lh_registry": [],
+      "status": "not_met",
+      "status_zh": "未达到",
+      "finding": "无 IQ 类型、Q 值编码/运算/溢出契约及相应功能块；REAL 替代不能证明与 IQ 等效。",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "line": 351
+        }
+      ],
+      "acceptance": "以手册 PDF 第 102 页的装配格式及本节参数/状态表构造有效程序，验证开辟 IQ 变量、边界及错误行为；绑定固件版本并完成实机测试。",
+      "hardware_tested_by_this_audit": false
+    },
+    {
+      "id": "LM-FB-074",
+      "category": "IQ 数运算",
+      "lm_name": "IQConstBuild",
+      "requirement": "开辟 IQ 常量",
+      "manual": {
+        "source_key": "manual",
+        "pdf_page": 103,
+        "printed_page": 98,
+        "section_pdf_pages": "101-112"
+      },
+      "lh_candidates": [],
+      "candidate_mapping_certified": false,
+      "exact_name_registered": false,
+      "lh_registry": [],
+      "status": "not_met",
+      "status_zh": "未达到",
+      "finding": "无 IQ 类型、Q 值编码/运算/溢出契约及相应功能块；REAL 替代不能证明与 IQ 等效。",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "line": 351
+        }
+      ],
+      "acceptance": "以手册 PDF 第 103 页的装配格式及本节参数/状态表构造有效程序，验证开辟 IQ 常量、边界及错误行为；绑定固件版本并完成实机测试。",
+      "hardware_tested_by_this_audit": false
+    },
+    {
+      "id": "LM-FB-075",
+      "category": "IQ 数运算",
+      "lm_name": "IQOutOper",
+      "requirement": "IQ 初等运算输出",
+      "manual": {
+        "source_key": "manual",
+        "pdf_page": 104,
+        "printed_page": 99,
+        "section_pdf_pages": "101-112"
+      },
+      "lh_candidates": [],
+      "candidate_mapping_certified": false,
+      "exact_name_registered": false,
+      "lh_registry": [],
+      "status": "not_met",
+      "status_zh": "未达到",
+      "finding": "无 IQ 类型、Q 值编码/运算/溢出契约及相应功能块；REAL 替代不能证明与 IQ 等效。",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "line": 351
+        }
+      ],
+      "acceptance": "以手册 PDF 第 104 页的装配格式及本节参数/状态表构造有效程序，验证IQ 初等运算输出、边界及错误行为；绑定固件版本并完成实机测试。",
+      "hardware_tested_by_this_audit": false
+    },
+    {
+      "id": "LM-FB-076",
+      "category": "IQ 数运算",
+      "lm_name": "IQBuffOper",
+      "requirement": "IQ 初等运算缓冲",
+      "manual": {
+        "source_key": "manual",
+        "pdf_page": 104,
+        "printed_page": 99,
+        "section_pdf_pages": "101-112"
+      },
+      "lh_candidates": [],
+      "candidate_mapping_certified": false,
+      "exact_name_registered": false,
+      "lh_registry": [],
+      "status": "not_met",
+      "status_zh": "未达到",
+      "finding": "无 IQ 类型、Q 值编码/运算/溢出契约及相应功能块；REAL 替代不能证明与 IQ 等效。",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "line": 351
+        }
+      ],
+      "acceptance": "以手册 PDF 第 104 页的装配格式及本节参数/状态表构造有效程序，验证IQ 初等运算缓冲、边界及错误行为；绑定固件版本并完成实机测试。",
+      "hardware_tested_by_this_audit": false
+    },
+    {
+      "id": "LM-FB-077",
+      "category": "IQ 数运算",
+      "lm_name": "IQValuate",
+      "requirement": "IQ 赋值",
+      "manual": {
+        "source_key": "manual",
+        "pdf_page": 105,
+        "printed_page": 100,
+        "section_pdf_pages": "101-112"
+      },
+      "lh_candidates": [],
+      "candidate_mapping_certified": false,
+      "exact_name_registered": false,
+      "lh_registry": [],
+      "status": "not_met",
+      "status_zh": "未达到",
+      "finding": "无 IQ 类型、Q 值编码/运算/溢出契约及相应功能块；REAL 替代不能证明与 IQ 等效。",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "line": 351
+        }
+      ],
+      "acceptance": "以手册 PDF 第 105 页的装配格式及本节参数/状态表构造有效程序，验证IQ 赋值、边界及错误行为；绑定固件版本并完成实机测试。",
+      "hardware_tested_by_this_audit": false
+    },
+    {
+      "id": "LM-FB-078",
+      "category": "IQ 数运算",
+      "lm_name": "IQMax",
+      "requirement": "IQ 高选",
+      "manual": {
+        "source_key": "manual",
+        "pdf_page": 106,
+        "printed_page": 101,
+        "section_pdf_pages": "101-112"
+      },
+      "lh_candidates": [],
+      "candidate_mapping_certified": false,
+      "exact_name_registered": false,
+      "lh_registry": [],
+      "status": "not_met",
+      "status_zh": "未达到",
+      "finding": "无 IQ 类型、Q 值编码/运算/溢出契约及相应功能块；REAL 替代不能证明与 IQ 等效。",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "line": 351
+        }
+      ],
+      "acceptance": "以手册 PDF 第 106 页的装配格式及本节参数/状态表构造有效程序，验证IQ 高选、边界及错误行为；绑定固件版本并完成实机测试。",
+      "hardware_tested_by_this_audit": false
+    },
+    {
+      "id": "LM-FB-079",
+      "category": "IQ 数运算",
+      "lm_name": "IQMin",
+      "requirement": "IQ 低选",
+      "manual": {
+        "source_key": "manual",
+        "pdf_page": 106,
+        "printed_page": 101,
+        "section_pdf_pages": "101-112"
+      },
+      "lh_candidates": [],
+      "candidate_mapping_certified": false,
+      "exact_name_registered": false,
+      "lh_registry": [],
+      "status": "not_met",
+      "status_zh": "未达到",
+      "finding": "无 IQ 类型、Q 值编码/运算/溢出契约及相应功能块；REAL 替代不能证明与 IQ 等效。",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "line": 351
+        }
+      ],
+      "acceptance": "以手册 PDF 第 106 页的装配格式及本节参数/状态表构造有效程序，验证IQ 低选、边界及错误行为；绑定固件版本并完成实机测试。",
+      "hardware_tested_by_this_audit": false
+    },
+    {
+      "id": "LM-FB-080",
+      "category": "IQ 数运算",
+      "lm_name": "IQLimt",
+      "requirement": "IQ 限幅",
+      "manual": {
+        "source_key": "manual",
+        "pdf_page": 107,
+        "printed_page": 102,
+        "section_pdf_pages": "101-112"
+      },
+      "lh_candidates": [],
+      "candidate_mapping_certified": false,
+      "exact_name_registered": false,
+      "lh_registry": [],
+      "status": "not_met",
+      "status_zh": "未达到",
+      "finding": "无 IQ 类型、Q 值编码/运算/溢出契约及相应功能块；REAL 替代不能证明与 IQ 等效。",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "line": 351
+        }
+      ],
+      "acceptance": "以手册 PDF 第 107 页的装配格式及本节参数/状态表构造有效程序，验证IQ 限幅、边界及错误行为；绑定固件版本并完成实机测试。",
+      "hardware_tested_by_this_audit": false
+    },
+    {
+      "id": "LM-FB-081",
+      "category": "IQ 数运算",
+      "lm_name": "IQPureLimt",
+      "requirement": "IQ 绝对值限幅",
+      "manual": {
+        "source_key": "manual",
+        "pdf_page": 108,
+        "printed_page": 103,
+        "section_pdf_pages": "101-112"
+      },
+      "lh_candidates": [],
+      "candidate_mapping_certified": false,
+      "exact_name_registered": false,
+      "lh_registry": [],
+      "status": "not_met",
+      "status_zh": "未达到",
+      "finding": "无 IQ 类型、Q 值编码/运算/溢出契约及相应功能块；REAL 替代不能证明与 IQ 等效。",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "line": 351
+        }
+      ],
+      "acceptance": "以手册 PDF 第 108 页的装配格式及本节参数/状态表构造有效程序，验证IQ 绝对值限幅、边界及错误行为；绑定固件版本并完成实机测试。",
+      "hardware_tested_by_this_audit": false
+    },
+    {
+      "id": "LM-FB-082",
+      "category": "IQ 数运算",
+      "lm_name": "IQComp",
+      "requirement": "IQ 比较",
+      "manual": {
+        "source_key": "manual",
+        "pdf_page": 109,
+        "printed_page": 104,
+        "section_pdf_pages": "101-112"
+      },
+      "lh_candidates": [],
+      "candidate_mapping_certified": false,
+      "exact_name_registered": false,
+      "lh_registry": [],
+      "status": "not_met",
+      "status_zh": "未达到",
+      "finding": "无 IQ 类型、Q 值编码/运算/溢出契约及相应功能块；REAL 替代不能证明与 IQ 等效。",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "line": 351
+        }
+      ],
+      "acceptance": "以手册 PDF 第 109 页的装配格式及本节参数/状态表构造有效程序，验证IQ 比较、边界及错误行为；绑定固件版本并完成实机测试。",
+      "hardware_tested_by_this_audit": false
+    },
+    {
+      "id": "LM-FB-083",
+      "category": "IQ 数运算",
+      "lm_name": "IQSignCut",
+      "requirement": "IQ 小信号切除",
+      "manual": {
+        "source_key": "manual",
+        "pdf_page": 109,
+        "printed_page": 104,
+        "section_pdf_pages": "101-112"
+      },
+      "lh_candidates": [],
+      "candidate_mapping_certified": false,
+      "exact_name_registered": false,
+      "lh_registry": [],
+      "status": "not_met",
+      "status_zh": "未达到",
+      "finding": "无 IQ 类型、Q 值编码/运算/溢出契约及相应功能块；REAL 替代不能证明与 IQ 等效。",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "line": 351
+        }
+      ],
+      "acceptance": "以手册 PDF 第 109 页的装配格式及本节参数/状态表构造有效程序，验证IQ 小信号切除、边界及错误行为；绑定固件版本并完成实机测试。",
+      "hardware_tested_by_this_audit": false
+    },
+    {
+      "id": "LM-FB-084",
+      "category": "IQ 数运算",
+      "lm_name": "IQVariLimt",
+      "requirement": "IQ 变化率限制",
+      "manual": {
+        "source_key": "manual",
+        "pdf_page": 110,
+        "printed_page": 105,
+        "section_pdf_pages": "101-112"
+      },
+      "lh_candidates": [],
+      "candidate_mapping_certified": false,
+      "exact_name_registered": false,
+      "lh_registry": [],
+      "status": "not_met",
+      "status_zh": "未达到",
+      "finding": "无 IQ 类型、Q 值编码/运算/溢出契约及相应功能块；REAL 替代不能证明与 IQ 等效。",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "line": 351
+        }
+      ],
+      "acceptance": "以手册 PDF 第 110 页的装配格式及本节参数/状态表构造有效程序，验证IQ 变化率限制、边界及错误行为；绑定固件版本并完成实机测试。",
+      "hardware_tested_by_this_audit": false
+    },
+    {
+      "id": "LM-FB-085",
+      "category": "IQ 数运算",
+      "lm_name": "IQOverWatch",
+      "requirement": "IQ 高值监视",
+      "manual": {
+        "source_key": "manual",
+        "pdf_page": 111,
+        "printed_page": 106,
+        "section_pdf_pages": "101-112"
+      },
+      "lh_candidates": [],
+      "candidate_mapping_certified": false,
+      "exact_name_registered": false,
+      "lh_registry": [],
+      "status": "not_met",
+      "status_zh": "未达到",
+      "finding": "无 IQ 类型、Q 值编码/运算/溢出契约及相应功能块；REAL 替代不能证明与 IQ 等效。",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "line": 351
+        }
+      ],
+      "acceptance": "以手册 PDF 第 111 页的装配格式及本节参数/状态表构造有效程序，验证IQ 高值监视、边界及错误行为；绑定固件版本并完成实机测试。",
+      "hardware_tested_by_this_audit": false
+    },
+    {
+      "id": "LM-FB-086",
+      "category": "IQ 数运算",
+      "lm_name": "IQBelowWatch",
+      "requirement": "IQ 低值监视",
+      "manual": {
+        "source_key": "manual",
+        "pdf_page": 112,
+        "printed_page": 107,
+        "section_pdf_pages": "101-112"
+      },
+      "lh_candidates": [],
+      "candidate_mapping_certified": false,
+      "exact_name_registered": false,
+      "lh_registry": [],
+      "status": "not_met",
+      "status_zh": "未达到",
+      "finding": "无 IQ 类型、Q 值编码/运算/溢出契约及相应功能块；REAL 替代不能证明与 IQ 等效。",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "line": 351
+        }
+      ],
+      "acceptance": "以手册 PDF 第 112 页的装配格式及本节参数/状态表构造有效程序，验证IQ 低值监视、边界及错误行为；绑定固件版本并完成实机测试。",
+      "hardware_tested_by_this_audit": false,
+      "manual_spelling_note": "本类总览 PDF102 写 IQUnderWatch，正文 PDF112 写 IQBelowWatch；按同一低值监视功能合并为一项。"
+    },
+    {
+      "id": "LM-FB-087",
+      "category": "数据转换处理",
+      "lm_name": "DealInUnify",
+      "requirement": "整型输入归一化为浮点/IQ",
+      "manual": {
+        "source_key": "manual",
+        "pdf_page": 114,
+        "printed_page": 109,
+        "section_pdf_pages": "113-121"
+      },
+      "lh_candidates": [
+        "DealInUnify"
+      ],
+      "candidate_mapping_certified": false,
+      "exact_name_registered": true,
+      "lh_registry": [
+        {
+          "name": "DealInUnify",
+          "status": "supported",
+          "parameter_count": 0,
+          "runtime_field_count": 0
+        }
+      ],
+      "status": "not_met",
+      "status_zh": "未达到",
+      "finding": "存在同名或近名注册项但参数表为空；实际所需数据项、可变组/引用、字段和算法执行未实现或未认证。",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_data.py",
+          "line": 270
+        },
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "line": 351
+        }
+      ],
+      "acceptance": "以手册 PDF 第 114 页的装配格式及本节参数/状态表构造有效程序，验证整型输入归一化为浮点/IQ、边界及错误行为；绑定固件版本并完成实机测试。",
+      "hardware_tested_by_this_audit": false
+    },
+    {
+      "id": "LM-FB-088",
+      "category": "数据转换处理",
+      "lm_name": "DealOutUnify",
+      "requirement": "浮点/IQ 输出归一化为整型",
+      "manual": {
+        "source_key": "manual",
+        "pdf_page": 116,
+        "printed_page": 111,
+        "section_pdf_pages": "113-121"
+      },
+      "lh_candidates": [
+        "DealOutUnify"
+      ],
+      "candidate_mapping_certified": false,
+      "exact_name_registered": true,
+      "lh_registry": [
+        {
+          "name": "DealOutUnify",
+          "status": "supported",
+          "parameter_count": 0,
+          "runtime_field_count": 0
+        }
+      ],
+      "status": "not_met",
+      "status_zh": "未达到",
+      "finding": "存在同名或近名注册项但参数表为空；实际所需数据项、可变组/引用、字段和算法执行未实现或未认证。",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_data.py",
+          "line": 282
+        },
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "line": 351
+        }
+      ],
+      "acceptance": "以手册 PDF 第 116 页的装配格式及本节参数/状态表构造有效程序，验证浮点/IQ 输出归一化为整型、边界及错误行为；绑定固件版本并完成实机测试。",
+      "hardware_tested_by_this_audit": false
+    },
+    {
+      "id": "LM-FB-089",
+      "category": "数据转换处理",
+      "lm_name": "DealSameKind",
+      "requirement": "同类数据传送",
+      "manual": {
+        "source_key": "manual",
+        "pdf_page": 118,
+        "printed_page": 113,
+        "section_pdf_pages": "113-121"
+      },
+      "lh_candidates": [],
+      "candidate_mapping_certified": false,
+      "exact_name_registered": false,
+      "lh_registry": [],
+      "status": "not_met",
+      "status_zh": "未达到",
+      "finding": "当前生产编译器无对应注册项；也未找到能完成本项 LM 语义的后端替代实现。",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "line": 351
+        }
+      ],
+      "acceptance": "以手册 PDF 第 118 页的装配格式及本节参数/状态表构造有效程序，验证同类数据传送、边界及错误行为；绑定固件版本并完成实机测试。",
+      "hardware_tested_by_this_audit": false
+    },
+    {
+      "id": "LM-FB-090",
+      "category": "数据转换处理",
+      "lm_name": "DealSameGroup",
+      "requirement": "同类数组传送",
+      "manual": {
+        "source_key": "manual",
+        "pdf_page": 119,
+        "printed_page": 114,
+        "section_pdf_pages": "113-121"
+      },
+      "lh_candidates": [],
+      "candidate_mapping_certified": false,
+      "exact_name_registered": false,
+      "lh_registry": [],
+      "status": "not_met",
+      "status_zh": "未达到",
+      "finding": "当前生产编译器无对应注册项；也未找到能完成本项 LM 语义的后端替代实现。",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "line": 351
+        }
+      ],
+      "acceptance": "以手册 PDF 第 119 页的装配格式及本节参数/状态表构造有效程序，验证同类数组传送、边界及错误行为；绑定固件版本并完成实机测试。",
+      "hardware_tested_by_this_audit": false
+    },
+    {
+      "id": "LM-FB-091",
+      "category": "数据转换处理",
+      "lm_name": "DealDiffKind",
+      "requirement": "异类数据及工程量转换",
+      "manual": {
+        "source_key": "manual",
+        "pdf_page": 120,
+        "printed_page": 115,
+        "section_pdf_pages": "113-121"
+      },
+      "lh_candidates": [],
+      "candidate_mapping_certified": false,
+      "exact_name_registered": false,
+      "lh_registry": [],
+      "status": "not_met",
+      "status_zh": "未达到",
+      "finding": "当前生产编译器无对应注册项；也未找到能完成本项 LM 语义的后端替代实现。",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "line": 351
+        }
+      ],
+      "acceptance": "以手册 PDF 第 120 页的装配格式及本节参数/状态表构造有效程序，验证异类数据及工程量转换、边界及错误行为；绑定固件版本并完成实机测试。",
+      "hardware_tested_by_this_audit": false
+    },
+    {
+      "id": "LM-FB-092",
+      "category": "数据转换处理",
+      "lm_name": "DealToSwit",
+      "requirement": "整型拆为位开关量",
+      "manual": {
+        "source_key": "manual",
+        "pdf_page": 121,
+        "printed_page": 116,
+        "section_pdf_pages": "113-121"
+      },
+      "lh_candidates": [
+        "DealToSwit"
+      ],
+      "candidate_mapping_certified": false,
+      "exact_name_registered": true,
+      "lh_registry": [
+        {
+          "name": "DealToSwit",
+          "status": "supported",
+          "parameter_count": 0,
+          "runtime_field_count": 0
+        }
+      ],
+      "status": "not_met",
+      "status_zh": "未达到",
+      "finding": "存在同名或近名注册项但参数表为空；实际所需数据项、可变组/引用、字段和算法执行未实现或未认证。",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_data.py",
+          "line": 306
+        },
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "line": 351
+        }
+      ],
+      "acceptance": "以手册 PDF 第 121 页的装配格式及本节参数/状态表构造有效程序，验证整型拆为位开关量、边界及错误行为；绑定固件版本并完成实机测试。",
+      "hardware_tested_by_this_audit": false
+    },
+    {
+      "id": "LM-FB-093",
+      "category": "数据转换处理",
+      "lm_name": "DealToData",
+      "requirement": "开关量合成整型",
+      "manual": {
+        "source_key": "manual",
+        "pdf_page": 121,
+        "printed_page": 116,
+        "section_pdf_pages": "113-121"
+      },
+      "lh_candidates": [
+        "DealToData"
+      ],
+      "candidate_mapping_certified": false,
+      "exact_name_registered": true,
+      "lh_registry": [
+        {
+          "name": "DealToData",
+          "status": "supported",
+          "parameter_count": 0,
+          "runtime_field_count": 0
+        }
+      ],
+      "status": "not_met",
+      "status_zh": "未达到",
+      "finding": "存在同名或近名注册项但参数表为空；实际所需数据项、可变组/引用、字段和算法执行未实现或未认证。",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_data.py",
+          "line": 294
+        },
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "line": 351
+        }
+      ],
+      "acceptance": "以手册 PDF 第 121 页的装配格式及本节参数/状态表构造有效程序，验证开关量合成整型、边界及错误行为；绑定固件版本并完成实机测试。",
+      "hardware_tested_by_this_audit": false
+    },
+    {
+      "id": "LM-FB-094",
+      "category": "选择函数",
+      "lm_name": "FuncIntSwitFloat",
+      "requirement": "整型开关选择浮点值",
+      "manual": {
+        "source_key": "manual",
+        "pdf_page": 123,
+        "printed_page": 118,
+        "section_pdf_pages": "122-127"
+      },
+      "lh_candidates": [],
+      "candidate_mapping_certified": false,
+      "exact_name_registered": false,
+      "lh_registry": [],
+      "status": "not_met",
+      "status_zh": "未达到",
+      "finding": "当前生产编译器无对应注册项；也未找到能完成本项 LM 语义的后端替代实现。",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "line": 351
+        }
+      ],
+      "acceptance": "以手册 PDF 第 123 页的装配格式及本节参数/状态表构造有效程序，验证整型开关选择浮点值、边界及错误行为；绑定固件版本并完成实机测试。",
+      "hardware_tested_by_this_audit": false
+    },
+    {
+      "id": "LM-FB-095",
+      "category": "选择函数",
+      "lm_name": "FuncIntSwitInt",
+      "requirement": "整型开关选择整型值",
+      "manual": {
+        "source_key": "manual",
+        "pdf_page": 124,
+        "printed_page": 119,
+        "section_pdf_pages": "122-127"
+      },
+      "lh_candidates": [],
+      "candidate_mapping_certified": false,
+      "exact_name_registered": false,
+      "lh_registry": [],
+      "status": "not_met",
+      "status_zh": "未达到",
+      "finding": "当前生产编译器无对应注册项；也未找到能完成本项 LM 语义的后端替代实现。",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "line": 351
+        }
+      ],
+      "acceptance": "以手册 PDF 第 124 页的装配格式及本节参数/状态表构造有效程序，验证整型开关选择整型值、边界及错误行为；绑定固件版本并完成实机测试。",
+      "hardware_tested_by_this_audit": false
+    },
+    {
+      "id": "LM-FB-096",
+      "category": "选择函数",
+      "lm_name": "FuncIntFloat",
+      "requirement": "整型索引到浮点函数",
+      "manual": {
+        "source_key": "manual",
+        "pdf_page": 125,
+        "printed_page": 120,
+        "section_pdf_pages": "122-127"
+      },
+      "lh_candidates": [],
+      "candidate_mapping_certified": false,
+      "exact_name_registered": false,
+      "lh_registry": [],
+      "status": "not_met",
+      "status_zh": "未达到",
+      "finding": "当前生产编译器无对应注册项；也未找到能完成本项 LM 语义的后端替代实现。",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "line": 351
+        }
+      ],
+      "acceptance": "以手册 PDF 第 125 页的装配格式及本节参数/状态表构造有效程序，验证整型索引到浮点函数、边界及错误行为；绑定固件版本并完成实机测试。",
+      "hardware_tested_by_this_audit": false
+    },
+    {
+      "id": "LM-FB-097",
+      "category": "选择函数",
+      "lm_name": "FuncIntInt",
+      "requirement": "整型索引到整型函数",
+      "manual": {
+        "source_key": "manual",
+        "pdf_page": 126,
+        "printed_page": 121,
+        "section_pdf_pages": "122-127"
+      },
+      "lh_candidates": [],
+      "candidate_mapping_certified": false,
+      "exact_name_registered": false,
+      "lh_registry": [],
+      "status": "not_met",
+      "status_zh": "未达到",
+      "finding": "当前生产编译器无对应注册项；也未找到能完成本项 LM 语义的后端替代实现。",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "line": 351
+        }
+      ],
+      "acceptance": "以手册 PDF 第 126 页的装配格式及本节参数/状态表构造有效程序，验证整型索引到整型函数、边界及错误行为；绑定固件版本并完成实机测试。",
+      "hardware_tested_by_this_audit": false
+    },
+    {
+      "id": "LM-FB-098",
+      "category": "选择函数",
+      "lm_name": "FuncReversIntFloat",
+      "requirement": "浮点输入的整型反函数",
+      "manual": {
+        "source_key": "manual",
+        "pdf_page": 127,
+        "printed_page": 122,
+        "section_pdf_pages": "122-127"
+      },
+      "lh_candidates": [],
+      "candidate_mapping_certified": false,
+      "exact_name_registered": false,
+      "lh_registry": [],
+      "status": "not_met",
+      "status_zh": "未达到",
+      "finding": "当前生产编译器无对应注册项；也未找到能完成本项 LM 语义的后端替代实现。",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "line": 351
+        }
+      ],
+      "acceptance": "以手册 PDF 第 127 页的装配格式及本节参数/状态表构造有效程序，验证浮点输入的整型反函数、边界及错误行为；绑定固件版本并完成实机测试。",
+      "hardware_tested_by_this_audit": false
+    },
+    {
+      "id": "LM-FB-099",
+      "category": "逼近函数",
+      "lm_name": "FuncPoly",
+      "requirement": "多项式逼近",
+      "manual": {
+        "source_key": "manual",
+        "pdf_page": 129,
+        "printed_page": 124,
+        "section_pdf_pages": "128-134"
+      },
+      "lh_candidates": [],
+      "candidate_mapping_certified": false,
+      "exact_name_registered": false,
+      "lh_registry": [],
+      "status": "not_met",
+      "status_zh": "未达到",
+      "finding": "当前生产编译器无对应注册项；也未找到能完成本项 LM 语义的后端替代实现。",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "line": 351
+        }
+      ],
+      "acceptance": "以手册 PDF 第 129 页的装配格式及本节参数/状态表构造有效程序，验证多项式逼近、边界及错误行为；绑定固件版本并完成实机测试。",
+      "hardware_tested_by_this_audit": false
+    },
+    {
+      "id": "LM-FB-100",
+      "category": "逼近函数",
+      "lm_name": "FuncMultLine",
+      "requirement": "一元折线函数",
+      "manual": {
+        "source_key": "manual",
+        "pdf_page": 130,
+        "printed_page": 125,
+        "section_pdf_pages": "128-134"
+      },
+      "lh_candidates": [],
+      "candidate_mapping_certified": false,
+      "exact_name_registered": false,
+      "lh_registry": [],
+      "status": "not_met",
+      "status_zh": "未达到",
+      "finding": "当前生产编译器无对应注册项；也未找到能完成本项 LM 语义的后端替代实现。",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "line": 351
+        }
+      ],
+      "acceptance": "以手册 PDF 第 130 页的装配格式及本节参数/状态表构造有效程序，验证一元折线函数、边界及错误行为；绑定固件版本并完成实机测试。",
+      "hardware_tested_by_this_audit": false
+    },
+    {
+      "id": "LM-FB-101",
+      "category": "逼近函数",
+      "lm_name": "FuncTwoMultLine",
+      "requirement": "二元折线函数",
+      "manual": {
+        "source_key": "manual",
+        "pdf_page": 132,
+        "printed_page": 127,
+        "section_pdf_pages": "128-134"
+      },
+      "lh_candidates": [],
+      "candidate_mapping_certified": false,
+      "exact_name_registered": false,
+      "lh_registry": [],
+      "status": "not_met",
+      "status_zh": "未达到",
+      "finding": "当前生产编译器无对应注册项；也未找到能完成本项 LM 语义的后端替代实现。",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "line": 351
+        }
+      ],
+      "acceptance": "以手册 PDF 第 132 页的装配格式及本节参数/状态表构造有效程序，验证二元折线函数、边界及错误行为；绑定固件版本并完成实机测试。",
+      "hardware_tested_by_this_audit": false
+    },
+    {
+      "id": "LM-FB-102",
+      "category": "时间函数",
+      "lm_name": "Timer",
+      "requirement": "计时器与时间状态",
+      "manual": {
+        "source_key": "manual",
+        "pdf_page": 136,
+        "printed_page": 131,
+        "section_pdf_pages": "135-142"
+      },
+      "lh_candidates": [
+        "Timer"
+      ],
+      "candidate_mapping_certified": false,
+      "exact_name_registered": true,
+      "lh_registry": [
+        {
+          "name": "Timer",
+          "status": "supported",
+          "parameter_count": 0,
+          "runtime_field_count": 0
+        }
+      ],
+      "status": "not_met",
+      "status_zh": "未达到",
+      "finding": "存在同名或近名注册项但参数表为空；实际所需数据项、可变组/引用、字段和算法执行未实现或未认证。",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_timer.py",
+          "line": 22
+        },
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "line": 351
+        }
+      ],
+      "acceptance": "以手册 PDF 第 136 页的装配格式及本节参数/状态表构造有效程序，验证计时器与时间状态、边界及错误行为；绑定固件版本并完成实机测试。",
+      "hardware_tested_by_this_audit": false
+    },
+    {
+      "id": "LM-FB-103",
+      "category": "时间函数",
+      "lm_name": "TimeDly",
+      "requirement": "延时器",
+      "manual": {
+        "source_key": "manual",
+        "pdf_page": 137,
+        "printed_page": 132,
+        "section_pdf_pages": "135-142"
+      },
+      "lh_candidates": [
+        "TON",
+        "TOF",
+        "TP"
+      ],
+      "candidate_mapping_certified": false,
+      "exact_name_registered": false,
+      "lh_registry": [
+        {
+          "name": "TON",
+          "status": "supported",
+          "parameter_count": 0,
+          "runtime_field_count": 0
+        },
+        {
+          "name": "TOF",
+          "status": "supported",
+          "parameter_count": 0,
+          "runtime_field_count": 0
+        },
+        {
+          "name": "TP",
+          "status": "supported",
+          "parameter_count": 0,
+          "runtime_field_count": 0
+        }
+      ],
+      "status": "not_met",
+      "status_zh": "未达到",
+      "finding": "存在同名或近名注册项但参数表为空；实际所需数据项、可变组/引用、字段和算法执行未实现或未认证。",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_timer.py",
+          "line": 33
+        },
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_timer.py",
+          "line": 44
+        },
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_timer.py",
+          "line": 55
+        },
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "line": 351
+        }
+      ],
+      "acceptance": "以手册 PDF 第 137 页的装配格式及本节参数/状态表构造有效程序，验证延时器、边界及错误行为；绑定固件版本并完成实机测试。",
+      "hardware_tested_by_this_audit": false
+    },
+    {
+      "id": "LM-FB-104",
+      "category": "时间函数",
+      "lm_name": "Timing",
+      "requirement": "系统时间",
+      "manual": {
+        "source_key": "manual",
+        "pdf_page": 138,
+        "printed_page": 133,
+        "section_pdf_pages": "135-142"
+      },
+      "lh_candidates": [],
+      "candidate_mapping_certified": false,
+      "exact_name_registered": false,
+      "lh_registry": [],
+      "status": "not_met",
+      "status_zh": "未达到",
+      "finding": "当前生产编译器无对应注册项；也未找到能完成本项 LM 语义的后端替代实现。",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "line": 351
+        }
+      ],
+      "acceptance": "以手册 PDF 第 138 页的装配格式及本节参数/状态表构造有效程序，验证系统时间、边界及错误行为；绑定固件版本并完成实机测试。",
+      "hardware_tested_by_this_audit": false
+    },
+    {
+      "id": "LM-FB-105",
+      "category": "时间函数",
+      "lm_name": "TimeCount",
+      "requirement": "计数器",
+      "manual": {
+        "source_key": "manual",
+        "pdf_page": 139,
+        "printed_page": 134,
+        "section_pdf_pages": "135-142"
+      },
+      "lh_candidates": [
+        "Counter",
+        "CTU",
+        "CTD",
+        "CTUD"
+      ],
+      "candidate_mapping_certified": false,
+      "exact_name_registered": false,
+      "lh_registry": [
+        {
+          "name": "Counter",
+          "status": "supported",
+          "parameter_count": 0,
+          "runtime_field_count": 0
+        },
+        {
+          "name": "CTU",
+          "status": "supported",
+          "parameter_count": 0,
+          "runtime_field_count": 0
+        },
+        {
+          "name": "CTD",
+          "status": "supported",
+          "parameter_count": 0,
+          "runtime_field_count": 0
+        },
+        {
+          "name": "CTUD",
+          "status": "supported",
+          "parameter_count": 0,
+          "runtime_field_count": 0
+        }
+      ],
+      "status": "not_met",
+      "status_zh": "未达到",
+      "finding": "存在同名或近名注册项但参数表为空；实际所需数据项、可变组/引用、字段和算法执行未实现或未认证。",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_counter.py",
+          "line": 22
+        },
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_counter.py",
+          "line": 33
+        },
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_counter.py",
+          "line": 44
+        },
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_counter.py",
+          "line": 55
+        },
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "line": 351
+        }
+      ],
+      "acceptance": "以手册 PDF 第 139 页的装配格式及本节参数/状态表构造有效程序，验证计数器、边界及错误行为；绑定固件版本并完成实机测试。",
+      "hardware_tested_by_this_audit": false
+    },
+    {
+      "id": "LM-FB-106",
+      "category": "时间函数",
+      "lm_name": "TimeScale",
+      "requirement": "分频器",
+      "manual": {
+        "source_key": "manual",
+        "pdf_page": 140,
+        "printed_page": 135,
+        "section_pdf_pages": "135-142"
+      },
+      "lh_candidates": [],
+      "candidate_mapping_certified": false,
+      "exact_name_registered": false,
+      "lh_registry": [],
+      "status": "not_met",
+      "status_zh": "未达到",
+      "finding": "当前生产编译器无对应注册项；也未找到能完成本项 LM 语义的后端替代实现。",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "line": 351
+        }
+      ],
+      "acceptance": "以手册 PDF 第 140 页的装配格式及本节参数/状态表构造有效程序，验证分频器、边界及错误行为；绑定固件版本并完成实机测试。",
+      "hardware_tested_by_this_audit": false
+    },
+    {
+      "id": "LM-FB-107",
+      "category": "时间函数",
+      "lm_name": "TimeFunc",
+      "requirement": "时间分段函数",
+      "manual": {
+        "source_key": "manual",
+        "pdf_page": 141,
+        "printed_page": 136,
+        "section_pdf_pages": "135-142"
+      },
+      "lh_candidates": [],
+      "candidate_mapping_certified": false,
+      "exact_name_registered": false,
+      "lh_registry": [],
+      "status": "not_met",
+      "status_zh": "未达到",
+      "finding": "当前生产编译器无对应注册项；也未找到能完成本项 LM 语义的后端替代实现。",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "line": 351
+        }
+      ],
+      "acceptance": "以手册 PDF 第 141 页的装配格式及本节参数/状态表构造有效程序，验证时间分段函数、边界及错误行为；绑定固件版本并完成实机测试。",
+      "hardware_tested_by_this_audit": false
+    },
+    {
+      "id": "LM-FB-108",
+      "category": "过程量处理",
+      "lm_name": "ProcsInteg",
+      "requirement": "过程量积算器",
+      "manual": {
+        "source_key": "manual",
+        "pdf_page": 143,
+        "printed_page": 138,
+        "section_pdf_pages": "143-147"
+      },
+      "lh_candidates": [],
+      "candidate_mapping_certified": false,
+      "exact_name_registered": false,
+      "lh_registry": [],
+      "status": "not_met",
+      "status_zh": "未达到",
+      "finding": "当前生产编译器无对应注册项；也未找到能完成本项 LM 语义的后端替代实现。",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "line": 351
+        }
+      ],
+      "acceptance": "以手册 PDF 第 143 页的装配格式及本节参数/状态表构造有效程序，验证过程量积算器、边界及错误行为；绑定固件版本并完成实机测试。",
+      "hardware_tested_by_this_audit": false
+    },
+    {
+      "id": "LM-FB-109",
+      "category": "过程量处理",
+      "lm_name": "ProcsBatch",
+      "requirement": "过程量批量处理",
+      "manual": {
+        "source_key": "manual",
+        "pdf_page": 145,
+        "printed_page": 140,
+        "section_pdf_pages": "143-147"
+      },
+      "lh_candidates": [],
+      "candidate_mapping_certified": false,
+      "exact_name_registered": false,
+      "lh_registry": [],
+      "status": "not_met",
+      "status_zh": "未达到",
+      "finding": "当前生产编译器无对应注册项；也未找到能完成本项 LM 语义的后端替代实现。",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "line": 351
+        }
+      ],
+      "acceptance": "以手册 PDF 第 145 页的装配格式及本节参数/状态表构造有效程序，验证过程量批量处理、边界及错误行为；绑定固件版本并完成实机测试。",
+      "hardware_tested_by_this_audit": false
+    },
+    {
+      "id": "LM-FB-110",
+      "category": "过程量处理",
+      "lm_name": "ProcsTemp",
+      "requirement": "温度计算",
+      "manual": {
+        "source_key": "manual",
+        "pdf_page": 146,
+        "printed_page": 141,
+        "section_pdf_pages": "143-147"
+      },
+      "lh_candidates": [],
+      "candidate_mapping_certified": false,
+      "exact_name_registered": false,
+      "lh_registry": [],
+      "status": "not_met",
+      "status_zh": "未达到",
+      "finding": "当前生产编译器无对应注册项；也未找到能完成本项 LM 语义的后端替代实现。",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "line": 351
+        }
+      ],
+      "acceptance": "以手册 PDF 第 146 页的装配格式及本节参数/状态表构造有效程序，验证温度计算、边界及错误行为；绑定固件版本并完成实机测试。",
+      "hardware_tested_by_this_audit": false
+    },
+    {
+      "id": "LM-FB-111",
+      "category": "控制典型环节",
+      "lm_name": "CtrlGain",
+      "requirement": "增益环节",
+      "manual": {
+        "source_key": "manual",
+        "pdf_page": 149,
+        "printed_page": 144,
+        "section_pdf_pages": "148-155"
+      },
+      "lh_candidates": [],
+      "candidate_mapping_certified": false,
+      "exact_name_registered": false,
+      "lh_registry": [],
+      "status": "not_met",
+      "status_zh": "未达到",
+      "finding": "当前生产编译器无对应注册项；也未找到能完成本项 LM 语义的后端替代实现。",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "line": 351
+        }
+      ],
+      "acceptance": "以手册 PDF 第 149 页的装配格式及本节参数/状态表构造有效程序，验证增益环节、边界及错误行为；绑定固件版本并完成实机测试。",
+      "hardware_tested_by_this_audit": false
+    },
+    {
+      "id": "LM-FB-112",
+      "category": "控制典型环节",
+      "lm_name": "CtrlBias",
+      "requirement": "偏置环节",
+      "manual": {
+        "source_key": "manual",
+        "pdf_page": 150,
+        "printed_page": 145,
+        "section_pdf_pages": "148-155"
+      },
+      "lh_candidates": [],
+      "candidate_mapping_certified": false,
+      "exact_name_registered": false,
+      "lh_registry": [],
+      "status": "not_met",
+      "status_zh": "未达到",
+      "finding": "当前生产编译器无对应注册项；也未找到能完成本项 LM 语义的后端替代实现。",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "line": 351
+        }
+      ],
+      "acceptance": "以手册 PDF 第 150 页的装配格式及本节参数/状态表构造有效程序，验证偏置环节、边界及错误行为；绑定固件版本并完成实机测试。",
+      "hardware_tested_by_this_audit": false
+    },
+    {
+      "id": "LM-FB-113",
+      "category": "控制典型环节",
+      "lm_name": "CtrlInertia",
+      "requirement": "惯性环节",
+      "manual": {
+        "source_key": "manual",
+        "pdf_page": 150,
+        "printed_page": 145,
+        "section_pdf_pages": "148-155"
+      },
+      "lh_candidates": [],
+      "candidate_mapping_certified": false,
+      "exact_name_registered": false,
+      "lh_registry": [],
+      "status": "not_met",
+      "status_zh": "未达到",
+      "finding": "当前生产编译器无对应注册项；也未找到能完成本项 LM 语义的后端替代实现。",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "line": 351
+        }
+      ],
+      "acceptance": "以手册 PDF 第 150 页的装配格式及本节参数/状态表构造有效程序，验证惯性环节、边界及错误行为；绑定固件版本并完成实机测试。",
+      "hardware_tested_by_this_audit": false
+    },
+    {
+      "id": "LM-FB-114",
+      "category": "控制典型环节",
+      "lm_name": "CtrlInteg",
+      "requirement": "积分环节",
+      "manual": {
+        "source_key": "manual",
+        "pdf_page": 151,
+        "printed_page": 146,
+        "section_pdf_pages": "148-155"
+      },
+      "lh_candidates": [],
+      "candidate_mapping_certified": false,
+      "exact_name_registered": false,
+      "lh_registry": [],
+      "status": "not_met",
+      "status_zh": "未达到",
+      "finding": "当前生产编译器无对应注册项；也未找到能完成本项 LM 语义的后端替代实现。",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "line": 351
+        }
+      ],
+      "acceptance": "以手册 PDF 第 151 页的装配格式及本节参数/状态表构造有效程序，验证积分环节、边界及错误行为；绑定固件版本并完成实机测试。",
+      "hardware_tested_by_this_audit": false
+    },
+    {
+      "id": "LM-FB-115",
+      "category": "控制典型环节",
+      "lm_name": "CtrlOscilla",
+      "requirement": "振荡环节",
+      "manual": {
+        "source_key": "manual",
+        "pdf_page": 152,
+        "printed_page": 147,
+        "section_pdf_pages": "148-155"
+      },
+      "lh_candidates": [],
+      "candidate_mapping_certified": false,
+      "exact_name_registered": false,
+      "lh_registry": [],
+      "status": "not_met",
+      "status_zh": "未达到",
+      "finding": "当前生产编译器无对应注册项；也未找到能完成本项 LM 语义的后端替代实现。",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "line": 351
+        }
+      ],
+      "acceptance": "以手册 PDF 第 152 页的装配格式及本节参数/状态表构造有效程序，验证振荡环节、边界及错误行为；绑定固件版本并完成实机测试。",
+      "hardware_tested_by_this_audit": false
+    },
+    {
+      "id": "LM-FB-116",
+      "category": "控制典型环节",
+      "lm_name": "CtrlDiffer",
+      "requirement": "一阶微分环节",
+      "manual": {
+        "source_key": "manual",
+        "pdf_page": 153,
+        "printed_page": 148,
+        "section_pdf_pages": "148-155"
+      },
+      "lh_candidates": [],
+      "candidate_mapping_certified": false,
+      "exact_name_registered": false,
+      "lh_registry": [],
+      "status": "not_met",
+      "status_zh": "未达到",
+      "finding": "当前生产编译器无对应注册项；也未找到能完成本项 LM 语义的后端替代实现。",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "line": 351
+        }
+      ],
+      "acceptance": "以手册 PDF 第 153 页的装配格式及本节参数/状态表构造有效程序，验证一阶微分环节、边界及错误行为；绑定固件版本并完成实机测试。",
+      "hardware_tested_by_this_audit": false
+    },
+    {
+      "id": "LM-FB-117",
+      "category": "控制典型环节",
+      "lm_name": "CtrlPureDiffer",
+      "requirement": "理想微分环节",
+      "manual": {
+        "source_key": "manual",
+        "pdf_page": 153,
+        "printed_page": 148,
+        "section_pdf_pages": "148-155"
+      },
+      "lh_candidates": [],
+      "candidate_mapping_certified": false,
+      "exact_name_registered": false,
+      "lh_registry": [],
+      "status": "not_met",
+      "status_zh": "未达到",
+      "finding": "当前生产编译器无对应注册项；也未找到能完成本项 LM 语义的后端替代实现。",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "line": 351
+        }
+      ],
+      "acceptance": "以手册 PDF 第 153 页的装配格式及本节参数/状态表构造有效程序，验证理想微分环节、边界及错误行为；绑定固件版本并完成实机测试。",
+      "hardware_tested_by_this_audit": false
+    },
+    {
+      "id": "LM-FB-118",
+      "category": "控制典型环节",
+      "lm_name": "CtrlTwoDiffer",
+      "requirement": "二阶微分环节",
+      "manual": {
+        "source_key": "manual",
+        "pdf_page": 154,
+        "printed_page": 149,
+        "section_pdf_pages": "148-155"
+      },
+      "lh_candidates": [],
+      "candidate_mapping_certified": false,
+      "exact_name_registered": false,
+      "lh_registry": [],
+      "status": "not_met",
+      "status_zh": "未达到",
+      "finding": "当前生产编译器无对应注册项；也未找到能完成本项 LM 语义的后端替代实现。",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "line": 351
+        }
+      ],
+      "acceptance": "以手册 PDF 第 154 页的装配格式及本节参数/状态表构造有效程序，验证二阶微分环节、边界及错误行为；绑定固件版本并完成实机测试。",
+      "hardware_tested_by_this_audit": false
+    },
+    {
+      "id": "LM-FB-119",
+      "category": "控制典型环节",
+      "lm_name": "CtrlDly",
+      "requirement": "纯延迟环节",
+      "manual": {
+        "source_key": "manual",
+        "pdf_page": 155,
+        "printed_page": 150,
+        "section_pdf_pages": "148-155"
+      },
+      "lh_candidates": [],
+      "candidate_mapping_certified": false,
+      "exact_name_registered": false,
+      "lh_registry": [],
+      "status": "not_met",
+      "status_zh": "未达到",
+      "finding": "当前生产编译器无对应注册项；也未找到能完成本项 LM 语义的后端替代实现。",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "line": 351
+        }
+      ],
+      "acceptance": "以手册 PDF 第 155 页的装配格式及本节参数/状态表构造有效程序，验证纯延迟环节、边界及错误行为；绑定固件版本并完成实机测试。",
+      "hardware_tested_by_this_audit": false
+    },
+    {
+      "id": "LM-FB-120",
+      "category": "PID 控制器",
+      "lm_name": "PIDCtrl",
+      "requirement": "完整 PID 控制与手自动、前馈、非线性",
+      "manual": {
+        "source_key": "manual",
+        "pdf_page": 157,
+        "printed_page": 152,
+        "section_pdf_pages": "156-168"
+      },
+      "lh_candidates": [
+        "PID"
+      ],
+      "candidate_mapping_certified": false,
+      "exact_name_registered": false,
+      "lh_registry": [
+        {
+          "name": "PID",
+          "status": "supported",
+          "parameter_count": 10,
+          "runtime_field_count": 0
+        }
+      ],
+      "status": "partial",
+      "status_zh": "部分达到",
+      "finding": "PID 仅十个构造参数，无法覆盖 LM 的 21 个运行时参数和 ManAuto/PosiNeg/OutInSP/P/Ti/Td/EnableNL/SeprtInput/ForwdFeed；反馈引用与输出字段不可用。",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_pid.py",
+          "line": 25
+        },
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "line": 351
+        }
+      ],
+      "acceptance": "以手册 PDF 第 157 页的装配格式及本节参数/状态表构造有效程序，验证完整 PID 控制与手自动、前馈、非线性、边界及错误行为；绑定固件版本并完成实机测试。",
+      "hardware_tested_by_this_audit": false
+    },
+    {
+      "id": "LM-FB-121",
+      "category": "PID 控制器",
+      "lm_name": "PIDRelayTuneCtrl",
+      "requirement": "PID 自动整定、保护和结果接收",
+      "manual": {
+        "source_key": "manual",
+        "pdf_page": 162,
+        "printed_page": 157,
+        "section_pdf_pages": "156-168"
+      },
+      "lh_candidates": [
+        "PIDAutoTune"
+      ],
+      "candidate_mapping_certified": false,
+      "exact_name_registered": false,
+      "lh_registry": [
+        {
+          "name": "PIDAutoTune",
+          "status": "supported",
+          "parameter_count": 6,
+          "runtime_field_count": 0
+        }
+      ],
+      "status": "partial",
+      "status_zh": "部分达到",
+      "finding": "PIDAutoTune 只有六个构造参数；LM 的完整 PID、整定状态、输出/PV 变化保障、ErrCondi、Enable/Receive 和结果接收链缺失。",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_pid.py",
+          "line": 52
+        },
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "line": 351
+        }
+      ],
+      "acceptance": "以手册 PDF 第 162 页的装配格式及本节参数/状态表构造有效程序，验证PID 自动整定、保护和结果接收、边界及错误行为；绑定固件版本并完成实机测试。",
+      "hardware_tested_by_this_audit": false
+    },
+    {
+      "id": "LM-FB-122",
+      "category": "TSO 控制器",
+      "lm_name": "TSOCtrl",
+      "requirement": "暂态、稳态、超调控制",
+      "manual": {
+        "source_key": "manual",
+        "pdf_page": 169,
+        "printed_page": 164,
+        "section_pdf_pages": "169-182"
+      },
+      "lh_candidates": [
+        "TSO"
+      ],
+      "candidate_mapping_certified": false,
+      "exact_name_registered": false,
+      "lh_registry": [
+        {
+          "name": "TSO",
+          "status": "incomplete",
+          "parameter_count": 0,
+          "runtime_field_count": 0
+        }
+      ],
+      "status": "not_met",
+      "status_zh": "未达到",
+      "finding": "对应候选明确标记 incomplete，编译器拒绝生成；仅保留历史契约线索，不能运行。",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_tso.py",
+          "line": 24
+        },
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "line": 351
+        }
+      ],
+      "acceptance": "以手册 PDF 第 169 页的装配格式及本节参数/状态表构造有效程序，验证暂态、稳态、超调控制、边界及错误行为；绑定固件版本并完成实机测试。",
+      "hardware_tested_by_this_audit": false
+    },
+    {
+      "id": "LM-FB-123",
+      "category": "TSO 控制器",
+      "lm_name": "TSORelayTuneCtrl",
+      "requirement": "TSO 自动整定",
+      "manual": {
+        "source_key": "manual",
+        "pdf_page": 176,
+        "printed_page": 171,
+        "section_pdf_pages": "169-182"
+      },
+      "lh_candidates": [
+        "TSOAutoTune"
+      ],
+      "candidate_mapping_certified": false,
+      "exact_name_registered": false,
+      "lh_registry": [
+        {
+          "name": "TSOAutoTune",
+          "status": "incomplete",
+          "parameter_count": 0,
+          "runtime_field_count": 0
+        }
+      ],
+      "status": "not_met",
+      "status_zh": "未达到",
+      "finding": "对应候选明确标记 incomplete，编译器拒绝生成；仅保留历史契约线索，不能运行。",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_tso.py",
+          "line": 42
+        },
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "line": 351
+        }
+      ],
+      "acceptance": "以手册 PDF 第 176 页的装配格式及本节参数/状态表构造有效程序，验证TSO 自动整定、边界及错误行为；绑定固件版本并完成实机测试。",
+      "hardware_tested_by_this_audit": false
+    },
+    {
+      "id": "LM-FB-124",
+      "category": "TSO 控制器",
+      "lm_name": "RelayCtrl",
+      "requirement": "两位继电控制、死区与滞环",
+      "manual": {
+        "source_key": "manual",
+        "pdf_page": 181,
+        "printed_page": 176,
+        "section_pdf_pages": "169-182"
+      },
+      "lh_candidates": [
+        "TwoPosition",
+        "RelayCtrl2"
+      ],
+      "candidate_mapping_certified": false,
+      "exact_name_registered": false,
+      "lh_registry": [
+        {
+          "name": "TwoPosition",
+          "status": "incomplete",
+          "parameter_count": 0,
+          "runtime_field_count": 0
+        },
+        {
+          "name": "RelayCtrl2",
+          "status": "incomplete",
+          "parameter_count": 0,
+          "runtime_field_count": 0
+        }
+      ],
+      "status": "not_met",
+      "status_zh": "未达到",
+      "finding": "对应候选明确标记 incomplete，编译器拒绝生成；仅保留历史契约线索，不能运行。",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_tso.py",
+          "line": 60
+        },
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_tso.py",
+          "line": 78
+        },
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "line": 351
+        }
+      ],
+      "acceptance": "以手册 PDF 第 181 页的装配格式及本节参数/状态表构造有效程序，验证两位继电控制、死区与滞环、边界及错误行为；绑定固件版本并完成实机测试。",
+      "hardware_tested_by_this_audit": false
+    },
+    {
+      "id": "LM-FB-125",
+      "category": "滤波器",
+      "lm_name": "FilterBW",
+      "requirement": "巴特沃斯滤波、阶次和截止频率",
+      "manual": {
+        "source_key": "manual",
+        "pdf_page": 183,
+        "printed_page": 178,
+        "section_pdf_pages": "183-184"
+      },
+      "lh_candidates": [
+        "FilterBW"
+      ],
+      "candidate_mapping_certified": false,
+      "exact_name_registered": true,
+      "lh_registry": [
+        {
+          "name": "FilterBW",
+          "status": "incomplete",
+          "parameter_count": 0,
+          "runtime_field_count": 0
+        }
+      ],
+      "status": "not_met",
+      "status_zh": "未达到",
+      "finding": "对应候选明确标记 incomplete，编译器拒绝生成；仅保留历史契约线索，不能运行。",
+      "source_evidence": [
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_filter.py",
+          "line": 21
+        },
+        {
+          "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+          "line": 351
+        }
+      ],
+      "acceptance": "以手册 PDF 第 183 页的装配格式及本节参数/状态表构造有效程序，验证巴特沃斯滤波、阶次和截止频率、边界及错误行为；绑定固件版本并完成实机测试。",
+      "hardware_tested_by_this_audit": false
+    }
+  ]
+}

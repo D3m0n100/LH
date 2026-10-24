@@ -139,12 +139,18 @@ def main(argv=None):
         version='lmc 1.0.0'
     )
     
+    parser.add_argument('--capabilities-json', action='store_true', help='导出功能块能力状态 JSON')
     args = parser.parse_args(argv)
 
     # 处理功能块注册表查询
-    if args.list_blocks or args.categories or args.describe:
+    if args.list_blocks or args.categories or args.describe or args.capabilities_json:
         reg = FunctionBlockRegistry()
         reg.load_defaults()
+
+        if args.capabilities_json:
+            import json
+            print(json.dumps([b.capability_state() for b in sorted(reg.list_all(), key=lambda b: b.name)], ensure_ascii=False))
+            return 0
 
         if args.categories:
             print("功能块类别列表:")
@@ -161,6 +167,7 @@ def main(argv=None):
             print(f"功能块: {block.name} (Type ID: {block.type_id})")
             status_info = f"支持 ({block.status})" if block.is_supported else f"未完善 ({block.status}) - {block.incomplete_reason}"
             print(f"状态: {status_info}")
+            print(f"定义校验: {block.definition_errors() or '通过'}；目标执行: 未验证")
             print(f"类别: {block.category or '未分类'}")
             print(f"描述: {block.description or '无描述'}")
             if block.parameters:
@@ -174,7 +181,7 @@ def main(argv=None):
             blocks = reg.list_all()
             print(f"所有功能块 (共 {len(blocks)} 个):")
             for b in sorted(blocks, key=lambda x: x.name):
-                status_str = f" [{b.status.upper()}]" if b.is_incomplete else ""
+                status_str = f" [{b.status.upper()}]" if b.is_incomplete else " [INVALID-DEFINITION]" if b.definition_errors() else ""
                 print(f"  {b.name:<24} [Type {b.type_id:<5}] {b.category or ''}{status_str}")
             return 0
 
@@ -220,6 +227,8 @@ def main(argv=None):
         result = compile_source(compiler, source_file, output_file)
         
         if result.success:
+            for warning in result.warnings:
+                print(f"警告: {warning}")
             if not args.verbose:
                 print(f"✓ 编译成功: {result.output_file}")
             if result.compile_only:

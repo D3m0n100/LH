@@ -1,0 +1,27 @@
+********* Start testing of Review20261023Test *********
+Config: Using QtTest library 5.15.2, Qt 5.15.2 (x86_64-little_endian-llp64 shared (dynamic) release build; by GCC 8.1.0), windows 10
+PASS   : Review20261023Test::initTestCase()
+QINFO  : Review20261023Test::producerPausedAfterInitialCheckIsRejectedAfterShutdown() [INFO] 12:09:33.915 当前数据库版本: 0, 目标版本: 5
+QINFO  : Review20261023Test::producerPausedAfterInitialCheckIsRejectedAfterShutdown() [INFO] 12:09:33.932 开始 Schema 迁移: 0 -> 5
+QINFO  : Review20261023Test::producerPausedAfterInitialCheckIsRejectedAfterShutdown() [INFO] 12:09:33.933 执行迁移到版本 1...
+QINFO  : Review20261023Test::producerPausedAfterInitialCheckIsRejectedAfterShutdown() [INFO] 12:09:33.933 数据库版本已更新为: 1
+QINFO  : Review20261023Test::producerPausedAfterInitialCheckIsRejectedAfterShutdown() [INFO] 12:09:33.933 执行迁移到版本 2...
+QINFO  : Review20261023Test::producerPausedAfterInitialCheckIsRejectedAfterShutdown() [INFO] 12:09:33.933 数据库版本已更新为: 2
+QINFO  : Review20261023Test::producerPausedAfterInitialCheckIsRejectedAfterShutdown() [INFO] 12:09:33.933 执行迁移到版本 3...
+QINFO  : Review20261023Test::producerPausedAfterInitialCheckIsRejectedAfterShutdown() [INFO] 12:09:33.933 数据库版本已更新为: 3
+QINFO  : Review20261023Test::producerPausedAfterInitialCheckIsRejectedAfterShutdown() [INFO] 12:09:33.933 执行迁移到版本 4...
+QINFO  : Review20261023Test::producerPausedAfterInitialCheckIsRejectedAfterShutdown() [INFO] 12:09:33.933 数据库版本已更新为: 4
+QINFO  : Review20261023Test::producerPausedAfterInitialCheckIsRejectedAfterShutdown() [INFO] 12:09:33.933 执行迁移到版本 5...
+QINFO  : Review20261023Test::producerPausedAfterInitialCheckIsRejectedAfterShutdown() [INFO] 12:09:33.933 开始执行 Schema V5 迁移：统一历史时间存储格式为标准 UTC ISO-8601...
+QINFO  : Review20261023Test::producerPausedAfterInitialCheckIsRejectedAfterShutdown() [INFO] 12:09:33.933 runtime_data 时间迁移完成: 共检查 0 条记录，更新 0 条
+QINFO  : Review20261023Test::producerPausedAfterInitialCheckIsRejectedAfterShutdown() [INFO] 12:09:33.933 system_logs 时间迁移完成: 共检查 0 条记录，更新 0 条
+QINFO  : Review20261023Test::producerPausedAfterInitialCheckIsRejectedAfterShutdown() [INFO] 12:09:33.933 Schema V5 迁移全部成功，耗时 0 ms
+QINFO  : Review20261023Test::producerPausedAfterInitialCheckIsRejectedAfterShutdown() [INFO] 12:09:33.933 数据库版本已更新为: 5
+QINFO  : Review20261023Test::producerPausedAfterInitialCheckIsRejectedAfterShutdown() [INFO] 12:09:33.933 Schema 迁移完成
+QINFO  : Review20261023Test::producerPausedAfterInitialCheckIsRejectedAfterShutdown() [INFO] 12:09:33.933 数据库初始化完成: C:/Users/Ryan/AppData/Local/Temp/review_20261023_test-JdxFIn/admission-barrier.db
+QINFO  : Review20261023Test::producerPausedAfterInitialCheckIsRejectedAfterShutdown() [INFO] 12:09:33.933 DataManager 正在关闭...
+QINFO  : Review20261023Test::producerPausedAfterInitialCheckIsRejectedAfterShutdown() [INFO] 12:09:33.940 DataManager 已关闭
+PASS   : Review20261023Test::producerPausedAfterInitialCheckIsRejectedAfterShutdown()
+PASS   : Review20261023Test::cleanupTestCase()
+Totals: 3 passed, 0 failed, 0 skipped, 0 blacklisted, 56ms
+********* Finished testing of Review20261023Test *********

@@ -15,6 +15,7 @@
 #include "../common/ConfigTypes.h"
 #include "../runtime/RuntimeSessionService.h"
 
+class QTimer;
 class IDeviceBackend;
 class IOpcServer;
 class ControllerDeviceBackend;
@@ -32,6 +33,7 @@ class RuntimeSessionController : public QObject
     Q_OBJECT
 public:
     explicit RuntimeSessionController(QObject* parent = nullptr, RuntimeSessionService* service = nullptr);
+    ~RuntimeSessionController() override;
 
     void setDeviceBackend(IDeviceBackend* backend);
     IDeviceBackend* deviceBackend() const;
@@ -58,6 +60,7 @@ public:
 
     bool prepareRun();
     bool applyRuntimeConfig();
+    void applyRuntimeConfigAsync(std::function<void(bool)> completed);
     void executeRun();
     void requestStop();
 
@@ -78,6 +81,9 @@ public:
     bool pauseController();
     bool resumeController();
     bool stepController();
+    bool startContinuousStep(int intervalMs = 500);
+    void stopContinuousStep();
+    bool isContinuousStepActive() const { return m_continuousStepActive; }
     bool runControllerToCursor(int lineNumber);
     bool setControllerBreakpoints(int firstLine, int secondLine);
     bool testControllerConnection();
@@ -96,9 +102,15 @@ signals:
     void opcErrorOccurred(const QString& message);
     void pausedChanged(bool paused);
     void debugCommandPendingChanged(bool pending);
+    void continuousStepChanged(bool active);
 
 private:
+    void scheduleContinuousStep();
+    QTimer* m_continuousStepTimer = nullptr;
+    bool m_continuousStepActive = false;
+    int m_continuousStepIntervalMs = 500;
     void setDebugCommandPending(bool pending);
+    std::function<void()> m_cancelDebugAudit;
     bool requestControllerDebug(const QString& command, const QVector<quint16>& arguments,
                                 int pauseState, const QString& description);
     void finishRunStart();
@@ -130,6 +142,8 @@ private:
     void startOpcServerIfEnabled();
     void stopOpcServer();
     bool ensureControllerBackend();
+    void ensureControllerBackendAsync(std::function<void(bool)> completed);
+    std::shared_ptr<std::atomic_bool> m_connectionCancelled;
     ControllerDeviceBackend* controllerBackend() const;
 
     QPointer<IDeviceBackend> m_backend;

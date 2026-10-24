@@ -259,8 +259,13 @@ private slots:
             QSKIP("No snippets available, skipping test");
         }
         
-        FunctionSnippet snippet = snippets.first();
-        
+        FunctionSnippet snippet;
+        for (const auto& candidate : snippets) {
+            if (candidate.metadata.value("compilerName").toString() == "Nop") snippet = candidate;
+            if (!candidate.canInsert()) QVERIFY(engine.generateInsertCode(candidate, "").isEmpty());
+        }
+        QVERIFY(snippet.isValid()); QVERIFY(snippet.canInsert());
+
         // 无缩进
         QString code1 = engine.generateInsertCode(snippet, "");
         QVERIFY(!code1.isEmpty());

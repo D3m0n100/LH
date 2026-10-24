@@ -1,0 +1,373 @@
+{
+  "retrieved_at_utc": "2026-10-24T04:04:10.090667+00:00",
+  "sources": [
+    {
+      "name": "qt-skills-readme",
+      "url": "https://raw.githubusercontent.com/TheQtCompanyRnD/agent-skills/main/README.md",
+      "path": "sources\\qt-skills-readme.md",
+      "sha256": "4cedd0d88df97a8cae19b6fad9e4a78d46b06e3612230446f02e9295f55f533a",
+      "bytes": 14549,
+      "status": "retrieved"
+    },
+    {
+      "name": "qt-skills-tree",
+      "url": "https://api.github.com/repos/TheQtCompanyRnD/agent-skills/git/trees/main?recursive=1",
+      "path": "sources\\qt-skills-tree.json",
+      "sha256": "b717aeb856fb53a962f3f4b6f5f59a7be341981b3798596e254c8e69b021b8ba",
+      "bytes": 68785,
+      "status": "retrieved"
+    },
+    {
+      "name": "openai-figma-library",
+      "url": "https://raw.githubusercontent.com/openai/skills/main/skills/.curated/figma-generate-library/SKILL.md",
+      "path": "sources\\openai-figma-library.md",
+      "sha256": "7f42103c59fc181d7081404a56545f321c458d97f5ee7f7a0ab2af75ea69a85f",
+      "bytes": 17853,
+      "status": "retrieved"
+    },
+    {
+      "name": "openai-figma-design",
+      "url": "https://raw.githubusercontent.com/openai/skills/main/skills/.curated/figma-generate-design/SKILL.md",
+      "path": "sources\\openai-figma-design.md",
+      "sha256": "45d2b97103bdeb31cb2744fca2c79bcefb659c88faca626bea30ec2f9342dcc9",
+      "bytes": 20164,
+      "status": "retrieved"
+    },
+    {
+      "name": "openai-figma-implement",
+      "url": "https://raw.githubusercontent.com/openai/skills/main/skills/.curated/figma-implement-design/SKILL.md",
+      "path": "sources\\openai-figma-implement.md",
+      "sha256": "63f3d12d444547bbf68c10a12982b1f42e0f6e26fc074324564a13184d4b15ad",
+      "bytes": 11621,
+      "status": "retrieved"
+    },
+    {
+      "name": "openai-figma-rules",
+      "url": "https://raw.githubusercontent.com/openai/skills/main/skills/.curated/figma-create-design-system-rules/SKILL.md",
+      "path": "sources\\openai-figma-rules.md",
+      "sha256": "1f4d7e16ba5325a80da32e2e6bde0ea850ba9287f35f4675d51d55d2f0dc6e2a",
+      "bytes": 18221,
+      "status": "retrieved"
+    },
+    {
+      "name": "anthropic-frontend-design",
+      "url": "https://raw.githubusercontent.com/anthropics/skills/main/skills/frontend-design/SKILL.md",
+      "path": "sources\\anthropic-frontend-design.md",
+      "sha256": "d91970639e9f5c37682ac7ab60094d35f1c7c1f38d731bd56396563aee10c1d3",
+      "bytes": 9390,
+      "status": "retrieved"
+    },
+    {
+      "name": "vercel-web-design-guidelines",
+      "url": "https://raw.githubusercontent.com/vercel-labs/agent-skills/main/skills/web-design-guidelines/SKILL.md",
+      "path": "sources\\vercel-web-design-guidelines.md",
+      "sha256": "f4647ca866a3accf763777f83e7682954f0187cd6bea7eea0399796652414e8f",
+      "bytes": 1231,
+      "status": "retrieved"
+    },
+    {
+      "name": "ui-ux-pro-max",
+      "url": "https://raw.githubusercontent.com/nextlevelbuilder/ui-ux-pro-max-skill/main/.claude/skills/ui-ux-pro-max/SKILL.md",
+      "path": "sources\\ui-ux-pro-max.md",
+      "sha256": "ea087c341bfb5b23195c7302027268ede86da802554c18a5c4896a6017b439f9",
+      "bytes": 15969,
+      "status": "retrieved"
+    },
+    {
+      "name": "ui-ux-pro-max-readme",
+      "url": "https://raw.githubusercontent.com/nextlevelbuilder/ui-ux-pro-max-skill/main/README.md",
+      "path": "sources\\ui-ux-pro-max-readme.md",
+      "sha256": "44f4cd60bdadc4aa271cde9154a1e65fde174e7e92141414b9cc75996fbbd298",
+      "bytes": 39932,
+      "status": "retrieved"
+    },
+    {
+      "name": "product-design-index",
+      "url": "https://raw.githubusercontent.com/openai/plugins/main/plugins/product-design/skills/index/SKILL.md",
+      "path": "sources\\product-design-index.md",
+      "sha256": "8f9f19273ee34a06298ed93f8d70a9c17b3d4ce66f061b024f6d1038b138e5f7",
+      "bytes": 9967,
+      "status": "retrieved"
+    },
+    {
+      "name": "wshobson-tree",
+      "url": "https://api.github.com/repos/wshobson/agents/git/trees/main?recursive=1",
+      "path": "sources\\wshobson-tree.json",
+      "sha256": "78dfc5de8ab427090c457b032c46c38f6e918aa50f2fdcd7d765c303ba2e251d",
+      "bytes": 505980,
+      "status": "retrieved"
+    },
+    {
+      "name": "advanced-docking-readme",
+      "url": "https://raw.githubusercontent.com/githubuser0xFFFF/Qt-Advanced-Docking-System/master/README.md",
+      "path": "sources\\advanced-docking-readme.md",
+      "sha256": "4f64376082edd2f672438aba908e0824ce3952f04c90a49236b061e46b43df9c",
+      "bytes": 39839,
+      "status": "retrieved"
+    },
+    {
+      "name": "kddockwidgets-readme",
+      "url": "https://raw.githubusercontent.com/KDAB/KDDockWidgets/main/README.md",
+      "path": "sources\\kddockwidgets-readme.md",
+      "sha256": "d879f8e5fead3c52cde58a6f8e5377a09f6936e84448316a85af41d239e420e4",
+      "bytes": 4732,
+      "status": "retrieved"
+    },
+    {
+      "name": "qt-qt-canvas2d",
+      "url": "https://raw.githubusercontent.com/TheQtCompanyRnD/agent-skills/6845f02d41171a6df8b6e6fe225b7f5d1a6f4adf/skills/qt-canvas2d/SKILL.md",
+      "path": "sources\\qt-qt-canvas2d.md",
+      "sha256": "5960fc98a4a0ca7973a3a5ab06852b4b22dec04b768c56b41d15495cc2b532c4",
+      "bytes": 13504,
+      "status": "retrieved"
+    },
+    {
+      "name": "qt-qt-cmake-project",
+      "url": "https://raw.githubusercontent.com/TheQtCompanyRnD/agent-skills/6845f02d41171a6df8b6e6fe225b7f5d1a6f4adf/skills/qt-cmake-project/SKILL.md",
+      "path": "sources\\qt-qt-cmake-project.md",
+      "sha256": "ab55f9ced2a898db26519bba1283090cf1af985f83e6137195a34d7f2aedcc35",
+      "bytes": 10165,
+      "status": "retrieved"
+    },
+    {
+      "name": "qt-qt-cpp-docs",
+      "url": "https://raw.githubusercontent.com/TheQtCompanyRnD/agent-skills/6845f02d41171a6df8b6e6fe225b7f5d1a6f4adf/skills/qt-cpp-docs/SKILL.md",
+      "path": "sources\\qt-qt-cpp-docs.md",
+      "sha256": "b317e7de2e5c3cdb060ceb2be3776cf8558108299b2d3ade88184346d7cc9de2",
+      "bytes": 24890,
+      "status": "retrieved"
+    },
+    {
+      "name": "qt-qt-cpp-review",
+      "url": "https://raw.githubusercontent.com/TheQtCompanyRnD/agent-skills/6845f02d41171a6df8b6e6fe225b7f5d1a6f4adf/skills/qt-cpp-review/SKILL.md",
+      "path": "sources\\qt-qt-cpp-review.md",
+      "sha256": "8021e34b9288cfe251c3d628482545b30bb98164ab3d0bd3c9d8a5d288a742a7",
+      "bytes": 11878,
+      "status": "retrieved"
+    },
+    {
+      "name": "qt-qt-figma-component-generation",
+      "url": "https://raw.githubusercontent.com/TheQtCompanyRnD/agent-skills/6845f02d41171a6df8b6e6fe225b7f5d1a6f4adf/skills/qt-figma-component-generation/SKILL.md",
+      "path": "sources\\qt-qt-figma-component-generation.md",
+      "sha256": "d109c6fd5bd795b0560791cbb380d70506d6fc00d0ea8cfcdee3f7789e24ecb2",
+      "bytes": 16734,
+      "status": "retrieved"
+    },
+    {
+      "name": "qt-qt-figma-token-extraction",
+      "url": "https://raw.githubusercontent.com/TheQtCompanyRnD/agent-skills/6845f02d41171a6df8b6e6fe225b7f5d1a6f4adf/skills/qt-figma-token-extraction/SKILL.md",
+      "path": "sources\\qt-qt-figma-token-extraction.md",
+      "sha256": "8c6daa84dd944a940fc0b0d0d65bee775a5c72fe622371c6931597bf7e757ade",
+      "bytes": 29566,
+      "status": "retrieved"
+    },
+    {
+      "name": "qt-qt-qml-docs",
+      "url": "https://raw.githubusercontent.com/TheQtCompanyRnD/agent-skills/6845f02d41171a6df8b6e6fe225b7f5d1a6f4adf/skills/qt-qml-docs/SKILL.md",
+      "path": "sources\\qt-qt-qml-docs.md",
+      "sha256": "d6a02bd7ed38e08c1b81af84c53c10ab70b35ac7cfdb982932aed78f21529972",
+      "bytes": 9988,
+      "status": "retrieved"
+    },
+    {
+      "name": "qt-qt-qml-profiler",
+      "url": "https://raw.githubusercontent.com/TheQtCompanyRnD/agent-skills/6845f02d41171a6df8b6e6fe225b7f5d1a6f4adf/skills/qt-qml-profiler/SKILL.md",
+      "path": "sources\\qt-qt-qml-profiler.md",
+      "sha256": "6cfdceefbe0ac465c32f0b53d603129ee143fb2b41072d61eda49ba3181cdab8",
+      "bytes": 24624,
+      "status": "retrieved"
+    },
+    {
+      "name": "qt-qt-qml-review",
+      "url": "https://raw.githubusercontent.com/TheQtCompanyRnD/agent-skills/6845f02d41171a6df8b6e6fe225b7f5d1a6f4adf/skills/qt-qml-review/SKILL.md",
+      "path": "sources\\qt-qt-qml-review.md",
+      "sha256": "c88ccaae48eff046582f582291ff420dde47b85bd4eeb52436c9b47aba96382c",
+      "bytes": 10175,
+      "status": "retrieved"
+    },
+    {
+      "name": "qt-qt-qml-test-run",
+      "url": "https://raw.githubusercontent.com/TheQtCompanyRnD/agent-skills/6845f02d41171a6df8b6e6fe225b7f5d1a6f4adf/skills/qt-qml-test-run/SKILL.md",
+      "path": "sources\\qt-qt-qml-test-run.md",
+      "sha256": "90242c780a078a5fba19db09f2d8e30a8acc759e6f83f77b3e8398c158c12a2a",
+      "bytes": 17623,
+      "status": "retrieved"
+    },
+    {
+      "name": "qt-qt-qml-test",
+      "url": "https://raw.githubusercontent.com/TheQtCompanyRnD/agent-skills/6845f02d41171a6df8b6e6fe225b7f5d1a6f4adf/skills/qt-qml-test/SKILL.md",
+      "path": "sources\\qt-qt-qml-test.md",
+      "sha256": "71077b350c0fab6658864ab7cf121b12278a716587c8d508dbf31bdf1a39d0ec",
+      "bytes": 16727,
+      "status": "retrieved"
+    },
+    {
+      "name": "qt-qt-qml",
+      "url": "https://raw.githubusercontent.com/TheQtCompanyRnD/agent-skills/6845f02d41171a6df8b6e6fe225b7f5d1a6f4adf/skills/qt-qml/SKILL.md",
+      "path": "sources\\qt-qt-qml.md",
+      "sha256": "39b4a26d125d8a904f77e3d9a45644ac39823beab04c52051e3c8d4390bc0760",
+      "bytes": 17801,
+      "status": "retrieved"
+    },
+    {
+      "name": "qt-qt-ui-design",
+      "url": "https://raw.githubusercontent.com/TheQtCompanyRnD/agent-skills/6845f02d41171a6df8b6e6fe225b7f5d1a6f4adf/skills/qt-ui-design/SKILL.md",
+      "path": "sources\\qt-qt-ui-design.md",
+      "sha256": "874112098bd3498219217019fc8cf148f3e5491e076767982ae9735a55e43dd1",
+      "bytes": 25612,
+      "status": "retrieved"
+    },
+    {
+      "name": "qt-LICENSE",
+      "url": "https://raw.githubusercontent.com/TheQtCompanyRnD/agent-skills/6845f02d41171a6df8b6e6fe225b7f5d1a6f4adf/LICENSE",
+      "path": "sources\\qt-LICENSE.md",
+      "sha256": "34e9066300fe20969e87af6b5f77de2439f2e3634b03b8b86caa7e948306df8e",
+      "bytes": 1529,
+      "status": "retrieved"
+    },
+    {
+      "name": "wshobson-accessibility-compliance",
+      "url": "https://raw.githubusercontent.com/wshobson/agents/0874a27b17a22e2b7c2e2bcd725768e0803cad06/plugins/ui-design/skills/accessibility-compliance/SKILL.md",
+      "path": "sources\\wshobson-accessibility-compliance.md",
+      "sha256": "3ad0fbcb0a69b69e70652641a8eeb59f168cceb4bc9d9b9c8b47154072b9e1a2",
+      "bytes": 2402,
+      "status": "retrieved"
+    },
+    {
+      "name": "wshobson-design-system-patterns",
+      "url": "https://raw.githubusercontent.com/wshobson/agents/0874a27b17a22e2b7c2e2bcd725768e0803cad06/plugins/ui-design/skills/design-system-patterns/SKILL.md",
+      "path": "sources\\wshobson-design-system-patterns.md",
+      "sha256": "618355f0e6c6ba8ca5d231035c9da18302fe6894aedce565743e9181b6c928ee",
+      "bytes": 4003,
+      "status": "retrieved"
+    },
+    {
+      "name": "wshobson-interaction-design",
+      "url": "https://raw.githubusercontent.com/wshobson/agents/0874a27b17a22e2b7c2e2bcd725768e0803cad06/plugins/ui-design/skills/interaction-design/SKILL.md",
+      "path": "sources\\wshobson-interaction-design.md",
+      "sha256": "87f2765ed1deeef3f1c06f9e4338ff103c391c6c4adcdffc885f3516b7c34ff2",
+      "bytes": 7572,
+      "status": "retrieved"
+    },
+    {
+      "name": "wshobson-mobile-android-design",
+      "url": "https://raw.githubusercontent.com/wshobson/agents/0874a27b17a22e2b7c2e2bcd725768e0803cad06/plugins/ui-design/skills/mobile-android-design/SKILL.md",
+      "path": "sources\\wshobson-mobile-android-design.md",
+      "sha256": "0a209a1c45585ce0056548cc2f0fd352b7fde5980a3b5dd397a9daf5dff19fe7",
+      "bytes": 3797,
+      "status": "retrieved"
+    },
+    {
+      "name": "wshobson-mobile-ios-design",
+      "url": "https://raw.githubusercontent.com/wshobson/agents/0874a27b17a22e2b7c2e2bcd725768e0803cad06/plugins/ui-design/skills/mobile-ios-design/SKILL.md",
+      "path": "sources\\wshobson-mobile-ios-design.md",
+      "sha256": "2b3b2405aee645a345d137ce93bd86bac65d33da4ad40c4b6f007bf4a51b6c96",
+      "bytes": 6921,
+      "status": "retrieved"
+    },
+    {
+      "name": "wshobson-react-native-design",
+      "url": "https://raw.githubusercontent.com/wshobson/agents/0874a27b17a22e2b7c2e2bcd725768e0803cad06/plugins/ui-design/skills/react-native-design/SKILL.md",
+      "path": "sources\\wshobson-react-native-design.md",
+      "sha256": "71eacfb8d4a62142e135e8b1934ffb540b0d2703d6b6b273d4c0f255bb1aa68d",
+      "bytes": 3949,
+      "status": "retrieved"
+    },
+    {
+      "name": "wshobson-responsive-design",
+      "url": "https://raw.githubusercontent.com/wshobson/agents/0874a27b17a22e2b7c2e2bcd725768e0803cad06/plugins/ui-design/skills/responsive-design/SKILL.md",
+      "path": "sources\\wshobson-responsive-design.md",
+      "sha256": "c8bd56f8fc0f122c4ff392b02617f0e6bb4a353b2d0189235c6ee77cdcfe8690",
+      "bytes": 1989,
+      "status": "retrieved"
+    },
+    {
+      "name": "wshobson-visual-design-foundations",
+      "url": "https://raw.githubusercontent.com/wshobson/agents/0874a27b17a22e2b7c2e2bcd725768e0803cad06/plugins/ui-design/skills/visual-design-foundations/SKILL.md",
+      "path": "sources\\wshobson-visual-design-foundations.md",
+      "sha256": "0c6970d14f5d5df55c63d1be995205d140489e2d0c39896657fabee6f6a5df84",
+      "bytes": 7218,
+      "status": "retrieved"
+    },
+    {
+      "name": "wshobson-web-component-design",
+      "url": "https://raw.githubusercontent.com/wshobson/agents/0874a27b17a22e2b7c2e2bcd725768e0803cad06/plugins/ui-design/skills/web-component-design/SKILL.md",
+      "path": "sources\\wshobson-web-component-design.md",
+      "sha256": "a7978f5e9e3fa7129cf3eb8d607cedece4e207011321893d9a3c5dd92cf32603",
+      "bytes": 7475,
+      "status": "retrieved"
+    },
+    {
+      "name": "openai-figma",
+      "url": "https://raw.githubusercontent.com/openai/skills/main/skills/.curated/figma/SKILL.md",
+      "path": "sources\\openai-figma.md",
+      "sha256": "5b11f7c8d0ce4c047b401323e7b8fe6559bd3162a3397bf5248634a5444609d5",
+      "bytes": 3170,
+      "status": "retrieved"
+    },
+    {
+      "name": "openai-figma-use",
+      "url": "https://raw.githubusercontent.com/openai/skills/main/skills/.curated/figma-use/SKILL.md",
+      "path": "sources\\openai-figma-use.md",
+      "sha256": "afa9c4ae068a18b93e4914b2d224180ace113db7713dd66f4df397f16ba9c4b4",
+      "bytes": 17799,
+      "status": "retrieved"
+    },
+    {
+      "name": "openai-figma-code-connect-components",
+      "url": "https://raw.githubusercontent.com/openai/skills/main/skills/.curated/figma-code-connect-components/SKILL.md",
+      "path": "sources\\openai-figma-code-connect-components.md",
+      "sha256": "0f19edad8aed28063a3517c419fbcbef5421d024f189fd02a17fae25093ec69d",
+      "bytes": 16763,
+      "status": "retrieved"
+    },
+    {
+      "name": "openai-figma-create-new-file",
+      "url": "https://raw.githubusercontent.com/openai/skills/main/skills/.curated/figma-create-new-file/SKILL.md",
+      "path": "sources\\openai-figma-create-new-file.md",
+      "sha256": "23f429203bd57f186905b2523d4ff8bdf10d3b85b39fc7eed4786097d81f1adc",
+      "bytes": 2731,
+      "status": "retrieved"
+    },
+    {
+      "name": "openai-winui-app",
+      "url": "https://raw.githubusercontent.com/openai/skills/main/skills/.curated/winui-app/SKILL.md",
+      "path": "sources\\openai-winui-app.md",
+      "sha256": "917341ec9eb688d73e21362910a7178a92b2ae49544b7d8f17ee9e19adfe2ea8",
+      "bytes": 11272,
+      "status": "retrieved"
+    },
+    {
+      "name": "openai-screenshot",
+      "url": "https://raw.githubusercontent.com/openai/skills/main/skills/.curated/screenshot/SKILL.md",
+      "path": "sources\\openai-screenshot.md",
+      "sha256": "081935a6a163277537d46365f49d6b4a3cb40b4748347e7e88759c5927fa8cf5",
+      "bytes": 7754,
+      "status": "retrieved"
+    },
+    {
+      "name": "openai-playwright",
+      "url": "https://raw.githubusercontent.com/openai/skills/main/skills/.curated/playwright/SKILL.md",
+      "path": "sources\\openai-playwright.md",
+      "sha256": "0ffaabcc8e0990627c4725f18bf1c7955534a796c1c199e872909de2013ce6a8",
+      "bytes": 3771,
+      "status": "retrieved"
+    },
+    {
+      "name": "openai-playwright-interactive",
+      "url": "https://raw.githubusercontent.com/openai/skills/main/skills/.curated/playwright-interactive/SKILL.md",
+      "path": "sources\\openai-playwright-interactive.md",
+      "sha256": "f6c1155d923e6ae3ccc12abfef2266f119f8e9546df2ddeee1f5eb369845a0a1",
+      "bytes": 31711,
+      "status": "retrieved"
+    },
+    {
+      "name": "superpowers-brainstorming",
+      "url": "https://raw.githubusercontent.com/obra/superpowers/main/skills/brainstorming/SKILL.md",
+      "path": "sources\\superpowers-brainstorming.md",
+      "sha256": "61a7ef918652108c76a3fd01e02dd92d39996c6b46d4cb2819cbd03f6c45e46a",
+      "bytes": 13602,
+      "status": "retrieved"
+    }
+  ]
+}

@@ -87,7 +87,9 @@ public:
                           const QDateTime& start,
                           const QDateTime& end) const;
 
+    [[deprecated("Legacy owner-thread API: use historyService().requestPage for structured asynchronous results")]]
     QList<Sample> historyFromDatabase(const QString& channelName, int count = 100) const;
+    [[deprecated("Legacy owner-thread API: use historyService().requestPage for structured asynchronous results")]]
     QList<Sample> historyFromDatabase(const QString& channelName,
                                       const QDateTime& start,
                                       const QDateTime& end) const;

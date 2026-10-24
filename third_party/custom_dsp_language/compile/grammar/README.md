@@ -23,7 +23,7 @@ This directory contains the ANTLR4 grammar definition for the LH language (CODES
    ```bash
    # Download ANTLR4
    cd ~
-   wget https://www.antlr.org/download/antlr-4.13.1-complete.jar
+   wget https://www.antlr.org/download/antlr-4.13.2-complete.jar
    
    # Or use package manager
    # Ubuntu/Debian:
@@ -46,14 +46,14 @@ This directory contains the ANTLR4 grammar definition for the LH language (CODES
 
 ```bash
 # Set ANTLR classpath (adjust path as needed)
-export CLASSPATH=".:/usr/local/lib/antlr-4.13.1-complete.jar:$CLASSPATH"
+export CLASSPATH=".:/usr/local/lib/antlr-4.13.2-complete.jar:$CLASSPATH"
 
 # Generate Python3 parser
 cd grammar
 antlr4 -Dlanguage=Python3 -visitor -no-listener LH.g4
 
 # Or using Java directly:
-java -jar /path/to/antlr-4.13.1-complete.jar -Dlanguage=Python3 -visitor -no-listener LH.g4
+java -jar /path/to/antlr-4.13.2-complete.jar -Dlanguage=Python3 -visitor -no-listener LH.g4
 ```
 
 **Generated Files:**
@@ -69,8 +69,8 @@ java -jar /path/to/antlr-4.13.1-complete.jar -Dlanguage=Python3 -visitor -no-lis
 
 ```bash
 # Set classpath
-export CLASSPATH=".:/usr/local/lib/antlr-4.13.1-complete.jar:$CLASSPATH"
-alias antlr4='java -jar /usr/local/lib/antlr-4.13.1-complete.jar'
+export CLASSPATH=".:/usr/local/lib/antlr-4.13.2-complete.jar:$CLASSPATH"
+alias antlr4='java -jar /usr/local/lib/antlr-4.13.2-complete.jar'
 alias grun='java org.antlr.v4.gui.TestRig'
 
 # Test with GUI
@@ -165,7 +165,7 @@ The `test_programs.lh` file contains various test cases:
 **Issue 1: "antlr4: command not found"**
 ```bash
 # Solution: Add ANTLR to PATH or use full path
-java -jar /path/to/antlr-4.13.1-complete.jar -Dlanguage=Python3 LH.g4
+java -jar /path/to/antlr-4.13.2-complete.jar -Dlanguage=Python3 LH.g4
 ```
 
 **Issue 2: "No such file or directory: LH.g4"**

@@ -7,6 +7,7 @@
 #include <QEventLoop>
 #include <QMetaType>
 #include <QTimer>
+#include <QSet>
 #include <QtGlobal>
 
 #include <cmath>
@@ -249,6 +250,7 @@ void ParameterController::loadDefinitions(const QList<ParameterDefinition>& defi
         const auto it = m_states.constFind(def.name);
         if (it == m_states.constEnd() || it->pointId != def.id
                 || it->dataType != canonicalParameterDataType(def.dataType)
+                || it->minValue != def.minValue || it->maxValue != def.maxValue
                 || it->onlineEditable != def.onlineEditable) {
             changed = true;
             break;
@@ -270,6 +272,9 @@ void ParameterController::loadDefinitions(const QList<ParameterDefinition>& defi
         info.pointId = def.id;
         info.name = def.name;
         info.dataType = canonicalParameterDataType(def.dataType);
+        info.minValue = def.minValue;
+        info.maxValue = def.maxValue;
+        info.unit = def.unit;
         info.onlineEditable = def.onlineEditable;
         info.definitionValue = def.currentValue.isEmpty() ? def.defaultValue : def.currentValue;
 
@@ -320,11 +325,63 @@ bool ParameterController::notifyStateChanges(const QList<StateChange>& changes)
             && definitionsGeneration == m_definitionsGeneration;
 }
 
+bool ParameterController::validateValue(const ParameterDefinition& def, const QString& value, QString* error)
+{
+    const auto fail = [&](const QString& reason) {
+        if (error) *error = QStringLiteral("参数 %1：%2").arg(def.name, reason);
+        return false;
+    };
+    if (error) error->clear();
+    if (!def.onlineEditable) return fail(QStringLiteral("参数只读"));
+    const QString type = canonicalParameterDataType(def.dataType);
+    if (type == QStringLiteral("STRING")) {
+        if (!def.minValue.trimmed().isEmpty() || !def.maxValue.trimmed().isEmpty())
+            return fail(QStringLiteral("STRING 不接受数值上下限"));
+        return true;
+    }
+    const auto parse = [&](const QString& text, double* number) {
+        const QVariant v(text);
+        if (type == QStringLiteral("BOOL")) {
+            bool b = false; if (!variantToBool(v, &b)) return false; *number = b ? 1 : 0; return true;
+        }
+        if (type == QStringLiteral("REAL")) {
+            float f = 0; if (!variantToFloat32(v, &f)) return false; *number = f; return true;
+        }
+        if (type == QStringLiteral("INT16") || type == QStringLiteral("INT32")) {
+            qint64 i = 0; const bool wide = type == QStringLiteral("INT32");
+            if (!variantToSigned(v, wide ? -2147483648LL : -32768, wide ? 2147483647LL : 32767, &i)) return false;
+            *number = double(i); return true;
+        }
+        if (type == QStringLiteral("UINT16") || type == QStringLiteral("UINT32")) {
+            quint64 i = 0;
+            if (!variantToUnsigned(v, type == QStringLiteral("UINT32") ? 4294967295ULL : 65535, &i)) return false;
+            *number = double(i); return true;
+        }
+        return false;
+    };
+    double number = 0, minimum = 0, maximum = 0;
+    if (!parse(value, &number)) return fail(QStringLiteral("值不符合类型 %1 或超出类型范围").arg(type));
+    const bool hasMin = !def.minValue.trimmed().isEmpty(), hasMax = !def.maxValue.trimmed().isEmpty();
+    if ((hasMin && !parse(def.minValue, &minimum)) || (hasMax && !parse(def.maxValue, &maximum))
+            || (hasMin && hasMax && minimum > maximum)) return fail(QStringLiteral("配置的上下限无效"));
+    if ((hasMin && number < minimum) || (hasMax && number > maximum))
+        return fail(QStringLiteral("值超出配置范围 [%1, %2]").arg(def.minValue, def.maxValue));
+    return true;
+}
+
 bool ParameterController::editParameter(const QString& name, const QString& value)
 {
     auto it = m_states.find(name);
     if (it == m_states.end() || !it->onlineEditable)
         return false;
+
+    ParameterDefinition def;
+    def.name = it->name; def.dataType = it->dataType; def.onlineEditable = it->onlineEditable;
+    def.minValue = it->minValue; def.maxValue = it->maxValue;
+    if (!validateValue(def, value, &it->lastError)) {
+        emit statesChanged();
+        return false;
+    }
 
     const ParameterState oldState = it->state;
     it->editedValue = value;
@@ -350,6 +407,24 @@ bool ParameterController::editParameterByPointId(const QString& pointId, const Q
     return false;
 }
 
+bool ParameterController::validateModifiedParametersForTargets(const QStringList& targets, QString* error) const
+{
+    QSet<QString> ids;
+    for (const auto& state : m_states) {
+        if (state.state != ParameterState::Modified || (!targets.isEmpty() && !targets.contains(state.pointId))) continue;
+        if (state.pointId.trimmed().isEmpty() || ids.contains(state.pointId)) {
+            if (error) *error = QStringLiteral("参数点位为空或重复：%1").arg(state.name);
+            return false;
+        }
+        ids.insert(state.pointId);
+        ParameterDefinition def;
+        def.name=state.name; def.dataType=state.dataType; def.onlineEditable=state.onlineEditable;
+        def.minValue=state.minValue; def.maxValue=state.maxValue;
+        if (!validateValue(def, state.editedValue, error)) return false;
+    }
+    return true;
+}
+
 bool ParameterController::applyModifiedParametersForTargets(
         IDeviceBackend* backend,
         const QStringList& targetPointIds,
@@ -361,6 +436,7 @@ bool ParameterController::applyModifiedParametersForTargets(
     const quint64 generation = m_pendingReadbackGeneration;
     if (batchTargetPointIds)
         batchTargetPointIds->clear();
+    if (!validateModifiedParametersForTargets(targetPointIds, errorMessage)) return false;
     if (!backend) {
         if (errorMessage)
             *errorMessage = QStringLiteral("参数下发失败：后端为空");
@@ -370,10 +446,26 @@ bool ParameterController::applyModifiedParametersForTargets(
     QHash<QString, QVariant> writes;
     QStringList modifiedNames;
     for (auto it = m_states.begin(); it != m_states.end(); ++it) {
-        if (it->state != ParameterState::Modified || it->pointId.isEmpty())
+        if (it->state != ParameterState::Modified)
             continue;
         if (!targetPointIds.isEmpty() && !targetPointIds.contains(it->pointId))
             continue;
+        if (it->pointId.trimmed().isEmpty()) {
+            if (errorMessage) *errorMessage = QStringLiteral("参数 %1 缺少点位 ID").arg(it->name);
+            if (batchTargetPointIds) batchTargetPointIds->clear();
+            return false;
+        }
+
+        ParameterDefinition def;
+        def.name = it->name; def.dataType = it->dataType; def.onlineEditable = it->onlineEditable;
+        def.minValue = it->minValue; def.maxValue = it->maxValue;
+        QString validationError;
+        if (!validateValue(def, it->editedValue, &validationError) || writes.contains(it->pointId)) {
+            if (errorMessage) *errorMessage = validationError.isEmpty()
+                    ? QStringLiteral("参数点位重复：%1").arg(it->pointId) : validationError;
+            if (batchTargetPointIds) batchTargetPointIds->clear();
+            return false;
+        }
 
         writes.insert(it->pointId, it->editedValue);
         modifiedNames.append(it->name);
@@ -523,8 +615,10 @@ bool ParameterController::applyModifiedParametersWithReadback(IDeviceBackend* ba
         if (errorMessage) *errorMessage = QStringLiteral("参数回读已取消或定义已变更");
         return false;
     }
-    if (targetPointIds.isEmpty())
-        return true;
+    if (targetPointIds.isEmpty()) {
+        if (errorMessage) *errorMessage = writeError;
+        return writeError.isEmpty();
+    }
 
     const int retryCount = qMax(1, maxReadbackRetries);
     QString readbackError;
@@ -669,6 +763,7 @@ bool ParameterController::applyModifiedParametersWithReadbackAsyncForTargets(
 
     QStringList batchTargetPointIds;
     QHash<QString, QVariant> writes;
+    if (!validateModifiedParametersForTargets(targetPointIds, errorMessage)) return false;
     for (auto it = m_states.cbegin(); it != m_states.cend(); ++it) {
         if (it->state == ParameterState::Modified && !it->pointId.isEmpty()
                 && (targetPointIds.isEmpty() || targetPointIds.contains(it->pointId))) {

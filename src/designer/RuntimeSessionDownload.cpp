@@ -88,6 +88,8 @@ QString currentTimeLabel()
 bool RuntimeSessionController::requestDownload(const QString& artifactPath, const QVariantMap& options)
 {
     if (m_backendDownloadInProgress || state() == RuntimeSessionState::Downloading) return false;
+    // Reject before allocating an operation or publishing a transient state.
+    if (state() != RuntimeSessionState::Running && state() != RuntimeSessionState::Connected) return false;
     m_downloadCancelled = false;
     if (m_backend) {
         m_backend->resetDownloadCancellation();

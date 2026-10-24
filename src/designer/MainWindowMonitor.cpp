@@ -63,11 +63,9 @@ void MainWindow::onOpenMonitor()
 void MainWindow::onStartMonitoring()
 {
     if (m_projectController && m_projectController->hasOpenProject()) {
-        if (!applyRuntimeConfigToMonitor()) {
-            return;
-        }
-
-        m_sessionController->startMonitoring();
+        m_sessionController->applyRuntimeConfigAsync([this](bool ok) {
+            if (ok) m_sessionController->startMonitoring();
+        });
         return;
     } else {
         appendOutput(QString("[%1] 未打开项目，进入演示模式进行监控")

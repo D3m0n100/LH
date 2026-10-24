@@ -40,7 +40,7 @@ def serializedATN():
         27,12,27,342,9,27,1,28,1,28,5,28,346,8,28,10,28,12,28,349,9,28,1,
         29,1,29,3,29,353,8,29,1,30,1,30,1,31,1,31,1,31,0,1,54,32,0,2,4,6,
         8,10,12,14,16,18,20,22,24,26,28,30,32,34,36,38,40,42,44,46,48,50,
-        52,54,56,58,60,62,0,5,1,0,54,59,1,0,60,61,2,0,50,50,62,63,3,0,51,
+        52,54,56,58,60,62,0,5,2,0,50,50,62,63,1,0,60,61,1,0,54,59,3,0,51,
         51,74,75,78,80,1,0,76,77,392,0,64,1,0,0,0,2,92,1,0,0,0,4,94,1,0,
         0,0,6,131,1,0,0,0,8,133,1,0,0,0,10,137,1,0,0,0,12,142,1,0,0,0,14,
         156,1,0,0,0,16,158,1,0,0,0,18,160,1,0,0,0,20,165,1,0,0,0,22,178,
@@ -122,25 +122,25 @@ def serializedATN():
         293,1,0,0,0,294,295,1,0,0,0,295,47,1,0,0,0,296,297,5,24,0,0,297,
         298,5,68,0,0,298,49,1,0,0,0,299,300,5,25,0,0,300,301,5,68,0,0,301,
         51,1,0,0,0,302,303,5,26,0,0,303,304,5,68,0,0,304,53,1,0,0,0,305,
-        306,6,27,-1,0,306,307,5,48,0,0,307,319,3,54,27,9,308,309,5,61,0,
-        0,309,319,3,54,27,5,310,311,5,60,0,0,311,319,3,54,27,4,312,313,5,
-        64,0,0,313,314,3,54,27,0,314,315,5,65,0,0,315,319,1,0,0,0,316,319,
-        3,26,13,0,317,319,3,56,28,0,318,305,1,0,0,0,318,308,1,0,0,0,318,
-        310,1,0,0,0,318,312,1,0,0,0,318,316,1,0,0,0,318,317,1,0,0,0,319,
-        340,1,0,0,0,320,321,10,12,0,0,321,322,5,47,0,0,322,339,3,54,27,13,
-        323,324,10,11,0,0,324,325,5,49,0,0,325,339,3,54,27,12,326,327,10,
-        10,0,0,327,328,5,46,0,0,328,339,3,54,27,11,329,330,10,8,0,0,330,
-        331,7,0,0,0,331,339,3,54,27,9,332,333,10,7,0,0,333,334,7,1,0,0,334,
-        339,3,54,27,8,335,336,10,6,0,0,336,337,7,2,0,0,337,339,3,54,27,7,
-        338,320,1,0,0,0,338,323,1,0,0,0,338,326,1,0,0,0,338,329,1,0,0,0,
-        338,332,1,0,0,0,338,335,1,0,0,0,339,342,1,0,0,0,340,338,1,0,0,0,
-        340,341,1,0,0,0,341,55,1,0,0,0,342,340,1,0,0,0,343,347,3,58,29,0,
-        344,346,3,22,11,0,345,344,1,0,0,0,346,349,1,0,0,0,347,345,1,0,0,
-        0,347,348,1,0,0,0,348,57,1,0,0,0,349,347,1,0,0,0,350,353,3,60,30,
-        0,351,353,3,62,31,0,352,350,1,0,0,0,352,351,1,0,0,0,353,59,1,0,0,
-        0,354,355,7,3,0,0,355,61,1,0,0,0,356,357,7,4,0,0,357,63,1,0,0,0,
-        30,69,80,88,92,99,131,142,156,169,178,186,195,207,220,225,229,237,
-        241,245,256,269,275,283,290,294,318,338,340,347,352
+        306,6,27,-1,0,306,307,5,48,0,0,307,319,3,54,27,12,308,309,5,61,0,
+        0,309,319,3,54,27,11,310,311,5,60,0,0,311,319,3,54,27,10,312,313,
+        5,64,0,0,313,314,3,54,27,0,314,315,5,65,0,0,315,319,1,0,0,0,316,
+        319,3,26,13,0,317,319,3,56,28,0,318,305,1,0,0,0,318,308,1,0,0,0,
+        318,310,1,0,0,0,318,312,1,0,0,0,318,316,1,0,0,0,318,317,1,0,0,0,
+        319,340,1,0,0,0,320,321,10,9,0,0,321,322,7,0,0,0,322,339,3,54,27,
+        10,323,324,10,8,0,0,324,325,7,1,0,0,325,339,3,54,27,9,326,327,10,
+        7,0,0,327,328,7,2,0,0,328,339,3,54,27,8,329,330,10,6,0,0,330,331,
+        5,46,0,0,331,339,3,54,27,7,332,333,10,5,0,0,333,334,5,49,0,0,334,
+        339,3,54,27,6,335,336,10,4,0,0,336,337,5,47,0,0,337,339,3,54,27,
+        5,338,320,1,0,0,0,338,323,1,0,0,0,338,326,1,0,0,0,338,329,1,0,0,
+        0,338,332,1,0,0,0,338,335,1,0,0,0,339,342,1,0,0,0,340,338,1,0,0,
+        0,340,341,1,0,0,0,341,55,1,0,0,0,342,340,1,0,0,0,343,347,3,58,29,
+        0,344,346,3,22,11,0,345,344,1,0,0,0,346,349,1,0,0,0,347,345,1,0,
+        0,0,347,348,1,0,0,0,348,57,1,0,0,0,349,347,1,0,0,0,350,353,3,60,
+        30,0,351,353,3,62,31,0,352,350,1,0,0,0,352,351,1,0,0,0,353,59,1,
+        0,0,0,354,355,7,3,0,0,355,61,1,0,0,0,356,357,7,4,0,0,357,63,1,0,
+        0,0,30,69,80,88,92,99,131,142,156,169,178,186,195,207,220,225,229,
+        237,241,245,256,269,275,283,290,294,318,338,340,347,352
     ]
 
 class LHParser ( Parser ):
@@ -2698,36 +2698,6 @@ class LHParser ( Parser ):
                 return visitor.visitChildren(self)
 
 
-    class XorExprContext(ExpressionContext):
-
-        def __init__(self, parser, ctx:ParserRuleContext): # actually a LHParser.ExpressionContext
-            super().__init__(parser)
-            self.copyFrom(ctx)
-
-        def expression(self, i:int=None):
-            if i is None:
-                return self.getTypedRuleContexts(LHParser.ExpressionContext)
-            else:
-                return self.getTypedRuleContext(LHParser.ExpressionContext,i)
-
-        def XOR(self):
-            return self.getToken(LHParser.XOR, 0)
-
-        def enterRule(self, listener:ParseTreeListener):
-            if hasattr( listener, "enterXorExpr" ):
-                listener.enterXorExpr(self)
-
-        def exitRule(self, listener:ParseTreeListener):
-            if hasattr( listener, "exitXorExpr" ):
-                listener.exitXorExpr(self)
-
-        def accept(self, visitor:ParseTreeVisitor):
-            if hasattr( visitor, "visitXorExpr" ):
-                return visitor.visitXorExpr(self)
-            else:
-                return visitor.visitChildren(self)
-
-
     class CompareExprContext(ExpressionContext):
 
         def __init__(self, parser, ctx:ParserRuleContext): # actually a LHParser.ExpressionContext
@@ -2765,6 +2735,36 @@ class LHParser ( Parser ):
         def accept(self, visitor:ParseTreeVisitor):
             if hasattr( visitor, "visitCompareExpr" ):
                 return visitor.visitCompareExpr(self)
+            else:
+                return visitor.visitChildren(self)
+
+
+    class XorExprContext(ExpressionContext):
+
+        def __init__(self, parser, ctx:ParserRuleContext): # actually a LHParser.ExpressionContext
+            super().__init__(parser)
+            self.copyFrom(ctx)
+
+        def expression(self, i:int=None):
+            if i is None:
+                return self.getTypedRuleContexts(LHParser.ExpressionContext)
+            else:
+                return self.getTypedRuleContext(LHParser.ExpressionContext,i)
+
+        def XOR(self):
+            return self.getToken(LHParser.XOR, 0)
+
+        def enterRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "enterXorExpr" ):
+                listener.enterXorExpr(self)
+
+        def exitRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "exitXorExpr" ):
+                listener.exitXorExpr(self)
+
+        def accept(self, visitor:ParseTreeVisitor):
+            if hasattr( visitor, "visitXorExpr" ):
+                return visitor.visitXorExpr(self)
             else:
                 return visitor.visitChildren(self)
 
@@ -2989,7 +2989,7 @@ class LHParser ( Parser ):
                 self.state = 306
                 self.match(LHParser.NOT)
                 self.state = 307
-                self.expression(9)
+                self.expression(12)
                 pass
 
             elif la_ == 2:
@@ -2999,7 +2999,7 @@ class LHParser ( Parser ):
                 self.state = 308
                 self.match(LHParser.MINUS)
                 self.state = 309
-                self.expression(5)
+                self.expression(11)
                 pass
 
             elif la_ == 3:
@@ -3009,7 +3009,7 @@ class LHParser ( Parser ):
                 self.state = 310
                 self.match(LHParser.PLUS)
                 self.state = 311
-                self.expression(4)
+                self.expression(10)
                 pass
 
             elif la_ == 4:
@@ -3054,90 +3054,13 @@ class LHParser ( Parser ):
                     self._errHandler.sync(self)
                     la_ = self._interp.adaptivePredict(self._input,26,self._ctx)
                     if la_ == 1:
-                        localctx = LHParser.OrExprContext(self, LHParser.ExpressionContext(self, _parentctx, _parentState))
-                        self.pushNewRecursionContext(localctx, _startState, self.RULE_expression)
-                        self.state = 320
-                        if not self.precpred(self._ctx, 12):
-                            from antlr4.error.Errors import FailedPredicateException
-                            raise FailedPredicateException(self, "self.precpred(self._ctx, 12)")
-                        self.state = 321
-                        self.match(LHParser.OR)
-                        self.state = 322
-                        self.expression(13)
-                        pass
-
-                    elif la_ == 2:
-                        localctx = LHParser.XorExprContext(self, LHParser.ExpressionContext(self, _parentctx, _parentState))
-                        self.pushNewRecursionContext(localctx, _startState, self.RULE_expression)
-                        self.state = 323
-                        if not self.precpred(self._ctx, 11):
-                            from antlr4.error.Errors import FailedPredicateException
-                            raise FailedPredicateException(self, "self.precpred(self._ctx, 11)")
-                        self.state = 324
-                        self.match(LHParser.XOR)
-                        self.state = 325
-                        self.expression(12)
-                        pass
-
-                    elif la_ == 3:
-                        localctx = LHParser.AndExprContext(self, LHParser.ExpressionContext(self, _parentctx, _parentState))
-                        self.pushNewRecursionContext(localctx, _startState, self.RULE_expression)
-                        self.state = 326
-                        if not self.precpred(self._ctx, 10):
-                            from antlr4.error.Errors import FailedPredicateException
-                            raise FailedPredicateException(self, "self.precpred(self._ctx, 10)")
-                        self.state = 327
-                        self.match(LHParser.AND)
-                        self.state = 328
-                        self.expression(11)
-                        pass
-
-                    elif la_ == 4:
-                        localctx = LHParser.CompareExprContext(self, LHParser.ExpressionContext(self, _parentctx, _parentState))
-                        self.pushNewRecursionContext(localctx, _startState, self.RULE_expression)
-                        self.state = 329
-                        if not self.precpred(self._ctx, 8):
-                            from antlr4.error.Errors import FailedPredicateException
-                            raise FailedPredicateException(self, "self.precpred(self._ctx, 8)")
-                        self.state = 330
-                        localctx.op = self._input.LT(1)
-                        _la = self._input.LA(1)
-                        if not((((_la) & ~0x3f) == 0 and ((1 << _la) & 1134907106097364992) != 0)):
-                            localctx.op = self._errHandler.recoverInline(self)
-                        else:
-                            self._errHandler.reportMatch(self)
-                            self.consume()
-                        self.state = 331
-                        self.expression(9)
-                        pass
-
-                    elif la_ == 5:
-                        localctx = LHParser.AddSubExprContext(self, LHParser.ExpressionContext(self, _parentctx, _parentState))
-                        self.pushNewRecursionContext(localctx, _startState, self.RULE_expression)
-                        self.state = 332
-                        if not self.precpred(self._ctx, 7):
-                            from antlr4.error.Errors import FailedPredicateException
-                            raise FailedPredicateException(self, "self.precpred(self._ctx, 7)")
-                        self.state = 333
-                        localctx.op = self._input.LT(1)
-                        _la = self._input.LA(1)
-                        if not(_la==60 or _la==61):
-                            localctx.op = self._errHandler.recoverInline(self)
-                        else:
-                            self._errHandler.reportMatch(self)
-                            self.consume()
-                        self.state = 334
-                        self.expression(8)
-                        pass
-
-                    elif la_ == 6:
                         localctx = LHParser.MulDivExprContext(self, LHParser.ExpressionContext(self, _parentctx, _parentState))
                         self.pushNewRecursionContext(localctx, _startState, self.RULE_expression)
-                        self.state = 335
-                        if not self.precpred(self._ctx, 6):
+                        self.state = 320
+                        if not self.precpred(self._ctx, 9):
                             from antlr4.error.Errors import FailedPredicateException
-                            raise FailedPredicateException(self, "self.precpred(self._ctx, 6)")
-                        self.state = 336
+                            raise FailedPredicateException(self, "self.precpred(self._ctx, 9)")
+                        self.state = 321
                         localctx.op = self._input.LT(1)
                         _la = self._input.LA(1)
                         if not((((_la) & ~0x3f) == 0 and ((1 << _la) & -4610560118520545280) != 0)):
@@ -3145,8 +3068,85 @@ class LHParser ( Parser ):
                         else:
                             self._errHandler.reportMatch(self)
                             self.consume()
-                        self.state = 337
+                        self.state = 322
+                        self.expression(10)
+                        pass
+
+                    elif la_ == 2:
+                        localctx = LHParser.AddSubExprContext(self, LHParser.ExpressionContext(self, _parentctx, _parentState))
+                        self.pushNewRecursionContext(localctx, _startState, self.RULE_expression)
+                        self.state = 323
+                        if not self.precpred(self._ctx, 8):
+                            from antlr4.error.Errors import FailedPredicateException
+                            raise FailedPredicateException(self, "self.precpred(self._ctx, 8)")
+                        self.state = 324
+                        localctx.op = self._input.LT(1)
+                        _la = self._input.LA(1)
+                        if not(_la==60 or _la==61):
+                            localctx.op = self._errHandler.recoverInline(self)
+                        else:
+                            self._errHandler.reportMatch(self)
+                            self.consume()
+                        self.state = 325
+                        self.expression(9)
+                        pass
+
+                    elif la_ == 3:
+                        localctx = LHParser.CompareExprContext(self, LHParser.ExpressionContext(self, _parentctx, _parentState))
+                        self.pushNewRecursionContext(localctx, _startState, self.RULE_expression)
+                        self.state = 326
+                        if not self.precpred(self._ctx, 7):
+                            from antlr4.error.Errors import FailedPredicateException
+                            raise FailedPredicateException(self, "self.precpred(self._ctx, 7)")
+                        self.state = 327
+                        localctx.op = self._input.LT(1)
+                        _la = self._input.LA(1)
+                        if not((((_la) & ~0x3f) == 0 and ((1 << _la) & 1134907106097364992) != 0)):
+                            localctx.op = self._errHandler.recoverInline(self)
+                        else:
+                            self._errHandler.reportMatch(self)
+                            self.consume()
+                        self.state = 328
+                        self.expression(8)
+                        pass
+
+                    elif la_ == 4:
+                        localctx = LHParser.AndExprContext(self, LHParser.ExpressionContext(self, _parentctx, _parentState))
+                        self.pushNewRecursionContext(localctx, _startState, self.RULE_expression)
+                        self.state = 329
+                        if not self.precpred(self._ctx, 6):
+                            from antlr4.error.Errors import FailedPredicateException
+                            raise FailedPredicateException(self, "self.precpred(self._ctx, 6)")
+                        self.state = 330
+                        self.match(LHParser.AND)
+                        self.state = 331
                         self.expression(7)
+                        pass
+
+                    elif la_ == 5:
+                        localctx = LHParser.XorExprContext(self, LHParser.ExpressionContext(self, _parentctx, _parentState))
+                        self.pushNewRecursionContext(localctx, _startState, self.RULE_expression)
+                        self.state = 332
+                        if not self.precpred(self._ctx, 5):
+                            from antlr4.error.Errors import FailedPredicateException
+                            raise FailedPredicateException(self, "self.precpred(self._ctx, 5)")
+                        self.state = 333
+                        self.match(LHParser.XOR)
+                        self.state = 334
+                        self.expression(6)
+                        pass
+
+                    elif la_ == 6:
+                        localctx = LHParser.OrExprContext(self, LHParser.ExpressionContext(self, _parentctx, _parentState))
+                        self.pushNewRecursionContext(localctx, _startState, self.RULE_expression)
+                        self.state = 335
+                        if not self.precpred(self._ctx, 4):
+                            from antlr4.error.Errors import FailedPredicateException
+                            raise FailedPredicateException(self, "self.precpred(self._ctx, 4)")
+                        self.state = 336
+                        self.match(LHParser.OR)
+                        self.state = 337
+                        self.expression(5)
                         pass
 
              
@@ -3431,27 +3431,27 @@ class LHParser ( Parser ):
 
     def expression_sempred(self, localctx:ExpressionContext, predIndex:int):
             if predIndex == 0:
-                return self.precpred(self._ctx, 12)
+                return self.precpred(self._ctx, 9)
          
 
             if predIndex == 1:
-                return self.precpred(self._ctx, 11)
-         
-
-            if predIndex == 2:
-                return self.precpred(self._ctx, 10)
-         
-
-            if predIndex == 3:
                 return self.precpred(self._ctx, 8)
          
 
-            if predIndex == 4:
+            if predIndex == 2:
                 return self.precpred(self._ctx, 7)
          
 
-            if predIndex == 5:
+            if predIndex == 3:
                 return self.precpred(self._ctx, 6)
+         
+
+            if predIndex == 4:
+                return self.precpred(self._ctx, 5)
+         
+
+            if predIndex == 5:
+                return self.precpred(self._ctx, 4)
          
 
 

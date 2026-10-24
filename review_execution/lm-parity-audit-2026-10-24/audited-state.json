@@ -1,0 +1,1796 @@
+{
+  "captured_at_utc": "2026-10-24T00:12:48.400933+00:00",
+  "cwd": "D:\\Table\\LH",
+  "head": "99f9b097161de3575cb383fee674f434f33c4c6c",
+  "branch": "main",
+  "tracked_worktree_status": " M resources/icons/app_icon.png\n M review_execution/CURRENT_REVIEW.md\n M src/common/RuntimeHistoryTypes.h\n M src/communication/Common.h\n M src/communication/ControllerBridge.cpp\n M src/communication/ControllerDeviceBackend.cpp\n M src/communication/ControllerDeviceBackend.h\n M src/communication/ControllerDeviceBackendDownload.cpp\n M src/communication/ControllerDeviceBackendPoints.cpp\n M src/communication/EthernetInterface.cpp\n M src/communication/EthernetInterface.h\n M src/core/AppLogging.cpp\n M src/core/AsyncDatabaseWorker.cpp\n M src/core/AsyncDatabaseWorker.h\n M src/core/HistoryQuery.cpp\n M src/designer/CMakeLists.txt\n M src/designer/MainWindow.cpp\n M src/designer/MainWindow.h\n M src/designer/MainWindowMonitor.cpp\n M src/designer/MainWindowOutput.cpp\n M src/designer/MainWindowUi.cpp\n D src/designer/MonitorController.cpp\n D src/designer/MonitorController.h\n M src/designer/OutputPaneController.cpp\n M src/designer/OutputPaneController.h\n M src/designer/ProjectController.cpp\n M src/designer/RuntimeSessionController.cpp\n M src/designer/RuntimeSessionController.h\n M src/designer/RuntimeSessionDebug.cpp\n M src/designer/RuntimeSessionDownload.cpp\n M src/designer/ui/CommandPaletteDialog.cpp\n M src/designer/ui/CommandPaletteDialog.h\n M src/main.cpp\n M src/monitor/AsyncHistoryStoreAdapter.cpp\n M src/monitor/ChartWidget.cpp\n M src/monitor/IMonitorHistoryStore.h\n M src/monitor/MonitorChartView.cpp\n M src/monitor/MonitorExportHelper.cpp\n M src/monitor/MonitorManager.h\n M tests/CMakeLists.txt\n M tests/UiEvidence.h\n M tests/controller_device_backend_test.cpp\n M tests/runtime_session_controller_test.cpp\n M tests/ui_style_preview.cpp\n M third_party/custom_dsp_language/compile/lh_download_v3.py\n",
+  "source_fingerprint_sha256": "8235b954ebd1e2027b1c27133e753600175ffec77487e0ce3196023d890b839b",
+  "source_file_count": 357,
+  "source_files": [
+    {
+      "path": "CMakeLists.txt",
+      "size": 7091,
+      "sha256": "a3a806a44999a384451409531ffa693b45119d5af02bf0555d79f3d037b1819a"
+    },
+    {
+      "path": "cmake/DeployQt.cmake.in",
+      "size": 3089,
+      "sha256": "6bf0496900b9bfc5b3c9f6f2f2cc2d868f236f0deed1a32ad076a4296643db0b"
+    },
+    {
+      "path": "cmake/LHConfig.cmake.in",
+      "size": 211,
+      "sha256": "ee241aecb6100f5e290ec5404de3207b0251c19b317b2e0758b958a2346f0a34"
+    },
+    {
+      "path": "include/Common.h",
+      "size": 3347,
+      "sha256": "750bf42f48bfda85194e676256ebd9b738fd38a5eccb18c10f9bcf31ddf66e05"
+    },
+    {
+      "path": "include/TextEncoding.h",
+      "size": 800,
+      "sha256": "524d2a712095e48346d57753d86d8efbd925b16d85947a66fd75a505184c936a"
+    },
+    {
+      "path": "resources/icons/app_icon.png",
+      "size": 165266,
+      "sha256": "af5b308eb7c72ebeae5de426e37ea27396b97af866c962cdc1d2a17ec7bbb5cd"
+    },
+    {
+      "path": "resources/icons/app_icon_legacy.png",
+      "size": 43947,
+      "sha256": "481610ea44e4f08073c7d37d009b7802e8d87a712056bfcae513c2ceb73b3c14"
+    },
+    {
+      "path": "resources/icons/clear.svg",
+      "size": 217,
+      "sha256": "28a828a91126a9e83c7d559624dd36e28cd94d3b533a848a22998881de115323"
+    },
+    {
+      "path": "resources/icons/collapse.svg",
+      "size": 191,
+      "sha256": "01f81041e3cf387e8a7ccd980abc1a28be1c2b998dce270e949e2f6505cfbaaf"
+    },
+    {
+      "path": "resources/icons/compile.svg",
+      "size": 250,
+      "sha256": "dd6e2e793f67225665ce34e0c207604276a2d715f1c27df66df05200449b15af"
+    },
+    {
+      "path": "resources/icons/download.svg",
+      "size": 190,
+      "sha256": "d45ca22fdd20c79ebb795f33a771b014ab6b6be827f184e9eafc0873df724da0"
+    },
+    {
+      "path": "resources/icons/export.svg",
+      "size": 210,
+      "sha256": "9d1f9c12007e8e33d4e1f9df9bd5200b1cc68bce1e8093315abfadf1aaafbb50"
+    },
+    {
+      "path": "resources/icons/lh_logo.svg",
+      "size": 3799,
+      "sha256": "252cf842a8803099b75629101a0147f20b0a7aa19615af527e14033510cfe351"
+    },
+    {
+      "path": "resources/icons/lh_logo_mark.svg",
+      "size": 3183,
+      "sha256": "fed4fbe6bd8a39a58e3521b5458737682ba8b9f9f4ea7267af90eaf2d9350bcd"
+    },
+    {
+      "path": "resources/icons/lh_logo_option1.png",
+      "size": 176434,
+      "sha256": "57ec33a6b720dd032163846d6d9b49fc6e04282391bdfdc21382e41dda91b780"
+    },
+    {
+      "path": "resources/icons/lh_logo_option2.png",
+      "size": 188208,
+      "sha256": "b1e12be4e25b730e06a05db8c6878307255deb046dd09910304595859de13ad7"
+    },
+    {
+      "path": "resources/icons/lh_logo_option3.png",
+      "size": 165266,
+      "sha256": "af5b308eb7c72ebeae5de426e37ea27396b97af866c962cdc1d2a17ec7bbb5cd"
+    },
+    {
+      "path": "resources/icons/locate.svg",
+      "size": 283,
+      "sha256": "191d66d464445c50fb259765a9afbeb2c2726cca6873c9fd087ae95a9c67e393"
+    },
+    {
+      "path": "resources/icons/monitor.svg",
+      "size": 296,
+      "sha256": "1affacc4625fbfb57cb08a9e9fa19beaf357d9c68ac30259e735ad8b2edceed4"
+    },
+    {
+      "path": "resources/icons/new.svg",
+      "size": 218,
+      "sha256": "7f779b7041108034877da3114910a0a994775078d6c238d878c3ae88dd977703"
+    },
+    {
+      "path": "resources/icons/open.svg",
+      "size": 161,
+      "sha256": "b1029597f61cf7059840697636f6c7908067c318a3796aa36c59e42ec10aeb8d"
+    },
+    {
+      "path": "resources/icons/output.svg",
+      "size": 217,
+      "sha256": "6f4fb81e1f5804e5df4a678769e6a16d45c45bc2632e0037d64ee40891a0bee4"
+    },
+    {
+      "path": "resources/icons/ppt_bg_content.png",
+      "size": 15019,
+      "sha256": "676bb4da41c40f9ea3852c3baaa36cd053d66b0a409c66d16a068a3b868bc9ae"
+    },
+    {
+      "path": "resources/icons/ppt_bg_cover.png",
+      "size": 29871,
+      "sha256": "f3b87e07ba5840cbaff5d0304371ddfaaa2ef020f0ec7e183751726a120e9da0"
+    },
+    {
+      "path": "resources/icons/problems.svg",
+      "size": 167,
+      "sha256": "066c62096361abff9c21b73c104cc6afa7953940ce7ef20368b0c5de3acb0e09"
+    },
+    {
+      "path": "resources/icons/refresh.svg",
+      "size": 213,
+      "sha256": "bac305e5d5145da2ad35973f68e0974858c34eaa91a10fe40af7b2b5ec276e1f"
+    },
+    {
+      "path": "resources/icons/run.svg",
+      "size": 111,
+      "sha256": "719168dddae638ecc2d26b85f3a16b78cc24e60ec6411acb00eb9233761bcde8"
+    },
+    {
+      "path": "resources/icons/save.svg",
+      "size": 209,
+      "sha256": "23409747024e91987fdd25db9bd72eb3709d71847476761dae004b2958e6abc7"
+    },
+    {
+      "path": "resources/icons/search.svg",
+      "size": 218,
+      "sha256": "c7ce53ff39f6bb4bb807fc6d513012dbeb778ee71972eb7e3caa77c17c453565"
+    },
+    {
+      "path": "resources/icons/settings.svg",
+      "size": 351,
+      "sha256": "72d981ca4b844d899a56ec727831218f780f54d9ef55b77613d5a345d8a9e574"
+    },
+    {
+      "path": "resources/icons/sit_logo_orig.png",
+      "size": 175851,
+      "sha256": "00085609fa257c4d8644d40b216c3467ca1b22e723ac55fad1fc87ac8ba63e97"
+    },
+    {
+      "path": "resources/icons/sit_logo_pure_white.png",
+      "size": 32335,
+      "sha256": "3dc7403470cc54f86c3d60387370bb9133c21194f72e8b924488d53e1fef3a30"
+    },
+    {
+      "path": "resources/icons/sit_logo_white.png",
+      "size": 118497,
+      "sha256": "fab9166bd5527367a448d2b1d0c7126338434fd8818db0e408347897c881839b"
+    },
+    {
+      "path": "resources/icons/stop.svg",
+      "size": 111,
+      "sha256": "2ef99af1b0a6358901bcd2ea419564ecb27f554740dc3a6e3830573096c79991"
+    },
+    {
+      "path": "resources/resources.qrc",
+      "size": 875,
+      "sha256": "b08f9cdee8060634702e28a210631d55a69d75ca13ad2129869d48015e8dbd1f"
+    },
+    {
+      "path": "resources/snippets/default_snippets.json",
+      "size": 84296,
+      "sha256": "a9e8c6d20dbd1367e6e201904d380783a1e20da4d94a631ac9724f94564a8d90"
+    },
+    {
+      "path": "src/common/ArtifactSnapshot.h",
+      "size": 1252,
+      "sha256": "75e0aae3c06865682858b94937f2495c4ebc1cf35042a9759e719deda824fc2a"
+    },
+    {
+      "path": "src/common/CompileArtifactPolicy.h",
+      "size": 685,
+      "sha256": "8f31b91f2e3444a79173dac126954c50522fd41bdd5334a0cda8d3068ce4a701"
+    },
+    {
+      "path": "src/common/ConfigTypes.h",
+      "size": 28435,
+      "sha256": "0e116b5666fba649e283eeea96f2218c5512fc3ad4a310f714f08509c65bb186"
+    },
+    {
+      "path": "src/common/DeferredThreadCleanup.h",
+      "size": 1567,
+      "sha256": "d9b809cb83bd8926ab44e21d764170248b1cc2c9629d870d18e23b1f22a3292f"
+    },
+    {
+      "path": "src/common/FileSnapshot.h",
+      "size": 660,
+      "sha256": "c8b91f09d37c00b3c1a053ad7d0e2916e72174dcb09a40959215760c26230491"
+    },
+    {
+      "path": "src/common/LogSafety.h",
+      "size": 4026,
+      "sha256": "bd81f15e0d898450e3f73c60c7162bfd176ab3f5191e2e8e8602dbeb3042a619"
+    },
+    {
+      "path": "src/common/PathSecurityUtils.h",
+      "size": 4690,
+      "sha256": "1df95e39ada58b22d9e5d2089c2d72daeea3b6b057dc33c79290b61e99dc1486"
+    },
+    {
+      "path": "src/common/ProjectMutationGuard.h",
+      "size": 20749,
+      "sha256": "ece5b70b79f50ef42e2f5452775197aad5add6cad4bd15c5cb2ffc0b14c055ed"
+    },
+    {
+      "path": "src/common/RuntimeHistoryTypes.h",
+      "size": 2704,
+      "sha256": "e2b45cba2c12731809692b58c01d4df4a78e652dc0c82798d0c07f0ed6776b8e"
+    },
+    {
+      "path": "src/common/RuntimePointTable.h",
+      "size": 10367,
+      "sha256": "d3df87d658d51fbd97450318fd645fc497eef436f11f4f04fcc2fd5e5adde2bc"
+    },
+    {
+      "path": "src/common/RuntimePointTypes.h",
+      "size": 22378,
+      "sha256": "c9496aca356ae4e52f9515b8e5286ece8f6efa4168e5820527f0b3e123581caa"
+    },
+    {
+      "path": "src/communication/AsyncOpcServer.cpp",
+      "size": 14519,
+      "sha256": "624011449a63c062529c3c58ccc3dbb713aa5624fc0170b98a479b933baf3518"
+    },
+    {
+      "path": "src/communication/AsyncOpcServer.h",
+      "size": 1785,
+      "sha256": "32ba0b68bdece4ca224b08f04cf393cd0469b16de42b309373478111f7a49b79"
+    },
+    {
+      "path": "src/communication/BackendOperationGuard.h",
+      "size": 1757,
+      "sha256": "a8dffe15be18e6e2a9f4dd677965abcda9dae0ceb8a9dae464eafe2ed8be384c"
+    },
+    {
+      "path": "src/communication/CANCommon.h",
+      "size": 4721,
+      "sha256": "ba2fe6b90b0311d9f93d87b9bcebda0e0b5a9e84db56618509701b358694e68f"
+    },
+    {
+      "path": "src/communication/CANInterface.cpp",
+      "size": 9149,
+      "sha256": "a31d1ec299e5ba937a9d36e8cd5049a5947a21ad4faf51b6889dc84d22d3b399"
+    },
+    {
+      "path": "src/communication/CANInterface.h",
+      "size": 2865,
+      "sha256": "54c199dcbb1848b4fc049756ee78625719bcc1694c20d644c0a50895a35fcbb6"
+    },
+    {
+      "path": "src/communication/CANOpenInterface.cpp",
+      "size": 3303,
+      "sha256": "467bea412bb6dfa69c171a583124f3ff1d2bc565d941fe8e1c0aee2adf5804c2"
+    },
+    {
+      "path": "src/communication/CANOpenInterface.h",
+      "size": 2130,
+      "sha256": "a010e0eb89da306df9cf8bd26ff7b1452ba2caf00509b3b7d39ae7c24f778865"
+    },
+    {
+      "path": "src/communication/CMakeLists.txt",
+      "size": 2928,
+      "sha256": "5cc020e3e75cb52b35e041328326cb72e35355ccfeac0f3b08770d87c8f7f0dd"
+    },
+    {
+      "path": "src/communication/ClassicOpcPollWorker.cpp",
+      "size": 7659,
+      "sha256": "428697531f65a9fd1cd60c074a924959991e5bab815d588e82ed854be1ff4818"
+    },
+    {
+      "path": "src/communication/ClassicOpcPollWorker.h",
+      "size": 1544,
+      "sha256": "7048891d2308800e64e724061b8b3b159b8fc56d34228b3856aa41b5f6b3732a"
+    },
+    {
+      "path": "src/communication/ClassicOpcServer.cpp",
+      "size": 23341,
+      "sha256": "6f12c6b47a7f0438200f218800509bbd27fdb88efdde71baf8dfdda236bcab83"
+    },
+    {
+      "path": "src/communication/ClassicOpcServer.h",
+      "size": 3429,
+      "sha256": "988d2a8b5e613f4252c22836f142b706bfa9657f70f243dfac4375964ac1161d"
+    },
+    {
+      "path": "src/communication/CommTypes.h",
+      "size": 30679,
+      "sha256": "67407dd911c789cf106b4b417cbcb188668abf03e6307465ad37c3add2f2769d"
+    },
+    {
+      "path": "src/communication/Common.h",
+      "size": 2747,
+      "sha256": "71eb1e8bfbcd33dc197a2f2604658d5c6f8193ceca6d69ca72f3501041fb2f99"
+    },
+    {
+      "path": "src/communication/Communication.h",
+      "size": 19668,
+      "sha256": "b2717445c22dde2ccb2ad37b1fcca9088c585cfcf5666090464af0d9a4512c3b"
+    },
+    {
+      "path": "src/communication/ControllerBridge.cpp",
+      "size": 26642,
+      "sha256": "d4d646f390ed2383259ab273fc675570ea03d0d24ed44b46440f7461be45553e"
+    },
+    {
+      "path": "src/communication/ControllerBridge.h",
+      "size": 2216,
+      "sha256": "c33da3ad7f78946af9ea4fd2d766b014da640a7a7949981d6c280c0dac1020a2"
+    },
+    {
+      "path": "src/communication/ControllerDebugClient.cpp",
+      "size": 16066,
+      "sha256": "5605e939f792c7e1b3428f779fa978cd37b3a7c55159cfe211a9763e0a6feb1f"
+    },
+    {
+      "path": "src/communication/ControllerDebugClient.h",
+      "size": 4596,
+      "sha256": "47e5b7f0169b3e56b14ce53ec84de3c0493ec4e28f75802fe5da29e23c9fd236"
+    },
+    {
+      "path": "src/communication/ControllerDebugProtocol.cpp",
+      "size": 1484,
+      "sha256": "afc3812a104591a02523b3ac9340fe6b143e8c70eb3af01779cd348de6d6c3fa"
+    },
+    {
+      "path": "src/communication/ControllerDebugProtocol.h",
+      "size": 1758,
+      "sha256": "f1b76f00223092c7c0c2aee14102fad050ca9a10974d8eb4881255240b4e09f9"
+    },
+    {
+      "path": "src/communication/ControllerDeviceBackend.cpp",
+      "size": 28733,
+      "sha256": "8bdbcabb75bc6c76b1cd3ea4b5474111b75261a63b8bab1cc61416bf7b78c707"
+    },
+    {
+      "path": "src/communication/ControllerDeviceBackend.h",
+      "size": 8895,
+      "sha256": "9f5230bdaad0b7fb27e7106eb1e190ed2287a179762cf4a9aeef10c4e6426dc9"
+    },
+    {
+      "path": "src/communication/ControllerDeviceBackendDebug.cpp",
+      "size": 5200,
+      "sha256": "ff2d1d5083d444001b5f0056fe75f7d9eee3d9c5365aeeb3998b4026947312f5"
+    },
+    {
+      "path": "src/communication/ControllerDeviceBackendDiagnostics.cpp",
+      "size": 16510,
+      "sha256": "39acef59c7796e15d5892ffd549600d941b34731ce517c0e9cfa6c8b87b573d2"
+    },
+    {
+      "path": "src/communication/ControllerDeviceBackendDownload.cpp",
+      "size": 54894,
+      "sha256": "1941074c87794ef7b72bd74c282d962be15d561fd97f4b69b890a14ce4622caf"
+    },
+    {
+      "path": "src/communication/ControllerDeviceBackendPoints.cpp",
+      "size": 37132,
+      "sha256": "bce83a0d1f019d5d36417c054e774290e4f47f39af8543da5329bb1001645027"
+    },
+    {
+      "path": "src/communication/DownloadManager.cpp",
+      "size": 19234,
+      "sha256": "c9c951bee074669742a2c5186e0f5ac46ebd0dcb895b02dd7f0ab1cbcb57c5da"
+    },
+    {
+      "path": "src/communication/DownloadManager.h",
+      "size": 2045,
+      "sha256": "8022748ef8bd2cb39b4e6d4f410337b0c2d7732483a2061b09afcfb82ddd5445"
+    },
+    {
+      "path": "src/communication/DownloadProfile.cpp",
+      "size": 18549,
+      "sha256": "891abc5b9237fb7c37e1fe17baedb6c71876c3995aa83920ea4c81d282cdb636"
+    },
+    {
+      "path": "src/communication/DownloadProfile.h",
+      "size": 1709,
+      "sha256": "7dd6f1b9ce3bf48088963556cfac877a0b015a1bc6dc227bf592af13ea5ef511"
+    },
+    {
+      "path": "src/communication/EthernetInterface.cpp",
+      "size": 20611,
+      "sha256": "078c726ce80d7cefd682cd87f6dc6a854b735e994c95f1740c3d385565f758aa"
+    },
+    {
+      "path": "src/communication/EthernetInterface.h",
+      "size": 3979,
+      "sha256": "ae6ca8d06b19e6e4bfd30cc06b15f7b595e1057efec04f683498df8ad7165076"
+    },
+    {
+      "path": "src/communication/ICommInterface.h",
+      "size": 6499,
+      "sha256": "807402f85b27d48b7ea87582a41e7cf1d876588c3ac656356c916c9a04270ca4"
+    },
+    {
+      "path": "src/communication/IDeviceBackend.h",
+      "size": 4154,
+      "sha256": "c954a4841f92bed2860b8f1ba06f0a81db5736f41071ab45248a857c363df235"
+    },
+    {
+      "path": "src/communication/IDownloadTransport.h",
+      "size": 875,
+      "sha256": "226097a64da87720d72fe92ed2671fff33782ed0def8ebb2727e7e19e1af803d"
+    },
+    {
+      "path": "src/communication/IOpcServer.h",
+      "size": 1219,
+      "sha256": "8705b4c7d0628f8a2f9322fb281b5ecf950896e839cff1a8e96b859f56c78762"
+    },
+    {
+      "path": "src/communication/J1939Interface.cpp",
+      "size": 4107,
+      "sha256": "3798e9d9b0ae3e7179b07903ece95c79f0c0902346da270fefb9d9c7c0cec6d4"
+    },
+    {
+      "path": "src/communication/J1939Interface.h",
+      "size": 2229,
+      "sha256": "6dec527c1e0184a9481b10e26346e76cfeb76a44284eb6fefb2bb4bd009c663f"
+    },
+    {
+      "path": "src/communication/MatrikonOpcServer.cpp",
+      "size": 98263,
+      "sha256": "515e9eab8babb18809e39a392db6f3ef201cf2ece6b19e69565de3c83bbfa6db"
+    },
+    {
+      "path": "src/communication/MatrikonOpcServer.h",
+      "size": 9542,
+      "sha256": "6425a3b31cc3e67dce3618a3979baa044e6c978a662857e6031d0a7e8011f724"
+    },
+    {
+      "path": "src/communication/ModbusInterface.cpp",
+      "size": 24124,
+      "sha256": "154ef2dcf764c3a3ecea980a6bab113ce55308d73c1974ac4e5ab1e3d18bd818"
+    },
+    {
+      "path": "src/communication/ModbusInterface.h",
+      "size": 5511,
+      "sha256": "75467c6b699bcc77e0fd2c194616897619b575519ef0ffe03899b3bdf7319682"
+    },
+    {
+      "path": "src/communication/ModbusLimits.h",
+      "size": 145,
+      "sha256": "6d9acc367dff28810acc9d62dba9c888800e1f8b9a2e9c5d272e784719ff15d8"
+    },
+    {
+      "path": "src/communication/OpcServerFactory.cpp",
+      "size": 1064,
+      "sha256": "7e8f2830a28add8a8d7b697fa3b5d977f27a1a526e4db374239094f01ea73dfb"
+    },
+    {
+      "path": "src/communication/OpcServerFactory.h",
+      "size": 359,
+      "sha256": "1e2e4afe8292509a980eb0c13bc2ffa6360d4b6c743aaa9af923e0bd3eb3fa62"
+    },
+    {
+      "path": "src/communication/OpcWriteResultState.h",
+      "size": 844,
+      "sha256": "13e3fbb7e81175e271e09cf84ae8028c3b006d22f8010b9b7e80923aba0be759"
+    },
+    {
+      "path": "src/communication/ProtocolUtils.h",
+      "size": 1280,
+      "sha256": "9e72a4709e5449e3aeacd565d01a71c4ca2b004820e2331b191e08c9a9a99af3"
+    },
+    {
+      "path": "src/communication/README.md",
+      "size": 9103,
+      "sha256": "411b92976b0f6f3b1241c599d6d6771a08da3b899b716e2987e59b0a736cd0df"
+    },
+    {
+      "path": "src/communication/RuntimePointQualityMapper.h",
+      "size": 1402,
+      "sha256": "0c5af4976103ed020729be0c504ff54983eaa0fae25ab13bd37081eaedd60f70"
+    },
+    {
+      "path": "src/communication/RuntimePointRegisterCodec.cpp",
+      "size": 24656,
+      "sha256": "86420ff926499280fb3812b0ddc792eca1d0b2a58cd6c8d33e75d27e9d3f2e1f"
+    },
+    {
+      "path": "src/communication/RuntimePointRegisterCodec.h",
+      "size": 1279,
+      "sha256": "4059a49ddfe340bff15b27531116ab9f9f9f3b0b362167a963eb2c7f7d5d6dc8"
+    },
+    {
+      "path": "src/communication/SerialInterface.cpp",
+      "size": 14529,
+      "sha256": "1c371f4dd8d627c158a16f65042c243e63e5fbfb297eb25b74b00f46e6a4e7c9"
+    },
+    {
+      "path": "src/communication/SerialInterface.h",
+      "size": 3914,
+      "sha256": "c783961da7a1428159a8d1f79e1e7563d06845d691a059b32c783e682e7bf37c"
+    },
+    {
+      "path": "src/communication/VirtualDeviceBackend.cpp",
+      "size": 17983,
+      "sha256": "0913d1c08dc5af90511f3dcd07a7539db6654ace425ab9998d8afc6540fe266e"
+    },
+    {
+      "path": "src/communication/VirtualDeviceBackend.h",
+      "size": 3802,
+      "sha256": "9306e74f2b5ac5af6dfa18ee075221ed66a934ab1c2056db406e58ca3fc46c65"
+    },
+    {
+      "path": "src/compiler/CMakeLists.txt",
+      "size": 531,
+      "sha256": "68095408eda01c8ade6cfc34fc74206f2952e4b8cad6b48b36a7950f2a533d2c"
+    },
+    {
+      "path": "src/compiler/DSLCompilerArtifacts.cpp",
+      "size": 38276,
+      "sha256": "ec041fb95268dd40cf17a12b1a842a6805b283aef6d336faa35b4a6dad5af441"
+    },
+    {
+      "path": "src/compiler/DSLCompilerAsync.cpp",
+      "size": 35175,
+      "sha256": "2d5dfce132897fe19c20054f269896e6b61c7dbafd3dd7f5fc3e6b9e0c503f4a"
+    },
+    {
+      "path": "src/compiler/DSLCompilerInput.cpp",
+      "size": 16891,
+      "sha256": "99980eba05e7266beac51573be1843a4f592fddef172771ddc06b92c86e77a92"
+    },
+    {
+      "path": "src/compiler/DSLCompilerInterface.cpp",
+      "size": 9527,
+      "sha256": "8a9e87a3f1ea7fae1a265c9385babf2cf2a24525d207a69930093ba24cec4f12"
+    },
+    {
+      "path": "src/compiler/DSLCompilerInterface.h",
+      "size": 12575,
+      "sha256": "47b16a4027f5085665be9ef3d633f275cc498c1c48021d087ce2413217d9d670"
+    },
+    {
+      "path": "src/compiler/DSLCompilerInternal.h",
+      "size": 2547,
+      "sha256": "48af9e6761e37ea395f40fea8b4328425046171756d2d519e8fa487dc84ecb3e"
+    },
+    {
+      "path": "src/core/AppLogging.cpp",
+      "size": 20158,
+      "sha256": "6ec5299a91d4b11799c87ba3782b1c7aab49e45cb957db19e04d94cb72e5d26c"
+    },
+    {
+      "path": "src/core/AppLogging.h",
+      "size": 2077,
+      "sha256": "f8f94c8a956fec5db3f325aaeb3f1c8665a403222ba64f1f5836868b17ad90c3"
+    },
+    {
+      "path": "src/core/AsyncDatabaseWorker.cpp",
+      "size": 26652,
+      "sha256": "290bf4f3fc4fbd1dfddd1504449b2731a734d75360da02d0bf27794d3ced8e53"
+    },
+    {
+      "path": "src/core/AsyncDatabaseWorker.h",
+      "size": 7539,
+      "sha256": "3b3bf5985faba7054dbe8fdb2d382a9ba77c56a2679cc4a4f58abfcef2a90438"
+    },
+    {
+      "path": "src/core/BackgroundTaskRegistry.cpp",
+      "size": 2885,
+      "sha256": "0e779114f1193ac95af41132fbf0e4752baddb6d510c6b51cb46f368724fe997"
+    },
+    {
+      "path": "src/core/BackgroundTaskRegistry.h",
+      "size": 594,
+      "sha256": "ef6dd0449c17f3a6b12532a31e23502006ed290af0b999a0e7a39741ba75a14c"
+    },
+    {
+      "path": "src/core/BusinessOperation.h",
+      "size": 1251,
+      "sha256": "a3421cbf67f10658a1a049c8280af848e2787f9e571fd1c13fe7f67f3761a24e"
+    },
+    {
+      "path": "src/core/CMakeLists.txt",
+      "size": 1352,
+      "sha256": "1024b5b6282e0682c2c7d1d1720eaedcb206d86d83973e901fb20bf878bcf909"
+    },
+    {
+      "path": "src/core/DataManager.cpp",
+      "size": 66787,
+      "sha256": "0b970a6346c6cda86f80c71b1c32e7c99c2ff083c9f8c03acf17d609135831ee"
+    },
+    {
+      "path": "src/core/DataManager.h",
+      "size": 15636,
+      "sha256": "e96d48609b499d817efdfe61e7ff37099012aa25ef84823e7ed3cdce640d7eec"
+    },
+    {
+      "path": "src/core/HistoryQuery.cpp",
+      "size": 14430,
+      "sha256": "c192646df6f889a67285fa3273544e2960cb3e55acc60c16fbb1aa8883b0f643"
+    },
+    {
+      "path": "src/core/HistoryQuery.h",
+      "size": 1321,
+      "sha256": "c07bb3a10c431c409c441b8d7811f852f9f93c0dcea9dbf0ad1ecba36e42dec2"
+    },
+    {
+      "path": "src/core/ProjectCommandCoordinator.cpp",
+      "size": 516,
+      "sha256": "f75a727cc26cb0fb47e6bb3bdee4fdcd4ba81a1940ee52f7b77c023e760cbe86"
+    },
+    {
+      "path": "src/core/ProjectCommandCoordinator.h",
+      "size": 461,
+      "sha256": "5c8e5d526f3ef3c521c1f50b4da0e89496f3906dd5466796d1d8117f7211739f"
+    },
+    {
+      "path": "src/core/tests/DataManagerTest.cpp",
+      "size": 46867,
+      "sha256": "15687eacbd6feacbbff7f817eb79fbcb5a3073a5651c4d9652a14da4ed47b6eb"
+    },
+    {
+      "path": "src/core/tests/DataManagerTest.h",
+      "size": 1957,
+      "sha256": "51391a135efedaa64ae387c0ee31b4ceae85cc2dbbe922201c8a09d7bb6a9e55"
+    },
+    {
+      "path": "src/designer/BuildController.cpp",
+      "size": 50843,
+      "sha256": "67d3d6f6525f2f6583a48ccb640934a1ca0cdaf7df6657ca92a946f909eefec9"
+    },
+    {
+      "path": "src/designer/BuildController.h",
+      "size": 6855,
+      "sha256": "bfb66cb7d733d0664d4bf3d6f9a06760f8e860f8668f548b4597b08588805f97"
+    },
+    {
+      "path": "src/designer/CMakeLists.txt",
+      "size": 1748,
+      "sha256": "a642022014f661fe31aa9428b71f1ec6f696f0f0f1a7f9f8924f7469d97e4f94"
+    },
+    {
+      "path": "src/designer/DeviceWorkspaceWidget.cpp",
+      "size": 16524,
+      "sha256": "5e859fac7c11e385898188625c498d0ebb8db8b9f77ec7a34322c05149b981d2"
+    },
+    {
+      "path": "src/designer/DeviceWorkspaceWidget.h",
+      "size": 3296,
+      "sha256": "a3416a07ba7ff7cac7e0fb80466d35971a5b2ffce7751f79176ff3668831f28a"
+    },
+    {
+      "path": "src/designer/DownloadDockWidget.cpp",
+      "size": 8544,
+      "sha256": "11ae4dcba8dcf340576b09b5aa9e81a18800f472e71a38b47e63d692c69e7c34"
+    },
+    {
+      "path": "src/designer/DownloadDockWidget.h",
+      "size": 1125,
+      "sha256": "a233b1070c428bfbe40599aa38668a21806ec558448035cc1353d466960fd9f5"
+    },
+    {
+      "path": "src/designer/DslCompletionEngine.cpp",
+      "size": 8038,
+      "sha256": "7b0ba627b67315cc0e23d68113a84e6c0d6b0315fd2c2befb8c80506d8d169b5"
+    },
+    {
+      "path": "src/designer/DslCompletionEngine.h",
+      "size": 6256,
+      "sha256": "59c31e8f64a5b2cf3769ffd09c6b7eab090828866cf5845e53d89035cced4d5f"
+    },
+    {
+      "path": "src/designer/DslDragDropHandler.cpp",
+      "size": 7694,
+      "sha256": "2c81fa089f4a24065881d08de0ec84051b89cd4b04743e3917734137eb7feb3a"
+    },
+    {
+      "path": "src/designer/DslDragDropHandler.h",
+      "size": 4749,
+      "sha256": "16d18af2b61cf5b8b983e32f10ccfe04741918f6bce52478b7bae19d04437a92"
+    },
+    {
+      "path": "src/designer/DslScriptEditor.cpp",
+      "size": 46732,
+      "sha256": "bf214cd638e07fa864dac87e1201faad547e72d1104f4fb7fc97a5c8001715c9"
+    },
+    {
+      "path": "src/designer/DslScriptEditor.h",
+      "size": 13868,
+      "sha256": "687ed77f3081bf28bc9e897561e1f29059dbfd33c0e836d906b868552f892a27"
+    },
+    {
+      "path": "src/designer/DslSyntaxHighlighter.cpp",
+      "size": 7653,
+      "sha256": "456211fe1c5da6abc269539927ee3350021857708a3d5ebe2a3661984fb10b0a"
+    },
+    {
+      "path": "src/designer/DslSyntaxHighlighter.h",
+      "size": 3081,
+      "sha256": "3e1ed48fa2da4abb670c77e122b9b87868a72d324bdcb95d4bb2f3a36d555bb0"
+    },
+    {
+      "path": "src/designer/MainWindow.cpp",
+      "size": 80403,
+      "sha256": "ed6f857c8cf08c2b6e7a0311d0f05304ebb005a2abfb73d9c5d498e9d829fb69"
+    },
+    {
+      "path": "src/designer/MainWindow.h",
+      "size": 20146,
+      "sha256": "c3e36bf21a0af7d491ff17b5978f47320ad50a236cade554bcac4f935175ef04"
+    },
+    {
+      "path": "src/designer/MainWindowExplorer.cpp",
+      "size": 15032,
+      "sha256": "fa9a1ab2aa26657895b3174b09bf4016e9e865ebfb8c3a9a71bf6c0fcbd500ca"
+    },
+    {
+      "path": "src/designer/MainWindowInspector.cpp",
+      "size": 16397,
+      "sha256": "08b3dd95b30064f7390b8b42372ff4225ba47cadd4bbe8621b1ffa917f328bfb"
+    },
+    {
+      "path": "src/designer/MainWindowMonitor.cpp",
+      "size": 3683,
+      "sha256": "174d1b4a4d85454aa56e5ff992c751990a5eac752ce6d4ed94f726b295e64f20"
+    },
+    {
+      "path": "src/designer/MainWindowOutput.cpp",
+      "size": 2798,
+      "sha256": "ade2a3b960a08afc2998f3b40a3eb9433939553c9b6f08a377dddc840781ffc7"
+    },
+    {
+      "path": "src/designer/MainWindowUi.cpp",
+      "size": 43538,
+      "sha256": "625b1efa583ac8852ee0d83f0dffde6d180aad48bace4b3747b405ad63d78be2"
+    },
+    {
+      "path": "src/designer/MainWindowWorkspace.cpp",
+      "size": 13528,
+      "sha256": "7ed4c1278ac4b80d9115dac3dab5b6af2d2c98e18f7ff723c92214a52a9cce94"
+    },
+    {
+      "path": "src/designer/MonitorController.cpp",
+      "size": -1,
+      "sha256": null
+    },
+    {
+      "path": "src/designer/MonitorController.h",
+      "size": -1,
+      "sha256": null
+    },
+    {
+      "path": "src/designer/OpcServerSettingsDialog.cpp",
+      "size": 8453,
+      "sha256": "680d8a54086525840a7b4a29b1087a38f6a59cf400f3090e86dd5609ddb6a5f5"
+    },
+    {
+      "path": "src/designer/OpcServerSettingsDialog.h",
+      "size": 1310,
+      "sha256": "f213fb06881a49e24d38e2d03ccd770662220199e69952cb97072df1edd72f51"
+    },
+    {
+      "path": "src/designer/OutputPaneController.cpp",
+      "size": 7776,
+      "sha256": "26af84c2f80c0717d1bd39fd488e4912618717005991f88fdefd20e9eef2723b"
+    },
+    {
+      "path": "src/designer/OutputPaneController.h",
+      "size": 5459,
+      "sha256": "d101473d782a053a5170c188f5ece3d73685d7d0469467cbbc65d01fbced8647"
+    },
+    {
+      "path": "src/designer/ParameterController.h",
+      "size": 57,
+      "sha256": "38b7b317a5da620ea5d30f1d0e13ffb3bac033dd3c782205e593eb693073da17"
+    },
+    {
+      "path": "src/designer/ParameterTuningPanel.cpp",
+      "size": 27006,
+      "sha256": "58e42e859bcaade46cedc7f74fc80441741f44680424fe9e5605f4e70a6c9e7f"
+    },
+    {
+      "path": "src/designer/ParameterTuningPanel.h",
+      "size": 3648,
+      "sha256": "dce030a81db28a30b9518d2434bd21ac30e946e5e0c51df2f6a8913df08e2374"
+    },
+    {
+      "path": "src/designer/ParameterTuningWindow.cpp",
+      "size": 4503,
+      "sha256": "8fa063828e1e834e216f7a6b4d4721dbed7a1bf61388694a7d86643460fdea91"
+    },
+    {
+      "path": "src/designer/ParameterTuningWindow.h",
+      "size": 1717,
+      "sha256": "97af2f724e5a638c7326527039f3bb4175313b937e6eed207ae464d9f781f820"
+    },
+    {
+      "path": "src/designer/PidParameterUtils.h",
+      "size": 1727,
+      "sha256": "e3d971cf8f87f5001a8f673b8df1b32f86d9c43f1cbf7b9ac10f98561ec0f0a3"
+    },
+    {
+      "path": "src/designer/ProfileResolution.cpp",
+      "size": 3217,
+      "sha256": "223924e29b797f61e946e69d2418be2ccd1ed5ba65255ab0ebb14d426e1e0055"
+    },
+    {
+      "path": "src/designer/ProfileResolution.h",
+      "size": 525,
+      "sha256": "32f9d57ebfaec44c439cacc07295a8c00b151cf951979add2db19c0e09aecbf8"
+    },
+    {
+      "path": "src/designer/ProgramBlocksWidget.cpp",
+      "size": 14166,
+      "sha256": "b1857f3a9bd8aeebcb62ab01f65e361afa3869a4f4ef9f4f366f8625ecd31857"
+    },
+    {
+      "path": "src/designer/ProgramBlocksWidget.h",
+      "size": 2633,
+      "sha256": "0c923f259260eefdf66b80e63858e32616fb3be64f451a2dffebff22a392c81e"
+    },
+    {
+      "path": "src/designer/ProjectConfigValidation.cpp",
+      "size": 33733,
+      "sha256": "31ef7d3f2e931501f8db3de600f5e6fc4587d50b96cb80f203eb793d27461515"
+    },
+    {
+      "path": "src/designer/ProjectConfigValidation.h",
+      "size": 820,
+      "sha256": "8bbe28d601817f6597b704a95308be476ffce76fe53dbeadbf96e941d2f09ddf"
+    },
+    {
+      "path": "src/designer/ProjectController.cpp",
+      "size": 59235,
+      "sha256": "6d5069f875a34d8335b15c9ea33017bcbcc31c9c8f20e93027b8fec9bafc9780"
+    },
+    {
+      "path": "src/designer/ProjectController.h",
+      "size": 8189,
+      "sha256": "b8220f5b34af5c16b31486e812bc2b098501e68c4321cb8ec3247b421eb746a8"
+    },
+    {
+      "path": "src/designer/ProjectExplorerWidget.cpp",
+      "size": 17573,
+      "sha256": "c166cf7ac7be37454b20facfa3fd4cbf7c33b77f6bd07b37bc78ec3b9af370b9"
+    },
+    {
+      "path": "src/designer/ProjectExplorerWidget.h",
+      "size": 1886,
+      "sha256": "bfba396636f7c5d0778d83bb1f8ed186d0e483cf1491d0abe3d51696eb966026"
+    },
+    {
+      "path": "src/designer/RunController.h",
+      "size": 51,
+      "sha256": "15776c66d932b1c75f1b54cfa93808b58288cdaea3544765c9b346f0c0517e07"
+    },
+    {
+      "path": "src/designer/RuntimeMonitorAdapter.cpp",
+      "size": 1424,
+      "sha256": "09e49f4d8d37de98ba6139ec7c8357c8aa94deb11c95d3188f315c3c837ac143"
+    },
+    {
+      "path": "src/designer/RuntimeMonitorAdapter.h",
+      "size": 197,
+      "sha256": "0a9a5c22aa9df17ff8cc47c808b4340d261398ee865ef2d2ab2f854734212e4e"
+    },
+    {
+      "path": "src/designer/RuntimeSessionController.cpp",
+      "size": 21612,
+      "sha256": "b1da24ab992bdaed880aef1ac7266d8ba42796749bf5e81a9004fc1953cd4595"
+    },
+    {
+      "path": "src/designer/RuntimeSessionController.h",
+      "size": 6968,
+      "sha256": "d65fbe71e5d7a22bfa35829a1e3e013aa84af6ba939805998b81479aaf2b4000"
+    },
+    {
+      "path": "src/designer/RuntimeSessionDebug.cpp",
+      "size": 17714,
+      "sha256": "ad06cc933aeb8caf10e5f2438414c0870b292c74a16eb2c7ff595ba2615aa38b"
+    },
+    {
+      "path": "src/designer/RuntimeSessionDownload.cpp",
+      "size": 33980,
+      "sha256": "b9d2c3ec6f8914aed596337b29ce699bfc6d7e634bfd9a25ca68905eeed33df7"
+    },
+    {
+      "path": "src/designer/RuntimeSessionOpc.cpp",
+      "size": 18657,
+      "sha256": "eecfb3ad1020be8a3e414c5cdaed54f275bb48ef3ff799f4bd2f24daa33c570c"
+    },
+    {
+      "path": "src/designer/SettingsController.cpp",
+      "size": 7247,
+      "sha256": "88952f6b64459a10613a6595a71593c61d188f73f80c1b24818abfbd0c4eaf86"
+    },
+    {
+      "path": "src/designer/SettingsController.h",
+      "size": 4867,
+      "sha256": "cbb79f01a6bca97d0525854c84fa296e6923174f95aff9ed96fea2d9064c5c5d"
+    },
+    {
+      "path": "src/designer/SettingsDialog.cpp",
+      "size": 5515,
+      "sha256": "184446c5f114fd316b3bec3f3ebd5ae5bfa814c619969521b250e2130ca0f424"
+    },
+    {
+      "path": "src/designer/SettingsDialog.h",
+      "size": 1019,
+      "sha256": "d6ab0556562c1a90d06cbf7af81927c0e1d668b1d0742ac1e76d2d5dc42bbf54"
+    },
+    {
+      "path": "src/designer/SnippetRepository.cpp",
+      "size": 10146,
+      "sha256": "f3c4470f15c0bad3833c387c0753e09ab16c7cd358bbb04054b262675d9db840"
+    },
+    {
+      "path": "src/designer/SnippetRepository.h",
+      "size": 5608,
+      "sha256": "55b16d0232f4509edfa30cf06795b6768825ec5de8281f74b3d7b8375ebb56f2"
+    },
+    {
+      "path": "src/designer/ui/CommandPaletteDialog.cpp",
+      "size": 15366,
+      "sha256": "8720a6c9d1e87300f6e02851b6d482f124727f6219a6f33e33bac8ef97933a97"
+    },
+    {
+      "path": "src/designer/ui/CommandPaletteDialog.h",
+      "size": 2062,
+      "sha256": "a387cb8d7ae26ecc1e5623aebf5c2363e309fc5a2fe12f344c6b1a3fbd4727b9"
+    },
+    {
+      "path": "src/designer/ui/DiagnosticItem.h",
+      "size": 1210,
+      "sha256": "01c6a91805887af26810dba77b489cc6f296151255d163371cb698c89d399f76"
+    },
+    {
+      "path": "src/designer/ui/DiagnosticParser.cpp",
+      "size": 6532,
+      "sha256": "3ba615977024af9109525fcfb99736f0028332bfe37d4fa007de9cc8b8ee2c31"
+    },
+    {
+      "path": "src/designer/ui/DiagnosticParser.h",
+      "size": 1468,
+      "sha256": "db2917fd79bdd81bca1293ad286c1e4deb96ae88b677923f6323ac23244bb960"
+    },
+    {
+      "path": "src/designer/ui/GlobalStatusBar.cpp",
+      "size": 7743,
+      "sha256": "5904fd12627ecba0077a86bb8ccfc715eae0a125d59415443f5d2c65590c9578"
+    },
+    {
+      "path": "src/designer/ui/GlobalStatusBar.h",
+      "size": 1839,
+      "sha256": "c89f0c3bc726195bb7022bf9d9f3a1f4e77a47fb3e229957f0fe77ef64afd219"
+    },
+    {
+      "path": "src/designer/ui/InspectorPanel.cpp",
+      "size": 33624,
+      "sha256": "64566c0ea919dd1ddec6c5f4b2ed7578dd6b7574431feafeb73fa72a5b8b9aa8"
+    },
+    {
+      "path": "src/designer/ui/InspectorPanel.h",
+      "size": 4004,
+      "sha256": "da6ea4a3d652fbdfe342cd2aaf95323ffc97c821b20e8933af01104959012137"
+    },
+    {
+      "path": "src/designer/ui/ProblemsPanel.cpp",
+      "size": 15032,
+      "sha256": "bf74277bcf2ef8375a40894146e419bac6f77181a43a3c576e472157f56623cc"
+    },
+    {
+      "path": "src/designer/ui/ProblemsPanel.h",
+      "size": 2359,
+      "sha256": "a31458a6f26bdad7ae8b8e2176ea7a9163c3041e4501ee0b8ca69b710ffc79d2"
+    },
+    {
+      "path": "src/designer/ui/StatusTextHelper.h",
+      "size": 1510,
+      "sha256": "cd79a867b0dd2d93380bf72a82fe655dbd315b6996d962f1570947c0863b654e"
+    },
+    {
+      "path": "src/designer/ui/ThemeManager.cpp",
+      "size": 13958,
+      "sha256": "51a1b47bd70d1c46b25a67f8309c05f65226fc6868901cb08017451ea79605ba"
+    },
+    {
+      "path": "src/designer/ui/ThemeManager.h",
+      "size": 584,
+      "sha256": "ea99ee412b6278e0d041cfd480fe166967dbcef11d5a2d196b825a881195730e"
+    },
+    {
+      "path": "src/diagnostics/DiagnosticSnapshotService.cpp",
+      "size": 3493,
+      "sha256": "e79c0dd092d044938fafb9f648298d3791c4e82db42ff2c9477e7464faeef66c"
+    },
+    {
+      "path": "src/diagnostics/DiagnosticSnapshotService.h",
+      "size": 651,
+      "sha256": "f9ca328fd91576ebd5607c01df2a17a85d6e834737390b1897c2575a06f5025e"
+    },
+    {
+      "path": "src/main.cpp",
+      "size": 7764,
+      "sha256": "7ecb34638bbca8d7b0a72e1684cdeba63c1cdd657d66d80d7153abb6b8847234"
+    },
+    {
+      "path": "src/monitor/AsyncHistoryStoreAdapter.cpp",
+      "size": 7107,
+      "sha256": "99fedb3f81a1e9560f44064fc7bf0a3e4fd619d328dd0b972dee3d16ea1bc39f"
+    },
+    {
+      "path": "src/monitor/AsyncHistoryStoreAdapter.h",
+      "size": 2769,
+      "sha256": "8aca363404e13791d9aae9a0d51ca1afb1ac2db68b2de372dcaf878fcb5a8d0f"
+    },
+    {
+      "path": "src/monitor/AtomicPixmap.h",
+      "size": 455,
+      "sha256": "21cdc9c1846a0fb26fe291153ad42fa4d639072ce870663ae3f372dad84bbdb2"
+    },
+    {
+      "path": "src/monitor/BackendSampler.cpp",
+      "size": 14155,
+      "sha256": "036effcd36da825993f5f00ed5df0eeb1ab9b04986b5d07cbe9457c263050705"
+    },
+    {
+      "path": "src/monitor/BackendSampler.h",
+      "size": 1562,
+      "sha256": "5526eaf7774b3ca801ec83dd888c85408b17d4c35a89f1186a621542a4827e4a"
+    },
+    {
+      "path": "src/monitor/CMakeLists.txt",
+      "size": 2794,
+      "sha256": "9320ce8503be62e72805a0214cc47da487eb326884a1658182af1b87472ff848"
+    },
+    {
+      "path": "src/monitor/ChartWidget.cpp",
+      "size": 33839,
+      "sha256": "a858a28c32ba966f7ce308103cf5748d0bcc69748157ca34eb3d32ab614d9f34"
+    },
+    {
+      "path": "src/monitor/ChartWidget.h",
+      "size": 7703,
+      "sha256": "12b551a562d2156e72f515cb4b56b2d9b36c787dc7cefc6978b98cabc2e05aa1"
+    },
+    {
+      "path": "src/monitor/DataManagerHistoryStoreAdapter.cpp",
+      "size": 3171,
+      "sha256": "99a6ab8c61b72116bb514929dcbb9553e68cd7bc3e4019b54f570f3791bf806f"
+    },
+    {
+      "path": "src/monitor/DataManagerHistoryStoreAdapter.h",
+      "size": 2370,
+      "sha256": "bbe10f96efc36b02acd7d111ac475ac0fbdd8d7637aa50b51affe1bc425c9933"
+    },
+    {
+      "path": "src/monitor/IMonitorHistoryStore.h",
+      "size": 4284,
+      "sha256": "84f68d7ff60857aaee84d1cc11bffe533febec7e0bdb8debd095fb48475aae08"
+    },
+    {
+      "path": "src/monitor/MonitorChannel.cpp",
+      "size": 5488,
+      "sha256": "56b16a08f6d18dda8c67ee3816c7296a52654c8fc367d8016b4923627dad4d11"
+    },
+    {
+      "path": "src/monitor/MonitorChannel.h",
+      "size": 2060,
+      "sha256": "40a52a93cd187753599b16410e872b1ff8b61a5e7339b4d3446929626399541c"
+    },
+    {
+      "path": "src/monitor/MonitorChartView.cpp",
+      "size": 21151,
+      "sha256": "300cf85a5b7b55e8fcc1d6ebe551862a999d4d60e5be3bb044e2a091a0bb036e"
+    },
+    {
+      "path": "src/monitor/MonitorChartView.h",
+      "size": 10672,
+      "sha256": "5ac4fda96b2c07121f8d279d67f8eac35b55167be02caae226aa76acc80dd0e8"
+    },
+    {
+      "path": "src/monitor/MonitorDataLogger.cpp",
+      "size": 15473,
+      "sha256": "36d2c5e3ab4adc8e3f3521d033c2417252685cd6dd9274f67768225ca074610b"
+    },
+    {
+      "path": "src/monitor/MonitorDataLogger.h",
+      "size": 3935,
+      "sha256": "c72294d1d744c4d5c2a2467dc3e46f1b40e9bd191fcdd0570015d4f5c7297d13"
+    },
+    {
+      "path": "src/monitor/MonitorDataProcessor.cpp",
+      "size": 30135,
+      "sha256": "44961845e501cc0158960d6fd2a70805e70fe344a28fd3e2b24fec8d6366f014"
+    },
+    {
+      "path": "src/monitor/MonitorDataProcessor.h",
+      "size": 12050,
+      "sha256": "769c5d1da98500f921b90cf8dd39321808d89eac3d5321e60344dce2c597089b"
+    },
+    {
+      "path": "src/monitor/MonitorExportHelper.cpp",
+      "size": 74756,
+      "sha256": "140518ff4fcad5c9ee104800fa1a8c73accb8cd2a774bdc54bdbee3601fc1c38"
+    },
+    {
+      "path": "src/monitor/MonitorExportHelper.h",
+      "size": 18034,
+      "sha256": "61c85435dc83d330808cc19c6275ba0a8745ac0e51018c161e245c072a590552"
+    },
+    {
+      "path": "src/monitor/MonitorHistoryService.cpp",
+      "size": 2821,
+      "sha256": "4a3d523174cb6bc69b7089fd1b5d615928ce385f605074483fae4e2200d63536"
+    },
+    {
+      "path": "src/monitor/MonitorHistoryService.h",
+      "size": 1539,
+      "sha256": "5f0de8e9e10dd2f3d724c6db43f59ef4bc8302018ae6f1fefdee2f0996846c79"
+    },
+    {
+      "path": "src/monitor/MonitorManager.cpp",
+      "size": 49512,
+      "sha256": "eaa91fd4ebc20af9eb4ce0c8933b34fa67e808b5d30507f3e831aec83643c470"
+    },
+    {
+      "path": "src/monitor/MonitorManager.h",
+      "size": 8203,
+      "sha256": "269c4c0483221c9b076ddb45523a9c14da22a3059b25f7b8bb4250b5080034a4"
+    },
+    {
+      "path": "src/monitor/MonitorManagerHistory.cpp",
+      "size": 6076,
+      "sha256": "37f8adaac5b77ee08408a605bdb77353b9d51760dd2593f692ccc774d57c2d34"
+    },
+    {
+      "path": "src/monitor/MonitorManagerPolling.cpp",
+      "size": 5901,
+      "sha256": "670ce1dfb9abf9ab6dd8e1469e9ed0266f3907706bca9dc496fb1ecb3f671700"
+    },
+    {
+      "path": "src/monitor/MonitorSample.h",
+      "size": 1866,
+      "sha256": "ba8777eb4202a45c23b8a870b657c066d47b86a6f546af6c095a754ca26d2f44"
+    },
+    {
+      "path": "src/monitor/MonitorTypes.h",
+      "size": 5606,
+      "sha256": "b1387881c9aa4c0c3f51a76f2970ba49446289c1542e684853632d7cb97a4fec"
+    },
+    {
+      "path": "src/monitor/MonitorWidget.cpp",
+      "size": 50975,
+      "sha256": "ef16945eb9a3383b8e9404a62e9fe79c35b4aea978920f4ce6f55dcf86ecc6e4"
+    },
+    {
+      "path": "src/monitor/MonitorWidget.h",
+      "size": 7286,
+      "sha256": "4ed80f43ee5c1a9fb2eb91ac5cec0e07f341a4add5232ef1dfb705e66bb28f75"
+    },
+    {
+      "path": "src/monitor/README_REFACTOR.md",
+      "size": 6920,
+      "sha256": "a77eb4ab911790567c52ab466325774d51676df71cac2e514d085818e762a53b"
+    },
+    {
+      "path": "src/monitor/ReadOnlyHistorySnapshot.cpp",
+      "size": 3393,
+      "sha256": "4c8295231a4a70908440c023e2c13063eceba59154b16e16c7b2e46559cbea27"
+    },
+    {
+      "path": "src/monitor/ReadOnlyHistorySnapshot.h",
+      "size": 1517,
+      "sha256": "6194029568b3ba06ec5384ec05f6aa2dbe1066699b86cfe8649dca994168fe9b"
+    },
+    {
+      "path": "src/monitor/RingBuffer.h",
+      "size": 7668,
+      "sha256": "4696c10c68d41b7a3045affe4f7035a85a33a891108bf703620531680623599a"
+    },
+    {
+      "path": "src/monitor/SampleDataProvider.cpp",
+      "size": 4075,
+      "sha256": "43d5b43066ff4ff4036226ca7ef80be3d5d90f69497f54f3f5208f2743e9d3c3"
+    },
+    {
+      "path": "src/monitor/SampleDataProvider.h",
+      "size": 1708,
+      "sha256": "a29b844fd00a5551496694475b2d0f11150c0103e73455de409039e17a40d2cd"
+    },
+    {
+      "path": "src/monitor/SvgExport.h",
+      "size": 867,
+      "sha256": "efee68cc01ddc67baa2f9a79e5ce2abd0fc74cf93cf46d5dd4a5d8701a206ee8"
+    },
+    {
+      "path": "src/runtime/CMakeLists.txt",
+      "size": 590,
+      "sha256": "b5b326537342f55f14f58f024d7b78112209b43c2f4452e6c877a8f7cd5484f0"
+    },
+    {
+      "path": "src/runtime/ParameterController.cpp",
+      "size": 42965,
+      "sha256": "6c794c02be5e39a1c38302c12b5f3fe1b5ff08f8b7c6dc4dbed1ffb1ab26bf01"
+    },
+    {
+      "path": "src/runtime/ParameterController.h",
+      "size": 4664,
+      "sha256": "5ece3e76cb285a30225916e0d179d279416f60469dea203b70ae625199a5dfb8"
+    },
+    {
+      "path": "src/runtime/ParameterStateTypes.h",
+      "size": 590,
+      "sha256": "febec049d0c4f99696ae9073e08aad2c5c620e69e00cbc7abc5fb1b5010d7ff0"
+    },
+    {
+      "path": "src/runtime/RunController.cpp",
+      "size": 43896,
+      "sha256": "7ce600fbbeeb90926a4233ea627675558ad579e65c7f0eaf71973c3ef21fead4"
+    },
+    {
+      "path": "src/runtime/RunController.h",
+      "size": 1457,
+      "sha256": "c54420ce11af3d3c85b571db858673abe8b322fdf2d5654a133aa003b0ce4dd7"
+    },
+    {
+      "path": "src/runtime/RuntimeSessionService.cpp",
+      "size": 3102,
+      "sha256": "78f4ec79981e2f7d9c086fc09bb4136715c60c2f71c21d47ccf802304e7bda1c"
+    },
+    {
+      "path": "src/runtime/RuntimeSessionService.h",
+      "size": 2723,
+      "sha256": "f9e827db7c99c1d3f7ace976f791d1e3be97a5b8ca3b23cb97aaad70dec45621"
+    },
+    {
+      "path": "src/runtime/RuntimeSessionTypes.h",
+      "size": 462,
+      "sha256": "4efbd22cad206576164471b8b6a1aff38f65ae775babf3d2c284e215b2ddc4b4"
+    },
+    {
+      "path": "tests/CMakeLists.txt",
+      "size": 19114,
+      "sha256": "d925221b334056a918e7d65f14cad9845634dff0f2c5c36d729617b94aac7f9f"
+    },
+    {
+      "path": "tests/UiEvidence.h",
+      "size": 6782,
+      "sha256": "eb90f1c1e7e9a5b336d184e27de63d9a5f32fa7e19d134b52571c2a4480e8c55"
+    },
+    {
+      "path": "tests/app_logging_overload_test.cpp",
+      "size": 4378,
+      "sha256": "e78fce3886818398376c1d71e7956b9dee5dd8556815c5645e0050c26d46ed0f"
+    },
+    {
+      "path": "tests/app_logging_test.cpp",
+      "size": 6744,
+      "sha256": "5d54b022360b705f69add82c4f33e0d01b8d64bdc0fdf8da697e4f7b1c13236a"
+    },
+    {
+      "path": "tests/async_database_worker_test.cpp",
+      "size": 12836,
+      "sha256": "157207162793a69ec105330427b83cbe3eb31eac42a06d7acda2190b1387a09b"
+    },
+    {
+      "path": "tests/backend_sampler_test.cpp",
+      "size": 2193,
+      "sha256": "27a39364d14d123b5aec0ea99595e20e0d5d00c0d74d1a9deb31e2b80be422d1"
+    },
+    {
+      "path": "tests/check_module_boundaries.py",
+      "size": 3465,
+      "sha256": "5ca6d7f00d3a43469b5719c86dacd4a774df40ad96ecebbbb97d0fea190fe373"
+    },
+    {
+      "path": "tests/classic_opc_worker_test.cpp",
+      "size": 9897,
+      "sha256": "1b5666cc79dc6026944307aff7786744799bb87ec1d31c7bd56ab5c2339a6aed"
+    },
+    {
+      "path": "tests/classic_poll_plan_test.cpp",
+      "size": 2151,
+      "sha256": "ed1c34be24a16e31ba562b8bb16524888d35ed572bd609aab2c44ca4459772a8"
+    },
+    {
+      "path": "tests/communication_routing_test.cpp",
+      "size": 31697,
+      "sha256": "a68536d05ed9556d337d5c18d58a6444645adf6b543b47605ced0fe501d79a3d"
+    },
+    {
+      "path": "tests/compiler_runtime_search_test.cpp",
+      "size": 8310,
+      "sha256": "86a991a7410ca129eeda05aa9fcbcb8de57005d3de8a1b21f300a42c5cb92d8b"
+    },
+    {
+      "path": "tests/controller_debug_protocol_test.cpp",
+      "size": 8010,
+      "sha256": "39033c0557b99064a5808388a261dad5a731987d7efbb25b44b4ac9e294fbcdd"
+    },
+    {
+      "path": "tests/controller_device_backend_test.cpp",
+      "size": 97032,
+      "sha256": "6427779818a0fad51ae36f007efe0884f50643ebebb9caefd54f87005c828fef"
+    },
+    {
+      "path": "tests/data_manager_history_paging_test.cpp",
+      "size": 15721,
+      "sha256": "46b21617e595b0ddf4cda5cd6592d1d0704e2657b5727bc48e197932a696e4d2"
+    },
+    {
+      "path": "tests/database_startup_migration_test.cpp",
+      "size": 7943,
+      "sha256": "05f07cd7f71a8e9af76f907185f0bcb2a991e519d7dca1fc1143e2bd175996cf"
+    },
+    {
+      "path": "tests/designer_p1_robustness_test.cpp",
+      "size": 30225,
+      "sha256": "cfbf758ae85be089a2f03d73ea2809cbfa4cfadb2624dbe09a5275402c822291"
+    },
+    {
+      "path": "tests/diagnostic_snapshot_test.cpp",
+      "size": 12791,
+      "sha256": "823e28bf58feeba10df2f6513ccb303ec54c6989fd652df71072289b669791d4"
+    },
+    {
+      "path": "tests/download_manager_lifecycle_test.cpp",
+      "size": 7948,
+      "sha256": "f8772fffe22a275a2e2cd832d3d2af629c630b82a7dcc38f21ed39540620e629"
+    },
+    {
+      "path": "tests/dsl_compiler_cancellation_test.cpp",
+      "size": 10400,
+      "sha256": "05011a186ce0235627fc96f7d339550f14f0e820b141407d4d68cdbefa2498e6"
+    },
+    {
+      "path": "tests/dsl_compiler_semantics_test.cpp",
+      "size": 27323,
+      "sha256": "7bff50fc0e418d01d4ea3bac039faf63198413f46e77374c544403e357858253"
+    },
+    {
+      "path": "tests/dsl_completion_engine_test.cpp",
+      "size": 12031,
+      "sha256": "b6610adedbe278206335376ffef34e709b082486a69df5cca5b596b0762c32e5"
+    },
+    {
+      "path": "tests/dsl_script_editor_save_test.cpp",
+      "size": 961,
+      "sha256": "6afc69e2671acdfea9eac5473ca7cfd42035bbe4e11bfc0458481fbc49eecc3e"
+    },
+    {
+      "path": "tests/full_review_regression_test.cpp",
+      "size": 30562,
+      "sha256": "144bded7203e18a32f9f44cb867528465e383ab3031bd6687b4c8193cd6f501c"
+    },
+    {
+      "path": "tests/history_core/CMakeLists.txt",
+      "size": 905,
+      "sha256": "3307aec4b67d3cde0ef124f4b60aea251f4a6f9db495620b554e97532ec07395"
+    },
+    {
+      "path": "tests/install_layout_test.cmake",
+      "size": 13061,
+      "sha256": "17823b573618bedbe6bed05184b1c66a3086223675ae4245e0a438c63247986d"
+    },
+    {
+      "path": "tests/main_window_integration_test.cpp",
+      "size": 156333,
+      "sha256": "9edd430407a0f6ce35a18f36370b1b277f7a389dd143625390e7e9c94891c631"
+    },
+    {
+      "path": "tests/monitor_data_logger_test.cpp",
+      "size": 24721,
+      "sha256": "78328464dff6961852167ecd675fba9eb025202986d32145d51ff32b4399e8d0"
+    },
+    {
+      "path": "tests/monitor_data_processor_test.cpp",
+      "size": 43450,
+      "sha256": "3f8277081877deecdb6a29fe38f31b477cd13d046c817e14819f2bea7fa6185c"
+    },
+    {
+      "path": "tests/monitor_export_test.cpp",
+      "size": 43348,
+      "sha256": "4f26bbdeb0b0dd5f83db4693cf186a5821e4c23830c8772abbc0ad281bdacf88"
+    },
+    {
+      "path": "tests/monitor_history_core_test.cpp",
+      "size": 3762,
+      "sha256": "48e7a8adad6aec1ede6e21453fbd22c2a67701ee74b0ae68ad1de93d564055c8"
+    },
+    {
+      "path": "tests/monitor_history_export_integration_test.cpp",
+      "size": 30464,
+      "sha256": "e95414002d8fbb190f37083693a7c66ead379dd6d2f3c52802aed0a173e9be18"
+    },
+    {
+      "path": "tests/monitor_manager_backend_test.cpp",
+      "size": 41064,
+      "sha256": "a48eaf8454bf99cd053f195fa650d3e1f338cdbdcc4ec1ace4fc37e39c12e78c"
+    },
+    {
+      "path": "tests/monitor_widget_ui_test.cpp",
+      "size": 7726,
+      "sha256": "9bb41313870c0cf58f4755dfaf5d3b0d604c5ff8d1eb63458a796edaaad98032"
+    },
+    {
+      "path": "tests/opc_server_config_test.cpp",
+      "size": 34155,
+      "sha256": "27c9929a0043fad35a30d8d002689c78d1710cd566deee3093ae3412c26845bb"
+    },
+    {
+      "path": "tests/optimization_acceptance_test.cpp",
+      "size": 12219,
+      "sha256": "77c4bc4f1d896c4190c0a208e1a3c6408d18090c54d51b550399687a5b571380"
+    },
+    {
+      "path": "tests/parameter_controller_test.cpp",
+      "size": 44621,
+      "sha256": "5d0a20210c16525cffa080f5e278244acebda93e9dbcc876159a62e100479f4a"
+    },
+    {
+      "path": "tests/pid_history_async_test.cpp",
+      "size": 1896,
+      "sha256": "983408e05596bbbe25bd9966cc0bf64992ede7ad293af96e5f0f4518cebde2fb"
+    },
+    {
+      "path": "tests/project_command_coordinator_test.cpp",
+      "size": 1667,
+      "sha256": "176e09df00e1a12f2c8f5026e9db3180a72d24f9585aa3db9784182cbe1296d0"
+    },
+    {
+      "path": "tests/project_mutation_guard_test.cpp",
+      "size": 16759,
+      "sha256": "e24dfb5f927bca809099c260b36cdf8513f16d7df502a0fa58b3fdee704b6df5"
+    },
+    {
+      "path": "tests/project_save_close_test.cpp",
+      "size": 76846,
+      "sha256": "42707a31a7a4c801d734f2d582de66101135e0ca44055da3b50a9c46cd5dec73"
+    },
+    {
+      "path": "tests/protocol_golden_vectors.json",
+      "size": 348,
+      "sha256": "5e6b177404f68396eac6d7f7598a73a5d268f7aba98b388559a144c6f071ab75"
+    },
+    {
+      "path": "tests/public_consumer/CMakeLists.txt",
+      "size": 707,
+      "sha256": "d0944b00faf7888df24e3f633c56321499728562b2a659b0e095df5892397bca"
+    },
+    {
+      "path": "tests/public_consumer/main.cpp",
+      "size": 1606,
+      "sha256": "eb26f70ae890c5dbd8ce793cd4ac90911c38d8a9eb8c2fe46b042b125f8dce61"
+    },
+    {
+      "path": "tests/review_20261023_test.cpp",
+      "size": 20126,
+      "sha256": "5a2f4f8e426e71ad32c22504bb53a1165e0d205ea6c511c4a05b0a491b222551"
+    },
+    {
+      "path": "tests/review_round2_regression_test.cpp",
+      "size": 25420,
+      "sha256": "4e50c3e4b0782bf35e9753afea33b4888c2de8d056924cad5dc0cf046aad81d8"
+    },
+    {
+      "path": "tests/runtime_point_table_test.cpp",
+      "size": 16997,
+      "sha256": "6a6a84f1dffb97f0084fe35c754f700b92e06fa40e478ace8bce969326956d93"
+    },
+    {
+      "path": "tests/runtime_session_controller_test.cpp",
+      "size": 101995,
+      "sha256": "ecd6d36005169dcd35f772f59050ce4e3f6e278122b5e6d15847e2fda7a8b144"
+    },
+    {
+      "path": "tests/runtime_session_service_test.cpp",
+      "size": 5763,
+      "sha256": "df46e1737fc70b2ffef368081d4256a00320764b8294307d98a6d7577cddd567"
+    },
+    {
+      "path": "tests/serial_interface_test.cpp",
+      "size": 4698,
+      "sha256": "38e58f84a0f804fb86eb751e024aab2ae82c47f92e52b71ba416d8036501378f"
+    },
+    {
+      "path": "tests/snippet_repository_test.cpp",
+      "size": 16402,
+      "sha256": "6d7a817404cb61a9e0eb2bd0d3ca7b019dddffecc3dd0bf543fe02d67df1ea09"
+    },
+    {
+      "path": "tests/test_standalone_downloader_review.py",
+      "size": 3944,
+      "sha256": "2acdc9131759f36bc46f58fb475ca150e683cffe5f5dd14f3f55d38ec17e4a8b"
+    },
+    {
+      "path": "tests/ui_style_preview.cpp",
+      "size": 6821,
+      "sha256": "8ff845e87e6401b776a157d2cf26504ab2864767c00fb1fb443176f573af6444"
+    },
+    {
+      "path": "tests/unc_test_fixture.h",
+      "size": 1897,
+      "sha256": "dc96498a72519ddf2986d932bd766d8a2417b76e7aeadbfc4e97f960c7569b0c"
+    },
+    {
+      "path": "tests/virtual_device_backend_test.cpp",
+      "size": 11978,
+      "sha256": "ded6884b7e8cfd55382f503e457193a62be8e341c03a7d9a279b0783ff435319"
+    },
+    {
+      "path": "third_party/custom_dsp_language/compile/grammar/LH.g4",
+      "size": 9441,
+      "sha256": "96cfacd703ad9321e55fba00d09c11ca0e964f22b9ccb2c6d4813456dd64f443"
+    },
+    {
+      "path": "third_party/custom_dsp_language/compile/grammar/LHLexer.py",
+      "size": 22998,
+      "sha256": "5060ebd9994a944774bc4c4e477f01d4dff9c711ef48290241fb7b8803080e85"
+    },
+    {
+      "path": "third_party/custom_dsp_language/compile/grammar/LHListener.py",
+      "size": 12884,
+      "sha256": "22ace979fd621f3a23d9c67c883156888bae721e027c1d863af8e8e1874d9a81"
+    },
+    {
+      "path": "third_party/custom_dsp_language/compile/grammar/LHParser.py",
+      "size": 122547,
+      "sha256": "32a996d487c3d0531502ef5ac91f28c2666d8eb3de6b62529d73ab585f816cc3"
+    },
+    {
+      "path": "third_party/custom_dsp_language/compile/grammar/LHVisitor.py",
+      "size": 7830,
+      "sha256": "fdc91a7b2782c22cfa98fa4b5f6518f6cbdc6e4ac885370f0b7707e181d79322"
+    },
+    {
+      "path": "third_party/custom_dsp_language/compile/grammar/README.md",
+      "size": 5433,
+      "sha256": "97214fb5e28f4321c76af02d0a307dbdca015b82054cb3fda71ccae352dda273"
+    },
+    {
+      "path": "third_party/custom_dsp_language/compile/grammar/__init__.py",
+      "size": 80,
+      "sha256": "da5b058ffb2b74e9f2e794ef7a7809e249b720a7ea8c26ac975fc85e73aec6ae"
+    },
+    {
+      "path": "third_party/custom_dsp_language/compile/grammar/test_programs.lh",
+      "size": 4076,
+      "sha256": "75ac1be4e9023f113fde44326dc229d7873c2750dfd85084bdd866de6a1374c5"
+    },
+    {
+      "path": "third_party/custom_dsp_language/compile/lh_download_v3.py",
+      "size": 10795,
+      "sha256": "d354e0e8d908f2c51a96c2e676fffa4ca6778485bde42ab1e4249ad9df0846d3"
+    },
+    {
+      "path": "third_party/custom_dsp_language/compile/lmc.py",
+      "size": 8955,
+      "sha256": "15425490e34362657d5df9f9ae0ef57f5ad6f13f126a528c153d1f9998978c40"
+    },
+    {
+      "path": "third_party/custom_dsp_language/compile/src/__init__.py",
+      "size": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/__init__.py",
+      "size": 160,
+      "sha256": "725361cd1743abeec01a4e8e2bf1516e8cf8229bd646a612c4597529767bed27"
+    },
+    {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/__init__.py",
+      "size": 275,
+      "sha256": "8316c6a1ff4ed361d4ff74b8b4e42b54528ea0d0784ef85690a38efa53cec16b"
+    },
+    {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/artifact_policy.py",
+      "size": 504,
+      "sha256": "dc2728641f82d014e59fc4e89b9f46e83c50459c8eb3b38d253758eee52701a8"
+    },
+    {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/artifacts.py",
+      "size": 2073,
+      "sha256": "73dff1494d05c71b1da5ead231e848eeaa8f08be336bbb3424156b6e900c5330"
+    },
+    {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+      "size": 39445,
+      "sha256": "f63e37af7d86086ab8513e8b901e6467be5ad5ea1f288935b98e469a1a5b077c"
+    },
+    {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/emitter.py",
+      "size": 13237,
+      "sha256": "9d95040a090ae5b4bc1ccbe68c1721c309a2b336327b2fe1d5b09e7ed812117d"
+    },
+    {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/memory.py",
+      "size": 5058,
+      "sha256": "787c35d2aafd441f47193df446c099d0237b43733219aeaa90621bd81cd1d770"
+    },
+    {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/operands.py",
+      "size": 2358,
+      "sha256": "0d8d5bdc57ad1e5887ff3eb8d16e18fb63dfcf918c70a2adfb4fc6ed3d59cd23"
+    },
+    {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/cli/__init__.py",
+      "size": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/cli/commands.py",
+      "size": 5887,
+      "sha256": "26aeb3fcfb7eb75e784a3af316daed41883097de1e787ef1c569f34ec30da35f"
+    },
+    {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/cli/service.py",
+      "size": 606,
+      "sha256": "2e45528e5da3c6bbe5ff1383d49a08231e8abc2b23c51a92cae49033acaec959"
+    },
+    {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/compiler.py",
+      "size": 16587,
+      "sha256": "9b99cbb7744a04610a899adbee1febce4198a7a02b4e21a38c00e841768d7009"
+    },
+    {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/frontend/__init__.py",
+      "size": 697,
+      "sha256": "3ea0277abf198040998471a1a0ea56055877a3ee1666dcb137237b31b600b292"
+    },
+    {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/frontend/ast_builder.py",
+      "size": 36541,
+      "sha256": "51d026b2330aa8561a8eb412925910a0d72f2a855472b56ccd8e7a877ec19c80"
+    },
+    {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/frontend/ast_nodes.py",
+      "size": 13910,
+      "sha256": "c31997e11360153b431dcb491a14ebc97ebaf15cce323a4bffc894ba7a46ddc3"
+    },
+    {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/__init__.py",
+      "size": 200,
+      "sha256": "58f8276eee5d0c5ed060e2577274b05399db9fc7f376d8ebed08c45b1ee0d666"
+    },
+    {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/__init__.py",
+      "size": 1819,
+      "sha256": "fe6e497ad8167cc5b3c9ae023d9680c6e382b987a41c38fe94c9584ea29c53c9"
+    },
+    {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_application.py",
+      "size": 1708,
+      "sha256": "76a04ea2c33c5d0c235e257e85db9281d7bd34d162f919fe94ff26b63bfcafc4"
+    },
+    {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_comm.py",
+      "size": 1641,
+      "sha256": "804c008500f163c050f84cb387edf938e37ae394cf7862c576de1bcb611ea402"
+    },
+    {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_compare.py",
+      "size": 1861,
+      "sha256": "874c32b3d3efda31a7e3fade99d22a287b86eb80cf4f15d809501c4709e2fd38"
+    },
+    {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_constant.py",
+      "size": 1115,
+      "sha256": "7abfa2565375090cda26aba2861bb8299c77638ab64d6194fc563d1c80e32228"
+    },
+    {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_control.py",
+      "size": 5572,
+      "sha256": "a4218b6dd96ca1ff0d7b5e0927bfc5202930fce5919af201be1475d5d0913c09"
+    },
+    {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_counter.py",
+      "size": 1569,
+      "sha256": "f19dd66d5b06d5699abf59f1dd3aad5eb02ea5f14995a95d4b0ba3df8038731e"
+    },
+    {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_data.py",
+      "size": 7768,
+      "sha256": "49f6209e98ad8f5d7bb23a52a9e0a03ad684fa190fceb9976e4f4b5c4f78e200"
+    },
+    {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_display.py",
+      "size": 3602,
+      "sha256": "44398c73bee935f289df520a83a4226fde415a45359ce0b343ff493aead041f3"
+    },
+    {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_exca.py",
+      "size": 2149,
+      "sha256": "d6b5aef82265e94a8170abefbf81542b33b64590d8ad615a1e81a6ccf5fada85"
+    },
+    {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_filter.py",
+      "size": 808,
+      "sha256": "9fb09b2c328a04781620bc03d8b46035c0d3fa43f46f00bc08f788a9e75deeda"
+    },
+    {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_io.py",
+      "size": 5273,
+      "sha256": "78432a733c2a9caa517d677413477bf0b8b4ed43941580143abbf205e4108581"
+    },
+    {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_logic.py",
+      "size": 2222,
+      "sha256": "9e775c38403894b51a69926ff55a612410c6c12aa14e3437b324d23f355a9f41"
+    },
+    {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_math.py",
+      "size": 4167,
+      "sha256": "64291fd76b1bbd8abbe55c9d288715df67016b684bee9f70ac99a5fbbf641516"
+    },
+    {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_param.py",
+      "size": 641,
+      "sha256": "d7764fabe6d586d930e7965c9c372e44ce30c375edbf3f7065d0c60ad4530c34"
+    },
+    {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_pid.py",
+      "size": 2594,
+      "sha256": "015591ce365957a3173cfa9ad6932404bc2c318a342880d8113167e698d8eb2a"
+    },
+    {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_safety.py",
+      "size": 1247,
+      "sha256": "2ea3a070bd83bb40b930d10654e2c0591940c604dacf586542a4230fe4ddd0ea"
+    },
+    {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_system.py",
+      "size": 2627,
+      "sha256": "249e521e489fb53e1acfa235a4ba075fae591dff215930a3366e000e28020d90"
+    },
+    {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_task.py",
+      "size": 5711,
+      "sha256": "a5bb16d7149388eb7535fc9e3fc8257dd1067dc2a17509017aec97d243beb389"
+    },
+    {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_timer.py",
+      "size": 1532,
+      "sha256": "11f532abeb5d9ac1a5acb2b0c2fa27918de634912aa2a470401d2fb6caa4d596"
+    },
+    {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_tso.py",
+      "size": 2406,
+      "sha256": "c689c695651ad232d45403061cd30b419154a47e489f56622c2d54f1e3b5d2e4"
+    },
+    {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/registry.py",
+      "size": 6433,
+      "sha256": "4fa84360d06ff8b8309dd81c9bb043c1e3bf87967ac17ee22069772832193374"
+    },
+    {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/ir/__init__.py",
+      "size": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/runtime/__init__.py",
+      "size": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/utils/__init__.py",
+      "size": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/utils/logger.py",
+      "size": 1102,
+      "sha256": "8e87976353b8801fa2e35ab4f48abf135a0a3816f4646005ce8574faecf7490c"
+    }
+  ]
+}

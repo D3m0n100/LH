@@ -22,9 +22,11 @@ struct RuntimeHistoryCursor
     QDateTime timestamp;
     qint64 id = 0;
     qint64 maxId = -1;
+    QDateTime windowStartTimestamp;
+    qint64 windowStartId = 0;
 
     bool isValid() const { return timestamp.isValid() && id > 0; }
-    void clear() { timestamp = QDateTime(); id = 0; maxId = -1; }
+    void clear() { timestamp = QDateTime(); id = 0; maxId = -1; windowStartTimestamp = {}; windowStartId = 0; }
 };
 
 enum class RuntimeHistoryPageStatus

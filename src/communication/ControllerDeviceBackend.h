@@ -48,6 +48,8 @@ public:
     void setDebugClientForTest(ControllerDebugClient* client);
 
     bool connectBackend() override;
+    void connectBackendAsync(int budgetMs, std::shared_ptr<std::atomic_bool> cancelled,
+                             QObject* context, std::function<void(bool, QString)> completed);
     void disconnectBackend() override;
     bool isOnline() const override;
 
@@ -88,8 +90,11 @@ public:
     bool requestDebugCommand(const QString& command, const QVector<quint16>& arguments,
                              QObject* context, std::function<void(bool, QString)> completed,
                              QString* errorMessage = nullptr, int budgetMs = 3000);
+    void cancelDebugCommand() { if (m_debugCancelled) m_debugCancelled->store(true); }
     bool testConnection(ControllerConnectionDiagnostic* diagnostic = nullptr,
                         QString* errorMessage = nullptr);
+    void testConnectionAsync(int budgetMs, QObject* context,
+        std::function<void(bool, ControllerConnectionDiagnostic, QString)> completed);
     bool tryBeginOperation(QString* errorMessage = nullptr);
     void endOperation();
     bool preflight(QString* errorMessage = nullptr, QVariantMap* report = nullptr) const;
@@ -100,6 +105,9 @@ public:
                                 QVariantMap* report = nullptr) const;
 
 private:
+    bool connectBackendWithBudget(int budgetMs, const std::atomic_bool* cancelled, bool publishConnection);
+    std::atomic_bool m_asyncConnectActive{false};
+    std::shared_ptr<std::atomic_bool> m_connectCancelled;
     struct PointMapping {
         QString pointId;
         int deviceId = 1;

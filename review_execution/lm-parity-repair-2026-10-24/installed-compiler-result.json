@@ -1,0 +1,31 @@
+{
+  "passed": true,
+  "probes": [
+    {
+      "entry": [
+        "D:\\Table\\LH\\third_party\\custom_dsp_language\\compile\\venv\\Scripts\\python.exe",
+        "D:\\Table\\LH\\build_current_mingw\\lm_parity_install\\third_party\\custom_dsp_language\\compile\\lmc.py"
+      ],
+      "exit_code": 0,
+      "constant_goldens": [
+        "14",
+        "2"
+      ],
+      "compile_only_guard_present": true
+    },
+    {
+      "entry": [
+        "D:\\Table\\LH\\third_party\\custom_dsp_language\\compile\\venv\\Scripts\\python.exe",
+        "-m",
+        "lh_compiler.cli.commands",
+        "compile"
+      ],
+      "exit_code": 0,
+      "constant_goldens": [
+        "14",
+        "2"
+      ],
+      "compile_only_guard_present": true
+    }
+  ]
+}

@@ -278,6 +278,8 @@ class CompileSupportEmitter:
                 "compile_only\t1", "target_execution_confirmed\t0",
                 f"warning\t{UNCONFIRMED_EXECUTION_WARNING}",
             ])
+        for warning in getattr(code_generator, "warnings", []):
+            lines.append(f"warning\t{warning}")
         if errors:
             for error in errors:
                 lines.append(f"error\t{error}")

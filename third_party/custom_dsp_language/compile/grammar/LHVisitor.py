@@ -164,13 +164,13 @@ class LHVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
-    # Visit a parse tree produced by LHParser#XorExpr.
-    def visitXorExpr(self, ctx:LHParser.XorExprContext):
+    # Visit a parse tree produced by LHParser#CompareExpr.
+    def visitCompareExpr(self, ctx:LHParser.CompareExprContext):
         return self.visitChildren(ctx)
 
 
-    # Visit a parse tree produced by LHParser#CompareExpr.
-    def visitCompareExpr(self, ctx:LHParser.CompareExprContext):
+    # Visit a parse tree produced by LHParser#XorExpr.
+    def visitXorExpr(self, ctx:LHParser.XorExprContext):
         return self.visitChildren(ctx)
 
 

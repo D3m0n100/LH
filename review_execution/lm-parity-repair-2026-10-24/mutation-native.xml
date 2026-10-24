@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<testsuite errors="7" failures="0" tests="11" name="ProjectMutationGuardTest">
+  <properties>
+    <property value="5.15.2" name="QTestVersion"/>
+    <property value="5.15.2" name="QtVersion"/>
+    <property value="Qt 5.15.2 (x86_64&#x002D;little_endian&#x002D;llp64 shared (dynamic) release build; by GCC 8.1.0)" name="QtBuild"/>
+  </properties>
+  <testcase result="pass" name="initTestCase"/>
+  <testcase name="uncCreateAtomicSaveRenameAndDelete">
+    <!-- message="Set LH_TEST_UNC_ROOT to a writable SMB test directory" type="skip" -->
+  </testcase>
+  <testcase name="uncConflictAndContainmentPreserveOriginal">
+    <!-- message="Set LH_TEST_UNC_ROOT to a writable SMB test directory" type="skip" -->
+  </testcase>
+  <testcase name="uncRejectsServerJunctionAndOutsideWrite">
+    <!-- message="Local backing directory is required for the SMB server&#x002D;side junction attack" type="skip" -->
+  </testcase>
+  <testcase result="pass" name="createsWithoutOverwriteAndRejectsInvalidNames"/>
+  <testcase result="pass" name="holdsAncestorsAndTargetAcrossRenameRollback"/>
+  <testcase result="pass" name="removesPinnedTreeButRejectsConcurrentNewEntry"/>
+  <testcase result="pass" name="rejectsRealJunctionAndPreservesOutsideSentinel"/>
+  <testcase result="pass" name="writeHandleConflictFailsBeforeStaging"/>
+  <testcase result="pass" name="inPlaceAncestorReparseCannotRedirectCreation">
+    <!-- tag="unc&#x002D;new&#x002D;file" message="Local backing directory is required for the SMB server&#x002D;side in&#x002D;place reparse attack" type="skip" -->
+    <!-- tag="unc&#x002D;atomic&#x002D;config&#x002D;replacement" message="Local backing directory is required for the SMB server&#x002D;side in&#x002D;place reparse attack" type="skip" -->
+    <!-- tag="unc&#x002D;attributes&#x002D;new&#x002D;file" message="Local backing directory is required for the SMB server&#x002D;side in&#x002D;place reparse attack" type="skip" -->
+    <!-- tag="unc&#x002D;attributes&#x002D;atomic&#x002D;config" message="Local backing directory is required for the SMB server&#x002D;side in&#x002D;place reparse attack" type="skip" -->
+  </testcase>
+  <testcase result="pass" name="cleanupTestCase"/>
+  <system-err>
+<![CDATA[Set LH_TEST_UNC_ROOT to a writable SMB test directory]]>
+<![CDATA[Set LH_TEST_UNC_ROOT to a writable SMB test directory]]>
+<![CDATA[Local backing directory is required for the SMB server-side junction attack]]>
+<![CDATA[Local backing directory is required for the SMB server-side in-place reparse attack]]>
+<![CDATA[Local backing directory is required for the SMB server-side in-place reparse attack]]>
+<![CDATA[Local backing directory is required for the SMB server-side in-place reparse attack]]>
+<![CDATA[Local backing directory is required for the SMB server-side in-place reparse attack]]>
+  </system-err>
+</testsuite>

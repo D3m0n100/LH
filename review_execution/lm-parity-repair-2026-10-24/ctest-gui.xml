@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="Win32-mingw32-make"
+	tests="3"
+	failures="2"
+	disabled="0"
+	skipped="0"
+	hostname="DESKTOP-HJIINHN"
+	time="22"
+	timestamp="2026-10-24T09:10:31"
+	>
+	<testcase name="MainWindowIntegrationTest" classname="MainWindowIntegrationTest" time="0.421688" status="fail">
+		<failure message="Failed"/>
+		<properties/>
+		<system-out></system-out>
+	</testcase>
+	<testcase name="ProjectSaveCloseTest" classname="ProjectSaveCloseTest" time="10.7913" status="run">
+		<properties/>
+		<system-out></system-out>
+	</testcase>
+	<testcase name="DslCompilerSemanticsTest" classname="DslCompilerSemanticsTest" time="11.4866" status="fail">
+		<failure message="Failed"/>
+		<properties/>
+		<system-out></system-out>
+	</testcase>
+</testsuite>

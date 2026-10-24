@@ -1,0 +1,167 @@
+{
+  "audit_mode": "read_only_business_source",
+  "hardware_connected_or_tested": false,
+  "build": {
+    "focused_targets": 8,
+    "editor_targets": 3,
+    "both_builds_exit_code": 0,
+    "toolchain": "Qt 5.15.2 / MinGW GCC 8.1.0 / build_current_mingw"
+  },
+  "python_compiler_unit": {
+    "collected": 112,
+    "passed": 111,
+    "failed": 0,
+    "skipped": [
+      {
+        "name": "test_sidecar_symlink_preserves_input",
+        "reason": "Symbolic links require platform permission"
+      }
+    ],
+    "seconds": 22.835
+  },
+  "ctest": {
+    "target_count": 11,
+    "passed": 9,
+    "non_passed": 2,
+    "targets": [
+      {
+        "name": "MonitorWidgetUiTest",
+        "passed": true,
+        "failure": null,
+        "seconds": 1.12125,
+        "result_file": "ctest-focused-results.xml"
+      },
+      {
+        "name": "MainWindowIntegrationTest",
+        "passed": false,
+        "failure": {
+          "message": "SEGFAULT"
+        },
+        "seconds": 5.54307,
+        "result_file": "ctest-focused-results.xml"
+      },
+      {
+        "name": "DslCompilerSemanticsTest",
+        "passed": true,
+        "failure": null,
+        "seconds": 10.5555,
+        "result_file": "ctest-focused-results.xml"
+      },
+      {
+        "name": "MonitorExportTest",
+        "passed": true,
+        "failure": null,
+        "seconds": 1.09763,
+        "result_file": "ctest-focused-results.xml"
+      },
+      {
+        "name": "ControllerDebugProtocolTest",
+        "passed": true,
+        "failure": null,
+        "seconds": 0.2341,
+        "result_file": "ctest-focused-results.xml"
+      },
+      {
+        "name": "RuntimePointTableTest",
+        "passed": true,
+        "failure": null,
+        "seconds": 0.180223,
+        "result_file": "ctest-focused-results.xml"
+      },
+      {
+        "name": "ParameterControllerTest",
+        "passed": true,
+        "failure": null,
+        "seconds": 32.5757,
+        "result_file": "ctest-focused-results.xml"
+      },
+      {
+        "name": "OpcServerConfigTest",
+        "passed": true,
+        "failure": null,
+        "seconds": 0.318004,
+        "result_file": "ctest-focused-results.xml"
+      },
+      {
+        "name": "DslCompletionEngineTest",
+        "passed": true,
+        "failure": null,
+        "seconds": 0.792074,
+        "result_file": "ctest-editor-results.xml"
+      },
+      {
+        "name": "DslScriptEditorSaveTest",
+        "passed": true,
+        "failure": null,
+        "seconds": 1.00024,
+        "result_file": "ctest-editor-results.xml"
+      },
+      {
+        "name": "ProjectSaveCloseTest",
+        "passed": false,
+        "failure": {
+          "message": "SEGFAULT"
+        },
+        "seconds": 5.10556,
+        "result_file": "ctest-editor-results.xml"
+      }
+    ],
+    "note": "Target status is not a count of QtTest internal assertions/cases. Two GUI targets are blocked by the independently reproduced Qt message box failure."
+  },
+  "selected_mainwindow": {
+    "business_cases_passed": 3,
+    "results": [
+      {
+        "name": "initTestCase",
+        "incidents": [
+          "pass"
+        ]
+      },
+      {
+        "name": "generatedBuildArtifactsUseLhProjectModel",
+        "incidents": [
+          "pass"
+        ]
+      },
+      {
+        "name": "applyParameterSyncsConfirmedAndCurrentValue",
+        "incidents": [
+          "pass"
+        ]
+      },
+      {
+        "name": "unifiedQActionConsistencyTest",
+        "incidents": [
+          "pass"
+        ]
+      },
+      {
+        "name": "cleanupTestCase",
+        "incidents": [
+          "pass"
+        ]
+      }
+    ]
+  },
+  "independent_compiler_probes": {
+    "count": 30,
+    "emitted": 5,
+    "rejected": 25
+  },
+  "registry_default_emission": {
+    "count": 140,
+    "emitted": 117,
+    "rejected": 23,
+    "not_functional_acceptance": true
+  },
+  "qt_environment_probe": {
+    "no_lh_business_objects": true,
+    "offscreen_exit_code": -1073741819,
+    "minimal_exit_code": -1073741819,
+    "exception_hex": "0xC0000005",
+    "font_recheck": "QT_QPA_FONTDIR=C:/Windows/Fonts did not resolve the failure",
+    "attribution": "Common Qt runtime/environment failure reproduced independently; precise cause unresolved; not proof of an LH-specific source defect."
+  },
+  "git_diff_check_exit_code": 0,
+  "source_fingerprint_sha256": "8235b954ebd1e2027b1c27133e753600175ffec77487e0ce3196023d890b839b"
+}

@@ -1,0 +1,18 @@
+{
+  "date": "2026-10-23",
+  "workspace": "D:\\Table\\LH",
+  "os": "Microsoft Windows NT 10.0.19045.0",
+  "qt": "5.15.2 mingw81_64",
+  "compiler": "GCC 8.1.0",
+  "generator": "MinGW Makefiles",
+  "build_type": "Debug",
+  "serial_inventory": [],
+  "smb_inventory": [],
+  "serial_error": "拒绝访问 ",
+  "smb_error": "拒绝访问 ",
+  "unsandboxed_read_only_inventory": {
+    "serial_ports": [],
+    "smb_mappings": [],
+    "errors": []
+  }
+}

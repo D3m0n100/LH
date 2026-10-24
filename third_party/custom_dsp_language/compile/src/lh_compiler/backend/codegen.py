@@ -135,6 +135,7 @@ class CodeGenerator:
         self.instructions: List[Instruction] = []
         self._symbols: Dict[str, dict] = {}
         self.errors: List[str] = []
+        self.warnings: List[str] = []
         self.requires_target_validation = False
 
     def generate(self, program: Program) -> List[Instruction]:
@@ -145,6 +146,7 @@ class CodeGenerator:
         self.memory.reset()
         self._symbols = {}
         self.errors = []
+        self.warnings = []
         self.requires_target_validation = False
 
         # 1. 首先生成 _System 功能块指令 (总是在地址 0)
@@ -561,7 +563,7 @@ class CodeGenerator:
                 p_name = p.name if hasattr(p, 'name') else str(p)
                 if p_name.upper() == p_def.name.upper():
                     found = True
-                    provided = self._eval_expression(p.value)
+                    provided = self._eval_expression(p.value, p_def.data_type)
                     break
 
             if provided is not None:
@@ -625,7 +627,7 @@ class CodeGenerator:
             return
 
         initial_errors_count = len(self.errors)
-        value = self._eval_expression(assign.value)
+        value = self._eval_expression(assign.value, sym["type"])
 
         if value is not None:
             # Retain type/range validation before emitting a constant block.
@@ -688,7 +690,7 @@ class CodeGenerator:
             fb_name = "BoolConstBuild"
             if isinstance(value, bool):
                 param_val = 1 if value else 0
-            elif isinstance(value, (int, float)) and value in (0, 1):
+            elif type(value) is int and value in (0, 1):
                 param_val = int(value)
             else:
                 self.errors.append(f"{line_str}类型不匹配: 无法将 '{value}' 赋值给布尔类型 '{dt_upper}'")
@@ -736,7 +738,9 @@ class CodeGenerator:
             return
 
         meta = self.registry.get(fb_name)
-        if not meta or not meta.is_supported:
+        # Internal scalar lowering has a known local one-value encoding, independent
+        # of the unavailable public FB call contract. It remains compile-only below.
+        if not meta:
             self.errors.append(f"{line_str}功能块不可用: {fb_name}")
             return
         address = self.memory.allocate(f"_const_{var_name}", fb_name, meta.memory_size)
@@ -746,7 +750,7 @@ class CodeGenerator:
         ))
         self.requires_target_validation = True
 
-    def _eval_expression(self, expr: Expression) -> Any:
+    def _eval_expression(self, expr: Expression, expected_type=None) -> Any:
         """
         求值表达式（编译时常量折叠）
         对于可以在编译时计算的常量表达式, 直接求值
@@ -763,11 +767,22 @@ class CodeGenerator:
             return None
 
         if isinstance(expr, BinaryOp):
-            left = self._eval_expression(expr.left)
-            right = self._eval_expression(expr.right)
+            groups = {'OR': 1, 'XOR': 2, 'AND': 3, 'EQ': 4, 'NEQ': 4, 'LT': 4, 'GT': 4,
+                      'LE': 4, 'GE': 4, 'ADD': 5, 'SUB': 5, 'MUL': 6, 'DIV': 6, 'MOD': 6}
+            group = groups.get(getattr(expr.operator, 'name', ''))
+            if any(isinstance(child, BinaryOp) and not getattr(child, 'parenthesized', False)
+                   and groups.get(getattr(child.operator, 'name', '')) != group
+                   for child in (expr.left, expr.right)):
+                message = f'第 {expr.line} 行: 混合运算按修正后的优先级计算；请用括号明确旧程序的意图'
+                if message not in self.warnings:
+                    self.warnings.append(message)
+            left = self._eval_expression(expr.left, expected_type)
+            right = self._eval_expression(expr.right, expected_type)
             if left is not None and right is not None:
                 try:
                     res = self._eval_binary_op(expr.operator, left, right)
+                    if type(res) is int and not -2147483648 <= res <= 4294967295:
+                        raise OverflowError('整数常量运算超出 32 位范围')
                     if isinstance(res, float):
                         if not math.isfinite(res):
                             raise ValueError(f"非有限浮点数 (Infinity/NaN): {res}")
@@ -782,10 +797,24 @@ class CodeGenerator:
             return None
 
         if isinstance(expr, UnaryOp):
-            operand = self._eval_expression(expr.operand)
+            operand = self._eval_expression(expr.operand, expected_type)
             if operand is not None:
                 try:
                     res = self._eval_unary_op(expr.operator, operand)
+                    # Integer NOT is a fixed-width complement. Unsigned destinations
+                    # retain their mask; signed destinations use two's complement.
+                    op = getattr(expr.operator, 'name', str(expr.operator)).upper()
+                    if op == 'NOT' and type(operand) is int:
+                        dt = str(getattr(expected_type, 'value', expected_type)).upper()
+                        bits = {'SINT': 8, 'USINT': 8, 'BYTE': 8,
+                                'INT': 16, 'UINT': 16, 'WORD': 16}.get(dt, 32)
+                        if operand < -(1 << (bits - 1)) or operand >= (1 << bits):
+                            raise OverflowError('NOT 操作数超出目标位宽')
+                        res &= (1 << bits) - 1
+                        if dt not in ('USINT', 'BYTE', 'UINT', 'WORD', 'UDINT', 'DWORD') and res >= (1 << (bits - 1)):
+                            res -= 1 << bits
+                    if type(res) is int and not -2147483648 <= res <= 4294967295:
+                        raise OverflowError('整数常量运算超出 32 位范围')
                     if isinstance(res, float):
                         if not math.isfinite(res):
                             raise ValueError(f"非有限浮点数 (Infinity/NaN): {res}")
@@ -827,7 +856,11 @@ class CodeGenerator:
                 return bool(val)
             elif dt in ("INT", "DINT", "UINT", "SINT", "USINT", "UDINT", "BYTE", "WORD", "DWORD"):
                 try:
-                    return int(val)
+                    integer = int(val)
+                    if not -2147483648 <= integer <= 4294967295:
+                        self.errors.append(f"第 {lit.line} 行: 整数字面量超出 32 位范围")
+                        return None
+                    return integer
                 except (ValueError, TypeError):
                     return None
             elif dt == "LREAL":
@@ -875,6 +908,21 @@ class CodeGenerator:
         if hasattr(operator, 'name'):
             op = operator.name.upper()
 
+        if op in ('AND', '&', 'OR', '|', 'XOR', '^'):
+            if type(left) is bool and type(right) is bool:
+                return {'AND': lambda: left and right, '&': lambda: left and right,
+                        'OR': lambda: left or right, '|': lambda: left or right,
+                        'XOR': lambda: left ^ right, '^': lambda: left ^ right}[op]()
+            if type(left) is not int or type(right) is not int:
+                raise ValueError('逻辑运算需要两个 BOOL 或两个整数操作数')
+            return {'AND': lambda: left & right, '&': lambda: left & right,
+                    'OR': lambda: left | right, '|': lambda: left | right,
+                    'XOR': lambda: left ^ right, '^': lambda: left ^ right}[op]()
+        if op in ('ADD', '+', 'SUB', '-', 'MUL', '*', 'DIV', '/', 'MOD', '%') and (type(left) is bool or type(right) is bool):
+            raise ValueError('算术运算不接受 BOOL 操作数')
+        if op in ('EQ', '=', '==', 'NE', 'NEQ', '<>', '!=', 'LT', '<', 'GT', '>', 'LE', '<=', 'GE', '>=') and (type(left) is bool) != (type(right) is bool):
+            raise ValueError('比较运算不能混用 BOOL 和数值')
+
         if op in ("ADD", "+"):
             return left + right
         elif op in ("SUB", "-"):
@@ -885,30 +933,30 @@ class CodeGenerator:
             if right == 0:
                 raise ZeroDivisionError("除数不能为0")
             if isinstance(left, int) and isinstance(right, int):
-                return left // right
+                quotient = abs(left) // abs(right)
+                return -quotient if (left < 0) != (right < 0) else quotient
             return left / right
         elif op in ("MOD", "%"):
             if right == 0:
                 raise ZeroDivisionError("模运算除数不能为0")
-            return left % right
-        elif op in ("AND", "&"):
-            return int(bool(left) and bool(right))
-        elif op in ("OR", "|"):
-            return int(bool(left) or bool(right))
-        elif op in ("XOR", "^"):
-            return int(bool(left) ^ bool(right))
+            if type(left) is not int or type(right) is not int:
+                raise ValueError('MOD 仅接受整数')
+            quotient = abs(left) // abs(right)
+            if (left < 0) != (right < 0):
+                quotient = -quotient
+            return left - quotient * right
         elif op in ("EQ", "=", "=="):
-            return int(left == right)
-        elif op in ("NE", "<>", "!="):
-            return int(left != right)
+            return left == right
+        elif op in ("NE", "NEQ", "<>", "!="):
+            return left != right
         elif op in ("LT", "<"):
-            return int(left < right)
+            return left < right
         elif op in ("GT", ">"):
-            return int(left > right)
+            return left > right
         elif op in ("LE", "<="):
-            return int(left <= right)
+            return left <= right
         elif op in ("GE", ">="):
-            return int(left >= right)
+            return left >= right
         return None
 
     @staticmethod
@@ -921,9 +969,19 @@ class CodeGenerator:
             op = operator.name.upper()
 
         if op in ("NOT", "!"):
-            return int(not bool(operand))
+            if type(operand) is bool:
+                return not operand
+            if type(operand) is int:
+                return ~operand
+            raise ValueError('NOT 仅接受 BOOL 或整数')
         elif op in ("NEG", "-"):
+            if type(operand) is bool:
+                raise ValueError('一元算术运算不接受 BOOL')
             return -operand
+        elif op in ("POS", "+"):
+            if type(operand) is bool:
+                raise ValueError('一元算术运算不接受 BOOL')
+            return +operand
         return None
 
     @staticmethod

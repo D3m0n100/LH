@@ -19,6 +19,7 @@
 #include <QProgressDialog>
 #include <QEventLoop>
 #include <QThread>
+#include <QTemporaryDir>
 #include <atomic>
 #include "designer/MainWindow.h"
 #include "core/AppLogging.h"
@@ -59,7 +60,10 @@ int main(int argc, char *argv[])
 
     if (parser.isSet(smokeTestOption)) {
         LOG_INFO("执行无头自检 (smoke-test)...");
-        const QString dbPath = DataManager::defaultDatabasePath();
+        // Deployment acceptance must never open or migrate the user's live data.
+        QTemporaryDir smokeDirectory(QDir::tempPath() + QStringLiteral("/LH-smoke-XXXXXX"));
+        const QString dbPath = smokeDirectory.isValid()
+            ? smokeDirectory.filePath(QStringLiteral("platform.db")) : QString();
         if (dbPath.isEmpty()) {
             LOG_ERROR("Smoke test 失败: 无法确定应用数据目录");
             AppLogging::shutdown();
@@ -185,7 +189,7 @@ int main(int argc, char *argv[])
         }
     }
     if (!DeferredThreadCleanup::drain()) {
-        qCritical("OPC 原生调用在退出期限后仍未结束；退出进程以保护 Qt 全局资源");
+        qCritical("延期 SQL/OPC 工作线程在退出期限后仍未结束；退出进程以保护 Qt 全局资源");
         AppLogging::shutdown();
         std::_Exit(2);
     }

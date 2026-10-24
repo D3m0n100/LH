@@ -53,6 +53,8 @@ def compile(input_file, output):
         err_msg = "\n".join(result.errors) if result.errors else "Compilation failed"
         raise click.ClickException(f"Compile failed:\n{err_msg}")
     console.print(f"[bold green]Compile success:[/bold green] {output or input_file}")
+    for warning in result.warnings:
+        console.print(f"警告: {warning}")
     if result.compile_only:
         from ..backend.artifact_policy import UNCONFIRMED_EXECUTION_WARNING
         console.print(f"警告: {UNCONFIRMED_EXECUTION_WARNING}")
@@ -61,7 +63,8 @@ def compile(input_file, output):
 @main.command(name='list-blocks')
 @click.option('--category', help='Filter by category')
 @click.option('--search', help='Search in names and descriptions')
-def list_blocks(category, search):
+@click.option('--json', 'as_json', is_flag=True, help='Export capability states as JSON')
+def list_blocks(category, search, as_json=False):
     """List available function blocks"""
     registry = _get_registry()
 
@@ -76,6 +79,11 @@ def list_blocks(category, search):
         blocks = registry.list_all()
         title = "All Function Blocks"
 
+    if as_json:
+        import json
+        click.echo(json.dumps([b.capability_state() for b in sorted(blocks, key=lambda b: b.name)], ensure_ascii=False))
+        return
+
     # Create table
     table = Table(title=title)
     table.add_column("Name", style="cyan")
@@ -86,7 +94,8 @@ def list_blocks(category, search):
 
     for block in sorted(blocks, key=lambda b: b.name):
         desc = block.description or ""
-        status_text = "[green]supported[/green]" if block.is_supported else f"[red]{block.status}[/red]"
+        status_text = ("[yellow]invalid-definition[/yellow]" if block.definition_errors() and block.is_supported
+                       else "[green]supported[/green]" if block.is_supported else f"[red]{block.status}[/red]")
         table.add_row(
             block.name,
             str(block.type_id),

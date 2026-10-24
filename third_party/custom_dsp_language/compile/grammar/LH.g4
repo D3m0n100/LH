@@ -203,19 +203,19 @@ continueStatement
     ;
 
 // ============================================================================
-// EXPRESSIONS  (precedence lowest to highest)
+// EXPRESSIONS (ANTLR left-recursive alternatives: highest to lowest)
 // ============================================================================
 
 expression
-    : expression OR  expression                                       # OrExpr
-    | expression XOR expression                                       # XorExpr
-    | expression AND expression                                       # AndExpr
-    | NOT expression                                                  # NotExpr
-    | expression op=(EQ | NEQ | LT | GT | LTE | GTE) expression     # CompareExpr
-    | expression op=(PLUS | MINUS) expression                        # AddSubExpr
-    | expression op=(MULT | DIV | MOD) expression                    # MulDivExpr
+    : NOT expression                                                  # NotExpr
     | MINUS expression                                               # UnaryMinus
     | PLUS  expression                                               # UnaryPlus
+    | expression op=(MULT | DIV | MOD) expression                    # MulDivExpr
+    | expression op=(PLUS | MINUS) expression                        # AddSubExpr
+    | expression op=(EQ | NEQ | LT | GT | LTE | GTE) expression     # CompareExpr
+    | expression AND expression                                       # AndExpr
+    | expression XOR expression                                       # XorExpr
+    | expression OR  expression                                       # OrExpr
     | LPAREN expression RPAREN                                       # ParenExpr
     | callExpr                                                       # FuncCallExpr
     | atomExpr                                                       # AtomExprRule

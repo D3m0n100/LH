@@ -1,0 +1,2690 @@
+{
+  "version": 1,
+  "scope": "已确认的软件修复；无 LM 迁移、无新增离线执行器、无真实控制器修改",
+  "original_audit_preserved": "review_execution\\lm-parity-audit-2026-10-24",
+  "baseline_entry_count": 188,
+  "software_tasks": [
+    {
+      "id": "S01",
+      "title": "表达式优先级、诊断及 CLI/IDE 一致性",
+      "status": "software_verified",
+      "evidence": [
+        "python-tests.xml",
+        "ctest-detailed.xml"
+      ]
+    },
+    {
+      "id": "S02",
+      "title": "整数位运算、负数除法/MOD、类型及边界",
+      "status": "software_verified",
+      "evidence": [
+        "python-tests.xml",
+        "ctest-detailed.xml"
+      ]
+    },
+    {
+      "id": "S03",
+      "title": "定义自检、空契约、能力目录及覆盖保护",
+      "status": "software_verified",
+      "evidence": [
+        "registry-capabilities.json",
+        "python-tests.xml",
+        "ctest-detailed.xml"
+      ]
+    },
+    {
+      "id": "S04",
+      "title": "参数权限/类型/范围、同步/异步整批预校验",
+      "status": "software_verified",
+      "evidence": [
+        "ctest-detailed.xml"
+      ]
+    },
+    {
+      "id": "S05",
+      "title": "本地项目参数快照、预览和全量验证后恢复",
+      "status": "software_verified",
+      "evidence": [
+        "ctest-detailed.xml"
+      ]
+    },
+    {
+      "id": "S06",
+      "title": "断点/连续单步及无映射防护、取消与串行化",
+      "status": "software_verified",
+      "evidence": [
+        "ctest-detailed.xml"
+      ]
+    },
+    {
+      "id": "S07",
+      "title": "最小新工程模板、编译/运行区分、工程回归",
+      "status": "software_verified",
+      "evidence": [
+        "ctest-detailed.xml"
+      ]
+    },
+    {
+      "id": "S08",
+      "title": "Qt 隔离环境、完整 GUI、安装与 smoke",
+      "status": "software_verified",
+      "evidence": [
+        "qt-isolated-probe.log",
+        "ctest-detailed.xml",
+        "installed-smoke.log"
+      ]
+    },
+    {
+      "id": "S09",
+      "title": "LH 原生产物/监控/导出回归",
+      "status": "software_verified",
+      "evidence": [
+        "ctest-detailed.xml"
+      ]
+    },
+    {
+      "id": "S10",
+      "title": "工程设计表、通用场景、软件使用和修复证据",
+      "status": "documentation_complete",
+      "evidence": [
+        "../../docs/LM功能对齐软件指南.md",
+        "../../docs/LM工程设计与场景清单.md"
+      ]
+    }
+  ],
+  "entries": [
+    {
+      "id": "L01",
+      "requirement": "LM 原始装配格式和旧项目迁移",
+      "original_status": "partial",
+      "disposition": "excluded_legacy_compatibility",
+      "handling": "用户明确不要求 LM 原始语法和旧项目迁移",
+      "software_tasks": [],
+      "target_verified": false
+    },
+    {
+      "id": "L02",
+      "requirement": "整型/浮点立即数、数据项引用和成员连接",
+      "original_status": "partial",
+      "disposition": "deferred_controller_contract",
+      "handling": "涉及目标运行时、地址/编码/固件或真实设备，保留显式拒绝/现有配置，不猜测目标契约",
+      "software_tasks": [],
+      "target_verified": false
+    },
+    {
+      "id": "L03",
+      "requirement": "IQ 与浮点的区分、Q 值和溢出语义",
+      "original_status": "not_met",
+      "disposition": "deferred_controller_contract",
+      "handling": "涉及目标运行时、地址/编码/固件或真实设备，保留显式拒绝/现有配置，不猜测目标契约",
+      "software_tasks": [],
+      "target_verified": false
+    },
+    {
+      "id": "L04",
+      "requirement": "上电一次初始化、任务外和周期内执行边界",
+      "original_status": "not_met",
+      "disposition": "deferred_controller_contract",
+      "handling": "涉及目标运行时、地址/编码/固件或真实设备，保留显式拒绝/现有配置，不猜测目标契约",
+      "software_tasks": [],
+      "target_verified": false
+    },
+    {
+      "id": "L05",
+      "requirement": "参数工程量序号、归一化、限幅及外部语义",
+      "original_status": "partial",
+      "disposition": "software_and_deferred_target",
+      "handling": "参数编辑/应用校验及本地项目快照；目标归一化和外部语义延期",
+      "software_tasks": [
+        "S04",
+        "S05"
+      ],
+      "target_verified": false
+    },
+    {
+      "id": "L06",
+      "requirement": "保存、永久保存及下载后恢复",
+      "original_status": "not_met",
+      "disposition": "deferred_controller_contract",
+      "handling": "涉及目标运行时、地址/编码/固件或真实设备，保留显式拒绝/现有配置，不猜测目标契约",
+      "software_tasks": [],
+      "target_verified": false
+    },
+    {
+      "id": "L07",
+      "requirement": "掉电保护和累计工作状态",
+      "original_status": "not_met",
+      "disposition": "deferred_controller_contract",
+      "handling": "涉及目标运行时、地址/编码/固件或真实设备，保留显式拒绝/现有配置，不猜测目标契约",
+      "software_tasks": [],
+      "target_verified": false
+    },
+    {
+      "id": "L08",
+      "requirement": "外部写参数唤醒任务和语义传送",
+      "original_status": "not_met",
+      "disposition": "deferred_controller_contract",
+      "handling": "涉及目标运行时、地址/编码/固件或真实设备，保留显式拒绝/现有配置，不猜测目标契约",
+      "software_tasks": [],
+      "target_verified": false
+    },
+    {
+      "id": "L09",
+      "requirement": "实时多任务、定时/中断/消息、锁与信号量",
+      "original_status": "not_met",
+      "disposition": "deferred_controller_contract",
+      "handling": "涉及目标运行时、地址/编码/固件或真实设备，保留显式拒绝/现有配置，不猜测目标契约",
+      "software_tasks": [],
+      "target_verified": false
+    },
+    {
+      "id": "L10",
+      "requirement": "IF/SWITCH/FOR/WHILE 嵌套、分支及退出",
+      "original_status": "not_met",
+      "disposition": "deferred_controller_contract",
+      "handling": "涉及目标运行时、地址/编码/固件或真实设备，保留显式拒绝/现有配置，不猜测目标契约",
+      "software_tasks": [],
+      "target_verified": false
+    },
+    {
+      "id": "L11",
+      "requirement": "可变数据组、数组、重复 Input/ItemEnd",
+      "original_status": "not_met",
+      "disposition": "deferred_controller_contract",
+      "handling": "涉及目标运行时、地址/编码/固件或真实设备，保留显式拒绝/现有配置，不猜测目标契约",
+      "software_tasks": [],
+      "target_verified": false
+    },
+    {
+      "id": "L12",
+      "requirement": "运行时算术/逻辑、初等函数、赋值与类型转换",
+      "original_status": "partial",
+      "disposition": "software_and_deferred_target",
+      "handling": "常量算术/位运算/比较走 LH 表达式；运行时算法及引用延期",
+      "software_tasks": [
+        "S01",
+        "S02"
+      ],
+      "target_verified": false
+    },
+    {
+      "id": "L13",
+      "requirement": "多文件、宏、条件编译及装置/网桥定义",
+      "original_status": "partial",
+      "disposition": "software_and_deferred_target",
+      "handling": "沿用已存在 LH 多文件，不要求 LM 宏/旧配置格式",
+      "software_tasks": [
+        "S07"
+      ],
+      "target_verified": false
+    },
+    {
+      "id": "L14",
+      "requirement": "编译目标、固件版本、指令表和布局一致性",
+      "original_status": "not_met",
+      "disposition": "deferred_controller_contract",
+      "handling": "涉及目标运行时、地址/编码/固件或真实设备，保留显式拒绝/现有配置，不猜测目标契约",
+      "software_tasks": [],
+      "target_verified": false
+    },
+    {
+      "id": "L15",
+      "requirement": "LM 三套编译器和支撑文件的完整功能",
+      "original_status": "partial",
+      "disposition": "software_and_deferred_target",
+      "handling": "保留 LH 原生配置/参数/通信产物；不要求旧三套编译器格式",
+      "software_tasks": [
+        "S09"
+      ],
+      "target_verified": false
+    },
+    {
+      "id": "L16",
+      "requirement": "参数脚本：地址赋值、暂停、复位、延时、设时、保存",
+      "original_status": "partial",
+      "disposition": "deferred_controller_contract",
+      "handling": "涉及目标运行时、地址/编码/固件或真实设备，保留显式拒绝/现有配置，不猜测目标契约",
+      "software_tasks": [],
+      "target_verified": false
+    },
+    {
+      "id": "L17",
+      "requirement": "多装置通信配置与 OPC/LabVIEW 产物",
+      "original_status": "partial",
+      "disposition": "software_and_deferred_target",
+      "handling": "验证 LH 自有通信产物；设备协议及外部 OPC/LabVIEW 集成延期",
+      "software_tasks": [
+        "S09"
+      ],
+      "target_verified": false
+    },
+    {
+      "id": "L18",
+      "requirement": "硬件外设资源占用、次数和实例校验",
+      "original_status": "partial",
+      "disposition": "deferred_controller_contract",
+      "handling": "涉及目标运行时、地址/编码/固件或真实设备，保留显式拒绝/现有配置，不猜测目标契约",
+      "software_tasks": [],
+      "target_verified": false
+    },
+    {
+      "id": "E01",
+      "requirement": "工程、文件编辑、保存和多文件组织",
+      "original_status": "partial",
+      "disposition": "software_and_deferred_target",
+      "handling": "沿用工程/编辑/保存/多文件并回归",
+      "software_tasks": [
+        "S07"
+      ],
+      "target_verified": false
+    },
+    {
+      "id": "E02",
+      "requirement": "语法高亮、模板、补全、功能块插入",
+      "original_status": "local_met",
+      "disposition": "software_and_deferred_target",
+      "handling": "目录/插入/补全能力一致性，项目覆盖不得提升能力",
+      "software_tasks": [
+        "S03"
+      ],
+      "target_verified": false
+    },
+    {
+      "id": "E03",
+      "requirement": "编译报告和错误导航",
+      "original_status": "partial",
+      "disposition": "software_and_deferred_target",
+      "handling": "编译警告和构建/可执行状态；沿用错误导航",
+      "software_tasks": [
+        "S01",
+        "S07"
+      ],
+      "target_verified": false
+    },
+    {
+      "id": "E04",
+      "requirement": "装配下载、编译下载、参数应用",
+      "original_status": "partial",
+      "disposition": "software_and_deferred_target",
+      "handling": "软件参数校验及构建产物保护；设备下载延期",
+      "software_tasks": [
+        "S04",
+        "S07"
+      ],
+      "target_verified": false
+    },
+    {
+      "id": "E05",
+      "requirement": "暂停、继续、单步、运行到光标",
+      "original_status": "partial",
+      "disposition": "software_and_deferred_target",
+      "handling": "复用调试命令；无映射禁用源码光标执行；现场效果延期",
+      "software_tasks": [
+        "S06"
+      ],
+      "target_verified": false
+    },
+    {
+      "id": "E06",
+      "requirement": "工作/调试模式及运行位置反馈",
+      "original_status": "partial",
+      "disposition": "deferred_controller_contract",
+      "handling": "涉及目标运行时、地址/编码/固件或真实设备，保留显式拒绝/现有配置，不猜测目标契约",
+      "software_tasks": [],
+      "target_verified": false
+    },
+    {
+      "id": "E07",
+      "requirement": "设置/清除断点和可调周期连续单步",
+      "original_status": "not_met",
+      "disposition": "software_and_deferred_target",
+      "handling": "组件断点入口与可取消的串行连续单步；现场效果延期",
+      "software_tasks": [
+        "S06"
+      ],
+      "target_verified": false
+    },
+    {
+      "id": "E08",
+      "requirement": "系统复位、保存数据、永久参数备份/恢复",
+      "original_status": "partial",
+      "disposition": "software_and_deferred_target",
+      "handling": "新增项目参数快照；硬件复位/掉电/永久保存延期",
+      "software_tasks": [
+        "S05"
+      ],
+      "target_verified": false
+    },
+    {
+      "id": "E09",
+      "requirement": "全部功能块字段自动浏览和实时值编辑",
+      "original_status": "partial",
+      "disposition": "software_and_deferred_target",
+      "handling": "使用已有已配置 RuntimePoint 浏览/调参；未知字段地址延期",
+      "software_tasks": [
+        "S03",
+        "S04"
+      ],
+      "target_verified": false
+    },
+    {
+      "id": "E10",
+      "requirement": "多曲线、显隐、范围和历史缩放",
+      "original_status": "local_met",
+      "disposition": "software_and_deferred_target",
+      "handling": "沿用多曲线和历史缩放并回归",
+      "software_tasks": [
+        "S09"
+      ],
+      "target_verified": false
+    },
+    {
+      "id": "E11",
+      "requirement": "曲线图片和时间序列导出",
+      "original_status": "local_met",
+      "disposition": "software_and_deferred_target",
+      "handling": "沿用图片/序列导出并回归",
+      "software_tasks": [
+        "S09"
+      ],
+      "target_verified": false
+    },
+    {
+      "id": "E12",
+      "requirement": "真实设备 30ms 曲线采样与时间一致性",
+      "original_status": "hardware_pending",
+      "disposition": "deferred_controller_contract",
+      "handling": "涉及目标运行时、地址/编码/固件或真实设备，保留显式拒绝/现有配置，不猜测目标契约",
+      "software_tasks": [],
+      "target_verified": false
+    },
+    {
+      "id": "E13",
+      "requirement": "OPC 配置、连接、订阅、读写与质量",
+      "original_status": "partial",
+      "disposition": "deferred_controller_contract",
+      "handling": "涉及目标运行时、地址/编码/固件或真实设备，保留显式拒绝/现有配置，不猜测目标契约",
+      "software_tasks": [],
+      "target_verified": false
+    },
+    {
+      "id": "E14",
+      "requirement": "DCOM 跨计算机 OPC",
+      "original_status": "hardware_pending",
+      "disposition": "deferred_controller_contract",
+      "handling": "涉及目标运行时、地址/编码/固件或真实设备，保留显式拒绝/现有配置，不猜测目标契约",
+      "software_tasks": [],
+      "target_verified": false
+    },
+    {
+      "id": "E15",
+      "requirement": "主窗口编译及工程关闭对话框路径验收",
+      "original_status": "environment_blocked",
+      "disposition": "software_and_deferred_target",
+      "handling": "隔离 Qt 原生环境重跑完整 GUI 测试",
+      "software_tasks": [
+        "S08"
+      ],
+      "target_verified": false
+    },
+    {
+      "id": "E16",
+      "requirement": "PC 与目标通信、连接诊断和现场下载链",
+      "original_status": "partial",
+      "disposition": "deferred_controller_contract",
+      "handling": "涉及目标运行时、地址/编码/固件或真实设备，保留显式拒绝/现有配置，不猜测目标契约",
+      "software_tasks": [],
+      "target_verified": false
+    },
+    {
+      "id": "E17",
+      "requirement": "可执行控制算法仿真及示例",
+      "original_status": "partial",
+      "disposition": "software_and_deferred_target",
+      "handling": "只提供实际可编译的软件例及工程设计例；不新建离线执行器",
+      "software_tasks": [
+        "S10"
+      ],
+      "target_verified": false
+    },
+    {
+      "id": "E18",
+      "requirement": "安装、运行依赖、帮助及故障诊断资料",
+      "original_status": "partial",
+      "disposition": "software_and_deferred_target",
+      "handling": "运行依赖隔离、故障证据、软件使用说明和设计清单",
+      "software_tasks": [
+        "S08",
+        "S10"
+      ],
+      "target_verified": false
+    },
+    {
+      "id": "G01",
+      "requirement": "正交编码器 QEP 输入",
+      "original_status": "not_met",
+      "disposition": "deferred_controller_with_design_example",
+      "handling": "提供通用设计/边界清单；实际算法、IO、屏、持久化和现场效果按用户要求延期",
+      "software_tasks": [
+        "S10"
+      ],
+      "target_verified": false
+    },
+    {
+      "id": "G02",
+      "requirement": "粗大误差滤波和传感器非线性标定",
+      "original_status": "not_met",
+      "disposition": "deferred_controller_with_design_example",
+      "handling": "提供通用设计/边界清单；实际算法、IO、屏、持久化和现场效果按用户要求延期",
+      "software_tasks": [
+        "S10"
+      ],
+      "target_verified": false
+    },
+    {
+      "id": "G03",
+      "requirement": "PWM 电流/电压、直流及步进电机输出",
+      "original_status": "partial",
+      "disposition": "deferred_controller_with_design_example",
+      "handling": "提供通用设计/边界清单；实际算法、IO、屏、持久化和现场效果按用户要求延期",
+      "software_tasks": [
+        "S10"
+      ],
+      "target_verified": false
+    },
+    {
+      "id": "G04",
+      "requirement": "按键扫描、按下/抬起/长按和显示任务",
+      "original_status": "not_met",
+      "disposition": "deferred_controller_with_design_example",
+      "handling": "提供通用设计/边界清单；实际算法、IO、屏、持久化和现场效果按用户要求延期",
+      "software_tasks": [
+        "S10"
+      ],
+      "target_verified": false
+    },
+    {
+      "id": "G05",
+      "requirement": "串口屏握手、图片切换/裁剪/反色和文本",
+      "original_status": "not_met",
+      "disposition": "deferred_controller_with_design_example",
+      "handling": "提供通用设计/边界清单；实际算法、IO、屏、持久化和现场效果按用户要求延期",
+      "software_tasks": [
+        "S10"
+      ],
+      "target_verified": false
+    },
+    {
+      "id": "G06",
+      "requirement": "M600 棒图和批量数据显示",
+      "original_status": "not_met",
+      "disposition": "deferred_controller_with_design_example",
+      "handling": "提供通用设计/边界清单；实际算法、IO、屏、持久化和现场效果按用户要求延期",
+      "software_tasks": [
+        "S10"
+      ],
+      "target_verified": false
+    },
+    {
+      "id": "G07",
+      "requirement": "显示图片制作、烧录、批量校验的完整工作流",
+      "original_status": "not_met",
+      "disposition": "deferred_controller_with_design_example",
+      "handling": "提供通用设计/边界清单；实际算法、IO、屏、持久化和现场效果按用户要求延期",
+      "software_tasks": [
+        "S10"
+      ],
+      "target_verified": false
+    },
+    {
+      "id": "G08",
+      "requirement": "PID 完整非线性、手自动、前馈、增益调度和自整定保护",
+      "original_status": "partial",
+      "disposition": "deferred_controller_with_design_example",
+      "handling": "提供通用设计/边界清单；实际算法、IO、屏、持久化和现场效果按用户要求延期",
+      "software_tasks": [
+        "S10"
+      ],
+      "target_verified": false
+    },
+    {
+      "id": "G09",
+      "requirement": "TSO、自整定、两位继电控制",
+      "original_status": "not_met",
+      "disposition": "deferred_controller_with_design_example",
+      "handling": "提供通用设计/边界清单；实际算法、IO、屏、持久化和现场效果按用户要求延期",
+      "software_tasks": [
+        "S10"
+      ],
+      "target_verified": false
+    },
+    {
+      "id": "G10",
+      "requirement": "报警灯/蜂鸣器及开关机 8 秒屏蔽",
+      "original_status": "not_met",
+      "disposition": "deferred_controller_with_design_example",
+      "handling": "提供通用设计/边界清单；实际算法、IO、屏、持久化和现场效果按用户要求延期",
+      "software_tasks": [
+        "S10"
+      ],
+      "target_verified": false
+    },
+    {
+      "id": "G11",
+      "requirement": "16 项保养提示、页面切换与蜂鸣器",
+      "original_status": "not_met",
+      "disposition": "deferred_controller_with_design_example",
+      "handling": "提供通用设计/边界清单；实际算法、IO、屏、持久化和现场效果按用户要求延期",
+      "software_tasks": [
+        "S10"
+      ],
+      "target_verified": false
+    },
+    {
+      "id": "G12",
+      "requirement": "档位/转速自动标定",
+      "original_status": "not_met",
+      "disposition": "deferred_controller_with_design_example",
+      "handling": "提供通用设计/边界清单；实际算法、IO、屏、持久化和现场效果按用户要求延期",
+      "software_tasks": [
+        "S10"
+      ],
+      "target_verified": false
+    },
+    {
+      "id": "G13",
+      "requirement": "泵与发动机复合控制及功率模式",
+      "original_status": "not_met",
+      "disposition": "deferred_controller_with_design_example",
+      "handling": "提供通用设计/边界清单；实际算法、IO、屏、持久化和现场效果按用户要求延期",
+      "software_tasks": [
+        "S10"
+      ],
+      "target_verified": false
+    },
+    {
+      "id": "G14",
+      "requirement": "铲斗合流、回转优先、回转阻尼、动臂优先",
+      "original_status": "not_met",
+      "disposition": "deferred_controller_with_design_example",
+      "handling": "提供通用设计/边界清单；实际算法、IO、屏、持久化和现场效果按用户要求延期",
+      "software_tasks": [
+        "S10"
+      ],
+      "target_verified": false
+    },
+    {
+      "id": "G15",
+      "requirement": "二次增压最长 8 秒和行走高低速",
+      "original_status": "not_met",
+      "disposition": "deferred_controller_with_design_example",
+      "handling": "提供通用设计/边界清单；实际算法、IO、屏、持久化和现场效果按用户要求延期",
+      "software_tasks": [
+        "S10"
+      ],
+      "target_verified": false
+    },
+    {
+      "id": "G16",
+      "requirement": "发动机电机功率保护、自动怠速/升速",
+      "original_status": "not_met",
+      "disposition": "deferred_controller_with_design_example",
+      "handling": "提供通用设计/边界清单；实际算法、IO、屏、持久化和现场效果按用户要求延期",
+      "software_tasks": [
+        "S10"
+      ],
+      "target_verified": false
+    },
+    {
+      "id": "G17",
+      "requirement": "总工作时间标定和定时持久计时",
+      "original_status": "not_met",
+      "disposition": "deferred_controller_with_design_example",
+      "handling": "提供通用设计/边界清单；实际算法、IO、屏、持久化和现场效果按用户要求延期",
+      "software_tasks": [
+        "S10"
+      ],
+      "target_verified": false
+    },
+    {
+      "id": "G18",
+      "requirement": "防花屏、串口/CAN 异常局部复位与重建",
+      "original_status": "not_met",
+      "disposition": "deferred_controller_with_design_example",
+      "handling": "提供通用设计/边界清单；实际算法、IO、屏、持久化和现场效果按用户要求延期",
+      "software_tasks": [
+        "S10"
+      ],
+      "target_verified": false
+    },
+    {
+      "id": "G19",
+      "requirement": "两小时触发流程",
+      "original_status": "not_met",
+      "disposition": "deferred_controller_with_design_example",
+      "handling": "提供通用设计/边界清单；实际算法、IO、屏、持久化和现场效果按用户要求延期",
+      "software_tasks": [
+        "S10"
+      ],
+      "target_verified": false
+    },
+    {
+      "id": "P01",
+      "requirement": "过程、IO、功能、参数、任务、文件结构六类设计表",
+      "original_status": "process_pending",
+      "disposition": "engineering_documentation",
+      "handling": "通用设计表、命名/版本/边界/审查/回归规则已在工程指南提供；具体工程需负责人填表",
+      "software_tasks": [
+        "S10"
+      ],
+      "target_verified": false
+    },
+    {
+      "id": "P02",
+      "requirement": "目录/文件命名、变量定义和初始化组织",
+      "original_status": "process_pending",
+      "disposition": "engineering_documentation",
+      "handling": "通用设计表、命名/版本/边界/审查/回归规则已在工程指南提供；具体工程需负责人填表",
+      "software_tasks": [
+        "S10"
+      ],
+      "target_verified": false
+    },
+    {
+      "id": "P03",
+      "requirement": "版本/版权/变更记录和可追溯性",
+      "original_status": "process_pending",
+      "disposition": "engineering_documentation",
+      "handling": "通用设计表、命名/版本/边界/审查/回归规则已在工程指南提供；具体工程需负责人填表",
+      "software_tasks": [
+        "S10"
+      ],
+      "target_verified": false
+    },
+    {
+      "id": "P04",
+      "requirement": "边界、空行、缩进、注释和一致风格",
+      "original_status": "process_pending",
+      "disposition": "engineering_documentation",
+      "handling": "通用设计表、命名/版本/边界/审查/回归规则已在工程指南提供；具体工程需负责人填表",
+      "software_tasks": [
+        "S10"
+      ],
+      "target_verified": false
+    },
+    {
+      "id": "P05",
+      "requirement": "有意义的英文及 IO/构件命名规则",
+      "original_status": "process_pending",
+      "disposition": "engineering_documentation",
+      "handling": "通用设计表、命名/版本/边界/审查/回归规则已在工程指南提供；具体工程需负责人填表",
+      "software_tasks": [
+        "S10"
+      ],
+      "target_verified": false
+    },
+    {
+      "id": "P06",
+      "requirement": "浮点容差、循环变量与 CASE 完整性审查",
+      "original_status": "process_pending",
+      "disposition": "engineering_documentation",
+      "handling": "通用设计表、命名/版本/边界/审查/回归规则已在工程指南提供；具体工程需负责人填表",
+      "software_tasks": [
+        "S10"
+      ],
+      "target_verified": false
+    },
+    {
+      "id": "P07",
+      "requirement": "审查计划、角色、缺陷处理与回归闭环",
+      "original_status": "process_pending",
+      "disposition": "engineering_documentation",
+      "handling": "通用设计表、命名/版本/边界/审查/回归规则已在工程指南提供；具体工程需负责人填表",
+      "software_tasks": [
+        "S10"
+      ],
+      "target_verified": false
+    },
+    {
+      "id": "P08",
+      "requirement": "历史安装、EditPlus 注册、旧路径/线束操作",
+      "original_status": "historical_context",
+      "disposition": "historical_context",
+      "handling": "历史说明作为需求证据，不执行其中的安装/注册/现场指令",
+      "software_tasks": [
+        "S10"
+      ],
+      "target_verified": false
+    },
+    {
+      "id": "LM-FB-001",
+      "requirement": "系统定义与状态、时钟、启动管理",
+      "lm_name": "System",
+      "original_status": "partial",
+      "lh_candidates": [
+        "System"
+      ],
+      "local_alternative": "现有 LH 构造参数/配置/目录状态；不宣称完整执行等价",
+      "software_tasks": [
+        "S03"
+      ],
+      "disposition": "deferred_target_execution",
+      "handling": "注册/空指令不再视为执行能力；完整功能依赖目标执行契约，延期。",
+      "target_verified": false
+    },
+    {
+      "id": "LM-FB-002",
+      "requirement": "系统结束边界",
+      "lm_name": "SystemEnd",
+      "original_status": "partial",
+      "lh_candidates": [
+        "SystemEnd"
+      ],
+      "local_alternative": "现有 LH 构造参数/配置/目录状态；不宣称完整执行等价",
+      "software_tasks": [
+        "S03"
+      ],
+      "disposition": "deferred_target_execution",
+      "handling": "注册/空指令不再视为执行能力；完整功能依赖目标执行契约，延期。",
+      "target_verified": false
+    },
+    {
+      "id": "LM-FB-003",
+      "requirement": "异常事件处理",
+      "lm_name": "SystemExceptDeal",
+      "original_status": "partial",
+      "lh_candidates": [
+        "Exception"
+      ],
+      "local_alternative": "现有 LH 构造参数/配置/目录状态；不宣称完整执行等价",
+      "software_tasks": [
+        "S03"
+      ],
+      "disposition": "deferred_target_execution",
+      "handling": "注册/空指令不再视为执行能力；完整功能依赖目标执行契约，延期。",
+      "target_verified": false
+    },
+    {
+      "id": "LM-FB-004",
+      "requirement": "空操作",
+      "lm_name": "SystemNop",
+      "original_status": "partial",
+      "lh_candidates": [
+        "Nop"
+      ],
+      "local_alternative": "现有 LH 构造参数/配置/目录状态；不宣称完整执行等价",
+      "software_tasks": [
+        "S03"
+      ],
+      "disposition": "deferred_target_execution",
+      "handling": "注册/空指令不再视为执行能力；完整功能依赖目标执行契约，延期。",
+      "target_verified": false
+    },
+    {
+      "id": "LM-FB-005",
+      "requirement": "任务创建、消息与优先级",
+      "lm_name": "Task",
+      "original_status": "not_met",
+      "lh_candidates": [
+        "Task"
+      ],
+      "local_alternative": "现有 LH 构造参数/配置/目录状态；不宣称完整执行等价",
+      "software_tasks": [
+        "S03"
+      ],
+      "disposition": "deferred_target_execution",
+      "handling": "注册/空指令不再视为执行能力；完整功能依赖目标执行契约，延期。",
+      "target_verified": false
+    },
+    {
+      "id": "LM-FB-006",
+      "requirement": "任务体结束",
+      "lm_name": "TaskEnd",
+      "original_status": "not_met",
+      "lh_candidates": [
+        "TaskEnd"
+      ],
+      "local_alternative": "现有 LH 构造参数/配置/目录状态；不宣称完整执行等价",
+      "software_tasks": [
+        "S03"
+      ],
+      "disposition": "deferred_target_execution",
+      "handling": "注册/空指令不再视为执行能力；完整功能依赖目标执行契约，延期。",
+      "target_verified": false
+    },
+    {
+      "id": "LM-FB-007",
+      "requirement": "功能块消息唤醒任务",
+      "lm_name": "TaskCompnt",
+      "original_status": "not_met",
+      "lh_candidates": [
+        "TaskWake"
+      ],
+      "local_alternative": "现有 LH 构造参数/配置/目录状态；不宣称完整执行等价",
+      "software_tasks": [
+        "S03"
+      ],
+      "disposition": "deferred_target_execution",
+      "handling": "注册/空指令不再视为执行能力；完整功能依赖目标执行契约，延期。",
+      "target_verified": false
+    },
+    {
+      "id": "LM-FB-008",
+      "requirement": "外部参数写入唤醒任务",
+      "lm_name": "TaskParamt",
+      "original_status": "not_met",
+      "lh_candidates": [
+        "TaskDataWake"
+      ],
+      "local_alternative": "现有 LH 构造参数/配置/目录状态；不宣称完整执行等价",
+      "software_tasks": [
+        "S03"
+      ],
+      "disposition": "deferred_target_execution",
+      "handling": "注册/空指令不再视为执行能力；完整功能依赖目标执行契约，延期。",
+      "target_verified": false
+    },
+    {
+      "id": "LM-FB-009",
+      "requirement": "任务锁定",
+      "lm_name": "TaskLock",
+      "original_status": "not_met",
+      "lh_candidates": [
+        "TaskLock"
+      ],
+      "local_alternative": "现有 LH 构造参数/配置/目录状态；不宣称完整执行等价",
+      "software_tasks": [
+        "S03"
+      ],
+      "disposition": "deferred_target_execution",
+      "handling": "注册/空指令不再视为执行能力；完整功能依赖目标执行契约，延期。",
+      "target_verified": false
+    },
+    {
+      "id": "LM-FB-010",
+      "requirement": "任务解锁",
+      "lm_name": "TaskUnlock",
+      "original_status": "not_met",
+      "lh_candidates": [
+        "TaskUnlock"
+      ],
+      "local_alternative": "现有 LH 构造参数/配置/目录状态；不宣称完整执行等价",
+      "software_tasks": [
+        "S03"
+      ],
+      "disposition": "deferred_target_execution",
+      "handling": "注册/空指令不再视为执行能力；完整功能依赖目标执行契约，延期。",
+      "target_verified": false
+    },
+    {
+      "id": "LM-FB-011",
+      "requirement": "信号量定义",
+      "lm_name": "SemaDef",
+      "original_status": "not_met",
+      "lh_candidates": [
+        "TaskSemDef"
+      ],
+      "local_alternative": "现有 LH 构造参数/配置/目录状态；不宣称完整执行等价",
+      "software_tasks": [
+        "S03"
+      ],
+      "disposition": "deferred_target_execution",
+      "handling": "注册/空指令不再视为执行能力；完整功能依赖目标执行契约，延期。",
+      "target_verified": false
+    },
+    {
+      "id": "LM-FB-012",
+      "requirement": "信号量 P 操作",
+      "lm_name": "SemaPOper",
+      "original_status": "not_met",
+      "lh_candidates": [
+        "TaskSemWait"
+      ],
+      "local_alternative": "现有 LH 构造参数/配置/目录状态；不宣称完整执行等价",
+      "software_tasks": [
+        "S03"
+      ],
+      "disposition": "deferred_target_execution",
+      "handling": "注册/空指令不再视为执行能力；完整功能依赖目标执行契约，延期。",
+      "target_verified": false
+    },
+    {
+      "id": "LM-FB-013",
+      "requirement": "信号量 V 操作",
+      "lm_name": "SemaVOper",
+      "original_status": "not_met",
+      "lh_candidates": [
+        "TaskSemPost"
+      ],
+      "local_alternative": "现有 LH 构造参数/配置/目录状态；不宣称完整执行等价",
+      "software_tasks": [
+        "S03"
+      ],
+      "disposition": "deferred_target_execution",
+      "handling": "注册/空指令不再视为执行能力；完整功能依赖目标执行契约，延期。",
+      "target_verified": false
+    },
+    {
+      "id": "LM-FB-014",
+      "requirement": "多分支入口",
+      "lm_name": "Switch",
+      "original_status": "not_met",
+      "lh_candidates": [
+        "Switch1",
+        "Switch2",
+        "Switch3",
+        "Switch4",
+        "Switch5"
+      ],
+      "local_alternative": "现有 LH 构造参数/配置/目录状态；不宣称完整执行等价",
+      "software_tasks": [
+        "S03"
+      ],
+      "disposition": "deferred_target_execution",
+      "handling": "注册/空指令不再视为执行能力；完整功能依赖目标执行契约，延期。",
+      "target_verified": false
+    },
+    {
+      "id": "LM-FB-015",
+      "requirement": "分支项",
+      "lm_name": "SwitchCase",
+      "original_status": "not_met",
+      "lh_candidates": [
+        "SwitchCase"
+      ],
+      "local_alternative": "现有 LH 构造参数/配置/目录状态；不宣称完整执行等价",
+      "software_tasks": [
+        "S03"
+      ],
+      "disposition": "deferred_target_execution",
+      "handling": "注册/空指令不再视为执行能力；完整功能依赖目标执行契约，延期。",
+      "target_verified": false
+    },
+    {
+      "id": "LM-FB-016",
+      "requirement": "缺省分支",
+      "lm_name": "SwitchDefault",
+      "original_status": "not_met",
+      "lh_candidates": [],
+      "local_alternative": "现有 LH 构造参数/配置/目录状态；不宣称完整执行等价",
+      "software_tasks": [
+        "S03"
+      ],
+      "disposition": "deferred_target_execution",
+      "handling": "注册/空指令不再视为执行能力；完整功能依赖目标执行契约，延期。",
+      "target_verified": false
+    },
+    {
+      "id": "LM-FB-017",
+      "requirement": "结束当前分支",
+      "lm_name": "SwitchBreak",
+      "original_status": "not_met",
+      "lh_candidates": [
+        "SwitchBreak"
+      ],
+      "local_alternative": "现有 LH 构造参数/配置/目录状态；不宣称完整执行等价",
+      "software_tasks": [
+        "S03"
+      ],
+      "disposition": "deferred_target_execution",
+      "handling": "注册/空指令不再视为执行能力；完整功能依赖目标执行契约，延期。",
+      "target_verified": false
+    },
+    {
+      "id": "LM-FB-018",
+      "requirement": "多分支结束",
+      "lm_name": "SwitchEnd",
+      "original_status": "not_met",
+      "lh_candidates": [
+        "SwitchEnd"
+      ],
+      "local_alternative": "现有 LH 构造参数/配置/目录状态；不宣称完整执行等价",
+      "software_tasks": [
+        "S03"
+      ],
+      "disposition": "deferred_target_execution",
+      "handling": "注册/空指令不再视为执行能力；完整功能依赖目标执行契约，延期。",
+      "target_verified": false
+    },
+    {
+      "id": "LM-FB-019",
+      "requirement": "条件分支入口",
+      "lm_name": "If",
+      "original_status": "not_met",
+      "lh_candidates": [
+        "If1",
+        "If2",
+        "If3"
+      ],
+      "local_alternative": "现有 LH 构造参数/配置/目录状态；不宣称完整执行等价",
+      "software_tasks": [
+        "S03"
+      ],
+      "disposition": "deferred_target_execution",
+      "handling": "注册/空指令不再视为执行能力；完整功能依赖目标执行契约，延期。",
+      "target_verified": false
+    },
+    {
+      "id": "LM-FB-020",
+      "requirement": "条件分支另一分支",
+      "lm_name": "IfElse",
+      "original_status": "not_met",
+      "lh_candidates": [
+        "IfElse"
+      ],
+      "local_alternative": "现有 LH 构造参数/配置/目录状态；不宣称完整执行等价",
+      "software_tasks": [
+        "S03"
+      ],
+      "disposition": "deferred_target_execution",
+      "handling": "注册/空指令不再视为执行能力；完整功能依赖目标执行契约，延期。",
+      "target_verified": false
+    },
+    {
+      "id": "LM-FB-021",
+      "requirement": "条件分支结束",
+      "lm_name": "IfEnd",
+      "original_status": "not_met",
+      "lh_candidates": [
+        "IfEnd"
+      ],
+      "local_alternative": "现有 LH 构造参数/配置/目录状态；不宣称完整执行等价",
+      "software_tasks": [
+        "S03"
+      ],
+      "disposition": "deferred_target_execution",
+      "handling": "注册/空指令不再视为执行能力；完整功能依赖目标执行契约，延期。",
+      "target_verified": false
+    },
+    {
+      "id": "LM-FB-022",
+      "requirement": "可数循环入口",
+      "lm_name": "For",
+      "original_status": "not_met",
+      "lh_candidates": [
+        "For"
+      ],
+      "local_alternative": "现有 LH 构造参数/配置/目录状态；不宣称完整执行等价",
+      "software_tasks": [
+        "S03"
+      ],
+      "disposition": "deferred_target_execution",
+      "handling": "注册/空指令不再视为执行能力；完整功能依赖目标执行契约，延期。",
+      "target_verified": false
+    },
+    {
+      "id": "LM-FB-023",
+      "requirement": "可数循环结束",
+      "lm_name": "ForEnd",
+      "original_status": "not_met",
+      "lh_candidates": [
+        "ForEnd"
+      ],
+      "local_alternative": "现有 LH 构造参数/配置/目录状态；不宣称完整执行等价",
+      "software_tasks": [
+        "S03"
+      ],
+      "disposition": "deferred_target_execution",
+      "handling": "注册/空指令不再视为执行能力；完整功能依赖目标执行契约，延期。",
+      "target_verified": false
+    },
+    {
+      "id": "LM-FB-024",
+      "requirement": "提前退出循环",
+      "lm_name": "ForExit",
+      "original_status": "not_met",
+      "lh_candidates": [
+        "LoopBreak"
+      ],
+      "local_alternative": "现有 LH 构造参数/配置/目录状态；不宣称完整执行等价",
+      "software_tasks": [
+        "S03"
+      ],
+      "disposition": "deferred_target_execution",
+      "handling": "注册/空指令不再视为执行能力；完整功能依赖目标执行契约，延期。",
+      "target_verified": false
+    },
+    {
+      "id": "LM-FB-025",
+      "requirement": "条件循环入口",
+      "lm_name": "While",
+      "original_status": "not_met",
+      "lh_candidates": [
+        "While"
+      ],
+      "local_alternative": "现有 LH 构造参数/配置/目录状态；不宣称完整执行等价",
+      "software_tasks": [
+        "S03"
+      ],
+      "disposition": "deferred_target_execution",
+      "handling": "注册/空指令不再视为执行能力；完整功能依赖目标执行契约，延期。",
+      "target_verified": false
+    },
+    {
+      "id": "LM-FB-026",
+      "requirement": "条件循环结束",
+      "lm_name": "WhileEnd",
+      "original_status": "not_met",
+      "lh_candidates": [
+        "WhileEnd"
+      ],
+      "local_alternative": "现有 LH 构造参数/配置/目录状态；不宣称完整执行等价",
+      "software_tasks": [
+        "S03"
+      ],
+      "disposition": "deferred_target_execution",
+      "handling": "注册/空指令不再视为执行能力；完整功能依赖目标执行契约，延期。",
+      "target_verified": false
+    },
+    {
+      "id": "LM-FB-027",
+      "requirement": "工程量空间及上下限",
+      "lm_name": "ParamtEngBuild",
+      "original_status": "not_met",
+      "lh_candidates": [
+        "ParamtEngBuild"
+      ],
+      "local_alternative": "现有 LH 构造参数/配置/目录状态；不宣称完整执行等价",
+      "software_tasks": [
+        "S03"
+      ],
+      "disposition": "deferred_target_execution",
+      "handling": "注册/空指令不再视为执行能力；完整功能依赖目标执行契约，延期。",
+      "target_verified": false
+    },
+    {
+      "id": "LM-FB-028",
+      "requirement": "关联参数与工程量序号",
+      "lm_name": "ParamtEngNum",
+      "original_status": "not_met",
+      "lh_candidates": [],
+      "local_alternative": "现有 LH 构造参数/配置/目录状态；不宣称完整执行等价",
+      "software_tasks": [
+        "S03"
+      ],
+      "disposition": "deferred_target_execution",
+      "handling": "注册/空指令不再视为执行能力；完整功能依赖目标执行契约，延期。",
+      "target_verified": false
+    },
+    {
+      "id": "LM-FB-029",
+      "requirement": "清除保存特征",
+      "lm_name": "ParamtClrSave",
+      "original_status": "not_met",
+      "lh_candidates": [],
+      "local_alternative": "现有 LH 构造参数/配置/目录状态；不宣称完整执行等价",
+      "software_tasks": [
+        "S03"
+      ],
+      "disposition": "deferred_target_execution",
+      "handling": "注册/空指令不再视为执行能力；完整功能依赖目标执行契约，延期。",
+      "target_verified": false
+    },
+    {
+      "id": "LM-FB-030",
+      "requirement": "清除参数语义",
+      "lm_name": "ParamtDeal",
+      "original_status": "not_met",
+      "lh_candidates": [],
+      "local_alternative": "现有 LH 构造参数/配置/目录状态；不宣称完整执行等价",
+      "software_tasks": [
+        "S03"
+      ],
+      "disposition": "deferred_target_execution",
+      "handling": "注册/空指令不再视为执行能力；完整功能依赖目标执行契约，延期。",
+      "target_verified": false
+    },
+    {
+      "id": "LM-FB-031",
+      "requirement": "定义永久参数",
+      "lm_name": "ParamtPermntSave",
+      "original_status": "not_met",
+      "lh_candidates": [],
+      "local_alternative": "现有 LH 构造参数/配置/目录状态；不宣称完整执行等价",
+      "software_tasks": [
+        "S03"
+      ],
+      "disposition": "deferred_target_execution",
+      "handling": "注册/空指令不再视为执行能力；完整功能依赖目标执行契约，延期。",
+      "target_verified": false
+    },
+    {
+      "id": "LM-FB-032",
+      "requirement": "掉电保护参数",
+      "lm_name": "ParamtPowerSave",
+      "original_status": "not_met",
+      "lh_candidates": [],
+      "local_alternative": "现有 LH 构造参数/配置/目录状态；不宣称完整执行等价",
+      "software_tasks": [
+        "S03"
+      ],
+      "disposition": "deferred_target_execution",
+      "handling": "注册/空指令不再视为执行能力；完整功能依赖目标执行契约，延期。",
+      "target_verified": false
+    },
+    {
+      "id": "LM-FB-033",
+      "requirement": "激活参数语义",
+      "lm_name": "ParamtActi",
+      "original_status": "not_met",
+      "lh_candidates": [],
+      "local_alternative": "现有 LH 构造参数/配置/目录状态；不宣称完整执行等价",
+      "software_tasks": [
+        "S03"
+      ],
+      "disposition": "deferred_target_execution",
+      "handling": "注册/空指令不再视为执行能力；完整功能依赖目标执行契约，延期。",
+      "target_verified": false
+    },
+    {
+      "id": "LM-FB-034",
+      "requirement": "语义参数传送",
+      "lm_name": "ParamtMove",
+      "original_status": "not_met",
+      "lh_candidates": [],
+      "local_alternative": "现有 LH 构造参数/配置/目录状态；不宣称完整执行等价",
+      "software_tasks": [
+        "S03"
+      ],
+      "disposition": "deferred_target_execution",
+      "handling": "注册/空指令不再视为执行能力；完整功能依赖目标执行契约，延期。",
+      "target_verified": false
+    },
+    {
+      "id": "LM-FB-035",
+      "requirement": "CAN 初始化与装置号、波特率",
+      "lm_name": "CommCANInit",
+      "original_status": "not_met",
+      "lh_candidates": [
+        "CommCANInit"
+      ],
+      "local_alternative": "现有 LH 构造参数/配置/目录状态；不宣称完整执行等价",
+      "software_tasks": [
+        "S03"
+      ],
+      "disposition": "deferred_target_execution",
+      "handling": "注册/空指令不再视为执行能力；完整功能依赖目标执行契约，延期。",
+      "target_verified": false
+    },
+    {
+      "id": "LM-FB-036",
+      "requirement": "带优先级、目标地址及数据组的发送",
+      "lm_name": "CommTrans",
+      "original_status": "not_met",
+      "lh_candidates": [
+        "CommTrans"
+      ],
+      "local_alternative": "现有 LH 构造参数/配置/目录状态；不宣称完整执行等价",
+      "software_tasks": [
+        "S03"
+      ],
+      "disposition": "deferred_target_execution",
+      "handling": "注册/空指令不再视为执行能力；完整功能依赖目标执行契约，延期。",
+      "target_verified": false
+    },
+    {
+      "id": "LM-FB-037",
+      "requirement": "数据变化触发发送",
+      "lm_name": "CommVariTrans",
+      "original_status": "not_met",
+      "lh_candidates": [],
+      "local_alternative": "现有 LH 构造参数/配置/目录状态；不宣称完整执行等价",
+      "software_tasks": [
+        "S03"
+      ],
+      "disposition": "deferred_target_execution",
+      "handling": "注册/空指令不再视为执行能力；完整功能依赖目标执行契约，延期。",
+      "target_verified": false
+    },
+    {
+      "id": "LM-FB-038",
+      "requirement": "接收缓冲区与地址",
+      "lm_name": "CommReciveBuff",
+      "original_status": "not_met",
+      "lh_candidates": [],
+      "local_alternative": "现有 LH 构造参数/配置/目录状态；不宣称完整执行等价",
+      "software_tasks": [
+        "S03"
+      ],
+      "disposition": "deferred_target_execution",
+      "handling": "注册/空指令不再视为执行能力；完整功能依赖目标执行契约，延期。",
+      "target_verified": false
+    },
+    {
+      "id": "LM-FB-039",
+      "requirement": "多通道 ADC 采样、平均",
+      "lm_name": "DrvAI",
+      "original_status": "partial",
+      "lh_candidates": [
+        "DrvAI"
+      ],
+      "local_alternative": "现有 LH 构造参数/配置/目录状态；不宣称完整执行等价",
+      "software_tasks": [
+        "S03"
+      ],
+      "disposition": "deferred_target_execution",
+      "handling": "注册/空指令不再视为执行能力；完整功能依赖目标执行契约，延期。",
+      "target_verified": false
+    },
+    {
+      "id": "LM-FB-040",
+      "requirement": "T1 PWM 模拟输出",
+      "lm_name": "DrvT1PWMAO",
+      "original_status": "partial",
+      "lh_candidates": [
+        "DrvAO"
+      ],
+      "local_alternative": "现有 LH 构造参数/配置/目录状态；不宣称完整执行等价",
+      "software_tasks": [
+        "S03"
+      ],
+      "disposition": "deferred_target_execution",
+      "handling": "注册/空指令不再视为执行能力；完整功能依赖目标执行契约，延期。",
+      "target_verified": false
+    },
+    {
+      "id": "LM-FB-041",
+      "requirement": "T2 PWM 模拟输出扩展",
+      "lm_name": "DrvT2PWMAO",
+      "original_status": "partial",
+      "lh_candidates": [
+        "DrvAO"
+      ],
+      "local_alternative": "现有 LH 构造参数/配置/目录状态；不宣称完整执行等价",
+      "software_tasks": [
+        "S03"
+      ],
+      "disposition": "deferred_target_execution",
+      "handling": "注册/空指令不再视为执行能力；完整功能依赖目标执行契约，延期。",
+      "target_verified": false
+    },
+    {
+      "id": "LM-FB-042",
+      "requirement": "CAP 周期、频率输入",
+      "lm_name": "DrvT2PeriodIn",
+      "original_status": "partial",
+      "lh_candidates": [
+        "DrvT2PeriodIn"
+      ],
+      "local_alternative": "现有 LH 构造参数/配置/目录状态；不宣称完整执行等价",
+      "software_tasks": [
+        "S03"
+      ],
+      "disposition": "deferred_target_execution",
+      "handling": "注册/空指令不再视为执行能力；完整功能依赖目标执行契约，延期。",
+      "target_verified": false
+    },
+    {
+      "id": "LM-FB-043",
+      "requirement": "脉冲计数输入",
+      "lm_name": "DrvT2PulseIn",
+      "original_status": "partial",
+      "lh_candidates": [
+        "DrvTimeIn"
+      ],
+      "local_alternative": "现有 LH 构造参数/配置/目录状态；不宣称完整执行等价",
+      "software_tasks": [
+        "S03"
+      ],
+      "disposition": "deferred_target_execution",
+      "handling": "注册/空指令不再视为执行能力；完整功能依赖目标执行契约，延期。",
+      "target_verified": false
+    },
+    {
+      "id": "LM-FB-044",
+      "requirement": "端口、通道屏蔽和正反作用输入",
+      "lm_name": "DrvDI",
+      "original_status": "partial",
+      "lh_candidates": [
+        "DrvDI"
+      ],
+      "local_alternative": "现有 LH 构造参数/配置/目录状态；不宣称完整执行等价",
+      "software_tasks": [
+        "S03"
+      ],
+      "disposition": "deferred_target_execution",
+      "handling": "注册/空指令不再视为执行能力；完整功能依赖目标执行契约，延期。",
+      "target_verified": false
+    },
+    {
+      "id": "LM-FB-045",
+      "requirement": "引用数据驱动的数字输出",
+      "lm_name": "DrvDO",
+      "original_status": "partial",
+      "lh_candidates": [
+        "DrvDO"
+      ],
+      "local_alternative": "现有 LH 构造参数/配置/目录状态；不宣称完整执行等价",
+      "software_tasks": [
+        "S03"
+      ],
+      "disposition": "deferred_target_execution",
+      "handling": "注册/空指令不再视为执行能力；完整功能依赖目标执行契约，延期。",
+      "target_verified": false
+    },
+    {
+      "id": "LM-FB-046",
+      "requirement": "开关量 PWM 输出",
+      "lm_name": "DrvSWPWMOut",
+      "original_status": "not_met",
+      "lh_candidates": [],
+      "local_alternative": "现有 LH 构造参数/配置/目录状态；不宣称完整执行等价",
+      "software_tasks": [
+        "S03"
+      ],
+      "disposition": "deferred_target_execution",
+      "handling": "注册/空指令不再视为执行能力；完整功能依赖目标执行契约，延期。",
+      "target_verified": false
+    },
+    {
+      "id": "LM-FB-047",
+      "requirement": "开辟可变长度整型变量组",
+      "lm_name": "IntBuild",
+      "original_status": "not_met",
+      "lh_candidates": [
+        "IntBuild"
+      ],
+      "local_alternative": "现有 LH 构造参数/配置/目录状态；不宣称完整执行等价",
+      "software_tasks": [
+        "S03"
+      ],
+      "disposition": "deferred_target_execution",
+      "handling": "注册/空指令不再视为执行能力；完整功能依赖目标执行契约，延期。",
+      "target_verified": false
+    },
+    {
+      "id": "LM-FB-048",
+      "requirement": "开辟整型常量组",
+      "lm_name": "IntConstBuild",
+      "original_status": "not_met",
+      "lh_candidates": [
+        "IntConstBuild"
+      ],
+      "local_alternative": "INT/WORD 等标量常量赋值",
+      "software_tasks": [
+        "S01",
+        "S02"
+      ],
+      "disposition": "software_subcapability_and_deferred_target",
+      "handling": "注册/空指令不再视为执行能力；完整功能依赖目标执行契约，延期。",
+      "target_verified": false
+    },
+    {
+      "id": "LM-FB-049",
+      "requirement": "整型四则运算输出",
+      "lm_name": "IntOutOper",
+      "original_status": "not_met",
+      "lh_candidates": [
+        "Add",
+        "Sub",
+        "Mul",
+        "Div",
+        "Mod"
+      ],
+      "local_alternative": "现有 LH 构造参数/配置/目录状态；不宣称完整执行等价",
+      "software_tasks": [
+        "S03"
+      ],
+      "disposition": "deferred_target_execution",
+      "handling": "注册/空指令不再视为执行能力；完整功能依赖目标执行契约，延期。",
+      "target_verified": false
+    },
+    {
+      "id": "LM-FB-050",
+      "requirement": "整型四则运算缓冲",
+      "lm_name": "IntBuffOper",
+      "original_status": "not_met",
+      "lh_candidates": [
+        "IntBuffOper"
+      ],
+      "local_alternative": "整数常量表达式的算术运算",
+      "software_tasks": [
+        "S01",
+        "S02"
+      ],
+      "disposition": "software_subcapability_and_deferred_target",
+      "handling": "注册/空指令不再视为执行能力；完整功能依赖目标执行契约，延期。",
+      "target_verified": false
+    },
+    {
+      "id": "LM-FB-051",
+      "requirement": "整型位逻辑运算输出",
+      "lm_name": "IntOutLogicOper",
+      "original_status": "not_met",
+      "lh_candidates": [
+        "And",
+        "Or",
+        "Xor",
+        "Not"
+      ],
+      "local_alternative": "整数常量位运算",
+      "software_tasks": [
+        "S01",
+        "S02"
+      ],
+      "disposition": "software_subcapability_and_deferred_target",
+      "handling": "注册/空指令不再视为执行能力；完整功能依赖目标执行契约，延期。",
+      "target_verified": false
+    },
+    {
+      "id": "LM-FB-052",
+      "requirement": "整型位逻辑运算缓冲",
+      "lm_name": "IntBuffLogicOper",
+      "original_status": "not_met",
+      "lh_candidates": [
+        "IntBuffLogicOper"
+      ],
+      "local_alternative": "整数常量位运算",
+      "software_tasks": [
+        "S01",
+        "S02"
+      ],
+      "disposition": "software_subcapability_and_deferred_target",
+      "handling": "注册/空指令不再视为执行能力；完整功能依赖目标执行契约，延期。",
+      "target_verified": false
+    },
+    {
+      "id": "LM-FB-053",
+      "requirement": "整型初始化与运行时赋值组",
+      "lm_name": "IntValuate",
+      "original_status": "partial",
+      "lh_candidates": [],
+      "local_alternative": "标量常量赋值",
+      "software_tasks": [
+        "S01",
+        "S02"
+      ],
+      "disposition": "software_subcapability_and_deferred_target",
+      "handling": "注册/空指令不再视为执行能力；完整功能依赖目标执行契约，延期。",
+      "target_verified": false
+    },
+    {
+      "id": "LM-FB-054",
+      "requirement": "整型高选",
+      "lm_name": "IntMax",
+      "original_status": "not_met",
+      "lh_candidates": [
+        "IntMax"
+      ],
+      "local_alternative": "现有 LH 构造参数/配置/目录状态；不宣称完整执行等价",
+      "software_tasks": [
+        "S03"
+      ],
+      "disposition": "deferred_target_execution",
+      "handling": "注册/空指令不再视为执行能力；完整功能依赖目标执行契约，延期。",
+      "target_verified": false
+    },
+    {
+      "id": "LM-FB-055",
+      "requirement": "整型低选",
+      "lm_name": "IntMin",
+      "original_status": "not_met",
+      "lh_candidates": [
+        "IntMin"
+      ],
+      "local_alternative": "现有 LH 构造参数/配置/目录状态；不宣称完整执行等价",
+      "software_tasks": [
+        "S03"
+      ],
+      "disposition": "deferred_target_execution",
+      "handling": "注册/空指令不再视为执行能力；完整功能依赖目标执行契约，延期。",
+      "target_verified": false
+    },
+    {
+      "id": "LM-FB-056",
+      "requirement": "整型限幅与限幅标志",
+      "lm_name": "IntLimt",
+      "original_status": "not_met",
+      "lh_candidates": [
+        "IntLimt"
+      ],
+      "local_alternative": "现有 LH 构造参数/配置/目录状态；不宣称完整执行等价",
+      "software_tasks": [
+        "S03"
+      ],
+      "disposition": "deferred_target_execution",
+      "handling": "注册/空指令不再视为执行能力；完整功能依赖目标执行契约，延期。",
+      "target_verified": false
+    },
+    {
+      "id": "LM-FB-057",
+      "requirement": "整型比较",
+      "lm_name": "IntComp",
+      "original_status": "not_met",
+      "lh_candidates": [
+        "IntComp"
+      ],
+      "local_alternative": "整数常量比较",
+      "software_tasks": [
+        "S01",
+        "S02"
+      ],
+      "disposition": "software_subcapability_and_deferred_target",
+      "handling": "注册/空指令不再视为执行能力；完整功能依赖目标执行契约，延期。",
+      "target_verified": false
+    },
+    {
+      "id": "LM-FB-058",
+      "requirement": "整型量监视",
+      "lm_name": "IntWatch",
+      "original_status": "not_met",
+      "lh_candidates": [],
+      "local_alternative": "现有 LH 构造参数/配置/目录状态；不宣称完整执行等价",
+      "software_tasks": [
+        "S03"
+      ],
+      "disposition": "deferred_target_execution",
+      "handling": "注册/空指令不再视为执行能力；完整功能依赖目标执行契约，延期。",
+      "target_verified": false
+    },
+    {
+      "id": "LM-FB-059",
+      "requirement": "开辟浮点变量组",
+      "lm_name": "FloatBuild",
+      "original_status": "not_met",
+      "lh_candidates": [
+        "FloatBuild"
+      ],
+      "local_alternative": "现有 LH 构造参数/配置/目录状态；不宣称完整执行等价",
+      "software_tasks": [
+        "S03"
+      ],
+      "disposition": "deferred_target_execution",
+      "handling": "注册/空指令不再视为执行能力；完整功能依赖目标执行契约，延期。",
+      "target_verified": false
+    },
+    {
+      "id": "LM-FB-060",
+      "requirement": "开辟浮点常量组",
+      "lm_name": "FloatConstBuild",
+      "original_status": "not_met",
+      "lh_candidates": [
+        "FloatConstBuild"
+      ],
+      "local_alternative": "REAL 常量赋值",
+      "software_tasks": [
+        "S01",
+        "S02"
+      ],
+      "disposition": "software_subcapability_and_deferred_target",
+      "handling": "注册/空指令不再视为执行能力；完整功能依赖目标执行契约，延期。",
+      "target_verified": false
+    },
+    {
+      "id": "LM-FB-061",
+      "requirement": "浮点初等运算输出",
+      "lm_name": "FloatOutOper",
+      "original_status": "not_met",
+      "lh_candidates": [
+        "Add",
+        "Sub",
+        "Mul",
+        "Div",
+        "Abs",
+        "Sqrt",
+        "Exp",
+        "Ln",
+        "Sin",
+        "Cos",
+        "Tan"
+      ],
+      "local_alternative": "现有 LH 构造参数/配置/目录状态；不宣称完整执行等价",
+      "software_tasks": [
+        "S03"
+      ],
+      "disposition": "deferred_target_execution",
+      "handling": "注册/空指令不再视为执行能力；完整功能依赖目标执行契约，延期。",
+      "target_verified": false
+    },
+    {
+      "id": "LM-FB-062",
+      "requirement": "浮点初等运算缓冲",
+      "lm_name": "FloatBuffOper",
+      "original_status": "not_met",
+      "lh_candidates": [
+        "FloatBuffOper"
+      ],
+      "local_alternative": "REAL 常量算术",
+      "software_tasks": [
+        "S01",
+        "S02"
+      ],
+      "disposition": "software_subcapability_and_deferred_target",
+      "handling": "注册/空指令不再视为执行能力；完整功能依赖目标执行契约，延期。",
+      "target_verified": false
+    },
+    {
+      "id": "LM-FB-063",
+      "requirement": "浮点初始化与运行时赋值组",
+      "lm_name": "FloatValuate",
+      "original_status": "partial",
+      "lh_candidates": [],
+      "local_alternative": "REAL 常量赋值",
+      "software_tasks": [
+        "S01",
+        "S02"
+      ],
+      "disposition": "software_subcapability_and_deferred_target",
+      "handling": "注册/空指令不再视为执行能力；完整功能依赖目标执行契约，延期。",
+      "target_verified": false
+    },
+    {
+      "id": "LM-FB-064",
+      "requirement": "浮点高选",
+      "lm_name": "FloatMax",
+      "original_status": "not_met",
+      "lh_candidates": [
+        "FloatMax"
+      ],
+      "local_alternative": "现有 LH 构造参数/配置/目录状态；不宣称完整执行等价",
+      "software_tasks": [
+        "S03"
+      ],
+      "disposition": "deferred_target_execution",
+      "handling": "注册/空指令不再视为执行能力；完整功能依赖目标执行契约，延期。",
+      "target_verified": false
+    },
+    {
+      "id": "LM-FB-065",
+      "requirement": "浮点低选",
+      "lm_name": "FloatMin",
+      "original_status": "not_met",
+      "lh_candidates": [
+        "FloatMin"
+      ],
+      "local_alternative": "现有 LH 构造参数/配置/目录状态；不宣称完整执行等价",
+      "software_tasks": [
+        "S03"
+      ],
+      "disposition": "deferred_target_execution",
+      "handling": "注册/空指令不再视为执行能力；完整功能依赖目标执行契约，延期。",
+      "target_verified": false
+    },
+    {
+      "id": "LM-FB-066",
+      "requirement": "浮点限幅",
+      "lm_name": "FloatLimt",
+      "original_status": "not_met",
+      "lh_candidates": [
+        "FloatLimt"
+      ],
+      "local_alternative": "现有 LH 构造参数/配置/目录状态；不宣称完整执行等价",
+      "software_tasks": [
+        "S03"
+      ],
+      "disposition": "deferred_target_execution",
+      "handling": "注册/空指令不再视为执行能力；完整功能依赖目标执行契约，延期。",
+      "target_verified": false
+    },
+    {
+      "id": "LM-FB-067",
+      "requirement": "浮点绝对值限幅",
+      "lm_name": "FloatPureLimt",
+      "original_status": "not_met",
+      "lh_candidates": [],
+      "local_alternative": "现有 LH 构造参数/配置/目录状态；不宣称完整执行等价",
+      "software_tasks": [
+        "S03"
+      ],
+      "disposition": "deferred_target_execution",
+      "handling": "注册/空指令不再视为执行能力；完整功能依赖目标执行契约，延期。",
+      "target_verified": false
+    },
+    {
+      "id": "LM-FB-068",
+      "requirement": "浮点比较",
+      "lm_name": "FloatComp",
+      "original_status": "not_met",
+      "lh_candidates": [
+        "FloatComp"
+      ],
+      "local_alternative": "REAL 常量比较",
+      "software_tasks": [
+        "S01",
+        "S02"
+      ],
+      "disposition": "software_subcapability_and_deferred_target",
+      "handling": "注册/空指令不再视为执行能力；完整功能依赖目标执行契约，延期。",
+      "target_verified": false
+    },
+    {
+      "id": "LM-FB-069",
+      "requirement": "浮点小信号切除",
+      "lm_name": "FloatSignCut",
+      "original_status": "not_met",
+      "lh_candidates": [],
+      "local_alternative": "现有 LH 构造参数/配置/目录状态；不宣称完整执行等价",
+      "software_tasks": [
+        "S03"
+      ],
+      "disposition": "deferred_target_execution",
+      "handling": "注册/空指令不再视为执行能力；完整功能依赖目标执行契约，延期。",
+      "target_verified": false
+    },
+    {
+      "id": "LM-FB-070",
+      "requirement": "浮点变化率限制",
+      "lm_name": "FloatVariLimt",
+      "original_status": "not_met",
+      "lh_candidates": [
+        "FloatVariLimt"
+      ],
+      "local_alternative": "现有 LH 构造参数/配置/目录状态；不宣称完整执行等价",
+      "software_tasks": [
+        "S03"
+      ],
+      "disposition": "deferred_target_execution",
+      "handling": "注册/空指令不再视为执行能力；完整功能依赖目标执行契约，延期。",
+      "target_verified": false
+    },
+    {
+      "id": "LM-FB-071",
+      "requirement": "浮点高值监视",
+      "lm_name": "FloatOverWatch",
+      "original_status": "not_met",
+      "lh_candidates": [
+        "FloatOverWatch"
+      ],
+      "local_alternative": "现有 LH 构造参数/配置/目录状态；不宣称完整执行等价",
+      "software_tasks": [
+        "S03"
+      ],
+      "disposition": "deferred_target_execution",
+      "handling": "注册/空指令不再视为执行能力；完整功能依赖目标执行契约，延期。",
+      "target_verified": false
+    },
+    {
+      "id": "LM-FB-072",
+      "requirement": "浮点低值监视",
+      "lm_name": "FloatBelowWatch",
+      "original_status": "not_met",
+      "lh_candidates": [
+        "FloatBelowWatch"
+      ],
+      "local_alternative": "现有 LH 构造参数/配置/目录状态；不宣称完整执行等价",
+      "software_tasks": [
+        "S03"
+      ],
+      "disposition": "deferred_target_execution",
+      "handling": "注册/空指令不再视为执行能力；完整功能依赖目标执行契约，延期。",
+      "target_verified": false
+    },
+    {
+      "id": "LM-FB-073",
+      "requirement": "开辟 IQ 变量",
+      "lm_name": "IQBuild",
+      "original_status": "not_met",
+      "lh_candidates": [],
+      "local_alternative": "现有 LH 构造参数/配置/目录状态；不宣称完整执行等价",
+      "software_tasks": [
+        "S03"
+      ],
+      "disposition": "deferred_target_execution",
+      "handling": "注册/空指令不再视为执行能力；完整功能依赖目标执行契约，延期。",
+      "target_verified": false
+    },
+    {
+      "id": "LM-FB-074",
+      "requirement": "开辟 IQ 常量",
+      "lm_name": "IQConstBuild",
+      "original_status": "not_met",
+      "lh_candidates": [],
+      "local_alternative": "现有 LH 构造参数/配置/目录状态；不宣称完整执行等价",
+      "software_tasks": [
+        "S03"
+      ],
+      "disposition": "deferred_target_execution",
+      "handling": "注册/空指令不再视为执行能力；完整功能依赖目标执行契约，延期。",
+      "target_verified": false
+    },
+    {
+      "id": "LM-FB-075",
+      "requirement": "IQ 初等运算输出",
+      "lm_name": "IQOutOper",
+      "original_status": "not_met",
+      "lh_candidates": [],
+      "local_alternative": "现有 LH 构造参数/配置/目录状态；不宣称完整执行等价",
+      "software_tasks": [
+        "S03"
+      ],
+      "disposition": "deferred_target_execution",
+      "handling": "注册/空指令不再视为执行能力；完整功能依赖目标执行契约，延期。",
+      "target_verified": false
+    },
+    {
+      "id": "LM-FB-076",
+      "requirement": "IQ 初等运算缓冲",
+      "lm_name": "IQBuffOper",
+      "original_status": "not_met",
+      "lh_candidates": [],
+      "local_alternative": "现有 LH 构造参数/配置/目录状态；不宣称完整执行等价",
+      "software_tasks": [
+        "S03"
+      ],
+      "disposition": "deferred_target_execution",
+      "handling": "注册/空指令不再视为执行能力；完整功能依赖目标执行契约，延期。",
+      "target_verified": false
+    },
+    {
+      "id": "LM-FB-077",
+      "requirement": "IQ 赋值",
+      "lm_name": "IQValuate",
+      "original_status": "not_met",
+      "lh_candidates": [],
+      "local_alternative": "现有 LH 构造参数/配置/目录状态；不宣称完整执行等价",
+      "software_tasks": [
+        "S03"
+      ],
+      "disposition": "deferred_target_execution",
+      "handling": "注册/空指令不再视为执行能力；完整功能依赖目标执行契约，延期。",
+      "target_verified": false
+    },
+    {
+      "id": "LM-FB-078",
+      "requirement": "IQ 高选",
+      "lm_name": "IQMax",
+      "original_status": "not_met",
+      "lh_candidates": [],
+      "local_alternative": "现有 LH 构造参数/配置/目录状态；不宣称完整执行等价",
+      "software_tasks": [
+        "S03"
+      ],
+      "disposition": "deferred_target_execution",
+      "handling": "注册/空指令不再视为执行能力；完整功能依赖目标执行契约，延期。",
+      "target_verified": false
+    },
+    {
+      "id": "LM-FB-079",
+      "requirement": "IQ 低选",
+      "lm_name": "IQMin",
+      "original_status": "not_met",
+      "lh_candidates": [],
+      "local_alternative": "现有 LH 构造参数/配置/目录状态；不宣称完整执行等价",
+      "software_tasks": [
+        "S03"
+      ],
+      "disposition": "deferred_target_execution",
+      "handling": "注册/空指令不再视为执行能力；完整功能依赖目标执行契约，延期。",
+      "target_verified": false
+    },
+    {
+      "id": "LM-FB-080",
+      "requirement": "IQ 限幅",
+      "lm_name": "IQLimt",
+      "original_status": "not_met",
+      "lh_candidates": [],
+      "local_alternative": "现有 LH 构造参数/配置/目录状态；不宣称完整执行等价",
+      "software_tasks": [
+        "S03"
+      ],
+      "disposition": "deferred_target_execution",
+      "handling": "注册/空指令不再视为执行能力；完整功能依赖目标执行契约，延期。",
+      "target_verified": false
+    },
+    {
+      "id": "LM-FB-081",
+      "requirement": "IQ 绝对值限幅",
+      "lm_name": "IQPureLimt",
+      "original_status": "not_met",
+      "lh_candidates": [],
+      "local_alternative": "现有 LH 构造参数/配置/目录状态；不宣称完整执行等价",
+      "software_tasks": [
+        "S03"
+      ],
+      "disposition": "deferred_target_execution",
+      "handling": "注册/空指令不再视为执行能力；完整功能依赖目标执行契约，延期。",
+      "target_verified": false
+    },
+    {
+      "id": "LM-FB-082",
+      "requirement": "IQ 比较",
+      "lm_name": "IQComp",
+      "original_status": "not_met",
+      "lh_candidates": [],
+      "local_alternative": "现有 LH 构造参数/配置/目录状态；不宣称完整执行等价",
+      "software_tasks": [
+        "S03"
+      ],
+      "disposition": "deferred_target_execution",
+      "handling": "注册/空指令不再视为执行能力；完整功能依赖目标执行契约，延期。",
+      "target_verified": false
+    },
+    {
+      "id": "LM-FB-083",
+      "requirement": "IQ 小信号切除",
+      "lm_name": "IQSignCut",
+      "original_status": "not_met",
+      "lh_candidates": [],
+      "local_alternative": "现有 LH 构造参数/配置/目录状态；不宣称完整执行等价",
+      "software_tasks": [
+        "S03"
+      ],
+      "disposition": "deferred_target_execution",
+      "handling": "注册/空指令不再视为执行能力；完整功能依赖目标执行契约，延期。",
+      "target_verified": false
+    },
+    {
+      "id": "LM-FB-084",
+      "requirement": "IQ 变化率限制",
+      "lm_name": "IQVariLimt",
+      "original_status": "not_met",
+      "lh_candidates": [],
+      "local_alternative": "现有 LH 构造参数/配置/目录状态；不宣称完整执行等价",
+      "software_tasks": [
+        "S03"
+      ],
+      "disposition": "deferred_target_execution",
+      "handling": "注册/空指令不再视为执行能力；完整功能依赖目标执行契约，延期。",
+      "target_verified": false
+    },
+    {
+      "id": "LM-FB-085",
+      "requirement": "IQ 高值监视",
+      "lm_name": "IQOverWatch",
+      "original_status": "not_met",
+      "lh_candidates": [],
+      "local_alternative": "现有 LH 构造参数/配置/目录状态；不宣称完整执行等价",
+      "software_tasks": [
+        "S03"
+      ],
+      "disposition": "deferred_target_execution",
+      "handling": "注册/空指令不再视为执行能力；完整功能依赖目标执行契约，延期。",
+      "target_verified": false
+    },
+    {
+      "id": "LM-FB-086",
+      "requirement": "IQ 低值监视",
+      "lm_name": "IQBelowWatch",
+      "original_status": "not_met",
+      "lh_candidates": [],
+      "local_alternative": "现有 LH 构造参数/配置/目录状态；不宣称完整执行等价",
+      "software_tasks": [
+        "S03"
+      ],
+      "disposition": "deferred_target_execution",
+      "handling": "注册/空指令不再视为执行能力；完整功能依赖目标执行契约，延期。",
+      "target_verified": false
+    },
+    {
+      "id": "LM-FB-087",
+      "requirement": "整型输入归一化为浮点/IQ",
+      "lm_name": "DealInUnify",
+      "original_status": "not_met",
+      "lh_candidates": [
+        "DealInUnify"
+      ],
+      "local_alternative": "现有 LH 构造参数/配置/目录状态；不宣称完整执行等价",
+      "software_tasks": [
+        "S03"
+      ],
+      "disposition": "deferred_target_execution",
+      "handling": "注册/空指令不再视为执行能力；完整功能依赖目标执行契约，延期。",
+      "target_verified": false
+    },
+    {
+      "id": "LM-FB-088",
+      "requirement": "浮点/IQ 输出归一化为整型",
+      "lm_name": "DealOutUnify",
+      "original_status": "not_met",
+      "lh_candidates": [
+        "DealOutUnify"
+      ],
+      "local_alternative": "现有 LH 构造参数/配置/目录状态；不宣称完整执行等价",
+      "software_tasks": [
+        "S03"
+      ],
+      "disposition": "deferred_target_execution",
+      "handling": "注册/空指令不再视为执行能力；完整功能依赖目标执行契约，延期。",
+      "target_verified": false
+    },
+    {
+      "id": "LM-FB-089",
+      "requirement": "同类数据传送",
+      "lm_name": "DealSameKind",
+      "original_status": "not_met",
+      "lh_candidates": [],
+      "local_alternative": "现有 LH 构造参数/配置/目录状态；不宣称完整执行等价",
+      "software_tasks": [
+        "S03"
+      ],
+      "disposition": "deferred_target_execution",
+      "handling": "注册/空指令不再视为执行能力；完整功能依赖目标执行契约，延期。",
+      "target_verified": false
+    },
+    {
+      "id": "LM-FB-090",
+      "requirement": "同类数组传送",
+      "lm_name": "DealSameGroup",
+      "original_status": "not_met",
+      "lh_candidates": [],
+      "local_alternative": "现有 LH 构造参数/配置/目录状态；不宣称完整执行等价",
+      "software_tasks": [
+        "S03"
+      ],
+      "disposition": "deferred_target_execution",
+      "handling": "注册/空指令不再视为执行能力；完整功能依赖目标执行契约，延期。",
+      "target_verified": false
+    },
+    {
+      "id": "LM-FB-091",
+      "requirement": "异类数据及工程量转换",
+      "lm_name": "DealDiffKind",
+      "original_status": "not_met",
+      "lh_candidates": [],
+      "local_alternative": "现有 LH 构造参数/配置/目录状态；不宣称完整执行等价",
+      "software_tasks": [
+        "S03"
+      ],
+      "disposition": "deferred_target_execution",
+      "handling": "注册/空指令不再视为执行能力；完整功能依赖目标执行契约，延期。",
+      "target_verified": false
+    },
+    {
+      "id": "LM-FB-092",
+      "requirement": "整型拆为位开关量",
+      "lm_name": "DealToSwit",
+      "original_status": "not_met",
+      "lh_candidates": [
+        "DealToSwit"
+      ],
+      "local_alternative": "现有 LH 构造参数/配置/目录状态；不宣称完整执行等价",
+      "software_tasks": [
+        "S03"
+      ],
+      "disposition": "deferred_target_execution",
+      "handling": "注册/空指令不再视为执行能力；完整功能依赖目标执行契约，延期。",
+      "target_verified": false
+    },
+    {
+      "id": "LM-FB-093",
+      "requirement": "开关量合成整型",
+      "lm_name": "DealToData",
+      "original_status": "not_met",
+      "lh_candidates": [
+        "DealToData"
+      ],
+      "local_alternative": "现有 LH 构造参数/配置/目录状态；不宣称完整执行等价",
+      "software_tasks": [
+        "S03"
+      ],
+      "disposition": "deferred_target_execution",
+      "handling": "注册/空指令不再视为执行能力；完整功能依赖目标执行契约，延期。",
+      "target_verified": false
+    },
+    {
+      "id": "LM-FB-094",
+      "requirement": "整型开关选择浮点值",
+      "lm_name": "FuncIntSwitFloat",
+      "original_status": "not_met",
+      "lh_candidates": [],
+      "local_alternative": "现有 LH 构造参数/配置/目录状态；不宣称完整执行等价",
+      "software_tasks": [
+        "S03"
+      ],
+      "disposition": "deferred_target_execution",
+      "handling": "注册/空指令不再视为执行能力；完整功能依赖目标执行契约，延期。",
+      "target_verified": false
+    },
+    {
+      "id": "LM-FB-095",
+      "requirement": "整型开关选择整型值",
+      "lm_name": "FuncIntSwitInt",
+      "original_status": "not_met",
+      "lh_candidates": [],
+      "local_alternative": "现有 LH 构造参数/配置/目录状态；不宣称完整执行等价",
+      "software_tasks": [
+        "S03"
+      ],
+      "disposition": "deferred_target_execution",
+      "handling": "注册/空指令不再视为执行能力；完整功能依赖目标执行契约，延期。",
+      "target_verified": false
+    },
+    {
+      "id": "LM-FB-096",
+      "requirement": "整型索引到浮点函数",
+      "lm_name": "FuncIntFloat",
+      "original_status": "not_met",
+      "lh_candidates": [],
+      "local_alternative": "现有 LH 构造参数/配置/目录状态；不宣称完整执行等价",
+      "software_tasks": [
+        "S03"
+      ],
+      "disposition": "deferred_target_execution",
+      "handling": "注册/空指令不再视为执行能力；完整功能依赖目标执行契约，延期。",
+      "target_verified": false
+    },
+    {
+      "id": "LM-FB-097",
+      "requirement": "整型索引到整型函数",
+      "lm_name": "FuncIntInt",
+      "original_status": "not_met",
+      "lh_candidates": [],
+      "local_alternative": "现有 LH 构造参数/配置/目录状态；不宣称完整执行等价",
+      "software_tasks": [
+        "S03"
+      ],
+      "disposition": "deferred_target_execution",
+      "handling": "注册/空指令不再视为执行能力；完整功能依赖目标执行契约，延期。",
+      "target_verified": false
+    },
+    {
+      "id": "LM-FB-098",
+      "requirement": "浮点输入的整型反函数",
+      "lm_name": "FuncReversIntFloat",
+      "original_status": "not_met",
+      "lh_candidates": [],
+      "local_alternative": "现有 LH 构造参数/配置/目录状态；不宣称完整执行等价",
+      "software_tasks": [
+        "S03"
+      ],
+      "disposition": "deferred_target_execution",
+      "handling": "注册/空指令不再视为执行能力；完整功能依赖目标执行契约，延期。",
+      "target_verified": false
+    },
+    {
+      "id": "LM-FB-099",
+      "requirement": "多项式逼近",
+      "lm_name": "FuncPoly",
+      "original_status": "not_met",
+      "lh_candidates": [],
+      "local_alternative": "现有 LH 构造参数/配置/目录状态；不宣称完整执行等价",
+      "software_tasks": [
+        "S03"
+      ],
+      "disposition": "deferred_target_execution",
+      "handling": "注册/空指令不再视为执行能力；完整功能依赖目标执行契约，延期。",
+      "target_verified": false
+    },
+    {
+      "id": "LM-FB-100",
+      "requirement": "一元折线函数",
+      "lm_name": "FuncMultLine",
+      "original_status": "not_met",
+      "lh_candidates": [],
+      "local_alternative": "现有 LH 构造参数/配置/目录状态；不宣称完整执行等价",
+      "software_tasks": [
+        "S03"
+      ],
+      "disposition": "deferred_target_execution",
+      "handling": "注册/空指令不再视为执行能力；完整功能依赖目标执行契约，延期。",
+      "target_verified": false
+    },
+    {
+      "id": "LM-FB-101",
+      "requirement": "二元折线函数",
+      "lm_name": "FuncTwoMultLine",
+      "original_status": "not_met",
+      "lh_candidates": [],
+      "local_alternative": "现有 LH 构造参数/配置/目录状态；不宣称完整执行等价",
+      "software_tasks": [
+        "S03"
+      ],
+      "disposition": "deferred_target_execution",
+      "handling": "注册/空指令不再视为执行能力；完整功能依赖目标执行契约，延期。",
+      "target_verified": false
+    },
+    {
+      "id": "LM-FB-102",
+      "requirement": "计时器与时间状态",
+      "lm_name": "Timer",
+      "original_status": "not_met",
+      "lh_candidates": [
+        "Timer"
+      ],
+      "local_alternative": "现有 LH 构造参数/配置/目录状态；不宣称完整执行等价",
+      "software_tasks": [
+        "S03"
+      ],
+      "disposition": "deferred_target_execution",
+      "handling": "注册/空指令不再视为执行能力；完整功能依赖目标执行契约，延期。",
+      "target_verified": false
+    },
+    {
+      "id": "LM-FB-103",
+      "requirement": "延时器",
+      "lm_name": "TimeDly",
+      "original_status": "not_met",
+      "lh_candidates": [
+        "TON",
+        "TOF",
+        "TP"
+      ],
+      "local_alternative": "现有 LH 构造参数/配置/目录状态；不宣称完整执行等价",
+      "software_tasks": [
+        "S03"
+      ],
+      "disposition": "deferred_target_execution",
+      "handling": "注册/空指令不再视为执行能力；完整功能依赖目标执行契约，延期。",
+      "target_verified": false
+    },
+    {
+      "id": "LM-FB-104",
+      "requirement": "系统时间",
+      "lm_name": "Timing",
+      "original_status": "not_met",
+      "lh_candidates": [],
+      "local_alternative": "现有 LH 构造参数/配置/目录状态；不宣称完整执行等价",
+      "software_tasks": [
+        "S03"
+      ],
+      "disposition": "deferred_target_execution",
+      "handling": "注册/空指令不再视为执行能力；完整功能依赖目标执行契约，延期。",
+      "target_verified": false
+    },
+    {
+      "id": "LM-FB-105",
+      "requirement": "计数器",
+      "lm_name": "TimeCount",
+      "original_status": "not_met",
+      "lh_candidates": [
+        "Counter",
+        "CTU",
+        "CTD",
+        "CTUD"
+      ],
+      "local_alternative": "现有 LH 构造参数/配置/目录状态；不宣称完整执行等价",
+      "software_tasks": [
+        "S03"
+      ],
+      "disposition": "deferred_target_execution",
+      "handling": "注册/空指令不再视为执行能力；完整功能依赖目标执行契约，延期。",
+      "target_verified": false
+    },
+    {
+      "id": "LM-FB-106",
+      "requirement": "分频器",
+      "lm_name": "TimeScale",
+      "original_status": "not_met",
+      "lh_candidates": [],
+      "local_alternative": "现有 LH 构造参数/配置/目录状态；不宣称完整执行等价",
+      "software_tasks": [
+        "S03"
+      ],
+      "disposition": "deferred_target_execution",
+      "handling": "注册/空指令不再视为执行能力；完整功能依赖目标执行契约，延期。",
+      "target_verified": false
+    },
+    {
+      "id": "LM-FB-107",
+      "requirement": "时间分段函数",
+      "lm_name": "TimeFunc",
+      "original_status": "not_met",
+      "lh_candidates": [],
+      "local_alternative": "现有 LH 构造参数/配置/目录状态；不宣称完整执行等价",
+      "software_tasks": [
+        "S03"
+      ],
+      "disposition": "deferred_target_execution",
+      "handling": "注册/空指令不再视为执行能力；完整功能依赖目标执行契约，延期。",
+      "target_verified": false
+    },
+    {
+      "id": "LM-FB-108",
+      "requirement": "过程量积算器",
+      "lm_name": "ProcsInteg",
+      "original_status": "not_met",
+      "lh_candidates": [],
+      "local_alternative": "现有 LH 构造参数/配置/目录状态；不宣称完整执行等价",
+      "software_tasks": [
+        "S03"
+      ],
+      "disposition": "deferred_target_execution",
+      "handling": "注册/空指令不再视为执行能力；完整功能依赖目标执行契约，延期。",
+      "target_verified": false
+    },
+    {
+      "id": "LM-FB-109",
+      "requirement": "过程量批量处理",
+      "lm_name": "ProcsBatch",
+      "original_status": "not_met",
+      "lh_candidates": [],
+      "local_alternative": "现有 LH 构造参数/配置/目录状态；不宣称完整执行等价",
+      "software_tasks": [
+        "S03"
+      ],
+      "disposition": "deferred_target_execution",
+      "handling": "注册/空指令不再视为执行能力；完整功能依赖目标执行契约，延期。",
+      "target_verified": false
+    },
+    {
+      "id": "LM-FB-110",
+      "requirement": "温度计算",
+      "lm_name": "ProcsTemp",
+      "original_status": "not_met",
+      "lh_candidates": [],
+      "local_alternative": "现有 LH 构造参数/配置/目录状态；不宣称完整执行等价",
+      "software_tasks": [
+        "S03"
+      ],
+      "disposition": "deferred_target_execution",
+      "handling": "注册/空指令不再视为执行能力；完整功能依赖目标执行契约，延期。",
+      "target_verified": false
+    },
+    {
+      "id": "LM-FB-111",
+      "requirement": "增益环节",
+      "lm_name": "CtrlGain",
+      "original_status": "not_met",
+      "lh_candidates": [],
+      "local_alternative": "现有 LH 构造参数/配置/目录状态；不宣称完整执行等价",
+      "software_tasks": [
+        "S03"
+      ],
+      "disposition": "deferred_target_execution",
+      "handling": "注册/空指令不再视为执行能力；完整功能依赖目标执行契约，延期。",
+      "target_verified": false
+    },
+    {
+      "id": "LM-FB-112",
+      "requirement": "偏置环节",
+      "lm_name": "CtrlBias",
+      "original_status": "not_met",
+      "lh_candidates": [],
+      "local_alternative": "现有 LH 构造参数/配置/目录状态；不宣称完整执行等价",
+      "software_tasks": [
+        "S03"
+      ],
+      "disposition": "deferred_target_execution",
+      "handling": "注册/空指令不再视为执行能力；完整功能依赖目标执行契约，延期。",
+      "target_verified": false
+    },
+    {
+      "id": "LM-FB-113",
+      "requirement": "惯性环节",
+      "lm_name": "CtrlInertia",
+      "original_status": "not_met",
+      "lh_candidates": [],
+      "local_alternative": "现有 LH 构造参数/配置/目录状态；不宣称完整执行等价",
+      "software_tasks": [
+        "S03"
+      ],
+      "disposition": "deferred_target_execution",
+      "handling": "注册/空指令不再视为执行能力；完整功能依赖目标执行契约，延期。",
+      "target_verified": false
+    },
+    {
+      "id": "LM-FB-114",
+      "requirement": "积分环节",
+      "lm_name": "CtrlInteg",
+      "original_status": "not_met",
+      "lh_candidates": [],
+      "local_alternative": "现有 LH 构造参数/配置/目录状态；不宣称完整执行等价",
+      "software_tasks": [
+        "S03"
+      ],
+      "disposition": "deferred_target_execution",
+      "handling": "注册/空指令不再视为执行能力；完整功能依赖目标执行契约，延期。",
+      "target_verified": false
+    },
+    {
+      "id": "LM-FB-115",
+      "requirement": "振荡环节",
+      "lm_name": "CtrlOscilla",
+      "original_status": "not_met",
+      "lh_candidates": [],
+      "local_alternative": "现有 LH 构造参数/配置/目录状态；不宣称完整执行等价",
+      "software_tasks": [
+        "S03"
+      ],
+      "disposition": "deferred_target_execution",
+      "handling": "注册/空指令不再视为执行能力；完整功能依赖目标执行契约，延期。",
+      "target_verified": false
+    },
+    {
+      "id": "LM-FB-116",
+      "requirement": "一阶微分环节",
+      "lm_name": "CtrlDiffer",
+      "original_status": "not_met",
+      "lh_candidates": [],
+      "local_alternative": "现有 LH 构造参数/配置/目录状态；不宣称完整执行等价",
+      "software_tasks": [
+        "S03"
+      ],
+      "disposition": "deferred_target_execution",
+      "handling": "注册/空指令不再视为执行能力；完整功能依赖目标执行契约，延期。",
+      "target_verified": false
+    },
+    {
+      "id": "LM-FB-117",
+      "requirement": "理想微分环节",
+      "lm_name": "CtrlPureDiffer",
+      "original_status": "not_met",
+      "lh_candidates": [],
+      "local_alternative": "现有 LH 构造参数/配置/目录状态；不宣称完整执行等价",
+      "software_tasks": [
+        "S03"
+      ],
+      "disposition": "deferred_target_execution",
+      "handling": "注册/空指令不再视为执行能力；完整功能依赖目标执行契约，延期。",
+      "target_verified": false
+    },
+    {
+      "id": "LM-FB-118",
+      "requirement": "二阶微分环节",
+      "lm_name": "CtrlTwoDiffer",
+      "original_status": "not_met",
+      "lh_candidates": [],
+      "local_alternative": "现有 LH 构造参数/配置/目录状态；不宣称完整执行等价",
+      "software_tasks": [
+        "S03"
+      ],
+      "disposition": "deferred_target_execution",
+      "handling": "注册/空指令不再视为执行能力；完整功能依赖目标执行契约，延期。",
+      "target_verified": false
+    },
+    {
+      "id": "LM-FB-119",
+      "requirement": "纯延迟环节",
+      "lm_name": "CtrlDly",
+      "original_status": "not_met",
+      "lh_candidates": [],
+      "local_alternative": "现有 LH 构造参数/配置/目录状态；不宣称完整执行等价",
+      "software_tasks": [
+        "S03"
+      ],
+      "disposition": "deferred_target_execution",
+      "handling": "注册/空指令不再视为执行能力；完整功能依赖目标执行契约，延期。",
+      "target_verified": false
+    },
+    {
+      "id": "LM-FB-120",
+      "requirement": "完整 PID 控制与手自动、前馈、非线性",
+      "lm_name": "PIDCtrl",
+      "original_status": "partial",
+      "lh_candidates": [
+        "PID"
+      ],
+      "local_alternative": "现有 LH 构造参数/配置/目录状态；不宣称完整执行等价",
+      "software_tasks": [
+        "S03"
+      ],
+      "disposition": "deferred_target_execution",
+      "handling": "注册/空指令不再视为执行能力；完整功能依赖目标执行契约，延期。",
+      "target_verified": false
+    },
+    {
+      "id": "LM-FB-121",
+      "requirement": "PID 自动整定、保护和结果接收",
+      "lm_name": "PIDRelayTuneCtrl",
+      "original_status": "partial",
+      "lh_candidates": [
+        "PIDAutoTune"
+      ],
+      "local_alternative": "现有 LH 构造参数/配置/目录状态；不宣称完整执行等价",
+      "software_tasks": [
+        "S03"
+      ],
+      "disposition": "deferred_target_execution",
+      "handling": "注册/空指令不再视为执行能力；完整功能依赖目标执行契约，延期。",
+      "target_verified": false
+    },
+    {
+      "id": "LM-FB-122",
+      "requirement": "暂态、稳态、超调控制",
+      "lm_name": "TSOCtrl",
+      "original_status": "not_met",
+      "lh_candidates": [
+        "TSO"
+      ],
+      "local_alternative": "现有 LH 构造参数/配置/目录状态；不宣称完整执行等价",
+      "software_tasks": [
+        "S03"
+      ],
+      "disposition": "deferred_target_execution",
+      "handling": "注册/空指令不再视为执行能力；完整功能依赖目标执行契约，延期。",
+      "target_verified": false
+    },
+    {
+      "id": "LM-FB-123",
+      "requirement": "TSO 自动整定",
+      "lm_name": "TSORelayTuneCtrl",
+      "original_status": "not_met",
+      "lh_candidates": [
+        "TSOAutoTune"
+      ],
+      "local_alternative": "现有 LH 构造参数/配置/目录状态；不宣称完整执行等价",
+      "software_tasks": [
+        "S03"
+      ],
+      "disposition": "deferred_target_execution",
+      "handling": "注册/空指令不再视为执行能力；完整功能依赖目标执行契约，延期。",
+      "target_verified": false
+    },
+    {
+      "id": "LM-FB-124",
+      "requirement": "两位继电控制、死区与滞环",
+      "lm_name": "RelayCtrl",
+      "original_status": "not_met",
+      "lh_candidates": [
+        "TwoPosition",
+        "RelayCtrl2"
+      ],
+      "local_alternative": "现有 LH 构造参数/配置/目录状态；不宣称完整执行等价",
+      "software_tasks": [
+        "S03"
+      ],
+      "disposition": "deferred_target_execution",
+      "handling": "注册/空指令不再视为执行能力；完整功能依赖目标执行契约，延期。",
+      "target_verified": false
+    },
+    {
+      "id": "LM-FB-125",
+      "requirement": "巴特沃斯滤波、阶次和截止频率",
+      "lm_name": "FilterBW",
+      "original_status": "not_met",
+      "lh_candidates": [
+        "FilterBW"
+      ],
+      "local_alternative": "现有 LH 构造参数/配置/目录状态；不宣称完整执行等价",
+      "software_tasks": [
+        "S03"
+      ],
+      "disposition": "deferred_target_execution",
+      "handling": "注册/空指令不再视为执行能力；完整功能依赖目标执行契约，延期。",
+      "target_verified": false
+    }
+  ],
+  "acceptance": "本地软件验证与总控/现场验收分别记录；不得把目标延期计作硬件通过",
+  "delivery_status": "已实现待总控验收",
+  "local_software_acceptance_complete": true
+}

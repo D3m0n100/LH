@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="Win32-mingw32-make"
+	tests="6"
+	failures="0"
+	disabled="0"
+	skipped="0"
+	hostname="DESKTOP-HJIINHN"
+	time="58"
+	timestamp="2026-10-23T12:09:40"
+	>
+	<testcase name="CoreDataManagerTest" classname="CoreDataManagerTest" time="2.16176" status="run">
+		<properties/>
+		<system-out></system-out>
+	</testcase>
+	<testcase name="DataManagerHistoryPagingTest" classname="DataManagerHistoryPagingTest" time="0.472567" status="run">
+		<properties/>
+		<system-out></system-out>
+	</testcase>
+	<testcase name="AsyncDatabaseWorkerTest" classname="AsyncDatabaseWorkerTest" time="2.48544" status="run">
+		<properties/>
+		<system-out></system-out>
+	</testcase>
+	<testcase name="InstallLayoutTest" classname="InstallLayoutTest" time="18.5963" status="run">
+		<properties/>
+		<system-out>-- 安装布局及独立公共接口消费者测试通过: D:/Table/LH/build_current_mingw/install_layout_test_prefix
+</system-out>
+	</testcase>
+	<testcase name="ReviewRound2RegressionTest" classname="ReviewRound2RegressionTest" time="14.6565" status="run">
+		<properties/>
+		<system-out></system-out>
+	</testcase>
+	<testcase name="Review20261023Test" classname="Review20261023Test" time="19.7577" status="run">
+		<properties/>
+		<system-out>Ϊ C:\Users\Ryan\AppData\Local\Temp\review_20261023_test-HhMGrI\external-junction &lt;&lt;===&gt;&gt; C:\Users\Ryan\AppData\Local\Temp\review_20261023_test-FnkDRq [NON-UTF-8-BYTE-0xB4][NON-UTF-8-BYTE-0xB4][NON-UTF-8-BYTE-0xBD][NON-UTF-8-BYTE-0xA8][NON-UTF-8-BYTE-0xB5][NON-UTF-8-BYTE-0xC4][NON-UTF-8-BYTE-0xC1][NON-UTF-8-BYTE-0xAA][NON-UTF-8-BYTE-0xBD][NON-UTF-8-BYTE-0xD3]
+</system-out>
+	</testcase>
+</testsuite>

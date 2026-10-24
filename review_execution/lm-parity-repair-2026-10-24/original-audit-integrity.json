@@ -1,0 +1,54 @@
+[
+  {
+    "path": "review_execution/lm-parity-audit-2026-10-24/audited-state.json",
+    "sha256": "f73d16decd268f160922b4e8e190dd54b08ab8bfd0fa0a92580551c2f22b1811"
+  },
+  {
+    "path": "review_execution/lm-parity-audit-2026-10-24/block-parity-matrix.json",
+    "sha256": "1f2cd299fb2d8a2a3fd5adffe306be9413949a0533809cefcddf26510b74e957"
+  },
+  {
+    "path": "review_execution/lm-parity-audit-2026-10-24/compiler-probes.json",
+    "sha256": "0954728034c9985389308132bb8e8c210991f172e7c1e5e69f7b016edae29f4d"
+  },
+  {
+    "path": "review_execution/lm-parity-audit-2026-10-24/cross-cutting-requirements.json",
+    "sha256": "a7c34ff568c9aff7da0b853ff64454d5667ee5416f80507438c06cddf0997bc1"
+  },
+  {
+    "path": "review_execution/lm-parity-audit-2026-10-24/current-registry.json",
+    "sha256": "0143c48c7e6f2e6a82bc36f71108c8990c0979bad6913ff4c42b1e6554cd7337"
+  },
+  {
+    "path": "review_execution/lm-parity-audit-2026-10-24/deliverable-validation.json",
+    "sha256": "434788c8a085d50634aae80c4a1a4c56f7bb09292dd4ed5d49322fd4d399a064"
+  },
+  {
+    "path": "review_execution/lm-parity-audit-2026-10-24/evidence-index.json",
+    "sha256": "0064a74e1ea66474a2ba4cc2ff45a834740e8c139a9c32566e1615b831966ed6"
+  },
+  {
+    "path": "review_execution/lm-parity-audit-2026-10-24/guide-block-mentions.json",
+    "sha256": "175978f384a13d793913c68f4132e9f54f2d3246772878331b3d9ce26f23f049"
+  },
+  {
+    "path": "review_execution/lm-parity-audit-2026-10-24/manual-block-mentions.json",
+    "sha256": "fc5b0cacca14c9323250fd790306d668adf2a10274aa90929d660a9bead52494"
+  },
+  {
+    "path": "review_execution/lm-parity-audit-2026-10-24/registry-default-emission-probes.json",
+    "sha256": "1381be175afc7e2dcb8b89b902a27b7c27e0a40eeba7a46ae193c74b8f8815d0"
+  },
+  {
+    "path": "review_execution/lm-parity-audit-2026-10-24/registry-summary.json",
+    "sha256": "0a6603a7563646f687285a3362c562c0575de21ec21884b9aa7814dd19065aaa"
+  },
+  {
+    "path": "review_execution/lm-parity-audit-2026-10-24/sources.json",
+    "sha256": "4828612d9217b4a053fd5f85a2763bb3a376e3c37422b5aaec4f371dd65279d8"
+  },
+  {
+    "path": "review_execution/lm-parity-audit-2026-10-24/verification-summary.json",
+    "sha256": "50d85ce6d29bdccb0d91a9c6a93c59a17630322370a2cdb36e340579f0e126f5"
+  }
+]

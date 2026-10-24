@@ -21,7 +21,6 @@ add_library(designer_module STATIC
     SettingsDialog.cpp
     OpcServerSettingsDialog.cpp
     OutputPaneController.cpp
-    MonitorController.cpp
     ProjectController.cpp
     ProjectConfigValidation.cpp
     BuildController.cpp

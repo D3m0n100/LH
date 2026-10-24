@@ -1,6 +1,7 @@
 #include "AsyncHistoryStoreAdapter.h"
 #include <exception>
 #include <QDebug>
+#include <algorithm>
 
 namespace Monitor {
 
@@ -16,20 +17,38 @@ bool AsyncHistoryStoreAdapter::isAvailable() const
 
 QList<RuntimeRecord> AsyncHistoryStoreAdapter::getLatestRecords(const QString& channelName, int count)
 {
-    if (!isAvailable()) {
-        return {};
+    QList<RuntimeRecord> records;
+    RuntimeHistoryCursor cursor;
+    for (;;) {
+        auto result = queryLatestHistoryPage(channelName, count, qMin(count, 10000), cursor, {});
+        if (!result.succeeded()) {
+            qWarning() << "Deprecated synchronous history API failed:" << result.errorCode << result.errorText;
+            return {};
+        }
+        records.append(result.records);
+        if (!result.hasMore) break;
+        cursor = result.nextCursor;
     }
-    return m_worker->getLatestRecords(channelName, count);
+    std::reverse(records.begin(), records.end());
+    return records;
 }
 
 QList<RuntimeRecord> AsyncHistoryStoreAdapter::queryHistory(const QString& channelName,
                                                            const QDateTime& start,
                                                            const QDateTime& end)
 {
-    if (!isAvailable()) {
-        return {};
+    QList<RuntimeRecord> records;
+    RuntimeHistoryCursor cursor;
+    for (;;) {
+        const auto result = queryHistoryResult(channelName, start, end, 10000, cursor);
+        if (!result.succeeded()) {
+            qWarning() << "Deprecated synchronous history API failed:" << result.errorCode << result.errorText;
+            return {};
+        }
+        records.append(result.records);
+        if (!result.hasMore) return records;
+        cursor = result.nextCursor;
     }
-    return m_worker->queryHistory(channelName, start, end);
 }
 
 RuntimeHistoryPage AsyncHistoryStoreAdapter::queryHistoryPage(

@@ -133,6 +133,27 @@ private:
     }
 
 private slots:
+    void projectCannotPromoteBuiltinCapabilityWithAnAlias() {
+        QTemporaryDir project;
+        QVERIFY(project.isValid());
+        SnippetRepository defaults; QVERIFY(defaults.loadSnippets());
+        FunctionSnippet unavailable;
+        for (const auto& snippet : defaults.allSnippets())
+            if (snippet.metadata.value("compilerName").toString() == "TSO") unavailable = snippet;
+        QVERIFY(unavailable.isValid()); QVERIFY(!unavailable.canInsert());
+        QJsonObject metadata{{"compilerName","TSO"},{"status","supported"},{"capabilityState",QJsonObject{{"targetExecutionVerified",true}}}};
+        QJsonObject alias{{"id","project-tso-alias"},{"name","Project TSO"},{"templateCode","TSO();"},{"metadata",metadata}};
+        QVERIFY(createSnippetsFile(project.path(),QString::fromUtf8(QJsonDocument(QJsonArray{alias}).toJson())));
+        SnippetRepository repository; QVERIFY(repository.loadSnippets(project.path()));
+        bool found=false;
+        for (const auto& snippet : repository.allSnippets()) {
+            if (snippet.id != "project-tso-alias") continue;
+            found=true; QVERIFY(!snippet.canInsert());
+            QCOMPARE(snippet.metadata.value("capabilityState"),unavailable.metadata.value("capabilityState"));
+        }
+        QVERIFY(found);
+    }
+
     void initTestCase()
     {
         qInfo() << "========================================";

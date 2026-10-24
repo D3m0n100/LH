@@ -220,6 +220,18 @@ void MainWindow::createActions()
     m_actRunToCursor = makeSharedAction("actRunToCursor", "", "运行到光标", "运行到光标 (Ctrl+F10)", QKeySequence("Ctrl+F10"));
     connect(m_actRunToCursor, &QAction::triggered, this, &MainWindow::onRunControllerToCursor);
 
+    m_actRunToCursor->setEnabled(false);
+    m_actRunToCursor->setToolTip(QStringLiteral("缺少源码行到控制器组件位置的可靠映射"));
+    auto* breakpoints = makeSharedAction("actControllerBreakpoints", "", "控制器组件断点…", "设置两个控制器组件位置断点");
+    connect(breakpoints, &QAction::triggered, this, &MainWindow::onControllerBreakpoints);
+    auto* continuous = makeSharedAction("actContinuousStep", "", "连续单步…", "按指定间隔串行单步；再次点击停止");
+    continuous->setCheckable(true);
+    connect(continuous, &QAction::triggered, this, &MainWindow::onContinuousStep);
+    auto* snapshotExport = makeSharedAction("actExportParameterSnapshot", "", "导出项目参数快照…", "保存本地项目参数值");
+    connect(snapshotExport, &QAction::triggered, this, &MainWindow::onExportParameterSnapshot);
+    auto* snapshotRestore = makeSharedAction("actRestoreParameterSnapshot", "", "恢复项目参数快照…", "校验并预览后恢复本地项目参数");
+    connect(snapshotRestore, &QAction::triggered, this, &MainWindow::onRestoreParameterSnapshot);
+
     // 监控操作（按规范严格命名为“开始监控”与“停止监控”）
     m_actOpenMonitor = makeSharedAction("actOpenMonitor", ":/icons/monitor.svg", "监控工作区", "打开监控工作区 (Ctrl+M)", QKeySequence("Ctrl+M"));
     connect(m_actOpenMonitor, &QAction::triggered, this, &MainWindow::onOpenMonitor);
@@ -332,11 +344,15 @@ void MainWindow::createMenus()
     runMenu->addAction(m_actPauseController);
     runMenu->addAction(m_actResumeController);
     runMenu->addAction(m_actStepController);
+    runMenu->addAction(findChild<QAction*>("actContinuousStep"));
+    runMenu->addAction(findChild<QAction*>("actControllerBreakpoints"));
     runMenu->addAction(m_actRunToCursor);
 
     QMenu* monitorMenu = menuBar()->addMenu("监控(&M)");
     monitorMenu->addAction(m_actOpenMonitor);
     monitorMenu->addAction(m_actParameterTuning);
+    monitorMenu->addAction(findChild<QAction*>("actExportParameterSnapshot"));
+    monitorMenu->addAction(findChild<QAction*>("actRestoreParameterSnapshot"));
     monitorMenu->addSeparator();
     monitorMenu->addAction(m_actStartMonitor);
     monitorMenu->addAction(m_actStopMonitor);
@@ -627,6 +643,7 @@ void MainWindow::createDockWidgets()
 
     m_outputViewer = new QTextEdit(m_bottomPanels);
     m_outputViewer->setObjectName(QStringLiteral("outputViewer"));
+    m_outputController = new OutputPaneController(m_outputViewer, this);
     m_outputViewer->setReadOnly(true);
     m_outputViewer->setLineWrapMode(QTextEdit::NoWrap);
     m_outputViewer->document()->setMaximumBlockCount(OutputPaneConfig::DEFAULT_MAX_BLOCK_COUNT);

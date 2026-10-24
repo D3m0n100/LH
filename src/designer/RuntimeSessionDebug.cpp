@@ -5,11 +5,13 @@
 #include "ProjectController.h"
 #include "../communication/ControllerDeviceBackend.h"
 #include "../monitor/MonitorManager.h"
+#include "../core/BusinessOperation.h"
 
 #include <QDateTime>
 #include <QStringList>
 #include <QVariantList>
 #include <QVariantMap>
+#include <QTimer>
 
 namespace {
 class ControllerOperationGuard {
@@ -27,17 +29,32 @@ private:
 bool RuntimeSessionController::requestControllerDebug(const QString& command,
         const QVector<quint16>& arguments, int pauseState, const QString& description)
 {
+    if (command != QStringLiteral("step")) stopContinuousStep();
+    auto* backend = controllerBackend();
+    QVariantList loggedArguments;
+    for (auto argument : arguments) loggedArguments.append(argument);
+    QVariantMap auditFields{{"backendGeneration", QVariant::fromValue(m_backendGeneration)},
+                           {"commandGeneration", QVariant::fromValue(m_debugCommandGeneration + 1)},
+                           {"command", command}, {"arguments", loggedArguments}};
+    if (backend) {
+        const auto config = backend->runtimeConfig();
+        auditFields.insert("controllerId", config.controller.modbusSlaveId);
+        auditFields.insert("port", config.transport.parameters.value("port", config.commParameters.value("port")));
+    }
+    auto audit = std::make_shared<Core::BusinessOperation>("controller_debug", "ControllerDeviceBackend", auditFields);
     if (m_debugCommandPending) {
+        audit->finish("rejected", "Debug command is busy");
         emit runtimeError(QStringLiteral("控制器调试命令正在执行，请等待完成"));
         return false;
     }
-    auto* backend = controllerBackend();
     if (!backend) {
         if (m_demoModeActive && pauseState >= 0) {
             setPaused(pauseState == 1);
             emit logMessage(description);
+            audit->finish("succeeded", "Demo mode");
             return true;
         }
+        audit->finish("rejected", "Controller backend unavailable");
         emit runtimeError(QStringLiteral("控制器后端不可用，无法执行调试命令。"));
         return false;
     }
@@ -46,16 +63,24 @@ bool RuntimeSessionController::requestControllerDebug(const QString& command,
     const QPointer<ControllerDeviceBackend> original(backend);
     QString error;
     const bool admitted = backend->requestDebugCommand(command, arguments, this,
-        [this, generation, operation, original, pauseState, description](bool ok, const QString& message) {
-            if (generation != m_backendGeneration || operation != m_debugCommandGeneration || original != controllerBackend()) return;
+        [this, generation, operation, original, pauseState, description, audit, command](bool ok, const QString& message) {
+            if (generation != m_backendGeneration || operation != m_debugCommandGeneration || original != controllerBackend()) {
+                audit->finish("canceled", "Session changed"); return;
+            }
+            audit->finish(ok ? "succeeded" : "failed", message);
             setDebugCommandPending(false);
-            if (!ok) { emit runtimeError(message); return; }
+            if (!ok) { stopContinuousStep(); emit runtimeError(message); return; }
             if (pauseState >= 0) setPaused(pauseState == 1);
             emit logMessage(QStringLiteral("[%1] %2")
                 .arg(QDateTime::currentDateTime().toString(QStringLiteral("HH:mm:ss")), description));
+            if (command == QStringLiteral("step")) scheduleContinuousStep();
         }, &error);
-    if (!admitted) emit runtimeError(error);
+    if (!admitted) { audit->finish("rejected", error); emit runtimeError(error); }
     else {
+        m_cancelDebugAudit = [audit, original] {
+            if (original) original->cancelDebugCommand();
+            audit->finish("canceled", "Session stopped or replaced");
+        };
         setDebugCommandPending(true);
         emit logMessage(QStringLiteral("控制器调试命令处理中…"));
     }
@@ -64,6 +89,11 @@ bool RuntimeSessionController::requestControllerDebug(const QString& command,
 
 void RuntimeSessionController::setDebugCommandPending(bool pending)
 {
+    if (!pending && m_cancelDebugAudit) {
+        auto cancel = std::move(m_cancelDebugAudit);
+        m_cancelDebugAudit = {};
+        cancel();
+    }
     if (m_debugCommandPending == pending) return;
     m_debugCommandPending = pending;
     emit debugCommandPendingChanged(pending);
@@ -84,13 +114,48 @@ bool RuntimeSessionController::stepController()
     return requestControllerDebug("step", {}, 1, QStringLiteral("控制器单步执行"));
 }
 
+bool RuntimeSessionController::startContinuousStep(int intervalMs)
+{
+    if (intervalMs < 50 || intervalMs > 60000 || m_debugCommandPending || m_continuousStepActive) return false;
+    m_continuousStepIntervalMs = intervalMs;
+    m_continuousStepActive = true;
+    emit continuousStepChanged(true);
+    if (!stepController()) { stopContinuousStep(); return false; }
+    // Demo completion is synchronous; real backend completion schedules the timer.
+    if (!m_debugCommandPending) scheduleContinuousStep();
+    return true;
+}
+
+void RuntimeSessionController::scheduleContinuousStep()
+{
+    if (!m_continuousStepActive) return;
+    if (!m_continuousStepTimer) {
+        m_continuousStepTimer = new QTimer(this);
+        m_continuousStepTimer->setSingleShot(true);
+        connect(m_continuousStepTimer, &QTimer::timeout, this, [this] {
+            if (!m_continuousStepActive || m_debugCommandPending) return;
+            if (!stepController()) { stopContinuousStep(); return; }
+            if (!m_debugCommandPending) scheduleContinuousStep();
+        });
+    }
+    m_continuousStepTimer->start(m_continuousStepIntervalMs);
+}
+
+void RuntimeSessionController::stopContinuousStep()
+{
+    if (m_continuousStepTimer) m_continuousStepTimer->stop();
+    if (!m_continuousStepActive) return;
+    m_continuousStepActive = false;
+    emit continuousStepChanged(false);
+}
+
 bool RuntimeSessionController::runControllerToCursor(int lineNumber)
 {
     if (lineNumber < 0 || lineNumber > 65535) {
         emit runtimeError(QStringLiteral("调试行号超出范围")); return false;
     }
     return requestControllerDebug("cursor", {quint16(lineNumber)}, -1,
-        QStringLiteral("控制器运行到第 %1 行").arg(lineNumber));
+        QStringLiteral("控制器运行到组件位置 %1").arg(lineNumber));
 }
 
 bool RuntimeSessionController::setControllerBreakpoints(int firstLine, int secondLine)
@@ -99,21 +164,33 @@ bool RuntimeSessionController::setControllerBreakpoints(int firstLine, int secon
         emit runtimeError(QStringLiteral("断点行号超出范围")); return false;
     }
     return requestControllerDebug("breakpoints", {quint16(firstLine), quint16(secondLine)}, -1,
-        QStringLiteral("控制器断点已设置：%1, %2").arg(firstLine).arg(secondLine));
+        QStringLiteral("控制器组件断点已设置：%1, %2").arg(firstLine).arg(secondLine));
 }
 
 bool RuntimeSessionController::testControllerConnection()
 {
     auto* backend = controllerBackend();
     if (!backend || !backend->isOnline()) {
-        if (!ensureControllerBackend()) {
-            return false;
-        }
-        backend = controllerBackend();
+        ensureControllerBackendAsync([this](bool ok) { if (ok) testControllerConnection(); });
+        return true;
     }
     if (!backend) {
         emit runtimeError(QStringLiteral("控制器后端不可用，无法测试连接。"));
         return false;
+    }
+
+    if (backend->supportsAsyncRead()) {
+        const quint64 generation = m_backendGeneration;
+        const QPointer<ControllerDeviceBackend> original(backend);
+        backend->testConnectionAsync(3000, this,
+            [this, generation, original](bool ok, ControllerConnectionDiagnostic diagnostic, const QString& error) {
+                if (generation != m_backendGeneration || original != controllerBackend()) return;
+                if (!ok) { emit runtimeError(error); return; }
+                emit logMessage(QStringLiteral("控制器连接测试：port=%1 deviceId=%2 state=%3 version=%4 target=%5")
+                    .arg(diagnostic.portName).arg(diagnostic.deviceId).arg(diagnostic.state)
+                    .arg(diagnostic.version).arg(diagnostic.targetOnline));
+            });
+        return true;
     }
 
     ControllerConnectionDiagnostic diagnostic;
@@ -260,6 +337,10 @@ bool RuntimeSessionController::ensureControllerBackend()
         setDeviceBackend(m_ownedControllerBackend);
     }
 
+    if (!m_ownedControllerBackend->isOnline() && m_ownedControllerBackend->supportsAsyncRead()) {
+        emit runtimeError(QStringLiteral("控制器尚未连接，请使用异步连接操作。"));
+        return false;
+    }
     if (!m_ownedControllerBackend->isOnline() && !m_ownedControllerBackend->connectBackend()) {
         const CommError err = m_ownedControllerBackend->lastError();
         emit runtimeError(err.message.isEmpty() ? QStringLiteral("控制器后端连接失败。") : err.message);
@@ -267,6 +348,36 @@ bool RuntimeSessionController::ensureControllerBackend()
     }
 
     return true;
+}
+
+void RuntimeSessionController::ensureControllerBackendAsync(std::function<void(bool)> completed)
+{
+    if (!completed) return;
+    if (!m_projectController) { completed(false); return; }
+    if (m_connectionCancelled) m_connectionCancelled->store(true);
+    m_connectionCancelled.reset();
+    if (!m_ownedControllerBackend) m_ownedControllerBackend = new ControllerDeviceBackend(this);
+    auto* backend = m_ownedControllerBackend;
+    const auto config = m_projectController->runtimeConfig();
+    QString error;
+    if (!backend->configure(config, &error)) { emit runtimeError(error); completed(false); return; }
+    if (m_backend != backend) setDeviceBackend(backend);
+    if (backend->isOnline()) { completed(true); return; }
+    const auto token = std::make_shared<std::atomic_bool>(false);
+    m_connectionCancelled = token;
+    const auto generation = m_backendGeneration;
+    const QPointer<ProjectController> project = m_projectController;
+    backend->connectBackendAsync(3000, token, this,
+        [this, completed, backend, generation, token, project, config](bool ok, const QString& message) {
+            if (token != m_connectionCancelled || generation != m_backendGeneration || backend != m_backend
+                    || !project || project != m_projectController || config.toJson() != project->runtimeConfig().toJson()) {
+                token->store(true);
+                if (token == m_connectionCancelled && backend == m_backend) backend->disconnectBackend();
+                completed(false); return;
+            }
+            if (!ok) emit runtimeError(message);
+            completed(ok);
+        });
 }
 
 ControllerDeviceBackend* RuntimeSessionController::controllerBackend() const

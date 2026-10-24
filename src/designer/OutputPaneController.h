@@ -79,6 +79,9 @@ public:
      * @param parent 父对象
      */
     explicit OutputPaneController(QDockWidget* dockWidget, QObject* parent = nullptr);
+    // Bind the production tab's existing editor; its UI owns menus and styling.
+    explicit OutputPaneController(QTextEdit* editor, QObject* parent = nullptr);
+    bool saveToPath(const QString& path, QString* error = nullptr) const;
     ~OutputPaneController() override;
 
     /**

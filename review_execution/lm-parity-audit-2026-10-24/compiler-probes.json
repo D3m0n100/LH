@@ -1,0 +1,733 @@
+[
+  {
+    "id": "legacy_assembly",
+    "source": "_System[Sys] AuthorID::1,ConfigID::1,DataTag::20261024;\n_SystemEnd;",
+    "success": false,
+    "compile_only": false,
+    "errors": [
+      "语法分析错误 (第 1 行, 第 0 列): missing 'PROGRAM' at '_System'",
+      "语法分析错误 (第 1 行, 第 7 列): extraneous input '[' expecting {'END_PROGRAM', 'VAR', 'VAR_CONSTANT', 'IF', 'CASE', 'FOR', 'WHILE', 'REPEAT', 'EXIT', 'RETURN', 'CONTINUE', ';', FB_IDENTIFIER, IDENTIFIER}",
+      "语法分析错误 (第 1 行, 第 8 列): mismatched input 'Sys' expecting 'END_PROGRAM'"
+    ],
+    "instructions": [],
+    "code_exists": false,
+    "code_contains_unconfirmed_execution_marker": false,
+    "source_path": "probes/legacy_assembly.lh"
+  },
+  {
+    "id": "legacy_include",
+    "source": "#Include \"child.inva\"\n",
+    "success": false,
+    "compile_only": false,
+    "errors": [
+      "语法分析错误 (第 1 行, 第 0 列): mismatched input '#' expecting 'PROGRAM'"
+    ],
+    "instructions": [],
+    "code_exists": false,
+    "code_contains_unconfirmed_execution_marker": false,
+    "source_path": "probes/legacy_include.lh"
+  },
+  {
+    "id": "int_initializer",
+    "source": "PROGRAM P VAR x : INT := 12; END_VAR END_PROGRAM",
+    "success": false,
+    "compile_only": false,
+    "errors": [
+      "第 1 行: 变量 'x' 初始化写回的目标指令契约未定义，禁止生成无效果的初始化"
+    ],
+    "instructions": [
+      {
+        "type_id": 101,
+        "params": [
+          0,
+          0,
+          0,
+          1,
+          1000
+        ]
+      }
+    ],
+    "code_exists": false,
+    "code_contains_unconfirmed_execution_marker": false,
+    "source_path": "probes/int_initializer.lh"
+  },
+  {
+    "id": "scalar_constant_write",
+    "source": "PROGRAM P VAR x : INT; END_VAR x := 12; END_PROGRAM",
+    "success": true,
+    "compile_only": true,
+    "errors": [],
+    "instructions": [
+      {
+        "type_id": 101,
+        "params": [
+          0,
+          0,
+          0,
+          1,
+          1000
+        ]
+      },
+      {
+        "type_id": 121,
+        "params": [
+          12
+        ]
+      }
+    ],
+    "code_exists": true,
+    "code_contains_unconfirmed_execution_marker": true,
+    "source_path": "probes/scalar_constant_write.lh"
+  },
+  {
+    "id": "runtime_variable_copy",
+    "source": "PROGRAM P VAR x : INT; y : INT; END_VAR x := y; END_PROGRAM",
+    "success": false,
+    "compile_only": false,
+    "errors": [
+      "第 1 行: 暂不支持变量赋值/拷贝指令: 'x := y'"
+    ],
+    "instructions": [
+      {
+        "type_id": 101,
+        "params": [
+          0,
+          0,
+          0,
+          1,
+          1000
+        ]
+      }
+    ],
+    "code_exists": false,
+    "code_contains_unconfirmed_execution_marker": false,
+    "source_path": "probes/runtime_variable_copy.lh"
+  },
+  {
+    "id": "runtime_expression",
+    "source": "PROGRAM P VAR x : INT; y : INT; END_VAR x := y + 1; END_PROGRAM",
+    "success": false,
+    "compile_only": false,
+    "errors": [
+      "第 1 行: 无法常量折叠的表达式赋值，暂不支持运行时求值指令: 'x'"
+    ],
+    "instructions": [
+      {
+        "type_id": 101,
+        "params": [
+          0,
+          0,
+          0,
+          1,
+          1000
+        ]
+      }
+    ],
+    "code_exists": false,
+    "code_contains_unconfirmed_execution_marker": false,
+    "source_path": "probes/runtime_expression.lh"
+  },
+  {
+    "id": "member_reference",
+    "source": "PROGRAM P VAR p : PID; x : REAL; END_VAR x := p.Feedback; END_PROGRAM",
+    "success": false,
+    "compile_only": false,
+    "errors": [
+      "第 1 行: 暂不支持成员访问作为右值赋值: 'x'"
+    ],
+    "instructions": [
+      {
+        "type_id": 101,
+        "params": [
+          0,
+          0,
+          0,
+          1,
+          1000
+        ]
+      }
+    ],
+    "code_exists": false,
+    "code_contains_unconfirmed_execution_marker": false,
+    "source_path": "probes/member_reference.lh"
+  },
+  {
+    "id": "block_input_reference",
+    "source": "PROGRAM P VAR p : PID; x : REAL; END_VAR p(Setpoint := x); END_PROGRAM",
+    "success": false,
+    "compile_only": false,
+    "errors": [
+      "第 1 行: 功能块 'PID' 参数 'Setpoint' 的值无法在编译期求值为有效常量"
+    ],
+    "instructions": [
+      {
+        "type_id": 101,
+        "params": [
+          0,
+          0,
+          0,
+          1,
+          1000
+        ]
+      }
+    ],
+    "code_exists": false,
+    "code_contains_unconfirmed_execution_marker": false,
+    "source_path": "probes/block_input_reference.lh"
+  },
+  {
+    "id": "block_output_reference",
+    "source": "PROGRAM P VAR p : PID; x : REAL; END_VAR p(Setpoint => x); END_PROGRAM",
+    "success": false,
+    "compile_only": false,
+    "errors": [
+      "第 1 行: 功能块输出绑定目标契约未定义，不能将输出引用按输入常量编码"
+    ],
+    "instructions": [
+      {
+        "type_id": 101,
+        "params": [
+          0,
+          0,
+          0,
+          1,
+          1000
+        ]
+      }
+    ],
+    "code_exists": false,
+    "code_contains_unconfirmed_execution_marker": false,
+    "source_path": "probes/block_output_reference.lh"
+  },
+  {
+    "id": "if_control",
+    "source": "PROGRAM P IF TRUE THEN Nop(); END_IF; END_PROGRAM",
+    "success": false,
+    "compile_only": false,
+    "errors": [
+      "第 1 行: 暂不支持控制流语句 IfStatement，指令生成拒绝静默跳过，禁止生成控制代码"
+    ],
+    "instructions": [
+      {
+        "type_id": 101,
+        "params": [
+          0,
+          0,
+          0,
+          1,
+          1000
+        ]
+      }
+    ],
+    "code_exists": false,
+    "code_contains_unconfirmed_execution_marker": false,
+    "source_path": "probes/if_control.lh"
+  },
+  {
+    "id": "case_control",
+    "source": "PROGRAM P CASE 1 OF 1: Nop(); END_CASE; END_PROGRAM",
+    "success": false,
+    "compile_only": false,
+    "errors": [
+      "第 1 行: 暂不支持控制流语句 CaseStatement，指令生成拒绝静默跳过，禁止生成控制代码"
+    ],
+    "instructions": [
+      {
+        "type_id": 101,
+        "params": [
+          0,
+          0,
+          0,
+          1,
+          1000
+        ]
+      }
+    ],
+    "code_exists": false,
+    "code_contains_unconfirmed_execution_marker": false,
+    "source_path": "probes/case_control.lh"
+  },
+  {
+    "id": "for_control",
+    "source": "PROGRAM P VAR i : INT; END_VAR FOR i := 1 TO 2 DO Nop(); END_FOR; END_PROGRAM",
+    "success": false,
+    "compile_only": false,
+    "errors": [
+      "第 1 行: 暂不支持控制流语句 ForStatement，指令生成拒绝静默跳过，禁止生成控制代码"
+    ],
+    "instructions": [
+      {
+        "type_id": 101,
+        "params": [
+          0,
+          0,
+          0,
+          1,
+          1000
+        ]
+      }
+    ],
+    "code_exists": false,
+    "code_contains_unconfirmed_execution_marker": false,
+    "source_path": "probes/for_control.lh"
+  },
+  {
+    "id": "while_control",
+    "source": "PROGRAM P WHILE FALSE DO Nop(); END_WHILE; END_PROGRAM",
+    "success": false,
+    "compile_only": false,
+    "errors": [
+      "第 1 行: 暂不支持控制流语句 WhileStatement，指令生成拒绝静默跳过，禁止生成控制代码"
+    ],
+    "instructions": [
+      {
+        "type_id": 101,
+        "params": [
+          0,
+          0,
+          0,
+          1,
+          1000
+        ]
+      }
+    ],
+    "code_exists": false,
+    "code_contains_unconfirmed_execution_marker": false,
+    "source_path": "probes/while_control.lh"
+  },
+  {
+    "id": "repeat_control",
+    "source": "PROGRAM P REPEAT Nop(); UNTIL TRUE END_REPEAT; END_PROGRAM",
+    "success": false,
+    "compile_only": false,
+    "errors": [
+      "第 1 行: 暂不支持控制流语句 RepeatStatement，指令生成拒绝静默跳过，禁止生成控制代码"
+    ],
+    "instructions": [
+      {
+        "type_id": 101,
+        "params": [
+          0,
+          0,
+          0,
+          1,
+          1000
+        ]
+      }
+    ],
+    "code_exists": false,
+    "code_contains_unconfirmed_execution_marker": false,
+    "source_path": "probes/repeat_control.lh"
+  },
+  {
+    "id": "array_layout",
+    "source": "PROGRAM P VAR a : ARRAY[1..2] OF INT; END_VAR END_PROGRAM",
+    "success": false,
+    "compile_only": false,
+    "errors": [
+      "第 1 行: 暂不支持数组类型 'ARRAY[1..2]OFINT'，禁止生成控制代码"
+    ],
+    "instructions": [
+      {
+        "type_id": 101,
+        "params": [
+          0,
+          0,
+          0,
+          1,
+          1000
+        ]
+      }
+    ],
+    "code_exists": false,
+    "code_contains_unconfirmed_execution_marker": false,
+    "source_path": "probes/array_layout.lh"
+  },
+  {
+    "id": "iq_type",
+    "source": "PROGRAM P VAR x : IQ; END_VAR END_PROGRAM",
+    "success": false,
+    "compile_only": false,
+    "errors": [
+      "第 1 行: 未支持的数据类型: 'IQ'"
+    ],
+    "instructions": [
+      {
+        "type_id": 101,
+        "params": [
+          0,
+          0,
+          0,
+          1,
+          1000
+        ]
+      }
+    ],
+    "code_exists": false,
+    "code_contains_unconfirmed_execution_marker": false,
+    "source_path": "probes/iq_type.lh"
+  },
+  {
+    "id": "task",
+    "source": "PROGRAM P VAR t : Task; END_VAR t(); END_PROGRAM",
+    "success": false,
+    "compile_only": false,
+    "errors": [
+      "第 1 行: 功能块 'Task' 尚未完善契约定义 (已保存 LM 功能候选证据；LH 固件版本对应的指令、引用和字段布局尚未核实)，禁止生成控制代码",
+      "第 1 行: 未声明的功能块实例: t"
+    ],
+    "instructions": [
+      {
+        "type_id": 101,
+        "params": [
+          0,
+          0,
+          0,
+          1,
+          1000
+        ]
+      }
+    ],
+    "code_exists": false,
+    "code_contains_unconfirmed_execution_marker": false,
+    "source_path": "probes/task.lh"
+  },
+  {
+    "id": "filter",
+    "source": "PROGRAM P VAR f : FilterBW; END_VAR f(); END_PROGRAM",
+    "success": false,
+    "compile_only": false,
+    "errors": [
+      "第 1 行: 功能块 'FilterBW' 尚未完善契约定义 (已保存 LM 功能候选证据；LH 固件版本对应的指令、引用和字段布局尚未核实)，禁止生成控制代码",
+      "第 1 行: 未声明的功能块实例: f"
+    ],
+    "instructions": [
+      {
+        "type_id": 101,
+        "params": [
+          0,
+          0,
+          0,
+          1,
+          1000
+        ]
+      }
+    ],
+    "code_exists": false,
+    "code_contains_unconfirmed_execution_marker": false,
+    "source_path": "probes/filter.lh"
+  },
+  {
+    "id": "display",
+    "source": "PROGRAM P VAR d : SCIDispTrans; END_VAR d(); END_PROGRAM",
+    "success": false,
+    "compile_only": false,
+    "errors": [
+      "第 1 行: 功能块 'SCIDispTrans' 尚未完善契约定义 (已保存 LM 功能候选证据；LH 固件版本对应的指令、引用和字段布局尚未核实)，禁止生成控制代码",
+      "第 1 行: 未声明的功能块实例: d"
+    ],
+    "instructions": [
+      {
+        "type_id": 101,
+        "params": [
+          0,
+          0,
+          0,
+          1,
+          1000
+        ]
+      }
+    ],
+    "code_exists": false,
+    "code_contains_unconfirmed_execution_marker": false,
+    "source_path": "probes/display.lh"
+  },
+  {
+    "id": "intbuild_empty",
+    "source": "PROGRAM P VAR b : IntBuild; END_VAR b(); END_PROGRAM",
+    "success": true,
+    "compile_only": false,
+    "errors": [],
+    "instructions": [
+      {
+        "type_id": 101,
+        "params": [
+          0,
+          0,
+          0,
+          1,
+          1000
+        ]
+      },
+      {
+        "type_id": 701,
+        "params": []
+      }
+    ],
+    "code_exists": true,
+    "code_contains_unconfirmed_execution_marker": false,
+    "source_path": "probes/intbuild_empty.lh"
+  },
+  {
+    "id": "intbuild_parameters",
+    "source": "PROGRAM P VAR b : IntBuild; END_VAR b(Paramts := 4); END_PROGRAM",
+    "success": false,
+    "compile_only": false,
+    "errors": [
+      "第 1 行: 功能块 'IntBuild' 未定义参数（不接受参数调用），但调用时传入了参数: Paramts"
+    ],
+    "instructions": [
+      {
+        "type_id": 101,
+        "params": [
+          0,
+          0,
+          0,
+          1,
+          1000
+        ]
+      }
+    ],
+    "code_exists": false,
+    "code_contains_unconfirmed_execution_marker": false,
+    "source_path": "probes/intbuild_parameters.lh"
+  },
+  {
+    "id": "math_parameters",
+    "source": "PROGRAM P VAR b : Add; END_VAR b(Input1 := 1, Input2 := 2); END_PROGRAM",
+    "success": false,
+    "compile_only": false,
+    "errors": [
+      "第 1 行: 功能块 'Add' 未定义参数（不接受参数调用），但调用时传入了参数: Input1, Input2"
+    ],
+    "instructions": [
+      {
+        "type_id": 101,
+        "params": [
+          0,
+          0,
+          0,
+          1,
+          1000
+        ]
+      }
+    ],
+    "code_exists": false,
+    "code_contains_unconfirmed_execution_marker": false,
+    "source_path": "probes/math_parameters.lh"
+  },
+  {
+    "id": "pid_literals",
+    "source": "PROGRAM P VAR p : PID; END_VAR p(Kp := 2.0, Ki := 0.5); END_PROGRAM",
+    "success": true,
+    "compile_only": false,
+    "errors": [],
+    "instructions": [
+      {
+        "type_id": 101,
+        "params": [
+          0,
+          0,
+          0,
+          1,
+          1000
+        ]
+      },
+      {
+        "type_id": 501,
+        "params": [
+          0,
+          0,
+          1073741824,
+          1056964608,
+          0,
+          1120403456,
+          3267887104,
+          1000,
+          1,
+          0
+        ]
+      }
+    ],
+    "code_exists": true,
+    "code_contains_unconfirmed_execution_marker": false,
+    "source_path": "probes/pid_literals.lh"
+  },
+  {
+    "id": "repeated_input_group",
+    "source": "PROGRAM P VAR p : PID; END_VAR p(Kp := 1.0, Kp := 2.0); END_PROGRAM",
+    "success": false,
+    "compile_only": false,
+    "errors": [
+      "第 1 行: 功能块 'PID' 存在重复参数 'Kp'"
+    ],
+    "instructions": [
+      {
+        "type_id": 101,
+        "params": [
+          0,
+          0,
+          0,
+          1,
+          1000
+        ]
+      }
+    ],
+    "code_exists": false,
+    "code_contains_unconfirmed_execution_marker": false,
+    "source_path": "probes/repeated_input_group.lh"
+  },
+  {
+    "id": "can_empty",
+    "source": "PROGRAM P VAR c : CommCANInit; END_VAR c(); END_PROGRAM",
+    "success": true,
+    "compile_only": false,
+    "errors": [],
+    "instructions": [
+      {
+        "type_id": 101,
+        "params": [
+          0,
+          0,
+          0,
+          1,
+          1000
+        ]
+      },
+      {
+        "type_id": 601,
+        "params": []
+      }
+    ],
+    "code_exists": true,
+    "code_contains_unconfirmed_execution_marker": false,
+    "source_path": "probes/can_empty.lh"
+  },
+  {
+    "id": "can_configured",
+    "source": "PROGRAM P VAR c : CommCANInit; END_VAR c(Baud := 250); END_PROGRAM",
+    "success": false,
+    "compile_only": false,
+    "errors": [
+      "第 1 行: 功能块 'CommCANInit' 未定义参数（不接受参数调用），但调用时传入了参数: Baud"
+    ],
+    "instructions": [
+      {
+        "type_id": 101,
+        "params": [
+          0,
+          0,
+          0,
+          1,
+          1000
+        ]
+      }
+    ],
+    "code_exists": false,
+    "code_contains_unconfirmed_execution_marker": false,
+    "source_path": "probes/can_configured.lh"
+  },
+  {
+    "id": "period_input_defaults",
+    "source": "PROGRAM P VAR b : DrvT2PeriodIn; END_VAR b(); END_PROGRAM",
+    "success": false,
+    "compile_only": false,
+    "errors": [
+      "第 1 行: 功能块 'DrvT2PeriodIn' 参数 'Mask' 的值 65535 超出 INT 有效范围 [-32768, 32767]"
+    ],
+    "instructions": [
+      {
+        "type_id": 101,
+        "params": [
+          0,
+          0,
+          0,
+          1,
+          1000
+        ]
+      }
+    ],
+    "code_exists": false,
+    "code_contains_unconfirmed_execution_marker": false,
+    "source_path": "probes/period_input_defaults.lh"
+  },
+  {
+    "id": "period_input_scale_1000",
+    "source": "PROGRAM P VAR b : DrvT2PeriodIn; END_VAR b(Scale := 1000, Mask := 255); END_PROGRAM",
+    "success": true,
+    "compile_only": false,
+    "errors": [],
+    "instructions": [
+      {
+        "type_id": 101,
+        "params": [
+          0,
+          0,
+          0,
+          1,
+          1000
+        ]
+      },
+      {
+        "type_id": 408,
+        "params": [
+          0,
+          0,
+          1000,
+          255
+        ]
+      }
+    ],
+    "code_exists": true,
+    "code_contains_unconfirmed_execution_marker": false,
+    "source_path": "probes/period_input_scale_1000.lh"
+  },
+  {
+    "id": "digital_input_mask_ffff",
+    "source": "PROGRAM P VAR b : DrvDI; END_VAR b(Mask := 16#FFFF); END_PROGRAM",
+    "success": false,
+    "compile_only": false,
+    "errors": [
+      "第 1 行: 功能块 'DrvDI' 参数 'Mask' 的值 65535 超出 INT 有效范围 [-32768, 32767]"
+    ],
+    "instructions": [
+      {
+        "type_id": 101,
+        "params": [
+          0,
+          0,
+          0,
+          1,
+          1000
+        ]
+      }
+    ],
+    "code_exists": false,
+    "code_contains_unconfirmed_execution_marker": false,
+    "source_path": "probes/digital_input_mask_ffff.lh"
+  },
+  {
+    "id": "pid_lm_nonlinearity",
+    "source": "PROGRAM P VAR b : PID; END_VAR b(EnableNL := 1); END_PROGRAM",
+    "success": false,
+    "compile_only": false,
+    "errors": [
+      "第 1 行: 功能块 'PID' 不接受参数 'EnableNL'，有效参数为: Setpoint, Feedback, Kp, Ki, Kd, OutMax, OutMin, SampleTime, Enable, Reset"
+    ],
+    "instructions": [
+      {
+        "type_id": 101,
+        "params": [
+          0,
+          0,
+          0,
+          1,
+          1000
+        ]
+      }
+    ],
+    "code_exists": false,
+    "code_contains_unconfirmed_execution_marker": false,
+    "source_path": "probes/pid_lm_nonlinearity.lh"
+  }
+]

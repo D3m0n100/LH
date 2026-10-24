@@ -26,27 +26,9 @@
 
 void MainWindow::appendOutput(const QString& message)
 {
-    if (!m_outputViewer) {
-        return;
-    }
-
-    const bool atBottom = OutputPaneConfig::isScrolledToBottom(m_outputViewer);
-    const QString sanitized = OutputPaneConfig::sanitizeAndTruncate(message);
-
-    QTextCursor cursor = m_outputViewer->textCursor();
-    cursor.movePosition(QTextCursor::End);
-    if (!m_outputViewer->document()->isEmpty()) {
-        cursor.insertBlock();
-    }
-    cursor.insertText(sanitized);
-
-    const bool autoScrollEnabled = m_settingsController ? m_settingsController->autoScrollLog() : true;
-    if (autoScrollEnabled && atBottom) {
-        QScrollBar* scrollBar = m_outputViewer->verticalScrollBar();
-        if (scrollBar) {
-            scrollBar->setValue(scrollBar->maximum());
-        }
-    }
+    if (!m_outputController) return;
+    m_outputController->setAutoScroll(m_settingsController ? m_settingsController->autoScrollLog() : true);
+    m_outputController->appendMessage(message);
 }
 
 void MainWindow::onToggleOutputDock(bool checked)
@@ -111,37 +93,9 @@ void MainWindow::onSaveOutputToFile()
         return;
     }
     
-    QSaveFile file(fileName);
-    file.setDirectWriteFallback(false);
-    if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
-        appendOutput(QString("[%1] 输出保存失败（打开）: %2\n%3")
-                     .arg(QDateTime::currentDateTime().toString("HH:mm:ss"))
-                     .arg(fileName)
-                     .arg(file.errorString()));
-        return;
-    }
-
-    QTextStream stream(&file);
-    TextEncoding::setUtf8(stream);
-    stream << m_outputViewer->toPlainText();
-    stream.flush();
-    if (stream.status() != QTextStream::Ok) {
-        const QString error = file.errorString();
-        file.cancelWriting();
-        appendOutput(QString("[%1] 输出保存失败（写入）: %2\n%3")
-                     .arg(QDateTime::currentDateTime().toString("HH:mm:ss"))
-                     .arg(fileName)
-                     .arg(error));
-        return;
-    }
-
-    if (!file.commit()) {
-        const QString error = file.errorString();
-        file.cancelWriting();
-        appendOutput(QString("[%1] 输出保存失败（提交）: %2\n%3")
-                     .arg(QDateTime::currentDateTime().toString("HH:mm:ss"))
-                     .arg(fileName)
-                     .arg(error));
+    QString error;
+    if (!m_outputController || !m_outputController->saveToPath(fileName, &error)) {
+        appendOutput(QStringLiteral("输出保存失败: %1\n%2").arg(fileName, error));
         return;
     }
 

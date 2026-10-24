@@ -18,13 +18,13 @@
  *
  * - **OutputPaneController**: 负责输出窗口（日志面板）的所有逻辑。
  *
- * - **MonitorController**: 负责监控相关逻辑。
+ * - **RuntimeSessionController / MonitorWidget**: 生产监控及运行会话入口。
  *
  * - **DslScriptEditor**: 封装 DSL 脚本编辑器 UI 和拖拽组态逻辑。
  *
  * 这种结构的优势：
  * 1. 职责分离，便于单独测试各模块
- * 2. 降低 MainWindow 的代码复杂度（从 ~1700 行降至 ~900 行）
+ * 2. MainWindow 仍承担 UI 及部分发布/运行编排，分拆 cpp 不代表职责已全部下沉。
  * 3. 后续扩展功能时无需修改 MainWindow 头文件
  * 4. 便于团队协作，不同成员可以并行开发不同模块
  *
@@ -94,7 +94,6 @@ class DownloadDockWidget;
 class ICommInterface;
 class SampleDataProvider;
 class OutputPaneController;
-class MonitorController;
 class ProgramBlocksWidget;
 class ProjectExplorerWidget;
 class GlobalStatusBar;
@@ -234,6 +233,10 @@ private slots:
     void onResumeController();
     void onStepController();
     void onRunControllerToCursor();
+    void onControllerBreakpoints();
+    void onContinuousStep();
+    void onExportParameterSnapshot();
+    void onRestoreParameterSnapshot();
     void onTestControllerConnection();
 
     // ===== 监控相关 =====
@@ -385,6 +388,7 @@ private:
     QDockWidget*  m_monitorDock;
     QDockWidget*  m_downloadDock;
     QTextEdit*    m_outputViewer;
+    OutputPaneController* m_outputController = nullptr;
     QTabWidget*   m_bottomPanels = nullptr;
     QTabWidget*   m_workspaceTabs = nullptr;
     QWidget*      m_workspaceDslPage = nullptr;

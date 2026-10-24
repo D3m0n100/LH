@@ -2,6 +2,7 @@
 // 监控图表视图实现（性能优化版本）
 
 #include "MonitorChartView.h"
+#include "AtomicPixmap.h"
 #include "SvgExport.h"
 #include "ChartWidget.h"
 #include "MonitorDataProcessor.h"
@@ -536,7 +537,7 @@ bool MonitorChartView::exportAsPng(const QString& filePath, int width, int heigh
         pixmap = m_chartWidget->grab();
     }
     
-    return pixmap.save(filePath, "PNG");
+    return AtomicPixmap::save(pixmap, filePath, "PNG");
 }
 
 bool MonitorChartView::exportAsJpg(const QString& filePath, int quality)
@@ -544,7 +545,7 @@ bool MonitorChartView::exportAsJpg(const QString& filePath, int quality)
     if (!m_chartWidget) {
         return false;
     }
-    return m_chartWidget->grab().save(filePath, "JPG", quality);
+    return AtomicPixmap::save(m_chartWidget->grab(), filePath, "JPG", quality);
 }
 
 bool MonitorChartView::exportAsSvg(const QString& filePath)

@@ -17,8 +17,12 @@ import math
 current_dir = os.path.dirname(os.path.abspath(__file__))
 project_root = os.path.dirname(os.path.dirname(os.path.dirname(current_dir)))
 grammar_path = os.path.join(project_root, 'grammar')
-if grammar_path not in sys.path:
-    sys.path.insert(0, grammar_path)
+if os.path.isfile(os.path.join(grammar_path, 'LHParser.py')):
+    # frontend is imported by package __init__ before compiler.py. Select the
+    # bundled grammar here too, before its visitor imports and caches LHParser.
+    if project_root in sys.path:
+        sys.path.remove(project_root)
+    sys.path.insert(0, project_root)
 
 # 尝试导入 ANTLR 访问器基类
 _LMVisitorBase = None
@@ -695,7 +699,10 @@ class ASTBuilder(_BaseClass):
 
     def visitParenExpr(self, ctx):
         if ctx.expression():
-            return self.visit(ctx.expression())
+            expression = self.visit(ctx.expression())
+            if expression is not None:
+                expression.parenthesized = True
+            return expression
         return None
 
     def visitFuncCallExpr(self, ctx):

@@ -6,6 +6,7 @@
 
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Any
+import math
 
 
 @dataclass
@@ -62,6 +63,42 @@ class FunctionBlockMeta:
     status: str = "supported"              # "supported" | "incomplete"
     incomplete_reason: str = ""            # 缺失契约/参数定义的原因说明
     runtime_fields: List[RuntimeFieldDef] = field(default_factory=list)
+
+    def definition_errors(self) -> List[str]:
+        errors = []
+        seen = set()
+        ranges = {'SINT': (-128, 127), 'USINT': (0, 255), 'BYTE': (0, 255),
+                  'INT': (-32768, 32767), 'UINT': (0, 65535), 'WORD': (0, 65535),
+                  'DINT': (-2147483648, 2147483647), 'UDINT': (0, 4294967295),
+                  'DWORD': (0, 4294967295)}
+        if not self.parameters and self.name != 'Nop':
+            errors.append('参数契约未定义；空参数表不表示完整功能')
+        for p in self.parameters:
+            key = p.name.upper()
+            if not key or key in seen:
+                errors.append(f'{p.name}: 参数名称为空或重复')
+            seen.add(key)
+            if p.direction not in ('IN', 'OUT', 'IN_OUT'):
+                errors.append(f'{p.name}: 参数方向无效')
+            dt, value = p.data_type.upper(), p.default_value
+            if dt not in {*ranges, 'BOOL', 'REAL'}:
+                errors.append(f'{p.name}: 未支持的参数类型 {dt}')
+            if value is None:
+                continue
+            if dt in ranges and (type(value) is not int or not ranges[dt][0] <= value <= ranges[dt][1]):
+                errors.append(f'{p.name}: 默认值 {value} 超出 {dt} 类型范围或类型错误')
+            elif dt == 'BOOL' and not (type(value) is bool or type(value) is int and value in (0, 1)):
+                errors.append(f'{p.name}: BOOL 默认值无效')
+            elif dt == 'REAL' and (type(value) not in (int, float) or not math.isfinite(value) or abs(value) > 3.4028234663852886e38):
+                errors.append(f'{p.name}: REAL 默认值无效')
+        return errors
+
+    def capability_state(self) -> Dict[str, Any]:
+        issues = self.definition_errors()
+        return {'name': self.name, 'status': self.status,
+                'definitionValid': not issues, 'definitionErrors': issues,
+                'compilerHandles': self.is_supported and not issues,
+                'targetExecutionVerified': False}
 
     def runtime_field_layout(self):
         validate_runtime_layout(self.runtime_fields, self.memory_size)
@@ -132,6 +169,10 @@ class FunctionBlockRegistry:
         """加载内置的默认功能块定义"""
         from .definitions import get_all_definitions
         for meta in get_all_definitions():
+            issues = meta.definition_errors()
+            if issues and not meta.parameters and meta.status == 'supported':
+                meta.status = 'incomplete'
+                meta.incomplete_reason = '; '.join(issues)
             self.register(meta)
 
     def __repr__(self):

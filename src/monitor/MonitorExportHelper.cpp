@@ -1,4 +1,5 @@
 #include "SvgExport.h"
+#include "AtomicPixmap.h"
 // 文件：src/monitor/MonitorExportHelper.cpp
 // 监控数据导出助手实现
 //
@@ -231,7 +232,7 @@ ExportResult MonitorExportHelper::exportChartAsPngToFile(
     }
     
     // 保存图像
-    if (!pixmap.save(result.filePath, "PNG", m_config.imageQuality)) {
+    if (!AtomicPixmap::save(pixmap, result.filePath, "PNG", m_config.imageQuality)) {
         result.errorMessage = tr("保存 PNG 文件失败: %1").arg(result.filePath);
         qWarning() << "[MonitorExportHelper] PNG导出失败:" << result.errorMessage;
         emit exportError(result.errorMessage);
@@ -280,7 +281,7 @@ ExportResult MonitorExportHelper::exportChartAsJpgToFile(
         return result;
     }
     
-    if (!pixmap.save(result.filePath, "JPG", m_config.imageQuality)) {
+    if (!AtomicPixmap::save(pixmap, result.filePath, "JPG", m_config.imageQuality)) {
         result.errorMessage = tr("保存 JPG 文件失败: %1").arg(result.filePath);
         qWarning() << "[MonitorExportHelper] JPG导出失败:" << result.errorMessage;
         emit exportError(result.errorMessage);
@@ -359,7 +360,7 @@ ExportResult MonitorExportHelper::exportPixmap(const QPixmap& pixmap,
         return result;
     }
     
-    if (!pixmap.save(filePath, format.toUtf8().constData(), m_config.imageQuality)) {
+    if (!AtomicPixmap::save(pixmap, filePath, format.toUtf8().constData(), m_config.imageQuality)) {
         result.errorMessage = tr("保存图像失败: %1").arg(filePath);
         qWarning() << "[MonitorExportHelper] Pixmap导出失败:" << result.errorMessage;
         emit exportError(result.errorMessage);

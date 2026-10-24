@@ -4,6 +4,7 @@
 
 #include "Communication.h"
 #include "ControllerDebugProtocol.h"
+#include "ProtocolUtils.h"
 
 #include "BackendOperationGuard.h"
 
@@ -11,23 +12,16 @@
 #include <QFileInfo>
 #include <QMutexLocker>
 #include <QtGlobal>
+#include <QDeadlineTimer>
+#include <QTimer>
+#include <QPointer>
+#include <QScopeGuard>
 
 using Communication::BackendOperationGuard;
 
 namespace {
 
-bool readPositiveInt(const QVariantMap& map, const QStringList& keys, int* value)
-{
-    for (const QString& key : keys) {
-        bool ok = false;
-        const int candidate = map.value(key).toInt(&ok);
-        if (ok && candidate > 0) {
-            *value = candidate;
-            return true;
-        }
-    }
-    return false;
-}
+using Communication::readPositiveInt;
 } // namespace
 
 ControllerDeviceBackend::ControllerDeviceBackend(QObject* parent)
@@ -42,26 +36,36 @@ ControllerDeviceBackend::ControllerDeviceBackend(QObject* parent)
 
 ControllerDeviceBackend::~ControllerDeviceBackend()
 {
+    if (m_connectCancelled) m_connectCancelled->store(true);
     if (m_debugCancelled) m_debugCancelled->store(true);
     cancelDownload();
     if (m_client) m_client->waitForIdle();
     disconnectBackend();
+    if (m_client) m_client->waitForIdle();
 }
 
 bool ControllerDeviceBackend::configure(const ProjectRuntimeConfig& config, QString* errorMessage)
 {
     BackendOperationGuard operation(&m_operationMutex);
-    if (m_asyncDownloadActive || m_asyncReadActive || !operation.tryLock()) {
+    if (m_asyncConnectActive || m_asyncDownloadActive || m_asyncReadActive || !operation.tryLock()) {
         if (errorMessage) *errorMessage = QStringLiteral("Controller is busy; configuration was not changed");
         return false;
     }
     QMutexLocker lock(&m_mutex);
+    if (m_online || m_portClaimed || m_disconnectPending) {
+        if (m_configured && m_config.toJson() == config.toJson()) return true;
+        if (errorMessage) *errorMessage = QStringLiteral("请先断开控制器，再应用新的连接配置。");
+        return false;
+    }
+    const ProjectRuntimeConfig previousConfig = m_config;
+    const bool previouslyConfigured = m_configured;
+    const auto rollback = [&]() {
+        m_config = previousConfig;
+        m_configured = previouslyConfigured;
+        loadPointDefinitions(RuntimePointConverter::fromProjectConfig(previousConfig));
+    };
     m_config = config;
     m_configured = true;
-    m_lastDownloadError.clear();
-    m_targetOnline = false;
-    m_targetDeviceId = targetDeviceId();
-    m_lastTargetProbe.clear();
     loadPointDefinitions(RuntimePointConverter::fromProjectConfig(config));
 
     QString transportProtocol = config.transport.protocol.trimmed();
@@ -86,7 +90,7 @@ bool ControllerDeviceBackend::configure(const ProjectRuntimeConfig& config, QStr
     const bool isRtu = transportMode.isEmpty()
             || transportMode.compare(QStringLiteral("rtu"), Qt::CaseInsensitive) == 0;
     if (!isModbus || !isRtu) {
-        m_configured = false;
+        rollback();
         const QString message = transportMode.compare(QStringLiteral("tcp"), Qt::CaseInsensitive) == 0
                 ? QStringLiteral("当前控制器后端仅支持 Modbus RTU，已拒绝 Modbus TCP 配置。")
                 : QStringLiteral("当前控制器后端仅支持 Modbus RTU，传输配置无效。");
@@ -105,7 +109,7 @@ bool ControllerDeviceBackend::configure(const ProjectRuntimeConfig& config, QStr
     QStringList preflightWarnings;
     buildPreflightReport(&preflightErrors, &preflightWarnings);
     if (!preflightErrors.isEmpty()) {
-        m_configured = false;
+        rollback();
         const QString message = QStringLiteral("控制器后端配置预检失败：%1")
                 .arg(preflightErrors.join(QStringLiteral("; ")));
         if (errorMessage) {
@@ -123,7 +127,7 @@ bool ControllerDeviceBackend::configure(const ProjectRuntimeConfig& config, QStr
                                                             QStringLiteral("portName"),
                                                             QStringLiteral("deviceName")});
     if (configuredPortName.trimmed().isEmpty()) {
-        m_configured = false;
+        rollback();
         const QString message = QStringLiteral("控制器后端配置失败：未指定串口端口。");
         if (errorMessage) {
             *errorMessage = message;
@@ -135,7 +139,7 @@ bool ControllerDeviceBackend::configure(const ProjectRuntimeConfig& config, QStr
 
     const int id = deviceId();
     if (!ControllerDebugProtocol::canReadDeviceId(id)) {
-        m_configured = false;
+        rollback();
         const QString message = QStringLiteral("控制器后端配置失败：装置号必须为 1..63。");
         if (errorMessage) {
             *errorMessage = message;
@@ -145,6 +149,10 @@ bool ControllerDeviceBackend::configure(const ProjectRuntimeConfig& config, QStr
         return false;
     }
 
+    m_lastDownloadError.clear();
+    m_targetOnline = false;
+    m_targetDeviceId = targetDeviceId();
+    m_lastTargetProbe.clear();
     lock.unlock();
     clearFailure();
     return true;
@@ -165,6 +173,60 @@ void ControllerDeviceBackend::setDebugClientForTest(ControllerDebugClient* clien
 
 bool ControllerDeviceBackend::connectBackend()
 {
+    return connectBackendWithBudget(3000, nullptr, true);
+}
+
+void ControllerDeviceBackend::connectBackendAsync(int budgetMs, std::shared_ptr<std::atomic_bool> cancelled,
+        QObject* context, std::function<void(bool, QString)> completed)
+{
+    if (!context || !completed) return;
+    if (!cancelled) cancelled = std::make_shared<std::atomic_bool>(false);
+    if (budgetMs <= 0 || m_asyncConnectActive.exchange(true)) {
+        completed(false, QStringLiteral("控制器正在连接或连接期限无效")); return;
+    }
+    m_connectCancelled = cancelled;
+    auto finished = std::make_shared<std::atomic_bool>(false);
+    QPointer<QObject> guard(context);
+    QPointer<ControllerDeviceBackend> self(this);
+    const QDeadlineTimer deadline(budgetMs);
+    QTimer::singleShot(budgetMs, context, [=] {
+        if (!finished->exchange(true)) {
+            cancelled->store(true);
+            completed(false, QStringLiteral("控制器连接超过总期限"));
+        }
+    });
+    auto job = [=] {
+        if (!guard) cancelled->store(true);
+        bool ok = !cancelled->load() && !deadline.hasExpired()
+            && connectBackendWithBudget(int(deadline.remainingTime()), cancelled.get(), false);
+        QString message = ok ? QString() : lastError().message;
+        if (!guard) cancelled->store(true);
+        if (cancelled->load() || deadline.hasExpired()) {
+            ok = false;
+            message = QStringLiteral("控制器连接已取消或超时");
+            // Close on the I/O actor; the GUI never waits for native close.
+            m_asyncConnectActive = false;
+            disconnectBackend();
+        }
+        if (guard) QMetaObject::invokeMethod(guard, [=] {
+            if (self) self->m_asyncConnectActive = false;
+            if (finished->exchange(true)) return;
+            if (!self) { completed(false, QStringLiteral("控制器后端已释放")); return; }
+            if (cancelled->load()) {
+                self->disconnectBackend(); completed(false, QStringLiteral("控制器连接已取消")); return;
+            }
+            if (ok) emit self->connectionStateChanged(true);
+            completed(ok, message);
+        }, Qt::QueuedConnection);
+    };
+    if (m_client && m_client->hasWorkerThread()) m_client->runAsync(std::move(job));
+    else QTimer::singleShot(0, this, std::move(job));
+}
+
+bool ControllerDeviceBackend::connectBackendWithBudget(int budgetMs, const std::atomic_bool* cancelled, bool publishConnection)
+{
+    QDeadlineTimer deadline(qMax(1, budgetMs));
+    if (cancelled && cancelled->load()) return false;
     if (m_asyncReadActive || m_asyncDownloadActive || m_disconnectPending) {
         setFailure(CommErrorCode::DeviceBusy, QStringLiteral("控制器正在处理请求或断开连接，请等待完成"));
         return false;
@@ -241,6 +303,8 @@ bool ControllerDeviceBackend::connectBackend()
         return false;
     }
 
+    m_client->setRequestBudget(int(deadline.remainingTime()), cancelled);
+    const auto clearBudget = qScopeGuard([this] { m_client->setRequestBudget(-1, nullptr); });
     ControllerDebugStatus status;
     if (!client->readStatus(&status)) {
         const CommError err = currentDebugError(QStringLiteral("控制器状态读取失败。"));
@@ -252,6 +316,11 @@ bool ControllerDeviceBackend::connectBackend()
 
     QString targetProbeError;
     const bool targetOk = probeTarget(&targetProbeError);
+    if (deadline.hasExpired() || (cancelled && cancelled->load())) {
+        client->close(); releaseClaim();
+        setFailure(CommErrorCode::ConnectionTimeout, QStringLiteral("控制器连接已取消或超过总期限"));
+        return false;
+    }
 
     {
         QMutexLocker lock(&m_mutex);
@@ -261,15 +330,55 @@ bool ControllerDeviceBackend::connectBackend()
         m_lastDownloadError = targetOk ? QString() : targetProbeError;
     }
     clearFailure();
-    emit connectionStateChanged(true);
+    if (publishConnection) emit connectionStateChanged(true);
     return true;
+}
+
+void ControllerDeviceBackend::testConnectionAsync(int budgetMs, QObject* context,
+        std::function<void(bool, ControllerConnectionDiagnostic, QString)> completed)
+{
+    if (!context || !completed) return;
+    if (budgetMs <= 0 || m_asyncConnectActive || m_asyncDownloadActive || m_asyncReadActive.exchange(true)) {
+        completed(false, {}, QStringLiteral("控制器正在处理其他请求")); return;
+    }
+    const auto cancelled = std::make_shared<std::atomic_bool>(false);
+    m_debugCancelled = cancelled;
+    const auto finished = std::make_shared<std::atomic_bool>(false);
+    const QDeadlineTimer deadline(budgetMs);
+    const QPointer<QObject> guard(context);
+    QTimer::singleShot(budgetMs, context, [=] {
+        if (!finished->exchange(true)) {
+            cancelled->store(true); completed(false, {}, QStringLiteral("控制器诊断超过总期限"));
+        }
+    });
+    auto job = [=] {
+        ControllerConnectionDiagnostic diagnostic;
+        QString error;
+        bool ok = false;
+        {
+            BackendOperationGuard operation(&m_operationMutex);
+            if (!cancelled->load() && !deadline.hasExpired() && operation.tryLock()) {
+                m_client->setRequestBudget(int(deadline.remainingTime()), cancelled.get());
+                ok = testConnection(&diagnostic, &error);
+                m_client->setRequestBudget(-1, nullptr);
+            }
+        }
+        if (cancelled->load() || deadline.hasExpired()) { ok = false; error = QStringLiteral("控制器诊断已取消或超时"); }
+        m_asyncReadActive = false;
+        if (guard) QMetaObject::invokeMethod(guard, [=] {
+            if (!finished->exchange(true)) completed(ok, diagnostic, error);
+        }, Qt::QueuedConnection);
+    };
+    if (m_client && m_client->hasWorkerThread()) m_client->runAsync(std::move(job));
+    else QTimer::singleShot(0, this, std::move(job));
 }
 
 void ControllerDeviceBackend::disconnectBackend()
 {
+    if (m_connectCancelled) m_connectCancelled->store(true);
     if (m_debugCancelled) m_debugCancelled->store(true);
     if (m_disconnectPending) return;
-    if (m_asyncReadActive && m_client && m_client->hasWorkerThread()
+    if (m_client && m_client->hasWorkerThread()
         && QThread::currentThread() == thread()) {
         if (m_disconnectPending.exchange(true)) return;
         QString port;
@@ -290,6 +399,7 @@ void ControllerDeviceBackend::disconnectBackend()
             client->close();
             if (wasClaimed) Communication::releaseRtuPort(port, token);
             m_disconnectPending = false;
+            m_asyncConnectActive = false;
         });
         if (wasOnline) emit connectionStateChanged(false);
         return;

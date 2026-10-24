@@ -1,0 +1,225 @@
+{
+  "timestamp_utc": "2026-10-24T01:32:37.055264+00:00",
+  "delivery_status": "已实现待总控验收",
+  "authorized_software_tasks": 10,
+  "software_acceptance_complete": true,
+  "real_controller_tested": false,
+  "ctest": {
+    "total": 47,
+    "passed": 47,
+    "failed": 0,
+    "targets": [
+      "ProjectMutationGuardTest",
+      "RuntimeSessionServiceTest",
+      "ClassicPollPlanTest",
+      "ClassicOpcWorkerTest",
+      "ModuleBoundaryCheck",
+      "ProjectCommandCoordinatorTest",
+      "OptimizationAcceptanceTest",
+      "app_logging_test",
+      "AppLoggingOverloadTest",
+      "CoreDataManagerTest",
+      "DataManagerHistoryPagingTest",
+      "SnippetRepositoryTest",
+      "MonitorDataProcessorTest",
+      "MonitorDataLoggerTest",
+      "AsyncDatabaseWorkerTest",
+      "MonitorManagerBackendTest",
+      "MonitorWidgetUiTest",
+      "MainWindowIntegrationTest",
+      "DownloadManagerLifecycleTest",
+      "DslCompletionEngineTest",
+      "DslScriptEditorSaveTest",
+      "ProjectSaveCloseTest",
+      "DslCompilerCancellationTest",
+      "DslCompilerSemanticsTest",
+      "CompilerRuntimeSearchTest",
+      "MonitorExportTest",
+      "MonitorHistoryExportIntegrationTest",
+      "CommunicationRoutingTest",
+      "SerialInterfaceTest",
+      "ControllerDebugProtocolTest",
+      "ControllerDeviceBackendTest",
+      "RuntimePointTableTest",
+      "VirtualDeviceBackendTest",
+      "ParameterControllerTest",
+      "RuntimeSessionControllerTest",
+      "OpcServerConfigTest",
+      "DiagnosticSnapshotTest",
+      "InstallLayoutTest",
+      "MonitorHistoryCoreTest",
+      "ReviewRound2RegressionTest",
+      "PidHistoryAsyncTest",
+      "DesignerP1RobustnessTest",
+      "DatabaseStartupMigrationTest",
+      "BackendSamplerTest",
+      "FullReviewRegressionTest",
+      "Review20261023Test",
+      "LmParitySoftwareTest"
+    ]
+  },
+  "python": {
+    "total": 150,
+    "passed": 149,
+    "failed": 0,
+    "skips": [
+      {
+        "test": "test_sidecar_symlink_preserves_input",
+        "reason": "Symbolic links require platform permission"
+      }
+    ]
+  },
+  "qtest_xml_suites": 43,
+  "native_exit_code_tests": [
+    "AppLoggingOverloadTest",
+    "app_logging_test"
+  ],
+  "qtest_cases": 713,
+  "qtest_conditional_skips": [
+    {
+      "suite": "MainWindowIntegrationTest",
+      "test": "parameterArtifactFailurePreservesPreviousFiles",
+      "reason": [
+        " message=\"需要以 LH_ENABLE_TEST_FAILURE_INJECTION=ON 构建测试注入路径。\" type=\"skip\" "
+      ]
+    },
+    {
+      "suite": "MainWindowIntegrationTest",
+      "test": "parameterArtifactFailureLeavesNoNewFormalFiles",
+      "reason": [
+        " message=\"需要以 LH_ENABLE_TEST_FAILURE_INJECTION=ON 构建测试注入路径。\" type=\"skip\" "
+      ]
+    },
+    {
+      "suite": "MainWindowIntegrationTest",
+      "test": "communicationArtifactFailureLeavesNoNewFormalFiles",
+      "reason": [
+        " message=\"需要以 LH_ENABLE_TEST_FAILURE_INJECTION=ON 构建测试注入路径。\" type=\"skip\" "
+      ]
+    },
+    {
+      "suite": "ProjectMutationGuardTest",
+      "test": "uncCreateAtomicSaveRenameAndDelete",
+      "reason": [
+        " message=\"Set LH_TEST_UNC_ROOT to a writable SMB test directory\" type=\"skip\" "
+      ]
+    },
+    {
+      "suite": "ProjectMutationGuardTest",
+      "test": "uncConflictAndContainmentPreserveOriginal",
+      "reason": [
+        " message=\"Set LH_TEST_UNC_ROOT to a writable SMB test directory\" type=\"skip\" "
+      ]
+    },
+    {
+      "suite": "ProjectMutationGuardTest",
+      "test": "uncRejectsServerJunctionAndOutsideWrite",
+      "reason": [
+        " message=\"Local backing directory is required for the SMB server&#x002D;side junction attack\" type=\"skip\" "
+      ]
+    },
+    {
+      "suite": "ProjectMutationGuardTest",
+      "test": "inPlaceAncestorReparseCannotRedirectCreation",
+      "reason": [
+        " tag=\"unc&#x002D;new&#x002D;file\" message=\"Local backing directory is required for the SMB server&#x002D;side in&#x002D;place reparse attack\" type=\"skip\" ",
+        " tag=\"unc&#x002D;atomic&#x002D;config&#x002D;replacement\" message=\"Local backing directory is required for the SMB server&#x002D;side in&#x002D;place reparse attack\" type=\"skip\" ",
+        " tag=\"unc&#x002D;attributes&#x002D;new&#x002D;file\" message=\"Local backing directory is required for the SMB server&#x002D;side in&#x002D;place reparse attack\" type=\"skip\" ",
+        " tag=\"unc&#x002D;attributes&#x002D;atomic&#x002D;config\" message=\"Local backing directory is required for the SMB server&#x002D;side in&#x002D;place reparse attack\" type=\"skip\" "
+      ]
+    },
+    {
+      "suite": "ProjectSaveCloseTest",
+      "test": "uncProjectSaveAndDeleteRollback",
+      "reason": [
+        " message=\"Set LH_TEST_UNC_ROOT to a writable SMB test directory\" type=\"skip\" "
+      ]
+    },
+    {
+      "suite": "ProjectSaveCloseTest",
+      "test": "symlinkToExternalMainScriptIsRejected",
+      "reason": [
+        " message=\"当前平台或 Qt 构建不支持可识别的符号链接测试\" type=\"skip\" "
+      ]
+    },
+    {
+      "suite": "ProjectSaveCloseTest",
+      "test": "symlinkDirectoryMissingAuxiliaryScriptIsRejected",
+      "reason": [
+        " message=\"当前平台或 Qt 构建不支持可识别的目录符号链接测试\" type=\"skip\" "
+      ]
+    }
+  ],
+  "gui_runs": [
+    {
+      "path": "review_execution\\lm-parity-repair-2026-10-24\\ui-detailed\\20261024_012730_267_24348_99ed8736-3906-4750-8b0b-d7cf95d15dd8\\run_environment.json",
+      "parent_run_id": "",
+      "totals": "Totals: 34 passed, 0 failed, 3 skipped, 0 blacklisted, 96879ms",
+      "workspace_fingerprint": "8ef0cd872a119328022755623705ee06d55f9c0418c5741f4a87ddffcfb96ecc",
+      "skips": [
+        "SKIP   : MainWindowIntegrationTest::parameterArtifactFailurePreservesPreviousFiles() ��Ҫ�� LH_ENABLE_TEST_FAILURE_INJECTION=ON ��������ע��·����",
+        "SKIP   : MainWindowIntegrationTest::parameterArtifactFailureLeavesNoNewFormalFiles() ��Ҫ�� LH_ENABLE_TEST_FAILURE_INJECTION=ON ��������ע��·����",
+        "SKIP   : MainWindowIntegrationTest::communicationArtifactFailureLeavesNoNewFormalFiles() ��Ҫ�� LH_ENABLE_TEST_FAILURE_INJECTION=ON ��������ע��·����"
+      ]
+    },
+    {
+      "path": "review_execution\\lm-parity-repair-2026-10-24\\ui-detailed\\20261024_012836_762_25124_c8f33625-92c6-4705-a3ee-bf90b7b5b3bd\\run_environment.json",
+      "parent_run_id": "20261024_012730_267_24348_99ed8736-3906-4750-8b0b-d7cf95d15dd8",
+      "totals": "Totals: 3 passed, 0 failed, 0 skipped, 0 blacklisted, 4351ms",
+      "workspace_fingerprint": "8ef0cd872a119328022755623705ee06d55f9c0418c5741f4a87ddffcfb96ecc",
+      "skips": []
+    },
+    {
+      "path": "review_execution\\lm-parity-repair-2026-10-24\\ui-detailed\\20261024_012842_148_27160_05ae754d-24b8-4921-a119-8e413d4adb22\\run_environment.json",
+      "parent_run_id": "20261024_012730_267_24348_99ed8736-3906-4750-8b0b-d7cf95d15dd8",
+      "totals": "Totals: 3 passed, 0 failed, 0 skipped, 0 blacklisted, 3246ms",
+      "workspace_fingerprint": "8ef0cd872a119328022755623705ee06d55f9c0418c5741f4a87ddffcfb96ecc",
+      "skips": []
+    },
+    {
+      "path": "review_execution\\lm-parity-repair-2026-10-24\\ui-detailed\\20261024_012846_393_18716_8f4ea346-5dbe-423a-8ecd-9e67fcbf4c50\\run_environment.json",
+      "parent_run_id": "20261024_012730_267_24348_99ed8736-3906-4750-8b0b-d7cf95d15dd8",
+      "totals": "Totals: 3 passed, 0 failed, 0 skipped, 0 blacklisted, 3269ms",
+      "workspace_fingerprint": "8ef0cd872a119328022755623705ee06d55f9c0418c5741f4a87ddffcfb96ecc",
+      "skips": []
+    },
+    {
+      "path": "review_execution\\lm-parity-repair-2026-10-24\\ui-detailed\\20261024_012850_664_16228_47217286-4a5b-40c9-9373-511627307010\\run_environment.json",
+      "parent_run_id": "20261024_012730_267_24348_99ed8736-3906-4750-8b0b-d7cf95d15dd8",
+      "totals": "Totals: 3 passed, 0 failed, 0 skipped, 0 blacklisted, 4483ms",
+      "workspace_fingerprint": "8ef0cd872a119328022755623705ee06d55f9c0418c5741f4a87ddffcfb96ecc",
+      "skips": []
+    },
+    {
+      "path": "review_execution\\lm-parity-repair-2026-10-24\\ui-detailed\\20261024_012856_164_23632_47b960a7-9379-4011-8bf2-8013d526b4bc\\run_environment.json",
+      "parent_run_id": "20261024_012730_267_24348_99ed8736-3906-4750-8b0b-d7cf95d15dd8",
+      "totals": "Totals: 3 passed, 0 failed, 0 skipped, 0 blacklisted, 3441ms",
+      "workspace_fingerprint": "8ef0cd872a119328022755623705ee06d55f9c0418c5741f4a87ddffcfb96ecc",
+      "skips": []
+    },
+    {
+      "path": "review_execution\\lm-parity-repair-2026-10-24\\ui-detailed\\20261024_012900_627_27272_e0801f2b-d131-42d9-8e03-df472f42be8a\\run_environment.json",
+      "parent_run_id": "20261024_012730_267_24348_99ed8736-3906-4750-8b0b-d7cf95d15dd8",
+      "totals": "Totals: 3 passed, 0 failed, 0 skipped, 0 blacklisted, 3445ms",
+      "workspace_fingerprint": "8ef0cd872a119328022755623705ee06d55f9c0418c5741f4a87ddffcfb96ecc",
+      "skips": []
+    }
+  ],
+  "gui_existing_conditional_skips": 3,
+  "skipped_conditions": "Existing OFF-profile fault-injection, UNC/filesystem privilege or environment cases are listed explicitly. No changed-feature cases skipped.",
+  "install_layout_passed": true,
+  "installed_smoke_exit_code": 0,
+  "installed_compiler_entries_passed": true,
+  "source_manifest_stable": true,
+  "original_audit_json_integrity_verified": true,
+  "not_implemented_by_request": [
+    "LM 旧项目迁移",
+    "新增 PC 离线执行器",
+    "真实控制器运行时/ABI/算法/硬件协议"
+  ],
+  "known_environment_limits": [
+    "Qt Windows offscreen/minimal QMessageBox crash retained as environment evidence; native windows plugin used for complete GUI acceptance",
+    "Windows native handle tests require normal host permissions rather than the restricted sandbox"
+  ],
+  "git_commit_or_push_performed": false
+}

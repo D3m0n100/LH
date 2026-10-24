@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<testsuite errors="6" failures="2" tests="6" name="LmParitySoftwareTest">
+  <properties>
+    <property value="5.15.2" name="QTestVersion"/>
+    <property value="5.15.2" name="QtVersion"/>
+    <property value="Qt 5.15.2 (x86_64&#x002D;little_endian&#x002D;llp64 shared (dynamic) release build; by GCC 8.1.0)" name="QtBuild"/>
+  </properties>
+  <testcase result="pass" name="initTestCase"/>
+  <testcase result="pass" name="parameterValidationAndAtomicBatch"/>
+  <testcase result="pass" name="snapshotPreviewAndRollback">
+    <!-- message="[DEBUG] 09:07:18.630 ProjectController å·²åˆ›å»º" type="qdebug" -->
+    <!-- message="[DEBUG] 09:07:18.637 ProjectController å·²é”€æ¯" type="qdebug" -->
+  </testcase>
+  <testcase result="fail" name="newProjectTemplateCompiles">
+    <!-- message="[DEBUG] 09:07:18.641 ProjectController å·²åˆ›å»º" type="qdebug" -->
+    <failure message="&apos;project.hasOpenProject()&apos; returned FALSE. ([09:07:18] ÎÞ·¨±£´æÏîÄ¿ÅäÖÃÎÄ¼þ: ¾Ü¾øÂ·¾¶¾ºÕù¡¢Á´½Ó»òÕ¼ÓÃ (NTSTATUS 0xc0000022)
+ÏîÄ¿ÅäÖÃÐ´ÈëÊ§°Ü£¬ÒÑÇåÀí±¾´Î´´½¨µÄÏîÄ¿ÎÄ¼þ¡£
+)" result="fail"/>
+    <!-- message="[DEBUG] 09:07:18.664 ProjectController å·²é”€æ¯" type="qdebug" -->
+  </testcase>
+  <testcase result="fail" name="continuousStepSerializesAndCancels">
+    <!-- message="[MonitorManager] device backend set: ControllerDeviceBackend(0x6b0ef50)" type="qdebug" -->
+    <failure message="&apos;controller.startContinuousStep(50)&apos; returned FALSE. ()" result="fail"/>
+    <!-- message="[MonitorManager] backend connectionStateChanged: false" type="qdebug" -->
+  </testcase>
+  <testcase result="pass" name="cleanupTestCase"/>
+  <system-err>
+<![CDATA[[DEBUG] 09:07:18.630 ProjectController å·²åˆ›å»º]]>
+<![CDATA[[DEBUG] 09:07:18.637 ProjectController å·²é”€æ¯]]>
+<![CDATA[[DEBUG] 09:07:18.641 ProjectController å·²åˆ›å»º]]>
+<![CDATA[[DEBUG] 09:07:18.664 ProjectController å·²é”€æ¯]]>
+<![CDATA[[MonitorManager] device backend set: ControllerDeviceBackend(0x6b0ef50)]]>
+<![CDATA[[MonitorManager] backend connectionStateChanged: false]]>
+  </system-err>
+</testsuite>

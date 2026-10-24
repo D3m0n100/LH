@@ -1,0 +1,339 @@
+{
+  "baseline": "99f9b097161de3575cb383fee674f434f33c4c6c",
+  "excluded_ctest_regex": "DslCompiler|CompilerRuntimeSearch",
+  "latest_results": {
+    "ProjectMutationGuardTest": "passed",
+    "RuntimeSessionServiceTest": "passed",
+    "ClassicPollPlanTest": "passed",
+    "ClassicOpcWorkerTest": "passed",
+    "ModuleBoundaryCheck": "passed",
+    "ProjectCommandCoordinatorTest": "passed",
+    "OptimizationAcceptanceTest": "passed",
+    "app_logging_test": "passed",
+    "AppLoggingOverloadTest": "passed",
+    "CoreDataManagerTest": "passed",
+    "DataManagerHistoryPagingTest": "passed",
+    "SnippetRepositoryTest": "passed",
+    "MonitorDataProcessorTest": "passed",
+    "MonitorDataLoggerTest": "passed",
+    "AsyncDatabaseWorkerTest": "passed",
+    "MonitorManagerBackendTest": "passed",
+    "MonitorWidgetUiTest": "passed",
+    "MainWindowIntegrationTest": "passed",
+    "DownloadManagerLifecycleTest": "passed",
+    "DslCompletionEngineTest": "passed",
+    "DslScriptEditorSaveTest": "passed",
+    "ProjectSaveCloseTest": "passed",
+    "MonitorExportTest": "passed",
+    "MonitorHistoryExportIntegrationTest": "passed",
+    "CommunicationRoutingTest": "passed",
+    "SerialInterfaceTest": "passed",
+    "ControllerDebugProtocolTest": "passed",
+    "ControllerDeviceBackendTest": "passed",
+    "RuntimePointTableTest": "passed",
+    "VirtualDeviceBackendTest": "passed",
+    "ParameterControllerTest": "passed",
+    "RuntimeSessionControllerTest": "passed",
+    "OpcServerConfigTest": "passed",
+    "DiagnosticSnapshotTest": "passed",
+    "InstallLayoutTest": "passed",
+    "MonitorHistoryCoreTest": "passed",
+    "ReviewRound2RegressionTest": "passed",
+    "PidHistoryAsyncTest": "passed",
+    "DesignerP1RobustnessTest": "passed",
+    "DatabaseStartupMigrationTest": "passed",
+    "BackendSamplerTest": "passed",
+    "FullReviewRegressionTest": "passed",
+    "Review20261023Test": "passed"
+  },
+  "history": [
+    {
+      "file": "review-2026-10-23-ctest.xml",
+      "results": [
+        {
+          "name": "ProjectMutationGuardTest",
+          "status": "passed"
+        },
+        {
+          "name": "RuntimeSessionServiceTest",
+          "status": "passed"
+        },
+        {
+          "name": "ClassicPollPlanTest",
+          "status": "passed"
+        },
+        {
+          "name": "ClassicOpcWorkerTest",
+          "status": "passed"
+        },
+        {
+          "name": "ModuleBoundaryCheck",
+          "status": "passed"
+        },
+        {
+          "name": "ProjectCommandCoordinatorTest",
+          "status": "passed"
+        },
+        {
+          "name": "OptimizationAcceptanceTest",
+          "status": "passed"
+        },
+        {
+          "name": "app_logging_test",
+          "status": "passed"
+        },
+        {
+          "name": "AppLoggingOverloadTest",
+          "status": "passed"
+        },
+        {
+          "name": "CoreDataManagerTest",
+          "status": "passed"
+        },
+        {
+          "name": "DataManagerHistoryPagingTest",
+          "status": "passed"
+        },
+        {
+          "name": "SnippetRepositoryTest",
+          "status": "passed"
+        },
+        {
+          "name": "MonitorDataProcessorTest",
+          "status": "passed"
+        },
+        {
+          "name": "MonitorDataLoggerTest",
+          "status": "passed"
+        },
+        {
+          "name": "AsyncDatabaseWorkerTest",
+          "status": "passed"
+        },
+        {
+          "name": "MonitorManagerBackendTest",
+          "status": "passed"
+        },
+        {
+          "name": "MonitorWidgetUiTest",
+          "status": "passed"
+        },
+        {
+          "name": "MainWindowIntegrationTest",
+          "status": "failed"
+        },
+        {
+          "name": "DownloadManagerLifecycleTest",
+          "status": "passed"
+        },
+        {
+          "name": "DslCompletionEngineTest",
+          "status": "passed"
+        },
+        {
+          "name": "DslScriptEditorSaveTest",
+          "status": "passed"
+        },
+        {
+          "name": "ProjectSaveCloseTest",
+          "status": "passed"
+        },
+        {
+          "name": "MonitorExportTest",
+          "status": "passed"
+        },
+        {
+          "name": "MonitorHistoryExportIntegrationTest",
+          "status": "passed"
+        },
+        {
+          "name": "CommunicationRoutingTest",
+          "status": "passed"
+        },
+        {
+          "name": "SerialInterfaceTest",
+          "status": "passed"
+        },
+        {
+          "name": "ControllerDebugProtocolTest",
+          "status": "passed"
+        },
+        {
+          "name": "ControllerDeviceBackendTest",
+          "status": "passed"
+        },
+        {
+          "name": "RuntimePointTableTest",
+          "status": "passed"
+        },
+        {
+          "name": "VirtualDeviceBackendTest",
+          "status": "passed"
+        },
+        {
+          "name": "ParameterControllerTest",
+          "status": "passed"
+        },
+        {
+          "name": "RuntimeSessionControllerTest",
+          "status": "passed"
+        },
+        {
+          "name": "OpcServerConfigTest",
+          "status": "passed"
+        },
+        {
+          "name": "DiagnosticSnapshotTest",
+          "status": "passed"
+        },
+        {
+          "name": "InstallLayoutTest",
+          "status": "passed"
+        },
+        {
+          "name": "MonitorHistoryCoreTest",
+          "status": "passed"
+        },
+        {
+          "name": "ReviewRound2RegressionTest",
+          "status": "passed"
+        },
+        {
+          "name": "PidHistoryAsyncTest",
+          "status": "passed"
+        },
+        {
+          "name": "DesignerP1RobustnessTest",
+          "status": "passed"
+        },
+        {
+          "name": "DatabaseStartupMigrationTest",
+          "status": "passed"
+        },
+        {
+          "name": "BackendSamplerTest",
+          "status": "passed"
+        },
+        {
+          "name": "FullReviewRegressionTest",
+          "status": "passed"
+        },
+        {
+          "name": "Review20261023Test",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "file": "review-2026-10-23-ctest-recheck.xml",
+      "results": [
+        {
+          "name": "MainWindowIntegrationTest",
+          "status": "passed"
+        },
+        {
+          "name": "RuntimeSessionControllerTest",
+          "status": "passed"
+        },
+        {
+          "name": "InstallLayoutTest",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "file": "review-2026-10-23-ctest-final.xml",
+      "results": [
+        {
+          "name": "MainWindowIntegrationTest",
+          "status": "passed"
+        },
+        {
+          "name": "ProjectSaveCloseTest",
+          "status": "passed"
+        },
+        {
+          "name": "InstallLayoutTest",
+          "status": "passed"
+        },
+        {
+          "name": "Review20261023Test",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "file": "review-2026-10-23-admission-ctest.xml",
+      "results": [
+        {
+          "name": "CoreDataManagerTest",
+          "status": "passed"
+        },
+        {
+          "name": "DataManagerHistoryPagingTest",
+          "status": "passed"
+        },
+        {
+          "name": "AsyncDatabaseWorkerTest",
+          "status": "passed"
+        },
+        {
+          "name": "InstallLayoutTest",
+          "status": "passed"
+        },
+        {
+          "name": "ReviewRound2RegressionTest",
+          "status": "passed"
+        },
+        {
+          "name": "Review20261023Test",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "file": "review-2026-10-23-session-generation-ctest.xml",
+      "results": [
+        {
+          "name": "RuntimeSessionControllerTest",
+          "status": "passed"
+        }
+      ]
+    }
+  ],
+  "latest_counts": {
+    "passed": 43
+  },
+  "main_window_internal_skips": 3,
+  "main_window_internal_skip_reason": "LH_ENABLE_TEST_FAILURE_INJECTION=OFF; unchanged BuildController publication failure injection cases",
+  "standalone_downloader_tests": 6,
+  "standalone_downloader_status": "passed",
+  "downloader_sha256": "d354e0e8d908f2c51a96c2e676fffa4ca6778485bde42ab1e4249ad9df0846d3",
+  "installed_smoke": {
+    "status": "passed",
+    "exit_code": 0,
+    "platform": "windows",
+    "path_scope": "installed bin plus Windows only",
+    "database_scope": "isolated temporary database",
+    "result_file": "review-2026-10-23-admission-smoke-result.txt",
+    "install_log": "review-2026-10-23-admission-install.log"
+  },
+  "deterministic_admission_probe": {
+    "status": "passed",
+    "log": "review-2026-10-23-admission-barrier.txt",
+    "producer_paused_after_initial_check": true,
+    "shutdown_completed_before_resume": true,
+    "resumed_batch_id": 0,
+    "pending_records": 0
+  },
+  "late_connection_session_probe": {
+    "status": "passed",
+    "log": "review-2026-10-23-session-generation.txt",
+    "cases": [
+      "project-switch",
+      "user-stop",
+      "configuration-change"
+    ],
+    "required_result": "one false completion, no Connected session state, backend offline"
+  }
+}

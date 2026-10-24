@@ -1,0 +1,2599 @@
+{
+  "count": 140,
+  "successful_emission_is_not_execution_coverage": true,
+  "probes": [
+    {
+      "name": "EXCATMaintain",
+      "capability": {
+        "name": "EXCATMaintain",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      },
+      "compile_success": false,
+      "compile_only": false,
+      "errors": [
+        "第 1 行: 功能块 'EXCATMaintain' 尚未完善契约定义 (参数契约未定义；空参数表不表示完整功能)，禁止生成控制代码",
+        "第 1 行: 未声明的功能块实例: fb"
+      ]
+    },
+    {
+      "name": "EXCAIntCheck",
+      "capability": {
+        "name": "EXCAIntCheck",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      },
+      "compile_success": false,
+      "compile_only": false,
+      "errors": [
+        "第 1 行: 功能块 'EXCAIntCheck' 尚未完善契约定义 (参数契约未定义；空参数表不表示完整功能)，禁止生成控制代码",
+        "第 1 行: 未声明的功能块实例: fb"
+      ]
+    },
+    {
+      "name": "PasswordVerify2",
+      "capability": {
+        "name": "PasswordVerify2",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      },
+      "compile_success": false,
+      "compile_only": false,
+      "errors": [
+        "第 1 行: 功能块 'PasswordVerify2' 尚未完善契约定义 (参数契约未定义；空参数表不表示完整功能)，禁止生成控制代码",
+        "第 1 行: 未声明的功能块实例: fb"
+      ]
+    },
+    {
+      "name": "LockCmdGenery",
+      "capability": {
+        "name": "LockCmdGenery",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      },
+      "compile_success": false,
+      "compile_only": false,
+      "errors": [
+        "第 1 行: 功能块 'LockCmdGenery' 尚未完善契约定义 (参数契约未定义；空参数表不表示完整功能)，禁止生成控制代码",
+        "第 1 行: 未声明的功能块实例: fb"
+      ]
+    },
+    {
+      "name": "OutRealTime3",
+      "capability": {
+        "name": "OutRealTime3",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      },
+      "compile_success": false,
+      "compile_only": false,
+      "errors": [
+        "第 1 行: 功能块 'OutRealTime3' 尚未完善契约定义 (参数契约未定义；空参数表不表示完整功能)，禁止生成控制代码",
+        "第 1 行: 未声明的功能块实例: fb"
+      ]
+    },
+    {
+      "name": "CommCANInit",
+      "capability": {
+        "name": "CommCANInit",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      },
+      "compile_success": false,
+      "compile_only": false,
+      "errors": [
+        "第 1 行: 功能块 'CommCANInit' 尚未完善契约定义 (参数契约未定义；空参数表不表示完整功能)，禁止生成控制代码",
+        "第 1 行: 未声明的功能块实例: fb"
+      ]
+    },
+    {
+      "name": "CommGPRS",
+      "capability": {
+        "name": "CommGPRS",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      },
+      "compile_success": false,
+      "compile_only": false,
+      "errors": [
+        "第 1 行: 功能块 'CommGPRS' 尚未完善契约定义 (参数契约未定义；空参数表不表示完整功能)，禁止生成控制代码",
+        "第 1 行: 未声明的功能块实例: fb"
+      ]
+    },
+    {
+      "name": "CommJ1939Trans",
+      "capability": {
+        "name": "CommJ1939Trans",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      },
+      "compile_success": false,
+      "compile_only": false,
+      "errors": [
+        "第 1 行: 功能块 'CommJ1939Trans' 尚未完善契约定义 (参数契约未定义；空参数表不表示完整功能)，禁止生成控制代码",
+        "第 1 行: 未声明的功能块实例: fb"
+      ]
+    },
+    {
+      "name": "CommTrans",
+      "capability": {
+        "name": "CommTrans",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      },
+      "compile_success": false,
+      "compile_only": false,
+      "errors": [
+        "第 1 行: 功能块 'CommTrans' 尚未完善契约定义 (参数契约未定义；空参数表不表示完整功能)，禁止生成控制代码",
+        "第 1 行: 未声明的功能块实例: fb"
+      ]
+    },
+    {
+      "name": "CommWatch",
+      "capability": {
+        "name": "CommWatch",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      },
+      "compile_success": false,
+      "compile_only": false,
+      "errors": [
+        "第 1 行: 功能块 'CommWatch' 尚未完善契约定义 (参数契约未定义；空参数表不表示完整功能)，禁止生成控制代码",
+        "第 1 行: 未声明的功能块实例: fb"
+      ]
+    },
+    {
+      "name": "GT",
+      "capability": {
+        "name": "GT",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      },
+      "compile_success": false,
+      "compile_only": false,
+      "errors": [
+        "第 1 行: 功能块 'GT' 尚未完善契约定义 (参数契约未定义；空参数表不表示完整功能)，禁止生成控制代码",
+        "第 1 行: 未声明的功能块实例: fb"
+      ]
+    },
+    {
+      "name": "LT",
+      "capability": {
+        "name": "LT",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      },
+      "compile_success": false,
+      "compile_only": false,
+      "errors": [
+        "第 1 行: 功能块 'LT' 尚未完善契约定义 (参数契约未定义；空参数表不表示完整功能)，禁止生成控制代码",
+        "第 1 行: 未声明的功能块实例: fb"
+      ]
+    },
+    {
+      "name": "LE",
+      "capability": {
+        "name": "LE",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      },
+      "compile_success": false,
+      "compile_only": false,
+      "errors": [
+        "第 1 行: 功能块 'LE' 尚未完善契约定义 (参数契约未定义；空参数表不表示完整功能)，禁止生成控制代码",
+        "第 1 行: 未声明的功能块实例: fb"
+      ]
+    },
+    {
+      "name": "GE",
+      "capability": {
+        "name": "GE",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      },
+      "compile_success": false,
+      "compile_only": false,
+      "errors": [
+        "第 1 行: 功能块 'GE' 尚未完善契约定义 (参数契约未定义；空参数表不表示完整功能)，禁止生成控制代码",
+        "第 1 行: 未声明的功能块实例: fb"
+      ]
+    },
+    {
+      "name": "EQ",
+      "capability": {
+        "name": "EQ",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      },
+      "compile_success": false,
+      "compile_only": false,
+      "errors": [
+        "第 1 行: 功能块 'EQ' 尚未完善契约定义 (参数契约未定义；空参数表不表示完整功能)，禁止生成控制代码",
+        "第 1 行: 未声明的功能块实例: fb"
+      ]
+    },
+    {
+      "name": "NE",
+      "capability": {
+        "name": "NE",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      },
+      "compile_success": false,
+      "compile_only": false,
+      "errors": [
+        "第 1 行: 功能块 'NE' 尚未完善契约定义 (参数契约未定义；空参数表不表示完整功能)，禁止生成控制代码",
+        "第 1 行: 未声明的功能块实例: fb"
+      ]
+    },
+    {
+      "name": "IntConstBuild",
+      "capability": {
+        "name": "IntConstBuild",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      },
+      "compile_success": false,
+      "compile_only": false,
+      "errors": [
+        "第 1 行: 功能块 'IntConstBuild' 尚未完善契约定义 (参数契约未定义；空参数表不表示完整功能)，禁止生成控制代码",
+        "第 1 行: 未声明的功能块实例: fb"
+      ]
+    },
+    {
+      "name": "RealConstBuild",
+      "capability": {
+        "name": "RealConstBuild",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      },
+      "compile_success": false,
+      "compile_only": false,
+      "errors": [
+        "第 1 行: 功能块 'RealConstBuild' 尚未完善契约定义 (参数契约未定义；空参数表不表示完整功能)，禁止生成控制代码",
+        "第 1 行: 未声明的功能块实例: fb"
+      ]
+    },
+    {
+      "name": "BoolConstBuild",
+      "capability": {
+        "name": "BoolConstBuild",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      },
+      "compile_success": false,
+      "compile_only": false,
+      "errors": [
+        "第 1 行: 功能块 'BoolConstBuild' 尚未完善契约定义 (参数契约未定义；空参数表不表示完整功能)，禁止生成控制代码",
+        "第 1 行: 未声明的功能块实例: fb"
+      ]
+    },
+    {
+      "name": "Switch1",
+      "capability": {
+        "name": "Switch1",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      },
+      "compile_success": false,
+      "compile_only": false,
+      "errors": [
+        "第 1 行: 功能块 'Switch1' 尚未完善契约定义 (参数契约未定义；空参数表不表示完整功能)，禁止生成控制代码",
+        "第 1 行: 未声明的功能块实例: fb"
+      ]
+    },
+    {
+      "name": "Switch2",
+      "capability": {
+        "name": "Switch2",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      },
+      "compile_success": false,
+      "compile_only": false,
+      "errors": [
+        "第 1 行: 功能块 'Switch2' 尚未完善契约定义 (参数契约未定义；空参数表不表示完整功能)，禁止生成控制代码",
+        "第 1 行: 未声明的功能块实例: fb"
+      ]
+    },
+    {
+      "name": "Switch3",
+      "capability": {
+        "name": "Switch3",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      },
+      "compile_success": false,
+      "compile_only": false,
+      "errors": [
+        "第 1 行: 功能块 'Switch3' 尚未完善契约定义 (参数契约未定义；空参数表不表示完整功能)，禁止生成控制代码",
+        "第 1 行: 未声明的功能块实例: fb"
+      ]
+    },
+    {
+      "name": "Switch4",
+      "capability": {
+        "name": "Switch4",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      },
+      "compile_success": false,
+      "compile_only": false,
+      "errors": [
+        "第 1 行: 功能块 'Switch4' 尚未完善契约定义 (参数契约未定义；空参数表不表示完整功能)，禁止生成控制代码",
+        "第 1 行: 未声明的功能块实例: fb"
+      ]
+    },
+    {
+      "name": "Switch5",
+      "capability": {
+        "name": "Switch5",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      },
+      "compile_success": false,
+      "compile_only": false,
+      "errors": [
+        "第 1 行: 功能块 'Switch5' 尚未完善契约定义 (参数契约未定义；空参数表不表示完整功能)，禁止生成控制代码",
+        "第 1 行: 未声明的功能块实例: fb"
+      ]
+    },
+    {
+      "name": "SwitchCase",
+      "capability": {
+        "name": "SwitchCase",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      },
+      "compile_success": false,
+      "compile_only": false,
+      "errors": [
+        "第 1 行: 功能块 'SwitchCase' 尚未完善契约定义 (参数契约未定义；空参数表不表示完整功能)，禁止生成控制代码",
+        "第 1 行: 未声明的功能块实例: fb"
+      ]
+    },
+    {
+      "name": "SwitchBreak",
+      "capability": {
+        "name": "SwitchBreak",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      },
+      "compile_success": false,
+      "compile_only": false,
+      "errors": [
+        "第 1 行: 功能块 'SwitchBreak' 尚未完善契约定义 (参数契约未定义；空参数表不表示完整功能)，禁止生成控制代码",
+        "第 1 行: 未声明的功能块实例: fb"
+      ]
+    },
+    {
+      "name": "SwitchEnd",
+      "capability": {
+        "name": "SwitchEnd",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      },
+      "compile_success": false,
+      "compile_only": false,
+      "errors": [
+        "第 1 行: 功能块 'SwitchEnd' 尚未完善契约定义 (参数契约未定义；空参数表不表示完整功能)，禁止生成控制代码",
+        "第 1 行: 未声明的功能块实例: fb"
+      ]
+    },
+    {
+      "name": "If1",
+      "capability": {
+        "name": "If1",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      },
+      "compile_success": false,
+      "compile_only": false,
+      "errors": [
+        "第 1 行: 功能块 'If1' 尚未完善契约定义 (参数契约未定义；空参数表不表示完整功能)，禁止生成控制代码",
+        "第 1 行: 未声明的功能块实例: fb"
+      ]
+    },
+    {
+      "name": "If2",
+      "capability": {
+        "name": "If2",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      },
+      "compile_success": false,
+      "compile_only": false,
+      "errors": [
+        "第 1 行: 功能块 'If2' 尚未完善契约定义 (参数契约未定义；空参数表不表示完整功能)，禁止生成控制代码",
+        "第 1 行: 未声明的功能块实例: fb"
+      ]
+    },
+    {
+      "name": "If3",
+      "capability": {
+        "name": "If3",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      },
+      "compile_success": false,
+      "compile_only": false,
+      "errors": [
+        "第 1 行: 功能块 'If3' 尚未完善契约定义 (参数契约未定义；空参数表不表示完整功能)，禁止生成控制代码",
+        "第 1 行: 未声明的功能块实例: fb"
+      ]
+    },
+    {
+      "name": "IfElse",
+      "capability": {
+        "name": "IfElse",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      },
+      "compile_success": false,
+      "compile_only": false,
+      "errors": [
+        "第 1 行: 功能块 'IfElse' 尚未完善契约定义 (参数契约未定义；空参数表不表示完整功能)，禁止生成控制代码",
+        "第 1 行: 未声明的功能块实例: fb"
+      ]
+    },
+    {
+      "name": "IfEnd",
+      "capability": {
+        "name": "IfEnd",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      },
+      "compile_success": false,
+      "compile_only": false,
+      "errors": [
+        "第 1 行: 功能块 'IfEnd' 尚未完善契约定义 (参数契约未定义；空参数表不表示完整功能)，禁止生成控制代码",
+        "第 1 行: 未声明的功能块实例: fb"
+      ]
+    },
+    {
+      "name": "For",
+      "capability": {
+        "name": "For",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      },
+      "compile_success": false,
+      "compile_only": false,
+      "errors": [
+        "第 1 行: 功能块 'For' 尚未完善契约定义 (参数契约未定义；空参数表不表示完整功能)，禁止生成控制代码",
+        "第 1 行: 未声明的功能块实例: fb"
+      ]
+    },
+    {
+      "name": "ForEnd",
+      "capability": {
+        "name": "ForEnd",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      },
+      "compile_success": false,
+      "compile_only": false,
+      "errors": [
+        "第 1 行: 功能块 'ForEnd' 尚未完善契约定义 (参数契约未定义；空参数表不表示完整功能)，禁止生成控制代码",
+        "第 1 行: 未声明的功能块实例: fb"
+      ]
+    },
+    {
+      "name": "While",
+      "capability": {
+        "name": "While",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      },
+      "compile_success": false,
+      "compile_only": false,
+      "errors": [
+        "第 1 行: 功能块 'While' 尚未完善契约定义 (参数契约未定义；空参数表不表示完整功能)，禁止生成控制代码",
+        "第 1 行: 未声明的功能块实例: fb"
+      ]
+    },
+    {
+      "name": "WhileEnd",
+      "capability": {
+        "name": "WhileEnd",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      },
+      "compile_success": false,
+      "compile_only": false,
+      "errors": [
+        "第 1 行: 功能块 'WhileEnd' 尚未完善契约定义 (参数契约未定义；空参数表不表示完整功能)，禁止生成控制代码",
+        "第 1 行: 未声明的功能块实例: fb"
+      ]
+    },
+    {
+      "name": "LoopBreak",
+      "capability": {
+        "name": "LoopBreak",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      },
+      "compile_success": false,
+      "compile_only": false,
+      "errors": [
+        "第 1 行: 功能块 'LoopBreak' 尚未完善契约定义 (参数契约未定义；空参数表不表示完整功能)，禁止生成控制代码",
+        "第 1 行: 未声明的功能块实例: fb"
+      ]
+    },
+    {
+      "name": "LoopContinue",
+      "capability": {
+        "name": "LoopContinue",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      },
+      "compile_success": false,
+      "compile_only": false,
+      "errors": [
+        "第 1 行: 功能块 'LoopContinue' 尚未完善契约定义 (参数契约未定义；空参数表不表示完整功能)，禁止生成控制代码",
+        "第 1 行: 未声明的功能块实例: fb"
+      ]
+    },
+    {
+      "name": "Return",
+      "capability": {
+        "name": "Return",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      },
+      "compile_success": false,
+      "compile_only": false,
+      "errors": [
+        "第 1 行: 功能块 'Return' 尚未完善契约定义 (参数契约未定义；空参数表不表示完整功能)，禁止生成控制代码",
+        "第 1 行: 未声明的功能块实例: fb"
+      ]
+    },
+    {
+      "name": "Counter",
+      "capability": {
+        "name": "Counter",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      },
+      "compile_success": false,
+      "compile_only": false,
+      "errors": [
+        "第 1 行: 功能块 'Counter' 尚未完善契约定义 (参数契约未定义；空参数表不表示完整功能)，禁止生成控制代码",
+        "第 1 行: 未声明的功能块实例: fb"
+      ]
+    },
+    {
+      "name": "CTU",
+      "capability": {
+        "name": "CTU",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      },
+      "compile_success": false,
+      "compile_only": false,
+      "errors": [
+        "第 1 行: 功能块 'CTU' 尚未完善契约定义 (参数契约未定义；空参数表不表示完整功能)，禁止生成控制代码",
+        "第 1 行: 未声明的功能块实例: fb"
+      ]
+    },
+    {
+      "name": "CTD",
+      "capability": {
+        "name": "CTD",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      },
+      "compile_success": false,
+      "compile_only": false,
+      "errors": [
+        "第 1 行: 功能块 'CTD' 尚未完善契约定义 (参数契约未定义；空参数表不表示完整功能)，禁止生成控制代码",
+        "第 1 行: 未声明的功能块实例: fb"
+      ]
+    },
+    {
+      "name": "CTUD",
+      "capability": {
+        "name": "CTUD",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      },
+      "compile_success": false,
+      "compile_only": false,
+      "errors": [
+        "第 1 行: 功能块 'CTUD' 尚未完善契约定义 (参数契约未定义；空参数表不表示完整功能)，禁止生成控制代码",
+        "第 1 行: 未声明的功能块实例: fb"
+      ]
+    },
+    {
+      "name": "CounterReset",
+      "capability": {
+        "name": "CounterReset",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      },
+      "compile_success": false,
+      "compile_only": false,
+      "errors": [
+        "第 1 行: 功能块 'CounterReset' 尚未完善契约定义 (参数契约未定义；空参数表不表示完整功能)，禁止生成控制代码",
+        "第 1 行: 未声明的功能块实例: fb"
+      ]
+    },
+    {
+      "name": "KeyScan",
+      "capability": {
+        "name": "KeyScan",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      },
+      "compile_success": false,
+      "compile_only": false,
+      "errors": [
+        "第 1 行: 功能块 'KeyScan' 尚未完善契约定义 (已保存 LM 功能候选证据；LH 固件版本对应的指令、引用和字段布局尚未核实)，禁止生成控制代码",
+        "第 1 行: 未声明的功能块实例: fb"
+      ]
+    },
+    {
+      "name": "SCIDispTrans",
+      "capability": {
+        "name": "SCIDispTrans",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      },
+      "compile_success": false,
+      "compile_only": false,
+      "errors": [
+        "第 1 行: 功能块 'SCIDispTrans' 尚未完善契约定义 (已保存 LM 功能候选证据；LH 固件版本对应的指令、引用和字段布局尚未核实)，禁止生成控制代码",
+        "第 1 行: 未声明的功能块实例: fb"
+      ]
+    },
+    {
+      "name": "SCIDispInit",
+      "capability": {
+        "name": "SCIDispInit",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      },
+      "compile_success": false,
+      "compile_only": false,
+      "errors": [
+        "第 1 行: 功能块 'SCIDispInit' 尚未完善契约定义 (已保存 LM 功能候选证据；LH 固件版本对应的指令、引用和字段布局尚未核实)，禁止生成控制代码",
+        "第 1 行: 未声明的功能块实例: fb"
+      ]
+    },
+    {
+      "name": "M600TextDisp",
+      "capability": {
+        "name": "M600TextDisp",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      },
+      "compile_success": false,
+      "compile_only": false,
+      "errors": [
+        "第 1 行: 功能块 'M600TextDisp' 尚未完善契约定义 (已保存 LM 功能候选证据；LH 固件版本对应的指令、引用和字段布局尚未核实)，禁止生成控制代码",
+        "第 1 行: 未声明的功能块实例: fb"
+      ]
+    },
+    {
+      "name": "M600ProgressBar",
+      "capability": {
+        "name": "M600ProgressBar",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      },
+      "compile_success": false,
+      "compile_only": false,
+      "errors": [
+        "第 1 行: 功能块 'M600ProgressBar' 尚未完善契约定义 (已保存 LM 功能候选证据；LH 固件版本对应的指令、引用和字段布局尚未核实)，禁止生成控制代码",
+        "第 1 行: 未声明的功能块实例: fb"
+      ]
+    },
+    {
+      "name": "EXCACycDisp",
+      "capability": {
+        "name": "EXCACycDisp",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      },
+      "compile_success": false,
+      "compile_only": false,
+      "errors": [
+        "第 1 行: 功能块 'EXCACycDisp' 尚未完善契约定义 (已保存 LM 功能候选证据；LH 固件版本对应的指令、引用和字段布局尚未核实)，禁止生成控制代码",
+        "第 1 行: 未声明的功能块实例: fb"
+      ]
+    },
+    {
+      "name": "FilterBW",
+      "capability": {
+        "name": "FilterBW",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      },
+      "compile_success": false,
+      "compile_only": false,
+      "errors": [
+        "第 1 行: 功能块 'FilterBW' 尚未完善契约定义 (已保存 LM 功能候选证据；LH 固件版本对应的指令、引用和字段布局尚未核实)，禁止生成控制代码",
+        "第 1 行: 未声明的功能块实例: fb"
+      ]
+    },
+    {
+      "name": "DrvAI",
+      "capability": {
+        "name": "DrvAI",
+        "status": "supported",
+        "definitionValid": true,
+        "definitionErrors": [],
+        "compilerHandles": true,
+        "targetExecutionVerified": false
+      },
+      "compile_success": true,
+      "compile_only": false,
+      "errors": []
+    },
+    {
+      "name": "DrvAO",
+      "capability": {
+        "name": "DrvAO",
+        "status": "supported",
+        "definitionValid": true,
+        "definitionErrors": [],
+        "compilerHandles": true,
+        "targetExecutionVerified": false
+      },
+      "compile_success": true,
+      "compile_only": false,
+      "errors": []
+    },
+    {
+      "name": "DrvDI",
+      "capability": {
+        "name": "DrvDI",
+        "status": "supported",
+        "definitionValid": true,
+        "definitionErrors": [],
+        "compilerHandles": true,
+        "targetExecutionVerified": false
+      },
+      "compile_success": true,
+      "compile_only": false,
+      "errors": []
+    },
+    {
+      "name": "DrvDO",
+      "capability": {
+        "name": "DrvDO",
+        "status": "supported",
+        "definitionValid": true,
+        "definitionErrors": [],
+        "compilerHandles": true,
+        "targetExecutionVerified": false
+      },
+      "compile_success": true,
+      "compile_only": false,
+      "errors": []
+    },
+    {
+      "name": "PortSet",
+      "capability": {
+        "name": "PortSet",
+        "status": "supported",
+        "definitionValid": true,
+        "definitionErrors": [],
+        "compilerHandles": true,
+        "targetExecutionVerified": false
+      },
+      "compile_success": true,
+      "compile_only": false,
+      "errors": []
+    },
+    {
+      "name": "PortReset",
+      "capability": {
+        "name": "PortReset",
+        "status": "supported",
+        "definitionValid": true,
+        "definitionErrors": [],
+        "compilerHandles": true,
+        "targetExecutionVerified": false
+      },
+      "compile_success": true,
+      "compile_only": false,
+      "errors": []
+    },
+    {
+      "name": "PortToggle",
+      "capability": {
+        "name": "PortToggle",
+        "status": "supported",
+        "definitionValid": true,
+        "definitionErrors": [],
+        "compilerHandles": true,
+        "targetExecutionVerified": false
+      },
+      "compile_success": true,
+      "compile_only": false,
+      "errors": []
+    },
+    {
+      "name": "DrvT2PeriodIn",
+      "capability": {
+        "name": "DrvT2PeriodIn",
+        "status": "supported",
+        "definitionValid": false,
+        "definitionErrors": [
+          "Mask: 默认值 65535 超出 INT 类型范围或类型错误"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      },
+      "compile_success": false,
+      "compile_only": false,
+      "errors": [
+        "第 1 行: 功能块 'DrvT2PeriodIn' 参数 'Mask' 的值 65535 超出 INT 有效范围 [-32768, 32767]"
+      ]
+    },
+    {
+      "name": "DrvTimeIn",
+      "capability": {
+        "name": "DrvTimeIn",
+        "status": "supported",
+        "definitionValid": false,
+        "definitionErrors": [
+          "Mask: 默认值 65535 超出 INT 类型范围或类型错误"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      },
+      "compile_success": false,
+      "compile_only": false,
+      "errors": [
+        "第 1 行: 功能块 'DrvTimeIn' 参数 'Mask' 的值 65535 超出 INT 有效范围 [-32768, 32767]"
+      ]
+    },
+    {
+      "name": "And",
+      "capability": {
+        "name": "And",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      },
+      "compile_success": false,
+      "compile_only": false,
+      "errors": [
+        "第 1 行: 功能块 'And' 尚未完善契约定义 (参数契约未定义；空参数表不表示完整功能)，禁止生成控制代码",
+        "第 1 行: 未声明的功能块实例: fb"
+      ]
+    },
+    {
+      "name": "Or",
+      "capability": {
+        "name": "Or",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      },
+      "compile_success": false,
+      "compile_only": false,
+      "errors": [
+        "第 1 行: 功能块 'Or' 尚未完善契约定义 (参数契约未定义；空参数表不表示完整功能)，禁止生成控制代码",
+        "第 1 行: 未声明的功能块实例: fb"
+      ]
+    },
+    {
+      "name": "Not",
+      "capability": {
+        "name": "Not",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      },
+      "compile_success": false,
+      "compile_only": false,
+      "errors": [
+        "第 1 行: 功能块 'Not' 尚未完善契约定义 (参数契约未定义；空参数表不表示完整功能)，禁止生成控制代码",
+        "第 1 行: 未声明的功能块实例: fb"
+      ]
+    },
+    {
+      "name": "Xor",
+      "capability": {
+        "name": "Xor",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      },
+      "compile_success": false,
+      "compile_only": false,
+      "errors": [
+        "第 1 行: 功能块 'Xor' 尚未完善契约定义 (参数契约未定义；空参数表不表示完整功能)，禁止生成控制代码",
+        "第 1 行: 未声明的功能块实例: fb"
+      ]
+    },
+    {
+      "name": "Shl",
+      "capability": {
+        "name": "Shl",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      },
+      "compile_success": false,
+      "compile_only": false,
+      "errors": [
+        "第 1 行: 功能块 'Shl' 尚未完善契约定义 (参数契约未定义；空参数表不表示完整功能)，禁止生成控制代码",
+        "第 1 行: 未声明的功能块实例: fb"
+      ]
+    },
+    {
+      "name": "Shr",
+      "capability": {
+        "name": "Shr",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      },
+      "compile_success": false,
+      "compile_only": false,
+      "errors": [
+        "第 1 行: 功能块 'Shr' 尚未完善契约定义 (参数契约未定义；空参数表不表示完整功能)，禁止生成控制代码",
+        "第 1 行: 未声明的功能块实例: fb"
+      ]
+    },
+    {
+      "name": "Rol",
+      "capability": {
+        "name": "Rol",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      },
+      "compile_success": false,
+      "compile_only": false,
+      "errors": [
+        "第 1 行: 功能块 'Rol' 尚未完善契约定义 (参数契约未定义；空参数表不表示完整功能)，禁止生成控制代码",
+        "第 1 行: 未声明的功能块实例: fb"
+      ]
+    },
+    {
+      "name": "Ror",
+      "capability": {
+        "name": "Ror",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      },
+      "compile_success": false,
+      "compile_only": false,
+      "errors": [
+        "第 1 行: 功能块 'Ror' 尚未完善契约定义 (参数契约未定义；空参数表不表示完整功能)，禁止生成控制代码",
+        "第 1 行: 未声明的功能块实例: fb"
+      ]
+    },
+    {
+      "name": "Add",
+      "capability": {
+        "name": "Add",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      },
+      "compile_success": false,
+      "compile_only": false,
+      "errors": [
+        "第 1 行: 功能块 'Add' 尚未完善契约定义 (参数契约未定义；空参数表不表示完整功能)，禁止生成控制代码",
+        "第 1 行: 未声明的功能块实例: fb"
+      ]
+    },
+    {
+      "name": "Sub",
+      "capability": {
+        "name": "Sub",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      },
+      "compile_success": false,
+      "compile_only": false,
+      "errors": [
+        "第 1 行: 功能块 'Sub' 尚未完善契约定义 (参数契约未定义；空参数表不表示完整功能)，禁止生成控制代码",
+        "第 1 行: 未声明的功能块实例: fb"
+      ]
+    },
+    {
+      "name": "Mul",
+      "capability": {
+        "name": "Mul",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      },
+      "compile_success": false,
+      "compile_only": false,
+      "errors": [
+        "第 1 行: 功能块 'Mul' 尚未完善契约定义 (参数契约未定义；空参数表不表示完整功能)，禁止生成控制代码",
+        "第 1 行: 未声明的功能块实例: fb"
+      ]
+    },
+    {
+      "name": "Div",
+      "capability": {
+        "name": "Div",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      },
+      "compile_success": false,
+      "compile_only": false,
+      "errors": [
+        "第 1 行: 功能块 'Div' 尚未完善契约定义 (参数契约未定义；空参数表不表示完整功能)，禁止生成控制代码",
+        "第 1 行: 未声明的功能块实例: fb"
+      ]
+    },
+    {
+      "name": "Mod",
+      "capability": {
+        "name": "Mod",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      },
+      "compile_success": false,
+      "compile_only": false,
+      "errors": [
+        "第 1 行: 功能块 'Mod' 尚未完善契约定义 (参数契约未定义；空参数表不表示完整功能)，禁止生成控制代码",
+        "第 1 行: 未声明的功能块实例: fb"
+      ]
+    },
+    {
+      "name": "Abs",
+      "capability": {
+        "name": "Abs",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      },
+      "compile_success": false,
+      "compile_only": false,
+      "errors": [
+        "第 1 行: 功能块 'Abs' 尚未完善契约定义 (参数契约未定义；空参数表不表示完整功能)，禁止生成控制代码",
+        "第 1 行: 未声明的功能块实例: fb"
+      ]
+    },
+    {
+      "name": "Sqrt",
+      "capability": {
+        "name": "Sqrt",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      },
+      "compile_success": false,
+      "compile_only": false,
+      "errors": [
+        "第 1 行: 功能块 'Sqrt' 尚未完善契约定义 (参数契约未定义；空参数表不表示完整功能)，禁止生成控制代码",
+        "第 1 行: 未声明的功能块实例: fb"
+      ]
+    },
+    {
+      "name": "Exp",
+      "capability": {
+        "name": "Exp",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      },
+      "compile_success": false,
+      "compile_only": false,
+      "errors": [
+        "第 1 行: 功能块 'Exp' 尚未完善契约定义 (参数契约未定义；空参数表不表示完整功能)，禁止生成控制代码",
+        "第 1 行: 未声明的功能块实例: fb"
+      ]
+    },
+    {
+      "name": "Ln",
+      "capability": {
+        "name": "Ln",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      },
+      "compile_success": false,
+      "compile_only": false,
+      "errors": [
+        "第 1 行: 功能块 'Ln' 尚未完善契约定义 (参数契约未定义；空参数表不表示完整功能)，禁止生成控制代码",
+        "第 1 行: 未声明的功能块实例: fb"
+      ]
+    },
+    {
+      "name": "Log",
+      "capability": {
+        "name": "Log",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      },
+      "compile_success": false,
+      "compile_only": false,
+      "errors": [
+        "第 1 行: 功能块 'Log' 尚未完善契约定义 (参数契约未定义；空参数表不表示完整功能)，禁止生成控制代码",
+        "第 1 行: 未声明的功能块实例: fb"
+      ]
+    },
+    {
+      "name": "Sin",
+      "capability": {
+        "name": "Sin",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      },
+      "compile_success": false,
+      "compile_only": false,
+      "errors": [
+        "第 1 行: 功能块 'Sin' 尚未完善契约定义 (参数契约未定义；空参数表不表示完整功能)，禁止生成控制代码",
+        "第 1 行: 未声明的功能块实例: fb"
+      ]
+    },
+    {
+      "name": "Cos",
+      "capability": {
+        "name": "Cos",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      },
+      "compile_success": false,
+      "compile_only": false,
+      "errors": [
+        "第 1 行: 功能块 'Cos' 尚未完善契约定义 (参数契约未定义；空参数表不表示完整功能)，禁止生成控制代码",
+        "第 1 行: 未声明的功能块实例: fb"
+      ]
+    },
+    {
+      "name": "Tan",
+      "capability": {
+        "name": "Tan",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      },
+      "compile_success": false,
+      "compile_only": false,
+      "errors": [
+        "第 1 行: 功能块 'Tan' 尚未完善契约定义 (参数契约未定义；空参数表不表示完整功能)，禁止生成控制代码",
+        "第 1 行: 未声明的功能块实例: fb"
+      ]
+    },
+    {
+      "name": "Limit",
+      "capability": {
+        "name": "Limit",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      },
+      "compile_success": false,
+      "compile_only": false,
+      "errors": [
+        "第 1 行: 功能块 'Limit' 尚未完善契约定义 (参数契约未定义；空参数表不表示完整功能)，禁止生成控制代码",
+        "第 1 行: 未声明的功能块实例: fb"
+      ]
+    },
+    {
+      "name": "Min",
+      "capability": {
+        "name": "Min",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      },
+      "compile_success": false,
+      "compile_only": false,
+      "errors": [
+        "第 1 行: 功能块 'Min' 尚未完善契约定义 (参数契约未定义；空参数表不表示完整功能)，禁止生成控制代码",
+        "第 1 行: 未声明的功能块实例: fb"
+      ]
+    },
+    {
+      "name": "Max",
+      "capability": {
+        "name": "Max",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      },
+      "compile_success": false,
+      "compile_only": false,
+      "errors": [
+        "第 1 行: 功能块 'Max' 尚未完善契约定义 (参数契约未定义；空参数表不表示完整功能)，禁止生成控制代码",
+        "第 1 行: 未声明的功能块实例: fb"
+      ]
+    },
+    {
+      "name": "PID",
+      "capability": {
+        "name": "PID",
+        "status": "supported",
+        "definitionValid": true,
+        "definitionErrors": [],
+        "compilerHandles": true,
+        "targetExecutionVerified": false
+      },
+      "compile_success": true,
+      "compile_only": false,
+      "errors": []
+    },
+    {
+      "name": "PIDAutoTune",
+      "capability": {
+        "name": "PIDAutoTune",
+        "status": "supported",
+        "definitionValid": true,
+        "definitionErrors": [],
+        "compilerHandles": true,
+        "targetExecutionVerified": false
+      },
+      "compile_success": true,
+      "compile_only": false,
+      "errors": []
+    },
+    {
+      "name": "System",
+      "capability": {
+        "name": "System",
+        "status": "supported",
+        "definitionValid": true,
+        "definitionErrors": [],
+        "compilerHandles": true,
+        "targetExecutionVerified": false
+      },
+      "compile_success": true,
+      "compile_only": false,
+      "errors": []
+    },
+    {
+      "name": "SystemEnd",
+      "capability": {
+        "name": "SystemEnd",
+        "status": "supported",
+        "definitionValid": true,
+        "definitionErrors": [],
+        "compilerHandles": true,
+        "targetExecutionVerified": false
+      },
+      "compile_success": true,
+      "compile_only": false,
+      "errors": []
+    },
+    {
+      "name": "Exception",
+      "capability": {
+        "name": "Exception",
+        "status": "supported",
+        "definitionValid": true,
+        "definitionErrors": [],
+        "compilerHandles": true,
+        "targetExecutionVerified": false
+      },
+      "compile_success": true,
+      "compile_only": false,
+      "errors": []
+    },
+    {
+      "name": "Nop",
+      "capability": {
+        "name": "Nop",
+        "status": "supported",
+        "definitionValid": true,
+        "definitionErrors": [],
+        "compilerHandles": true,
+        "targetExecutionVerified": false
+      },
+      "compile_success": true,
+      "compile_only": false,
+      "errors": []
+    },
+    {
+      "name": "Task",
+      "capability": {
+        "name": "Task",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      },
+      "compile_success": false,
+      "compile_only": false,
+      "errors": [
+        "第 1 行: 功能块 'Task' 尚未完善契约定义 (已保存 LM 功能候选证据；LH 固件版本对应的指令、引用和字段布局尚未核实)，禁止生成控制代码",
+        "第 1 行: 未声明的功能块实例: fb"
+      ]
+    },
+    {
+      "name": "TaskPeriodic",
+      "capability": {
+        "name": "TaskPeriodic",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      },
+      "compile_success": false,
+      "compile_only": false,
+      "errors": [
+        "第 1 行: 功能块 'TaskPeriodic' 尚未完善契约定义 (已保存 LM 功能候选证据；LH 固件版本对应的指令、引用和字段布局尚未核实)，禁止生成控制代码",
+        "第 1 行: 未声明的功能块实例: fb"
+      ]
+    },
+    {
+      "name": "TaskWake",
+      "capability": {
+        "name": "TaskWake",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      },
+      "compile_success": false,
+      "compile_only": false,
+      "errors": [
+        "第 1 行: 功能块 'TaskWake' 尚未完善契约定义 (已保存 LM 功能候选证据；LH 固件版本对应的指令、引用和字段布局尚未核实)，禁止生成控制代码",
+        "第 1 行: 未声明的功能块实例: fb"
+      ]
+    },
+    {
+      "name": "TaskDataWake",
+      "capability": {
+        "name": "TaskDataWake",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      },
+      "compile_success": false,
+      "compile_only": false,
+      "errors": [
+        "第 1 行: 功能块 'TaskDataWake' 尚未完善契约定义 (已保存 LM 功能候选证据；LH 固件版本对应的指令、引用和字段布局尚未核实)，禁止生成控制代码",
+        "第 1 行: 未声明的功能块实例: fb"
+      ]
+    },
+    {
+      "name": "TaskLock",
+      "capability": {
+        "name": "TaskLock",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      },
+      "compile_success": false,
+      "compile_only": false,
+      "errors": [
+        "第 1 行: 功能块 'TaskLock' 尚未完善契约定义 (已保存 LM 功能候选证据；LH 固件版本对应的指令、引用和字段布局尚未核实)，禁止生成控制代码",
+        "第 1 行: 未声明的功能块实例: fb"
+      ]
+    },
+    {
+      "name": "TaskUnlock",
+      "capability": {
+        "name": "TaskUnlock",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      },
+      "compile_success": false,
+      "compile_only": false,
+      "errors": [
+        "第 1 行: 功能块 'TaskUnlock' 尚未完善契约定义 (已保存 LM 功能候选证据；LH 固件版本对应的指令、引用和字段布局尚未核实)，禁止生成控制代码",
+        "第 1 行: 未声明的功能块实例: fb"
+      ]
+    },
+    {
+      "name": "TaskSemDef",
+      "capability": {
+        "name": "TaskSemDef",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      },
+      "compile_success": false,
+      "compile_only": false,
+      "errors": [
+        "第 1 行: 功能块 'TaskSemDef' 尚未完善契约定义 (已保存 LM 功能候选证据；LH 固件版本对应的指令、引用和字段布局尚未核实)，禁止生成控制代码",
+        "第 1 行: 未声明的功能块实例: fb"
+      ]
+    },
+    {
+      "name": "TaskSemWait",
+      "capability": {
+        "name": "TaskSemWait",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      },
+      "compile_success": false,
+      "compile_only": false,
+      "errors": [
+        "第 1 行: 功能块 'TaskSemWait' 尚未完善契约定义 (已保存 LM 功能候选证据；LH 固件版本对应的指令、引用和字段布局尚未核实)，禁止生成控制代码",
+        "第 1 行: 未声明的功能块实例: fb"
+      ]
+    },
+    {
+      "name": "TaskSemPost",
+      "capability": {
+        "name": "TaskSemPost",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      },
+      "compile_success": false,
+      "compile_only": false,
+      "errors": [
+        "第 1 行: 功能块 'TaskSemPost' 尚未完善契约定义 (已保存 LM 功能候选证据；LH 固件版本对应的指令、引用和字段布局尚未核实)，禁止生成控制代码",
+        "第 1 行: 未声明的功能块实例: fb"
+      ]
+    },
+    {
+      "name": "TaskEnd",
+      "capability": {
+        "name": "TaskEnd",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      },
+      "compile_success": false,
+      "compile_only": false,
+      "errors": [
+        "第 1 行: 功能块 'TaskEnd' 尚未完善契约定义 (已保存 LM 功能候选证据；LH 固件版本对应的指令、引用和字段布局尚未核实)，禁止生成控制代码",
+        "第 1 行: 未声明的功能块实例: fb"
+      ]
+    },
+    {
+      "name": "Timer",
+      "capability": {
+        "name": "Timer",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      },
+      "compile_success": false,
+      "compile_only": false,
+      "errors": [
+        "第 1 行: 功能块 'Timer' 尚未完善契约定义 (参数契约未定义；空参数表不表示完整功能)，禁止生成控制代码",
+        "第 1 行: 未声明的功能块实例: fb"
+      ]
+    },
+    {
+      "name": "TON",
+      "capability": {
+        "name": "TON",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      },
+      "compile_success": false,
+      "compile_only": false,
+      "errors": [
+        "第 1 行: 功能块 'TON' 尚未完善契约定义 (参数契约未定义；空参数表不表示完整功能)，禁止生成控制代码",
+        "第 1 行: 未声明的功能块实例: fb"
+      ]
+    },
+    {
+      "name": "TOF",
+      "capability": {
+        "name": "TOF",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      },
+      "compile_success": false,
+      "compile_only": false,
+      "errors": [
+        "第 1 行: 功能块 'TOF' 尚未完善契约定义 (参数契约未定义；空参数表不表示完整功能)，禁止生成控制代码",
+        "第 1 行: 未声明的功能块实例: fb"
+      ]
+    },
+    {
+      "name": "TP",
+      "capability": {
+        "name": "TP",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      },
+      "compile_success": false,
+      "compile_only": false,
+      "errors": [
+        "第 1 行: 功能块 'TP' 尚未完善契约定义 (参数契约未定义；空参数表不表示完整功能)，禁止生成控制代码",
+        "第 1 行: 未声明的功能块实例: fb"
+      ]
+    },
+    {
+      "name": "TimerStop",
+      "capability": {
+        "name": "TimerStop",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      },
+      "compile_success": false,
+      "compile_only": false,
+      "errors": [
+        "第 1 行: 功能块 'TimerStop' 尚未完善契约定义 (参数契约未定义；空参数表不表示完整功能)，禁止生成控制代码",
+        "第 1 行: 未声明的功能块实例: fb"
+      ]
+    },
+    {
+      "name": "TSO",
+      "capability": {
+        "name": "TSO",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      },
+      "compile_success": false,
+      "compile_only": false,
+      "errors": [
+        "第 1 行: 功能块 'TSO' 尚未完善契约定义 (已保存 LM 功能候选证据；LH 固件版本对应的指令、引用和字段布局尚未核实)，禁止生成控制代码",
+        "第 1 行: 未声明的功能块实例: fb"
+      ]
+    },
+    {
+      "name": "TSOAutoTune",
+      "capability": {
+        "name": "TSOAutoTune",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      },
+      "compile_success": false,
+      "compile_only": false,
+      "errors": [
+        "第 1 行: 功能块 'TSOAutoTune' 尚未完善契约定义 (已保存 LM 功能候选证据；LH 固件版本对应的指令、引用和字段布局尚未核实)，禁止生成控制代码",
+        "第 1 行: 未声明的功能块实例: fb"
+      ]
+    },
+    {
+      "name": "TwoPosition",
+      "capability": {
+        "name": "TwoPosition",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      },
+      "compile_success": false,
+      "compile_only": false,
+      "errors": [
+        "第 1 行: 功能块 'TwoPosition' 尚未完善契约定义 (已保存 LM 功能候选证据；LH 固件版本对应的指令、引用和字段布局尚未核实)，禁止生成控制代码",
+        "第 1 行: 未声明的功能块实例: fb"
+      ]
+    },
+    {
+      "name": "RelayCtrl2",
+      "capability": {
+        "name": "RelayCtrl2",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      },
+      "compile_success": false,
+      "compile_only": false,
+      "errors": [
+        "第 1 行: 功能块 'RelayCtrl2' 尚未完善契约定义 (已保存 LM 功能候选证据；LH 固件版本对应的指令、引用和字段布局尚未核实)，禁止生成控制代码",
+        "第 1 行: 未声明的功能块实例: fb"
+      ]
+    },
+    {
+      "name": "EXCAKeyParamt",
+      "capability": {
+        "name": "EXCAKeyParamt",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      },
+      "compile_success": false,
+      "compile_only": false,
+      "errors": [
+        "第 1 行: 功能块 'EXCAKeyParamt' 尚未完善契约定义 (参数契约未定义；空参数表不表示完整功能)，禁止生成控制代码",
+        "第 1 行: 未声明的功能块实例: fb"
+      ]
+    },
+    {
+      "name": "EXCAModifyParamt",
+      "capability": {
+        "name": "EXCAModifyParamt",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      },
+      "compile_success": false,
+      "compile_only": false,
+      "errors": [
+        "第 1 行: 功能块 'EXCAModifyParamt' 尚未完善契约定义 (参数契约未定义；空参数表不表示完整功能)，禁止生成控制代码",
+        "第 1 行: 未声明的功能块实例: fb"
+      ]
+    },
+    {
+      "name": "EXCAOperComp",
+      "capability": {
+        "name": "EXCAOperComp",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      },
+      "compile_success": false,
+      "compile_only": false,
+      "errors": [
+        "第 1 行: 功能块 'EXCAOperComp' 尚未完善契约定义 (参数契约未定义；空参数表不表示完整功能)，禁止生成控制代码",
+        "第 1 行: 未声明的功能块实例: fb"
+      ]
+    },
+    {
+      "name": "EXCASpdUnify",
+      "capability": {
+        "name": "EXCASpdUnify",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      },
+      "compile_success": false,
+      "compile_only": false,
+      "errors": [
+        "第 1 行: 功能块 'EXCASpdUnify' 尚未完善契约定义 (参数契约未定义；空参数表不表示完整功能)，禁止生成控制代码",
+        "第 1 行: 未声明的功能块实例: fb"
+      ]
+    },
+    {
+      "name": "IntBuild",
+      "capability": {
+        "name": "IntBuild",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      },
+      "compile_success": false,
+      "compile_only": false,
+      "errors": [
+        "第 1 行: 功能块 'IntBuild' 尚未完善契约定义 (参数契约未定义；空参数表不表示完整功能)，禁止生成控制代码",
+        "第 1 行: 未声明的功能块实例: fb"
+      ]
+    },
+    {
+      "name": "IntDirectBuild",
+      "capability": {
+        "name": "IntDirectBuild",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      },
+      "compile_success": false,
+      "compile_only": false,
+      "errors": [
+        "第 1 行: 功能块 'IntDirectBuild' 尚未完善契约定义 (参数契约未定义；空参数表不表示完整功能)，禁止生成控制代码",
+        "第 1 行: 未声明的功能块实例: fb"
+      ]
+    },
+    {
+      "name": "FloatBuild",
+      "capability": {
+        "name": "FloatBuild",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      },
+      "compile_success": false,
+      "compile_only": false,
+      "errors": [
+        "第 1 行: 功能块 'FloatBuild' 尚未完善契约定义 (参数契约未定义；空参数表不表示完整功能)，禁止生成控制代码",
+        "第 1 行: 未声明的功能块实例: fb"
+      ]
+    },
+    {
+      "name": "FloatConstBuild",
+      "capability": {
+        "name": "FloatConstBuild",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      },
+      "compile_success": false,
+      "compile_only": false,
+      "errors": [
+        "第 1 行: 功能块 'FloatConstBuild' 尚未完善契约定义 (参数契约未定义；空参数表不表示完整功能)，禁止生成控制代码",
+        "第 1 行: 未声明的功能块实例: fb"
+      ]
+    },
+    {
+      "name": "IntComp",
+      "capability": {
+        "name": "IntComp",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      },
+      "compile_success": false,
+      "compile_only": false,
+      "errors": [
+        "第 1 行: 功能块 'IntComp' 尚未完善契约定义 (参数契约未定义；空参数表不表示完整功能)，禁止生成控制代码",
+        "第 1 行: 未声明的功能块实例: fb"
+      ]
+    },
+    {
+      "name": "FloatComp",
+      "capability": {
+        "name": "FloatComp",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      },
+      "compile_success": false,
+      "compile_only": false,
+      "errors": [
+        "第 1 行: 功能块 'FloatComp' 尚未完善契约定义 (参数契约未定义；空参数表不表示完整功能)，禁止生成控制代码",
+        "第 1 行: 未声明的功能块实例: fb"
+      ]
+    },
+    {
+      "name": "IntMax",
+      "capability": {
+        "name": "IntMax",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      },
+      "compile_success": false,
+      "compile_only": false,
+      "errors": [
+        "第 1 行: 功能块 'IntMax' 尚未完善契约定义 (参数契约未定义；空参数表不表示完整功能)，禁止生成控制代码",
+        "第 1 行: 未声明的功能块实例: fb"
+      ]
+    },
+    {
+      "name": "IntMin",
+      "capability": {
+        "name": "IntMin",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      },
+      "compile_success": false,
+      "compile_only": false,
+      "errors": [
+        "第 1 行: 功能块 'IntMin' 尚未完善契约定义 (参数契约未定义；空参数表不表示完整功能)，禁止生成控制代码",
+        "第 1 行: 未声明的功能块实例: fb"
+      ]
+    },
+    {
+      "name": "FloatMax",
+      "capability": {
+        "name": "FloatMax",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      },
+      "compile_success": false,
+      "compile_only": false,
+      "errors": [
+        "第 1 行: 功能块 'FloatMax' 尚未完善契约定义 (参数契约未定义；空参数表不表示完整功能)，禁止生成控制代码",
+        "第 1 行: 未声明的功能块实例: fb"
+      ]
+    },
+    {
+      "name": "FloatMin",
+      "capability": {
+        "name": "FloatMin",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      },
+      "compile_success": false,
+      "compile_only": false,
+      "errors": [
+        "第 1 行: 功能块 'FloatMin' 尚未完善契约定义 (参数契约未定义；空参数表不表示完整功能)，禁止生成控制代码",
+        "第 1 行: 未声明的功能块实例: fb"
+      ]
+    },
+    {
+      "name": "IntLimt",
+      "capability": {
+        "name": "IntLimt",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      },
+      "compile_success": false,
+      "compile_only": false,
+      "errors": [
+        "第 1 行: 功能块 'IntLimt' 尚未完善契约定义 (参数契约未定义；空参数表不表示完整功能)，禁止生成控制代码",
+        "第 1 行: 未声明的功能块实例: fb"
+      ]
+    },
+    {
+      "name": "FloatLimt",
+      "capability": {
+        "name": "FloatLimt",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      },
+      "compile_success": false,
+      "compile_only": false,
+      "errors": [
+        "第 1 行: 功能块 'FloatLimt' 尚未完善契约定义 (参数契约未定义；空参数表不表示完整功能)，禁止生成控制代码",
+        "第 1 行: 未声明的功能块实例: fb"
+      ]
+    },
+    {
+      "name": "FloatVariLimt",
+      "capability": {
+        "name": "FloatVariLimt",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      },
+      "compile_success": false,
+      "compile_only": false,
+      "errors": [
+        "第 1 行: 功能块 'FloatVariLimt' 尚未完善契约定义 (参数契约未定义；空参数表不表示完整功能)，禁止生成控制代码",
+        "第 1 行: 未声明的功能块实例: fb"
+      ]
+    },
+    {
+      "name": "IntBuffOper",
+      "capability": {
+        "name": "IntBuffOper",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      },
+      "compile_success": false,
+      "compile_only": false,
+      "errors": [
+        "第 1 行: 功能块 'IntBuffOper' 尚未完善契约定义 (参数契约未定义；空参数表不表示完整功能)，禁止生成控制代码",
+        "第 1 行: 未声明的功能块实例: fb"
+      ]
+    },
+    {
+      "name": "FloatBuffOper",
+      "capability": {
+        "name": "FloatBuffOper",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      },
+      "compile_success": false,
+      "compile_only": false,
+      "errors": [
+        "第 1 行: 功能块 'FloatBuffOper' 尚未完善契约定义 (参数契约未定义；空参数表不表示完整功能)，禁止生成控制代码",
+        "第 1 行: 未声明的功能块实例: fb"
+      ]
+    },
+    {
+      "name": "IntBuffLogicOper",
+      "capability": {
+        "name": "IntBuffLogicOper",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      },
+      "compile_success": false,
+      "compile_only": false,
+      "errors": [
+        "第 1 行: 功能块 'IntBuffLogicOper' 尚未完善契约定义 (参数契约未定义；空参数表不表示完整功能)，禁止生成控制代码",
+        "第 1 行: 未声明的功能块实例: fb"
+      ]
+    },
+    {
+      "name": "IntModOper",
+      "capability": {
+        "name": "IntModOper",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      },
+      "compile_success": false,
+      "compile_only": false,
+      "errors": [
+        "第 1 行: 功能块 'IntModOper' 尚未完善契约定义 (参数契约未定义；空参数表不表示完整功能)，禁止生成控制代码",
+        "第 1 行: 未声明的功能块实例: fb"
+      ]
+    },
+    {
+      "name": "FloatRoughFilter",
+      "capability": {
+        "name": "FloatRoughFilter",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      },
+      "compile_success": false,
+      "compile_only": false,
+      "errors": [
+        "第 1 行: 功能块 'FloatRoughFilter' 尚未完善契约定义 (参数契约未定义；空参数表不表示完整功能)，禁止生成控制代码",
+        "第 1 行: 未声明的功能块实例: fb"
+      ]
+    },
+    {
+      "name": "DataRedundancy",
+      "capability": {
+        "name": "DataRedundancy",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      },
+      "compile_success": false,
+      "compile_only": false,
+      "errors": [
+        "第 1 行: 功能块 'DataRedundancy' 尚未完善契约定义 (参数契约未定义；空参数表不表示完整功能)，禁止生成控制代码",
+        "第 1 行: 未声明的功能块实例: fb"
+      ]
+    },
+    {
+      "name": "DealInUnify",
+      "capability": {
+        "name": "DealInUnify",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      },
+      "compile_success": false,
+      "compile_only": false,
+      "errors": [
+        "第 1 行: 功能块 'DealInUnify' 尚未完善契约定义 (参数契约未定义；空参数表不表示完整功能)，禁止生成控制代码",
+        "第 1 行: 未声明的功能块实例: fb"
+      ]
+    },
+    {
+      "name": "DealOutUnify",
+      "capability": {
+        "name": "DealOutUnify",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      },
+      "compile_success": false,
+      "compile_only": false,
+      "errors": [
+        "第 1 行: 功能块 'DealOutUnify' 尚未完善契约定义 (参数契约未定义；空参数表不表示完整功能)，禁止生成控制代码",
+        "第 1 行: 未声明的功能块实例: fb"
+      ]
+    },
+    {
+      "name": "DealToData",
+      "capability": {
+        "name": "DealToData",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      },
+      "compile_success": false,
+      "compile_only": false,
+      "errors": [
+        "第 1 行: 功能块 'DealToData' 尚未完善契约定义 (参数契约未定义；空参数表不表示完整功能)，禁止生成控制代码",
+        "第 1 行: 未声明的功能块实例: fb"
+      ]
+    },
+    {
+      "name": "DealToSwit",
+      "capability": {
+        "name": "DealToSwit",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      },
+      "compile_success": false,
+      "compile_only": false,
+      "errors": [
+        "第 1 行: 功能块 'DealToSwit' 尚未完善契约定义 (参数契约未定义；空参数表不表示完整功能)，禁止生成控制代码",
+        "第 1 行: 未声明的功能块实例: fb"
+      ]
+    },
+    {
+      "name": "FloatBelowWatch",
+      "capability": {
+        "name": "FloatBelowWatch",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      },
+      "compile_success": false,
+      "compile_only": false,
+      "errors": [
+        "第 1 行: 功能块 'FloatBelowWatch' 尚未完善契约定义 (参数契约未定义；空参数表不表示完整功能)，禁止生成控制代码",
+        "第 1 行: 未声明的功能块实例: fb"
+      ]
+    },
+    {
+      "name": "FloatOverWatch",
+      "capability": {
+        "name": "FloatOverWatch",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      },
+      "compile_success": false,
+      "compile_only": false,
+      "errors": [
+        "第 1 行: 功能块 'FloatOverWatch' 尚未完善契约定义 (参数契约未定义；空参数表不表示完整功能)，禁止生成控制代码",
+        "第 1 行: 未声明的功能块实例: fb"
+      ]
+    },
+    {
+      "name": "EXCASFC",
+      "capability": {
+        "name": "EXCASFC",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      },
+      "compile_success": false,
+      "compile_only": false,
+      "errors": [
+        "第 1 行: 功能块 'EXCASFC' 尚未完善契约定义 (参数契约未定义；空参数表不表示完整功能)，禁止生成控制代码",
+        "第 1 行: 未声明的功能块实例: fb"
+      ]
+    },
+    {
+      "name": "ParamtEngBuild",
+      "capability": {
+        "name": "ParamtEngBuild",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      },
+      "compile_success": false,
+      "compile_only": false,
+      "errors": [
+        "第 1 行: 功能块 'ParamtEngBuild' 尚未完善契约定义 (参数契约未定义；空参数表不表示完整功能)，禁止生成控制代码",
+        "第 1 行: 未声明的功能块实例: fb"
+      ]
+    }
+  ]
+}

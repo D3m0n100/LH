@@ -320,13 +320,14 @@ QString ProgramBlocksWidget::makeSnippetTooltip(const FunctionSnippet& snippet)
                    "分类: %3<br/>"
                    "单位: %4<br/>"
                    "采样周期: %5 ms<br/>"
-                   "<code>%6</code>")
+                   "<code>%6</code><br/>能力：%7<br/>目标执行：未验证")
         .arg(snippet.name)
         .arg(desc)
         .arg(cat)
         .arg(unit)
         .arg(snippet.defaultPeriodMs)
-        .arg(codePreview);
+        .arg(codePreview)
+        .arg((snippet.canInsert() ? QStringLiteral("编译契约可用") : snippet.capabilityReason()).toHtmlEscaped());
 }
 
 void ProgramBlocksWidget::rebuildTree(const QList<FunctionSnippet>& snippets)

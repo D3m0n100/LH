@@ -2,6 +2,7 @@
 
 #include "ControllerBridge.h"
 #include "ModbusLimits.h"
+#include "ProtocolUtils.h"
 
 #include "DownloadProfile.h"
 #include "ModbusInterface.h"
@@ -34,29 +35,7 @@ private:
     int m_oldId;
 };
 
-QVector<quint16> bytesToWordsBE(const QByteArray& chunk)
-{
-    QVector<quint16> out;
-    out.reserve((chunk.size() + 1) / 2);
-    for (int i = 0; i < chunk.size(); i += 2) {
-        const quint8 hi = static_cast<quint8>(chunk.at(i));
-        const quint8 lo = (i + 1 < chunk.size()) ? static_cast<quint8>(chunk.at(i + 1)) : 0;
-        out.push_back((static_cast<quint16>(hi) << 8) | static_cast<quint16>(lo));
-    }
-    return out;
-}
-
-QVector<quint16> bytesToWordsLE(const QByteArray& chunk)
-{
-    QVector<quint16> out;
-    out.reserve((chunk.size() + 1) / 2);
-    for (int i = 0; i < chunk.size(); i += 2) {
-        const quint8 lo = static_cast<quint8>(chunk.at(i));
-        const quint8 hi = (i + 1 < chunk.size()) ? static_cast<quint8>(chunk.at(i + 1)) : 0;
-        out.push_back((static_cast<quint16>(hi) << 8) | static_cast<quint16>(lo));
-    }
-    return out;
-}
+using Communication::bytesToRegisters;
 } // namespace
 
 ControllerBridge::ControllerBridge(ModbusInterface* modbus, QObject* parent)
@@ -125,18 +104,7 @@ bool ControllerBridge::parseExpected(const QVariant& v, int count, QVector<quint
 
 quint16 ControllerBridge::calcCrc16Modbus(const QByteArray& bytes)
 {
-    quint16 crc = 0xFFFF;
-    for (char c : bytes) {
-        crc ^= static_cast<quint8>(c);
-        for (int i = 0; i < 8; ++i) {
-            if (crc & 0x0001) {
-                crc = static_cast<quint16>((crc >> 1) ^ 0xA001);
-            } else {
-                crc = static_cast<quint16>(crc >> 1);
-            }
-        }
-    }
-    return crc;
+    return Communication::modbusCrc16(bytes);
 }
 
 void ControllerBridge::requestAbort()
@@ -555,7 +523,7 @@ bool ControllerBridge::stepSendChunk(const QVariantMap& params, const QByteArray
         const int off = i * bytesPerChunk;
         const int len = qMin(bytesPerChunk, totalBytes - off);
         const QByteArray chunk = payload.mid(off, len);
-        const QVector<quint16> words = le ? bytesToWordsLE(chunk) : bytesToWordsBE(chunk);
+        const QVector<quint16> words = bytesToRegisters(chunk, le);
         const quint16 chunkCrc = calcCrc16Modbus(chunk);
         if (packetIndexBase + i > 65535 || off > 65535 || len > 65535) {
             m_modbus->reportCommError(CommErrorCode::InvalidConfig,

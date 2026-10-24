@@ -31,6 +31,12 @@ public:
     static constexpr int MAX_BUFFER_SIZE = 1048576;
     static constexpr int MAX_QUEUED_DATAGRAMS = 1024;
     static constexpr int DEFAULT_RECEIVE_BUFFER_SIZE = 65536;
+    static constexpr int MAX_ACTIVE_CLIENTS = 32;
+    static constexpr qint64 MAX_PENDING_SEND_PER_CLIENT = 1024 * 1024;
+    static constexpr qint64 MAX_PENDING_SEND_TOTAL = 8 * 1024 * 1024;
+    quint64 rejectedTcpConnections() const { return m_rejectedTcpConnections; }
+    quint64 backpressuredSends() const { return m_backpressuredSends; }
+    int activeTcpClients() const { return m_clientSockets.size(); }
 
     explicit EthernetInterface(QObject *parent = nullptr);
     ~EthernetInterface() override;
@@ -117,6 +123,8 @@ private:
     qint64 m_bytesSent;
     qint64 m_suppressedDropBytes = 0;
     QElapsedTimer m_lastDropLogTimer;
+    quint64 m_rejectedTcpConnections = 0;
+    quint64 m_backpressuredSends = 0;
 };
 
 #endif // ETHERNETINTERFACE_H

@@ -14,7 +14,12 @@ from typing import List, Optional
 current_dir = Path(__file__).parent
 src_dir = current_dir.parent.parent
 
-if str(src_dir) not in sys.path:
+# The entrypoint may also expose a venv containing an older installed grammar.
+# Prefer the grammar shipped beside this compiler, including the installed app
+# layout. Never let site-packages silently select a different language version.
+if (src_dir / 'grammar' / 'LHParser.py').is_file():
+    if str(src_dir) in sys.path:
+        sys.path.remove(str(src_dir))
     sys.path.insert(0, str(src_dir))
 
 class CompilerDependencyError(ImportError):
@@ -63,12 +68,15 @@ class CompileResult:
     errors: List[str] = None
     output_file: Optional[str] = None
     compile_only: bool = False
+    warnings: List[str] = None
 
     def __post_init__(self):
         if self.instructions is None:
             self.instructions = []
         if self.errors is None:
             self.errors = []
+        if self.warnings is None:
+            self.warnings = []
 
 
 class LHCompiler:
@@ -395,6 +403,7 @@ class LHCompiler:
             errors=[],
             output_file=str(output_path) if output_path else None,
             compile_only=self.code_generator.requires_target_validation,
+            warnings=list(self.code_generator.warnings),
         )
 
     def batch_compile(self, source_files: List[str], output_dir: str = None) -> List[CompileResult]:

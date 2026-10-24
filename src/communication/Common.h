@@ -6,6 +6,7 @@
 #define COMMUNICATION_COMMON_H
 
 #include <QDebug>
+#include "ProtocolUtils.h"
 #include <QString>
 #include <QDateTime>
 #include <QRegularExpression>
@@ -63,18 +64,7 @@ inline QByteArray fromHexString(const QString& hexStr)
  */
 inline quint16 crc16Modbus(const QByteArray& data)
 {
-    quint16 crc = 0xFFFF;
-    for (int i = 0; i < data.size(); i++) {
-        crc ^= static_cast<quint8>(data[i]);
-        for (int j = 0; j < 8; j++) {
-            if (crc & 0x0001) {
-                crc = (crc >> 1) ^ 0xA001;
-            } else {
-                crc >>= 1;
-            }
-        }
-    }
-    return crc;
+    return Communication::modbusCrc16(data);
 }
 
 /**

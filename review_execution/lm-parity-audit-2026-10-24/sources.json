@@ -1,0 +1,31 @@
+{
+  "manual": {
+    "source": "D:\\Table\\LM\\LM2007用户手册(1).pdf",
+    "sha256": "99d42e57db22fe0107fd3bde810a61267392196bd4612469e1256dcc77c3f706",
+    "page_count": 207,
+    "text_chars": 174611,
+    "low_text_pages": []
+  },
+  "guide": {
+    "source": "D:\\Table\\LM\\高质量LM编程指南V1.05.pdf",
+    "sha256": "5a8f7e95ff9632750a76d06bbebb8aa1ae3056fc8a503f4a468e57118c0819d4",
+    "page_count": 176,
+    "text_chars": 62816,
+    "low_text_pages": [
+      43,
+      49,
+      55,
+      92,
+      96,
+      101,
+      103,
+      108,
+      116,
+      120,
+      124,
+      126,
+      128,
+      176
+    ]
+  }
+}

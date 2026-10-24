@@ -27,13 +27,27 @@ public:
     /// 存储后端是否可用
     virtual bool isAvailable() const = 0;
 
-    /// 获取通道最新 records（按降序排列）
+    /// Legacy compatibility only: errors and empty results are ambiguous.
+    /// New callers must use requestPage, or structured *Result on an owning thread.
+    [[deprecated("Use requestPage or getLatestRecordsResult; empty lists cannot report errors")]]
     virtual QList<RuntimeRecord> getLatestRecords(const QString& channelName, int count) = 0;
 
     /// 按时间范围查询历史 records（按时间升序排列）
+    [[deprecated("Use requestPage or queryHistoryResult; empty lists cannot report errors")]]
     virtual QList<RuntimeRecord> queryHistory(const QString& channelName,
                                               const QDateTime& start,
                                               const QDateTime& end) = 0;
+
+    // Bounded, status-bearing compatibility replacements. These remain owner-thread
+    // APIs; the production asynchronous adapter rejects cross-thread calls explicitly.
+    RuntimeHistoryPage getLatestRecordsResult(const QString& channel, int count) {
+        return queryLatestHistoryPage(channel, count, count, {}, {});
+    }
+    RuntimeHistoryPage queryHistoryResult(const QString& channel, const QDateTime& start,
+                                          const QDateTime& end, int size = 1000,
+                                          const RuntimeHistoryCursor& cursor = {}) {
+        return queryHistoryPage(channel, start, end, size, cursor);
+    }
 
     /// keyset 游标分页查询
     virtual RuntimeHistoryPage queryHistoryPage(const QString& channelName,

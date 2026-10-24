@@ -150,6 +150,31 @@ class DslCompilerSemanticsTest : public QObject
     Q_OBJECT
 
 private slots:
+    void parityExpressionsAndWarningsUseTheSameIdeCompiler() {
+        QTemporaryDir directory; QVERIFY(directory.isValid());
+        const QString main=directory.filePath("parity.lh");
+        QVERIFY(writeTextFile(main,"PROGRAM P\nVAR x : INT; y : INT; END_VAR\nx := 2 + 3 * 4; y := 6 AND 3;\nEND_PROGRAM\n"));
+        DSLCompilerInterface compiler;
+        CompileResult result; QString error;
+        ProjectRuntimeConfig config; config.mainScriptPath=main; config.scriptFiles=QStringList{main};
+        QVERIFY2(compileProject(&compiler,directory.path(),config,directory.filePath("out"),5101,&result,&error),qPrintable(error));
+        QVERIFY(result.success);
+        bool diagnostic=false;
+        for (const auto& warning : result.warnings) if (warning.contains(QStringLiteral("优先级"))) diagnostic=true;
+        QVERIFY(diagnostic);
+        bool golden14=false,golden2=false;
+        for (const auto& artifact : result.artifacts) {
+            if (artifact.type != "compiled_code") continue;
+            for (const auto& line : readTextFile(artifact.path).split('\n')) {
+                const auto fields=line.simplified().split(' ');
+                if (fields.size()==4 && fields[0]=="121" && fields[3]=="14") golden14=true;
+                if (fields.size()==4 && fields[0]=="121" && fields[3]=="2") golden2=true;
+            }
+        }
+        QVERIFY(golden14); QVERIFY(golden2);
+        QVERIFY(result.metadata.value("compileOnly").toBool());
+    }
+
     void assembledSourceMapTracksIdenticalLinesAndLegacyInlineCalls()
     {
         QTemporaryDir dir;

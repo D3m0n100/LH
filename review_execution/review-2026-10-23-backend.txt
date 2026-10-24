@@ -1,0 +1,8 @@
+********* Start testing of ControllerDeviceBackendTest *********
+Config: Using QtTest library 5.15.2, Qt 5.15.2 (x86_64-little_endian-llp64 shared (dynamic) release build; by GCC 8.1.0), windows 10
+PASS   : ControllerDeviceBackendTest::initTestCase()
+PASS   : ControllerDeviceBackendTest::reviewOnlineReconfigurationAndInvalidCandidatePreserveSnapshot()
+PASS   : ControllerDeviceBackendTest::reviewAsyncConnectionMaintainsHeartbeatAndRejectsLateSuccess()
+PASS   : ControllerDeviceBackendTest::cleanupTestCase()
+Totals: 4 passed, 0 failed, 0 skipped, 0 blacklisted, 834ms
+********* Finished testing of ControllerDeviceBackendTest *********

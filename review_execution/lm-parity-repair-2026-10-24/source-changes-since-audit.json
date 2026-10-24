@@ -1,0 +1,172 @@
+{
+  "baseline": "8235b954ebd1e2027b1c27133e753600175ffec77487e0ce3196023d890b839b",
+  "changed_count": 33,
+  "changed": [
+    {
+      "path": "resources/snippets/default_snippets.json",
+      "audit_sha256": "a9e8c6d20dbd1367e6e201904d380783a1e20da4d94a631ac9724f94564a8d90",
+      "current_sha256": "a1b08400a3ee7aa8bcb4141ab8124411d5f56ed8fd5b93fc8157f8e15dceb377"
+    },
+    {
+      "path": "src/compiler/DSLCompilerArtifacts.cpp",
+      "audit_sha256": "ec041fb95268dd40cf17a12b1a842a6805b283aef6d336faa35b4a6dad5af441",
+      "current_sha256": "ae0c795314e7246441cd28f6f62bef9f4015d692ab1a6df6680617d22da51d46"
+    },
+    {
+      "path": "src/designer/MainWindow.cpp",
+      "audit_sha256": "ed6f857c8cf08c2b6e7a0311d0f05304ebb005a2abfb73d9c5d498e9d829fb69",
+      "current_sha256": "06ca9c0162d1779c9d19d58cea491ad2b4c41d422f47d5b846dc7d198bcbb393"
+    },
+    {
+      "path": "src/designer/MainWindow.h",
+      "audit_sha256": "c3e36bf21a0af7d491ff17b5978f47320ad50a236cade554bcac4f935175ef04",
+      "current_sha256": "dfe94d99804a52ed7a1f9a0b93e2dac745eead64145259b890e23429d9e48f16"
+    },
+    {
+      "path": "src/designer/MainWindowUi.cpp",
+      "audit_sha256": "625b1efa583ac8852ee0d83f0dffde6d180aad48bace4b3747b405ad63d78be2",
+      "current_sha256": "6c5e21fb5c03141c7af44b0cc7b684fbeb583ce90e6397854781aa68bf8ba893"
+    },
+    {
+      "path": "src/designer/ProgramBlocksWidget.cpp",
+      "audit_sha256": "b1857f3a9bd8aeebcb62ab01f65e361afa3869a4f4ef9f4f366f8625ecd31857",
+      "current_sha256": "7ae9c518515d27d87e8ccb25c8cf4329e9e10d90c3d01be66414f9684fca4f82"
+    },
+    {
+      "path": "src/designer/ProjectController.cpp",
+      "audit_sha256": "6d5069f875a34d8335b15c9ea33017bcbcc31c9c8f20e93027b8fec9bafc9780",
+      "current_sha256": "1fe0e553626830b16a8a2f2a4a882cd8a2cb44ccd512e184bfbd618d6960e25b"
+    },
+    {
+      "path": "src/designer/ProjectController.h",
+      "audit_sha256": "b8220f5b34af5c16b31486e812bc2b098501e68c4321cb8ec3247b421eb746a8",
+      "current_sha256": "f33f05f8d3a1411f58c53760b8f2c8c4953d8b1a632db7dc18a9335365b063fe"
+    },
+    {
+      "path": "src/designer/RuntimeSessionController.cpp",
+      "audit_sha256": "b1da24ab992bdaed880aef1ac7266d8ba42796749bf5e81a9004fc1953cd4595",
+      "current_sha256": "1e53f4620bab6b499cff1a6d6c3f356635d67a9f3a015c7ed3f47edce619188e"
+    },
+    {
+      "path": "src/designer/RuntimeSessionController.h",
+      "audit_sha256": "d65fbe71e5d7a22bfa35829a1e3e013aa84af6ba939805998b81479aaf2b4000",
+      "current_sha256": "f7216e66d6b7fbfdcf57e31a611594607743ff48a2a745b64e0b0414f5eadb94"
+    },
+    {
+      "path": "src/designer/RuntimeSessionDebug.cpp",
+      "audit_sha256": "ad06cc933aeb8caf10e5f2438414c0870b292c74a16eb2c7ff595ba2615aa38b",
+      "current_sha256": "09d5a6a140f1b8bb6af0d11cd63cd25e884864a7c8acb8475485213cecd12afb"
+    },
+    {
+      "path": "src/designer/SnippetRepository.cpp",
+      "audit_sha256": "f3c4470f15c0bad3833c387c0753e09ab16c7cd358bbb04054b262675d9db840",
+      "current_sha256": "9b47de5368623cba1fb0cd0997b900b0fa82972bcbef263fd65facc3a5357992"
+    },
+    {
+      "path": "src/runtime/ParameterController.cpp",
+      "audit_sha256": "6c794c02be5e39a1c38302c12b5f3fe1b5ff08f8b7c6dc4dbed1ffb1ab26bf01",
+      "current_sha256": "c3543cd72152bf6d320879cf635c5ac3940f3e1cbbb8a1b3593febf29fd5b959"
+    },
+    {
+      "path": "src/runtime/ParameterController.h",
+      "audit_sha256": "5ece3e76cb285a30225916e0d179d279416f60469dea203b70ae625199a5dfb8",
+      "current_sha256": "adaac8d480b6e17e482fe080a8e2b390f83f6eba7fbcbb20fbcf3ddfca023806"
+    },
+    {
+      "path": "src/runtime/ParameterStateTypes.h",
+      "audit_sha256": "febec049d0c4f99696ae9073e08aad2c5c620e69e00cbc7abc5fb1b5010d7ff0",
+      "current_sha256": "1935a0075b3f46e102445d73c51d754f395a087ccfc1b110c686d9f788072640"
+    },
+    {
+      "path": "tests/CMakeLists.txt",
+      "audit_sha256": "d925221b334056a918e7d65f14cad9845634dff0f2c5c36d729617b94aac7f9f",
+      "current_sha256": "6c62e576196f8ab2e0c6541a3e3bcd98f722c29bc05e0c908293dced8bf8214e"
+    },
+    {
+      "path": "tests/dsl_compiler_semantics_test.cpp",
+      "audit_sha256": "7bff50fc0e418d01d4ea3bac039faf63198413f46e77374c544403e357858253",
+      "current_sha256": "55bdd337c188853a2be7d5bb4f47323b67ba91d2b93f41da03af81c1e2702c80"
+    },
+    {
+      "path": "tests/dsl_completion_engine_test.cpp",
+      "audit_sha256": "b6610adedbe278206335376ffef34e709b082486a69df5cca5b596b0762c32e5",
+      "current_sha256": "5e42eb9d4762842b2461cb68d9d75f5c3df302150e4424b59a139b576b34c69c"
+    },
+    {
+      "path": "tests/main_window_integration_test.cpp",
+      "audit_sha256": "9edd430407a0f6ce35a18f36370b1b277f7a389dd143625390e7e9c94891c631",
+      "current_sha256": "e3259ab25f0017d7c278672316e9b541a74525ee654d2cfa7c5dba0329e9ca39"
+    },
+    {
+      "path": "tests/parameter_controller_test.cpp",
+      "audit_sha256": "5d0a20210c16525cffa080f5e278244acebda93e9dbcc876159a62e100479f4a",
+      "current_sha256": "e433fb8550078d349867340d159159a1d6e8e345be2a99a01ebee0801bd51723"
+    },
+    {
+      "path": "tests/snippet_repository_test.cpp",
+      "audit_sha256": "6d7a817404cb61a9e0eb2bd0d3ca7b019dddffecc3dd0bf543fe02d67df1ea09",
+      "current_sha256": "dd6b04888fb4e877470ff702074ed357ee1892f97f0ec6bd93928c4b889c3150"
+    },
+    {
+      "path": "third_party/custom_dsp_language/compile/grammar/LH.g4",
+      "audit_sha256": "96cfacd703ad9321e55fba00d09c11ca0e964f22b9ccb2c6d4813456dd64f443",
+      "current_sha256": "93321b8c8dfff5ed74ff2806bc3882e7a50b17913ef3d941b349b136a5bc145b"
+    },
+    {
+      "path": "third_party/custom_dsp_language/compile/grammar/LHListener.py",
+      "audit_sha256": "22ace979fd621f3a23d9c67c883156888bae721e027c1d863af8e8e1874d9a81",
+      "current_sha256": "de83d908e02da96033c7b3be7f4a60bf52d1b36ff78751770e5610d1ba615191"
+    },
+    {
+      "path": "third_party/custom_dsp_language/compile/grammar/LHParser.py",
+      "audit_sha256": "32a996d487c3d0531502ef5ac91f28c2666d8eb3de6b62529d73ab585f816cc3",
+      "current_sha256": "781109ec3a70d617b8c8f208463dfbbace3109148c1f9f9b1f481b9adc4b1baa"
+    },
+    {
+      "path": "third_party/custom_dsp_language/compile/grammar/LHVisitor.py",
+      "audit_sha256": "fdc91a7b2782c22cfa98fa4b5f6518f6cbdc6e4ac885370f0b7707e181d79322",
+      "current_sha256": "e519b65a222830d304266ec81e7a17b733191a141a2346009ad4b65b6ef9f8bd"
+    },
+    {
+      "path": "third_party/custom_dsp_language/compile/grammar/README.md",
+      "audit_sha256": "97214fb5e28f4321c76af02d0a307dbdca015b82054cb3fda71ccae352dda273",
+      "current_sha256": "c2ad3b1f45dfe0d28180899c44c7895728b6d29f680f4ef1f7ed26164bf6748a"
+    },
+    {
+      "path": "third_party/custom_dsp_language/compile/lmc.py",
+      "audit_sha256": "15425490e34362657d5df9f9ae0ef57f5ad6f13f126a528c153d1f9998978c40",
+      "current_sha256": "3004d2c29e0c67cdcdc9cb67747e3bd9631c7f1945096de87dd7859116ffe127"
+    },
+    {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+      "audit_sha256": "f63e37af7d86086ab8513e8b901e6467be5ad5ea1f288935b98e469a1a5b077c",
+      "current_sha256": "63b93cd15633eaa76e1e83bd795ac3e88ea381fd15e90939debb687da2343c2e"
+    },
+    {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/emitter.py",
+      "audit_sha256": "9d95040a090ae5b4bc1ccbe68c1721c309a2b336327b2fe1d5b09e7ed812117d",
+      "current_sha256": "d2f8f2bb2b74e9811a4704e4e6d5bb90dbc763e585ea1da5fd8b448231919771"
+    },
+    {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/cli/commands.py",
+      "audit_sha256": "26aeb3fcfb7eb75e784a3af316daed41883097de1e787ef1c569f34ec30da35f",
+      "current_sha256": "00054e0ac46f95c0a2626ce8f0285f1d93e1d4ad98e21be7d0d0b303ad477dc4"
+    },
+    {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/compiler.py",
+      "audit_sha256": "9b99cbb7744a04610a899adbee1febce4198a7a02b4e21a38c00e841768d7009",
+      "current_sha256": "2de1568c8833e9072f245a06d7f66fcbb2b45896a75afb46f08333eb62408f39"
+    },
+    {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/frontend/ast_builder.py",
+      "audit_sha256": "51d026b2330aa8561a8eb412925910a0d72f2a855472b56ccd8e7a877ec19c80",
+      "current_sha256": "5f1ce0f06cbce0260261564e507dd87d3cd40dd4ffc20dd6d2de9675b228a40d"
+    },
+    {
+      "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/registry.py",
+      "audit_sha256": "4fa84360d06ff8b8309dd81c9bb043c1e3bf87967ac17ee22069772832193374",
+      "current_sha256": "6621f9393c3556cbbf82787069f9665d5472e6fe61dadf429cdce962783770e7"
+    }
+  ],
+  "head_unchanged": true
+}

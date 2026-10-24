@@ -1,0 +1,615 @@
+{
+  "PWM": [
+    2,
+    68,
+    69,
+    71,
+    72,
+    73,
+    75,
+    189
+  ],
+  "System": [
+    23,
+    24
+  ],
+  "SystemEnd": [
+    23,
+    24
+  ],
+  "SystemExceptDeal": [
+    23,
+    31
+  ],
+  "SystemNop": [
+    23,
+    31
+  ],
+  "ERR": [
+    26
+  ],
+  "ERR_LENG": [
+    26
+  ],
+  "ERR_SIZE": [
+    26
+  ],
+  "NUMB": [
+    26
+  ],
+  "ORDER": [
+    26
+  ],
+  "TASK": [
+    26,
+    28
+  ],
+  "UNIT": [
+    26
+  ],
+  "BUFF_SIZE": [
+    27,
+    65
+  ],
+  "CAN": [
+    27
+  ],
+  "CONF_REC": [
+    27
+  ],
+  "CRC": [
+    27
+  ],
+  "DEALING": [
+    27
+  ],
+  "ENG": [
+    27
+  ],
+  "ERR_REC": [
+    27
+  ],
+  "INT_LIMT": [
+    27
+  ],
+  "LOGIC_OPER": [
+    27
+  ],
+  "MAXMIN": [
+    27
+  ],
+  "NO_FUN": [
+    27
+  ],
+  "NO_PASSWORD": [
+    27
+  ],
+  "OPER": [
+    27
+  ],
+  "PROG_STATE": [
+    27
+  ],
+  "REC_LEN": [
+    27
+  ],
+  "RIGHT_WORD": [
+    27
+  ],
+  "RX_LIMT": [
+    27
+  ],
+  "SCI": [
+    27
+  ],
+  "SWI_LENG": [
+    27
+  ],
+  "TIME": [
+    27
+  ],
+  "TX_LIMT": [
+    27
+  ],
+  "VERSION": [
+    27
+  ],
+  "WORK": [
+    28,
+    29
+  ],
+  "INT": [
+    29
+  ],
+  "TIMER_INT": [
+    29
+  ],
+  "Task": [
+    32,
+    33,
+    189
+  ],
+  "TaskCompnt": [
+    32,
+    36
+  ],
+  "TaskEnd": [
+    32,
+    33
+  ],
+  "TaskLock": [
+    32,
+    37
+  ],
+  "TaskParamt": [
+    32,
+    36
+  ],
+  "TaskUnlock": [
+    32,
+    37
+  ],
+  "SemaDef": [
+    33,
+    37
+  ],
+  "SemaPOper": [
+    33,
+    38
+  ],
+  "SemaVOper": [
+    33,
+    38
+  ],
+  "For": [
+    39,
+    43
+  ],
+  "ForEnd": [
+    39,
+    44
+  ],
+  "ForExit": [
+    39,
+    45
+  ],
+  "If": [
+    39,
+    42
+  ],
+  "IfElse": [
+    39,
+    42
+  ],
+  "IfEnd": [
+    39,
+    42
+  ],
+  "Switch": [
+    39,
+    40
+  ],
+  "SwitchBreak": [
+    39,
+    40
+  ],
+  "SwitchCase": [
+    39,
+    40
+  ],
+  "SwitchDefault": [
+    39,
+    40
+  ],
+  "SwitchEnd": [
+    39,
+    40
+  ],
+  "While": [
+    39,
+    45
+  ],
+  "WhileEnd": [
+    39,
+    46
+  ],
+  "ParamtActi": [
+    47,
+    52
+  ],
+  "ParamtClrSave": [
+    47,
+    49
+  ],
+  "ParamtDeal": [
+    47,
+    50
+  ],
+  "ParamtEngBuild": [
+    47,
+    48
+  ],
+  "ParamtEngNum": [
+    47,
+    49
+  ],
+  "ParamtMove": [
+    47,
+    53
+  ],
+  "ParamtPermntSave": [
+    47,
+    51
+  ],
+  "ParamtPowerSave": [
+    47,
+    51
+  ],
+  "CommCANInit": [
+    54,
+    55
+  ],
+  "CommReciveBuff": [
+    55,
+    67
+  ],
+  "CommTrans": [
+    55,
+    64
+  ],
+  "CommVariTrans": [
+    55,
+    66
+  ],
+  "DrvAI": [
+    68,
+    69
+  ],
+  "DrvDI": [
+    68,
+    75
+  ],
+  "DrvDO": [
+    68,
+    76
+  ],
+  "DrvSWPWMOut": [
+    68,
+    77
+  ],
+  "DrvT1PWMAO": [
+    68
+  ],
+  "DrvT2PWMAO": [
+    68,
+    71
+  ],
+  "DrvT2PeriodIn": [
+    68,
+    72
+  ],
+  "DrvT2PulseIn": [
+    68,
+    74
+  ],
+  "IntBuffLogicOper": [
+    79,
+    83
+  ],
+  "IntBuffOper": [
+    79,
+    82
+  ],
+  "IntBuild": [
+    79,
+    80
+  ],
+  "IntComp": [
+    79,
+    87
+  ],
+  "IntConstBuild": [
+    79,
+    81
+  ],
+  "IntLimt": [
+    79,
+    86
+  ],
+  "IntMax": [
+    79,
+    85
+  ],
+  "IntMin": [
+    79,
+    85
+  ],
+  "IntOutLogicOper": [
+    79,
+    83
+  ],
+  "IntOutOper": [
+    79,
+    82
+  ],
+  "IntValuate": [
+    79,
+    84
+  ],
+  "IntWatch": [
+    79,
+    88
+  ],
+  "FloatBuffOper": [
+    89,
+    92
+  ],
+  "FloatBuild": [
+    89,
+    90
+  ],
+  "FloatConstBuild": [
+    89,
+    91
+  ],
+  "FloatLimt": [
+    89,
+    95
+  ],
+  "FloatMax": [
+    89,
+    94
+  ],
+  "FloatMin": [
+    89,
+    94
+  ],
+  "FloatOutOper": [
+    89,
+    92
+  ],
+  "FloatValuate": [
+    89,
+    93
+  ],
+  "FloatComp": [
+    90,
+    97
+  ],
+  "FloatOverWatch": [
+    90,
+    99
+  ],
+  "FloatPureLimt": [
+    90,
+    96
+  ],
+  "FloatSignCut": [
+    90,
+    97
+  ],
+  "FloatUnderWatch": [
+    90
+  ],
+  "FloatVariLimt": [
+    90,
+    98
+  ],
+  "FloatBelowWatch": [
+    100
+  ],
+  "IQBuffOper": [
+    101,
+    104
+  ],
+  "IQBuild": [
+    101,
+    102
+  ],
+  "IQConstBuild": [
+    101,
+    103
+  ],
+  "IQOutOper": [
+    101,
+    104
+  ],
+  "IQValuate": [
+    101,
+    105
+  ],
+  "IQComp": [
+    102,
+    109
+  ],
+  "IQLimt": [
+    102,
+    107
+  ],
+  "IQMax": [
+    102,
+    106
+  ],
+  "IQMin": [
+    102,
+    106
+  ],
+  "IQOverWatch": [
+    102,
+    111
+  ],
+  "IQPureLimt": [
+    102,
+    108
+  ],
+  "IQSignCut": [
+    102,
+    109
+  ],
+  "IQUnderWatch": [
+    102
+  ],
+  "IQVariLimt": [
+    102,
+    110
+  ],
+  "IQBelowWatch": [
+    112
+  ],
+  "DealInUnify": [
+    113,
+    114
+  ],
+  "DealOutUnify": [
+    113,
+    116
+  ],
+  "DealDiffKind": [
+    114,
+    120
+  ],
+  "DealSameGroup": [
+    114,
+    119
+  ],
+  "DealSameKind": [
+    114,
+    118
+  ],
+  "DealToData": [
+    114,
+    121
+  ],
+  "DealToSwit": [
+    114,
+    121
+  ],
+  "FuncIntFloat": [
+    122,
+    125
+  ],
+  "FuncIntInt": [
+    122,
+    126
+  ],
+  "FuncIntSwitFloat": [
+    122,
+    123
+  ],
+  "FuncIntSwitInt": [
+    122,
+    124
+  ],
+  "FuncReversIntFloat": [
+    122,
+    127
+  ],
+  "FuncMultLine": [
+    128,
+    130
+  ],
+  "FuncPoly": [
+    128,
+    129
+  ],
+  "FuncTwoMultLine": [
+    128,
+    132
+  ],
+  "TimeCount": [
+    135,
+    139
+  ],
+  "TimeDly": [
+    135,
+    137
+  ],
+  "TimeFunc": [
+    135,
+    141
+  ],
+  "TimeScale": [
+    135,
+    140
+  ],
+  "Timer": [
+    135,
+    136
+  ],
+  "Timing": [
+    135,
+    138
+  ],
+  "ProcsBatch": [
+    143,
+    145
+  ],
+  "ProcsInteg": [
+    143
+  ],
+  "ProcsTemp": [
+    143,
+    146
+  ],
+  "CtrlBias": [
+    148,
+    150
+  ],
+  "CtrlDiffer": [
+    148,
+    153
+  ],
+  "CtrlDly": [
+    148,
+    155
+  ],
+  "CtrlGain": [
+    148,
+    149
+  ],
+  "CtrlInertia": [
+    148,
+    150
+  ],
+  "CtrlInteg": [
+    148,
+    151
+  ],
+  "CtrlOscilla": [
+    148,
+    152
+  ],
+  "CtrlPureDiffer": [
+    148,
+    153
+  ],
+  "CtrlTwoDiffer": [
+    148,
+    154
+  ],
+  "PIDCtrl": [
+    156,
+    157
+  ],
+  "PIDRelayTuneCtrl": [
+    156,
+    162
+  ],
+  "RelayCtrl": [
+    169,
+    181
+  ],
+  "TSOCtrl": [
+    169
+  ],
+  "TSORelayTuneCtrl": [
+    169,
+    176
+  ],
+  "FilterBW": [
+    183
+  ],
+  "component": [
+    202
+  ]
+}

@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="Win32-mingw32-make"
+	tests="8"
+	failures="1"
+	disabled="0"
+	skipped="0"
+	hostname="DESKTOP-HJIINHN"
+	time="51"
+	timestamp="2026-10-24T07:58:04"
+	>
+	<testcase name="MonitorWidgetUiTest" classname="MonitorWidgetUiTest" time="1.12125" status="run">
+		<properties/>
+		<system-out></system-out>
+	</testcase>
+	<testcase name="MainWindowIntegrationTest" classname="MainWindowIntegrationTest" time="5.54307" status="fail">
+		<failure message="SEGFAULT"/>
+		<properties/>
+		<system-out>A crash occurred in D:\Table\LH\build_current_mingw\bin\main_window_integration_test.exe.
+Function time: 1095ms Total time: 1101ms
+
+Exception address: 0x00000000075ee3d7
+Exception code   : 0xc0000005
+Nearby symbol    : ZN11QMessageBox13buttonClickedEP15QAbstractButton
+
+Stack:
+#  1: ZN24QAbstractItemModelTester11qt_metacallEN11QMetaObject4CallEiPPv() - 0x000000006ede65f0
+#  2: UnhandledExceptionFilter() - 0x00007ffd862043f0
+#  3: memset() - 0x00007ffd885b4600
+#  4: _C_specific_handler() - 0x00007ffd8859cdb0
+#  5: _chkstk() - 0x00007ffd885b27a0
+#  6: RtlRaiseException() - 0x00007ffd885620d0
+#  7: KiUserExceptionDispatcher() - 0x00007ffd885b13a0
+#  8: ZN11QMessageBox13buttonClickedEP15QAbstractButton() - 0x00000000075ee110
+#  9: ZN11QMessageBox9showEventEP10QShowEvent() - 0x00000000075f2a00
+# 10: ZN7QWidget5eventEP6QEvent() - 0x0000000007433bd0
+# 11: ZN11QMessageBox5eventEP6QEvent() - 0x00000000075eee60
+# 12: ZN19QApplicationPrivate13notify_helperEP7QObjectP6QEvent() - 0x00000000073f7890
+# 13: ZN12QApplication6notifyEP7QObjectP6QEvent() - 0x00000000073fe190
+# 14: ZN16QCoreApplication9sendEventEP7QObjectP6QEvent() - 0x0000000068a65bf0
+# 15: ZN14QWidgetPrivate11show_helperEv() - 0x0000000007430100
+# 16: ZN14QWidgetPrivate10setVisibleEb() - 0x0000000007433710
+# 17: ZN7QDialog10setVisibleEb() - 0x00000000075c4a40
+# 18: ZN7QDialog4execEv() - 0x00000000075c4130
+# 19: ZN11QMessageBox8criticalEP7QWidgetRK7QStringS4_iii() - 0x00000000075f0ee0
+# 20: ZN11QMessageBox7warningEP7QWidgetRK7QStringS4_6QFlagsINS_14StandardButtonEES6_() - 0x00000000075f1150
+# 21: Unable to obtain symbol
+# 22: Unable to obtain symbol
+# 23: Unable to obtain symbol
+# 24: Unable to obtain symbol
+# 25: Unable to obtain symbol
+# 26: Unable to obtain symbol
+# 27: Unable to obtain symbol
+# 28: Unable to obtain symbol
+# 29: Unable to obtain symbol
+# 30: Unable to obtain symbol
+# 31: Unable to obtain symbol
+# 32: ZN9QMimeType18qt_static_metacallEP7QObjectN11QMetaObject4CallEiPPv() - 0x0000000068b3fc10
+# 33: ZN7QAction8activateENS_11ActionEventE() - 0x00000000073f3d20
+# 34: Unable to obtain symbol
+# 35: Unable to obtain symbol
+# 36: Unable to obtain symbol
+# 37: ZNK11QMetaMethod6invokeEP7QObjectN2Qt14ConnectionTypeE22QGenericReturnArgument16QGenericArgumentS5_S5_S5_S5_S5_S5_S5_S5_S5_() - 0x0000000068a71880
+# 38: ZN5QTest5qInitEP7QObjectiPPc() - 0x000000006edc8250
+# 39: ZN5QTest5qInitEP7QObjectiPPc() - 0x000000006edc8250
+# 40: ZN5QTest5qInitEP7QObjectiPPc() - 0x000000006edc8250
+# 41: ZN5QTest4qRunEv() - 0x000000006edcae60
+# 42: ZN5QTest5qExecEP7QObjectRK11QStringList() - 0x000000006edcb2e0
+# 43: Unable to obtain symbol
+# 44: Unable to obtain symbol
+# 45: Unable to obtain symbol
+# 46: BaseThreadInitThunk() - 0x00007ffd87db7360
+# 47: RtlUserThreadStart() - 0x00007ffd8855cc70
+
+</system-out>
+	</testcase>
+	<testcase name="DslCompilerSemanticsTest" classname="DslCompilerSemanticsTest" time="10.5555" status="run">
+		<properties/>
+		<system-out></system-out>
+	</testcase>
+	<testcase name="MonitorExportTest" classname="MonitorExportTest" time="1.09763" status="run">
+		<properties/>
+		<system-out></system-out>
+	</testcase>
+	<testcase name="ControllerDebugProtocolTest" classname="ControllerDebugProtocolTest" time="0.2341" status="run">
+		<properties/>
+		<system-out></system-out>
+	</testcase>
+	<testcase name="RuntimePointTableTest" classname="RuntimePointTableTest" time="0.180223" status="run">
+		<properties/>
+		<system-out></system-out>
+	</testcase>
+	<testcase name="ParameterControllerTest" classname="ParameterControllerTest" time="32.5757" status="run">
+		<properties/>
+		<system-out>2026-10-23T23:58:23.780Z [INFO] [category=business_event] [thread=0x2790] [BUSINESS_EVENT] event=parameter_write_started opId=op-param-write-1792799903780 phase=parameter_write status=started code=0 target=A,B attempt=1 count=2
+2026-10-23T23:58:23.781Z [INFO] [category=business_event] [thread=0x2790] [BUSINESS_EVENT] event=parameter_write_succeeded opId=op-param-write-1792799903780 phase=parameter_write status=succeeded code=0 target=A,B attempt=1 count=2
+2026-10-23T23:58:23.815Z [INFO] [category=business_event] [thread=0x2790] [BUSINESS_EVENT] event=parameter_write_started opId=op-param-write-1792799903815 phase=parameter_write status=started code=0 target=A,B attempt=1 count=2
+2026-10-23T23:58:23.815Z [INFO] [category=business_event] [thread=0x2790] [BUSINESS_EVENT] event=parameter_write_succeeded opId=op-param-write-1792799903815 phase=parameter_write status=succeeded code=0 target=A,B attempt=1 count=2
+2026-10-23T23:58:23.861Z [INFO] [category=business_event] [thread=0x2790] [BUSINESS_EVENT] event=paramet...
+[This part of the test output was removed since it exceeds the threshold of 1024 bytes.]
+</system-out>
+	</testcase>
+	<testcase name="OpcServerConfigTest" classname="OpcServerConfigTest" time="0.318004" status="run">
+		<properties/>
+		<system-out></system-out>
+	</testcase>
+</testsuite>

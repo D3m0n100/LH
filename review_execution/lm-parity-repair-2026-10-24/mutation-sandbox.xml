@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<testsuite errors="7" failures="7" tests="11" name="ProjectMutationGuardTest">
+  <properties>
+    <property value="5.15.2" name="QTestVersion"/>
+    <property value="5.15.2" name="QtVersion"/>
+    <property value="Qt 5.15.2 (x86_64&#x002D;little_endian&#x002D;llp64 shared (dynamic) release build; by GCC 8.1.0)" name="QtBuild"/>
+  </properties>
+  <testcase result="pass" name="initTestCase"/>
+  <testcase name="uncCreateAtomicSaveRenameAndDelete">
+    <!-- message="Set LH_TEST_UNC_ROOT to a writable SMB test directory" type="skip" -->
+  </testcase>
+  <testcase name="uncConflictAndContainmentPreserveOriginal">
+    <!-- message="Set LH_TEST_UNC_ROOT to a writable SMB test directory" type="skip" -->
+  </testcase>
+  <testcase name="uncRejectsServerJunctionAndOutsideWrite">
+    <!-- message="Local backing directory is required for the SMB server&#x002D;side junction attack" type="skip" -->
+  </testcase>
+  <testcase result="fail" name="createsWithoutOverwriteAndRejectsInvalidNames">
+    <failure message="&apos;guard.acquire(root, temp.filePath(&quot;new.txt&quot;), false, &amp;error)&apos; returned FALSE. (拒绝路径竞争、链接或占用 (NTSTATUS 0xc0000022))" result="fail"/>
+  </testcase>
+  <testcase result="fail" name="holdsAncestorsAndTargetAcrossRenameRollback">
+    <failure message="&apos;guard.acquire(temp.filePath(&quot;project&quot;), file.fileName(), true, &amp;error)&apos; returned FALSE. (拒绝路径竞争、链接或占用 (NTSTATUS 0xc0000022))" result="fail"/>
+  </testcase>
+  <testcase result="fail" name="removesPinnedTreeButRejectsConcurrentNewEntry">
+    <failure message="&apos;guard.acquire(temp.path(), tree, true, &amp;error)&apos; returned FALSE. (拒绝路径竞争、链接或占用 (NTSTATUS 0xc0000022))" result="fail"/>
+  </testcase>
+  <testcase result="pass" name="rejectsRealJunctionAndPreservesOutsideSentinel"/>
+  <testcase result="pass" name="writeHandleConflictFailsBeforeStaging"/>
+  <testcase result="fail" name="inPlaceAncestorReparseCannotRedirectCreation">
+    <failure tag="new&#x002D;file" message="&apos;guard.acquire(root,parent+&quot;/new.txt&quot;,false,&amp;error)&apos; returned FALSE. (拒绝路径竞争、链接或占用 (NTSTATUS 0xc0000022))" result="fail"/>
+    <failure tag="atomic&#x002D;config&#x002D;replacement" message="&apos;guard.acquire(root,parent+&quot;/new.txt&quot;,false,&amp;error)&apos; returned FALSE. (拒绝路径竞争、链接或占用 (NTSTATUS 0xc0000022))" result="fail"/>
+    <!-- tag="unc&#x002D;new&#x002D;file" message="Local backing directory is required for the SMB server&#x002D;side in&#x002D;place reparse attack" type="skip" -->
+    <!-- tag="unc&#x002D;atomic&#x002D;config&#x002D;replacement" message="Local backing directory is required for the SMB server&#x002D;side in&#x002D;place reparse attack" type="skip" -->
+    <failure tag="attributes&#x002D;new&#x002D;file" message="&apos;guard.acquire(root,parent+&quot;/new.txt&quot;,false,&amp;error)&apos; returned FALSE. (拒绝路径竞争、链接或占用 (NTSTATUS 0xc0000022))" result="fail"/>
+    <failure tag="attributes&#x002D;atomic&#x002D;config" message="&apos;guard.acquire(root,parent+&quot;/new.txt&quot;,false,&amp;error)&apos; returned FALSE. (拒绝路径竞争、链接或占用 (NTSTATUS 0xc0000022))" result="fail"/>
+    <!-- tag="unc&#x002D;attributes&#x002D;new&#x002D;file" message="Local backing directory is required for the SMB server&#x002D;side in&#x002D;place reparse attack" type="skip" -->
+    <!-- tag="unc&#x002D;attributes&#x002D;atomic&#x002D;config" message="Local backing directory is required for the SMB server&#x002D;side in&#x002D;place reparse attack" type="skip" -->
+  </testcase>
+  <testcase result="pass" name="cleanupTestCase"/>
+  <system-err>
+<![CDATA[Set LH_TEST_UNC_ROOT to a writable SMB test directory]]>
+<![CDATA[Set LH_TEST_UNC_ROOT to a writable SMB test directory]]>
+<![CDATA[Local backing directory is required for the SMB server-side junction attack]]>
+<![CDATA[Local backing directory is required for the SMB server-side in-place reparse attack]]>
+<![CDATA[Local backing directory is required for the SMB server-side in-place reparse attack]]>
+<![CDATA[Local backing directory is required for the SMB server-side in-place reparse attack]]>
+<![CDATA[Local backing directory is required for the SMB server-side in-place reparse attack]]>
+  </system-err>
+</testsuite>

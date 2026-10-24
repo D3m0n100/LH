@@ -1,0 +1,232 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="Win32-mingw32-make"
+	tests="47"
+	failures="1"
+	disabled="0"
+	skipped="0"
+	hostname="DESKTOP-HJIINHN"
+	time="292"
+	timestamp="2026-10-24T09:21:43"
+	>
+	<testcase name="ProjectMutationGuardTest" classname="ProjectMutationGuardTest" time="0.294007" status="run">
+		<properties/>
+		<system-out></system-out>
+	</testcase>
+	<testcase name="RuntimeSessionServiceTest" classname="RuntimeSessionServiceTest" time="0.229441" status="run">
+		<properties/>
+		<system-out>2026-10-24T01:21:44.203Z [INFO] [category=business_event] [thread=0x6844] [BUSINESS_EVENT] event=parameter_readback_started opId=op-param-rb-1792804904203 phase=readback status=started code=0 target=param.kp attempt=1 maxRetries=1 retryIntervalMs=0
+2026-10-24T01:21:44.207Z [INFO] [category=business_event] [thread=0x6844] [BUSINESS_EVENT] event=parameter_readback_attempt opId=op-param-rb-1792804904203 phase=readback status=polling code=0 target=param.kp attempt=1 attempt=1 maxRetries=1
+2026-10-24T01:21:44.207Z [INFO] [category=business_event] [thread=0x6844] [BUSINESS_EVENT] event=parameter_readback_succeeded opId=op-param-rb-1792804904203 phase=readback status=succeeded code=0 target=param.kp attempt=1 attempts=1 message=
+</system-out>
+	</testcase>
+	<testcase name="ClassicPollPlanTest" classname="ClassicPollPlanTest" time="0.201089" status="run">
+		<properties/>
+		<system-out></system-out>
+	</testcase>
+	<testcase name="ClassicOpcWorkerTest" classname="ClassicOpcWorkerTest" time="0.625025" status="run">
+		<properties/>
+		<system-out></system-out>
+	</testcase>
+	<testcase name="ModuleBoundaryCheck" classname="ModuleBoundaryCheck" time="3.88176" status="run">
+		<properties/>
+		<system-out>Module boundaries checked.
+</system-out>
+	</testcase>
+	<testcase name="ProjectCommandCoordinatorTest" classname="ProjectCommandCoordinatorTest" time="0.0641341" status="run">
+		<properties/>
+		<system-out></system-out>
+	</testcase>
+	<testcase name="OptimizationAcceptanceTest" classname="OptimizationAcceptanceTest" time="4.1903" status="run">
+		<properties/>
+		<system-out></system-out>
+	</testcase>
+	<testcase name="app_logging_test" classname="app_logging_test" time="0.376563" status="run">
+		<properties/>
+		<system-out>2026-10-24T01:21:53.580Z [ERROR] [category=default] [thread=0x646c] critical-must-be-visible
+2026-10-24T01:21:53.612Z [ERROR] [category=default] [thread=0x646c] rotation-failure-probe
+2026-10-24T01:21:53.612Z [ERROR] [category=default] [thread=0x646c] rotation-failure-probe
+</system-out>
+	</testcase>
+	<testcase name="AppLoggingOverloadTest" classname="AppLoggingOverloadTest" time="1.54884" status="run">
+		<properties/>
+		<system-out></system-out>
+	</testcase>
+	<testcase name="CoreDataManagerTest" classname="CoreDataManagerTest" time="1.81464" status="run">
+		<properties/>
+		<system-out></system-out>
+	</testcase>
+	<testcase name="DataManagerHistoryPagingTest" classname="DataManagerHistoryPagingTest" time="0.245408" status="run">
+		<properties/>
+		<system-out></system-out>
+	</testcase>
+	<testcase name="SnippetRepositoryTest" classname="SnippetRepositoryTest" time="0.537841" status="run">
+		<properties/>
+		<system-out></system-out>
+	</testcase>
+	<testcase name="MonitorDataProcessorTest" classname="MonitorDataProcessorTest" time="0.472685" status="run">
+		<properties/>
+		<system-out></system-out>
+	</testcase>
+	<testcase name="MonitorDataLoggerTest" classname="MonitorDataLoggerTest" time="1.24926" status="run">
+		<properties/>
+		<system-out></system-out>
+	</testcase>
+	<testcase name="AsyncDatabaseWorkerTest" classname="AsyncDatabaseWorkerTest" time="2.63731" status="run">
+		<properties/>
+		<system-out></system-out>
+	</testcase>
+	<testcase name="MonitorManagerBackendTest" classname="MonitorManagerBackendTest" time="0.716856" status="run">
+		<properties/>
+		<system-out></system-out>
+	</testcase>
+	<testcase name="MonitorWidgetUiTest" classname="MonitorWidgetUiTest" time="1.99821" status="run">
+		<properties/>
+		<system-out></system-out>
+	</testcase>
+	<testcase name="MainWindowIntegrationTest" classname="MainWindowIntegrationTest" time="99.0839" status="run">
+		<properties/>
+		<system-out>2026-10-24T01:22:13.832Z [INFO] [category=business_event] [thread=0x5fe4] [BUSINESS_EVENT] event=parameter_readback_started opId=op-param-rb-1792804933830 phase=readback status=started code=0 target=param.kp attempt=1 maxRetries=2 retryIntervalMs=100
+2026-10-24T01:22:14.052Z [INFO] [category=business_event] [thread=0x5fe4] [BUSINESS_EVENT] event=parameter_readback_attempt opId=op-param-rb-1792804933830 phase=readback status=polling code=0 target=param.kp attempt=1 attempt=1 maxRetries=2
+2026-10-24T01:22:14.205Z [INFO] [category=business_event] [thread=0x5fe4] [BUSINESS_EVENT] event=parameter_readback_succeeded opId=op-param-rb-1792804933830 phase=readback status=succeeded code=0 target=param.kp attempt=1 attempts=1 message=
+2026-10-24T01:22:16.955Z [INFO] [category=business_event] [thread=0x5fe4] [BUSINESS_EVENT] event=session_state_changed opId= phase=session status=state_change code=0 target=RuntimeSessionController attempt=1 from=0 to=4
+2026-10-24T01:22:16.962Z [INFO] [category=business_event] [thread=0x5f...
+[This part of the test output was removed since it exceeds the threshold of 1024 bytes.]
+</system-out>
+	</testcase>
+	<testcase name="DownloadManagerLifecycleTest" classname="DownloadManagerLifecycleTest" time="0.950573" status="run">
+		<properties/>
+		<system-out></system-out>
+	</testcase>
+	<testcase name="DslCompletionEngineTest" classname="DslCompletionEngineTest" time="0.514293" status="run">
+		<properties/>
+		<system-out></system-out>
+	</testcase>
+	<testcase name="DslScriptEditorSaveTest" classname="DslScriptEditorSaveTest" time="0.908331" status="run">
+		<properties/>
+		<system-out></system-out>
+	</testcase>
+	<testcase name="ProjectSaveCloseTest" classname="ProjectSaveCloseTest" time="10.7038" status="run">
+		<properties/>
+		<system-out></system-out>
+	</testcase>
+	<testcase name="DslCompilerCancellationTest" classname="DslCompilerCancellationTest" time="3.16685" status="run">
+		<properties/>
+		<system-out></system-out>
+	</testcase>
+	<testcase name="DslCompilerSemanticsTest" classname="DslCompilerSemanticsTest" time="11.0858" status="run">
+		<properties/>
+		<system-out></system-out>
+	</testcase>
+	<testcase name="CompilerRuntimeSearchTest" classname="CompilerRuntimeSearchTest" time="0.213378" status="run">
+		<properties/>
+		<system-out></system-out>
+	</testcase>
+	<testcase name="MonitorExportTest" classname="MonitorExportTest" time="0.948159" status="run">
+		<properties/>
+		<system-out></system-out>
+	</testcase>
+	<testcase name="MonitorHistoryExportIntegrationTest" classname="MonitorHistoryExportIntegrationTest" time="0.610481" status="run">
+		<properties/>
+		<system-out></system-out>
+	</testcase>
+	<testcase name="CommunicationRoutingTest" classname="CommunicationRoutingTest" time="1.93441" status="run">
+		<properties/>
+		<system-out></system-out>
+	</testcase>
+	<testcase name="SerialInterfaceTest" classname="SerialInterfaceTest" time="0.191927" status="run">
+		<properties/>
+		<system-out></system-out>
+	</testcase>
+	<testcase name="ControllerDebugProtocolTest" classname="ControllerDebugProtocolTest" time="0.199739" status="run">
+		<properties/>
+		<system-out></system-out>
+	</testcase>
+	<testcase name="ControllerDeviceBackendTest" classname="ControllerDeviceBackendTest" time="2.49397" status="run">
+		<properties/>
+		<system-out></system-out>
+	</testcase>
+	<testcase name="RuntimePointTableTest" classname="RuntimePointTableTest" time="0.0669215" status="run">
+		<properties/>
+		<system-out></system-out>
+	</testcase>
+	<testcase name="VirtualDeviceBackendTest" classname="VirtualDeviceBackendTest" time="0.210918" status="run">
+		<properties/>
+		<system-out></system-out>
+	</testcase>
+	<testcase name="ParameterControllerTest" classname="ParameterControllerTest" time="32.4664" status="run">
+		<properties/>
+		<system-out>2026-10-24T01:24:18.361Z [INFO] [category=business_event] [thread=0xb00] [BUSINESS_EVENT] event=parameter_write_started opId=op-param-write-1792805058361 phase=parameter_write status=started code=0 target=A,B attempt=1 count=2
+2026-10-24T01:24:18.362Z [INFO] [category=business_event] [thread=0xb00] [BUSINESS_EVENT] event=parameter_write_succeeded opId=op-param-write-1792805058361 phase=parameter_write status=succeeded code=0 target=A,B attempt=1 count=2
+2026-10-24T01:24:18.394Z [INFO] [category=business_event] [thread=0xb00] [BUSINESS_EVENT] event=parameter_write_started opId=op-param-write-1792805058394 phase=parameter_write status=started code=0 target=A,B attempt=1 count=2
+2026-10-24T01:24:18.395Z [INFO] [category=business_event] [thread=0xb00] [BUSINESS_EVENT] event=parameter_write_succeeded opId=op-param-write-1792805058394 phase=parameter_write status=succeeded code=0 target=A,B attempt=1 count=2
+2026-10-24T01:24:18.425Z [INFO] [category=business_event] [thread=0xb00] [BUSINESS_EVENT] event=parameter_wr...
+[This part of the test output was removed since it exceeds the threshold of 1024 bytes.]
+</system-out>
+	</testcase>
+	<testcase name="RuntimeSessionControllerTest" classname="RuntimeSessionControllerTest" time="8.58218" status="run">
+		<properties/>
+		<system-out>2026-10-24T01:24:51.067Z [INFO] [category=business_event] [thread=0x52ac] [BUSINESS_EVENT] event=session_state_changed opId= phase=session status=state_change code=0 target=RuntimeSessionController attempt=1 from=0 to=4
+2026-10-24T01:24:51.068Z [INFO] [category=business_event] [thread=0x52ac] [BUSINESS_EVENT] event=session_state_changed opId= phase=session status=state_change code=0 target=RuntimeSessionController attempt=1 from=0 to=4
+2026-10-24T01:24:51.071Z [INFO] [category=business_event] [thread=0x52ac] [BUSINESS_EVENT] event=session_state_changed opId= phase=session status=state_change code=0 target=RuntimeSessionController attempt=1 from=0 to=3
+2026-10-24T01:24:51.073Z [INFO] [category=business_event] [thread=0x52ac] [BUSINESS_EVENT] event=download_started opId=op-dl-1792805091073-113701392 phase=precheck status=started code=0 target=C:/Users/Ryan/AppData/Local/Temp/runtime_session_controller_test.qCppxD attempt=1 retryCount=1
+2026-10-24T01:24:51.076Z [INFO] [category=business_event] [thread=0x52ac] [B...
+[This part of the test output was removed since it exceeds the threshold of 1024 bytes.]
+</system-out>
+	</testcase>
+	<testcase name="OpcServerConfigTest" classname="OpcServerConfigTest" time="0.215621" status="run">
+		<properties/>
+		<system-out></system-out>
+	</testcase>
+	<testcase name="DiagnosticSnapshotTest" classname="DiagnosticSnapshotTest" time="0.147303" status="run">
+		<properties/>
+		<system-out></system-out>
+	</testcase>
+	<testcase name="InstallLayoutTest" classname="InstallLayoutTest" time="6.27494" status="run">
+		<properties/>
+		<system-out>-- 安装布局及独立公共接口消费者测试通过: D:/Table/LH/build_current_mingw/install_layout_test_prefix
+</system-out>
+	</testcase>
+	<testcase name="MonitorHistoryCoreTest" classname="MonitorHistoryCoreTest" time="0.0564643" status="run">
+		<properties/>
+		<system-out></system-out>
+	</testcase>
+	<testcase name="ReviewRound2RegressionTest" classname="ReviewRound2RegressionTest" time="14.7888" status="fail">
+		<failure message="Failed"/>
+		<properties/>
+		<system-out></system-out>
+	</testcase>
+	<testcase name="PidHistoryAsyncTest" classname="PidHistoryAsyncTest" time="1.74272" status="run">
+		<properties/>
+		<system-out></system-out>
+	</testcase>
+	<testcase name="DesignerP1RobustnessTest" classname="DesignerP1RobustnessTest" time="41.9394" status="run">
+		<properties/>
+		<system-out></system-out>
+	</testcase>
+	<testcase name="DatabaseStartupMigrationTest" classname="DatabaseStartupMigrationTest" time="3.66718" status="run">
+		<properties/>
+		<system-out></system-out>
+	</testcase>
+	<testcase name="BackendSamplerTest" classname="BackendSamplerTest" time="0.327487" status="run">
+		<properties/>
+		<system-out></system-out>
+	</testcase>
+	<testcase name="FullReviewRegressionTest" classname="FullReviewRegressionTest" time="4.54635" status="run">
+		<properties/>
+		<system-out></system-out>
+	</testcase>
+	<testcase name="Review20261023Test" classname="Review20261023Test" time="20.6659" status="run">
+		<properties/>
+		<system-out>Ϊ C:\Users\Ryan\AppData\Local\Temp\review_20261023_test-sOlxUH\external-junction &lt;&lt;===&gt;&gt; C:\Users\Ryan\AppData\Local\Temp\review_20261023_test-zSMiny [NON-UTF-8-BYTE-0xB4][NON-UTF-8-BYTE-0xB4][NON-UTF-8-BYTE-0xBD][NON-UTF-8-BYTE-0xA8][NON-UTF-8-BYTE-0xB5][NON-UTF-8-BYTE-0xC4][NON-UTF-8-BYTE-0xC1][NON-UTF-8-BYTE-0xAA][NON-UTF-8-BYTE-0xBD][NON-UTF-8-BYTE-0xD3]
+</system-out>
+	</testcase>
+	<testcase name="LmParitySoftwareTest" classname="LmParitySoftwareTest" time="2.69741" status="run">
+		<properties/>
+		<system-out>2026-10-24T01:26:35.038Z [INFO] [category=business_event] [thread=0x6250] [BUSINESS_EVENT] event=session_state_changed opId= phase=session status=state_change code=0 target=RuntimeSessionController attempt=1 from=0 to=3
+2026-10-24T01:26:35.039Z [INFO] [category=business_event] [thread=0x6250] [BUSINESS_EVENT] event=controller_debug_started opId=40eba4ab-79f7-4601-8309-5fd17bda221b phase=admission status=started code=0 target=ControllerDeviceBackend attempt=1 arguments=[] backendGeneration=1 command=step commandGeneration=2 controllerId=1 port=parity-slow-debug
+2026-10-24T01:26:35.221Z [INFO] [category=business_event] [thread=0x6250] [BUSINESS_EVENT] event=controller_debug_finished opId=40eba4ab-79f7-4601-8309-5fd17bda221b phase=finish status=succeeded code=0 target=ControllerDeviceBackend attempt=1 arguments=[] backendGeneration=1 command=step commandGeneration=2 controllerId=1 message= port=parity-slow-debug
+2026-10-24T01:26:35.285Z [INFO] [category=business_event] [thread=0x6250] [BUSINESS_EVENT] event=cont...
+[This part of the test output was removed since it exceeds the threshold of 1024 bytes.]
+</system-out>
+	</testcase>
+</testsuite>

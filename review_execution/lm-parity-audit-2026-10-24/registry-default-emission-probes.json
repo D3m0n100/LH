@@ -1,0 +1,1189 @@
+[
+  {
+    "name": "EXCATMaintain",
+    "success": true,
+    "compile_only": false,
+    "errors": [],
+    "parameter_count": 0,
+    "note": "Default-only local emission probe; does not verify functional behavior or firmware support."
+  },
+  {
+    "name": "EXCAIntCheck",
+    "success": true,
+    "compile_only": false,
+    "errors": [],
+    "parameter_count": 0,
+    "note": "Default-only local emission probe; does not verify functional behavior or firmware support."
+  },
+  {
+    "name": "PasswordVerify2",
+    "success": true,
+    "compile_only": false,
+    "errors": [],
+    "parameter_count": 0,
+    "note": "Default-only local emission probe; does not verify functional behavior or firmware support."
+  },
+  {
+    "name": "LockCmdGenery",
+    "success": true,
+    "compile_only": false,
+    "errors": [],
+    "parameter_count": 0,
+    "note": "Default-only local emission probe; does not verify functional behavior or firmware support."
+  },
+  {
+    "name": "OutRealTime3",
+    "success": true,
+    "compile_only": false,
+    "errors": [],
+    "parameter_count": 0,
+    "note": "Default-only local emission probe; does not verify functional behavior or firmware support."
+  },
+  {
+    "name": "CommCANInit",
+    "success": true,
+    "compile_only": false,
+    "errors": [],
+    "parameter_count": 0,
+    "note": "Default-only local emission probe; does not verify functional behavior or firmware support."
+  },
+  {
+    "name": "CommGPRS",
+    "success": true,
+    "compile_only": false,
+    "errors": [],
+    "parameter_count": 0,
+    "note": "Default-only local emission probe; does not verify functional behavior or firmware support."
+  },
+  {
+    "name": "CommJ1939Trans",
+    "success": true,
+    "compile_only": false,
+    "errors": [],
+    "parameter_count": 0,
+    "note": "Default-only local emission probe; does not verify functional behavior or firmware support."
+  },
+  {
+    "name": "CommTrans",
+    "success": true,
+    "compile_only": false,
+    "errors": [],
+    "parameter_count": 0,
+    "note": "Default-only local emission probe; does not verify functional behavior or firmware support."
+  },
+  {
+    "name": "CommWatch",
+    "success": true,
+    "compile_only": false,
+    "errors": [],
+    "parameter_count": 0,
+    "note": "Default-only local emission probe; does not verify functional behavior or firmware support."
+  },
+  {
+    "name": "GT",
+    "success": true,
+    "compile_only": false,
+    "errors": [],
+    "parameter_count": 0,
+    "note": "Default-only local emission probe; does not verify functional behavior or firmware support."
+  },
+  {
+    "name": "LT",
+    "success": true,
+    "compile_only": false,
+    "errors": [],
+    "parameter_count": 0,
+    "note": "Default-only local emission probe; does not verify functional behavior or firmware support."
+  },
+  {
+    "name": "LE",
+    "success": true,
+    "compile_only": false,
+    "errors": [],
+    "parameter_count": 0,
+    "note": "Default-only local emission probe; does not verify functional behavior or firmware support."
+  },
+  {
+    "name": "GE",
+    "success": true,
+    "compile_only": false,
+    "errors": [],
+    "parameter_count": 0,
+    "note": "Default-only local emission probe; does not verify functional behavior or firmware support."
+  },
+  {
+    "name": "EQ",
+    "success": true,
+    "compile_only": false,
+    "errors": [],
+    "parameter_count": 0,
+    "note": "Default-only local emission probe; does not verify functional behavior or firmware support."
+  },
+  {
+    "name": "NE",
+    "success": true,
+    "compile_only": false,
+    "errors": [],
+    "parameter_count": 0,
+    "note": "Default-only local emission probe; does not verify functional behavior or firmware support."
+  },
+  {
+    "name": "IntConstBuild",
+    "success": true,
+    "compile_only": false,
+    "errors": [],
+    "parameter_count": 0,
+    "note": "Default-only local emission probe; does not verify functional behavior or firmware support."
+  },
+  {
+    "name": "RealConstBuild",
+    "success": true,
+    "compile_only": false,
+    "errors": [],
+    "parameter_count": 0,
+    "note": "Default-only local emission probe; does not verify functional behavior or firmware support."
+  },
+  {
+    "name": "BoolConstBuild",
+    "success": true,
+    "compile_only": false,
+    "errors": [],
+    "parameter_count": 0,
+    "note": "Default-only local emission probe; does not verify functional behavior or firmware support."
+  },
+  {
+    "name": "Switch1",
+    "success": true,
+    "compile_only": false,
+    "errors": [],
+    "parameter_count": 0,
+    "note": "Default-only local emission probe; does not verify functional behavior or firmware support."
+  },
+  {
+    "name": "Switch2",
+    "success": true,
+    "compile_only": false,
+    "errors": [],
+    "parameter_count": 0,
+    "note": "Default-only local emission probe; does not verify functional behavior or firmware support."
+  },
+  {
+    "name": "Switch3",
+    "success": true,
+    "compile_only": false,
+    "errors": [],
+    "parameter_count": 0,
+    "note": "Default-only local emission probe; does not verify functional behavior or firmware support."
+  },
+  {
+    "name": "Switch4",
+    "success": true,
+    "compile_only": false,
+    "errors": [],
+    "parameter_count": 0,
+    "note": "Default-only local emission probe; does not verify functional behavior or firmware support."
+  },
+  {
+    "name": "Switch5",
+    "success": true,
+    "compile_only": false,
+    "errors": [],
+    "parameter_count": 0,
+    "note": "Default-only local emission probe; does not verify functional behavior or firmware support."
+  },
+  {
+    "name": "SwitchCase",
+    "success": true,
+    "compile_only": false,
+    "errors": [],
+    "parameter_count": 0,
+    "note": "Default-only local emission probe; does not verify functional behavior or firmware support."
+  },
+  {
+    "name": "SwitchBreak",
+    "success": true,
+    "compile_only": false,
+    "errors": [],
+    "parameter_count": 0,
+    "note": "Default-only local emission probe; does not verify functional behavior or firmware support."
+  },
+  {
+    "name": "SwitchEnd",
+    "success": true,
+    "compile_only": false,
+    "errors": [],
+    "parameter_count": 0,
+    "note": "Default-only local emission probe; does not verify functional behavior or firmware support."
+  },
+  {
+    "name": "If1",
+    "success": true,
+    "compile_only": false,
+    "errors": [],
+    "parameter_count": 0,
+    "note": "Default-only local emission probe; does not verify functional behavior or firmware support."
+  },
+  {
+    "name": "If2",
+    "success": true,
+    "compile_only": false,
+    "errors": [],
+    "parameter_count": 0,
+    "note": "Default-only local emission probe; does not verify functional behavior or firmware support."
+  },
+  {
+    "name": "If3",
+    "success": true,
+    "compile_only": false,
+    "errors": [],
+    "parameter_count": 0,
+    "note": "Default-only local emission probe; does not verify functional behavior or firmware support."
+  },
+  {
+    "name": "IfElse",
+    "success": true,
+    "compile_only": false,
+    "errors": [],
+    "parameter_count": 0,
+    "note": "Default-only local emission probe; does not verify functional behavior or firmware support."
+  },
+  {
+    "name": "IfEnd",
+    "success": true,
+    "compile_only": false,
+    "errors": [],
+    "parameter_count": 0,
+    "note": "Default-only local emission probe; does not verify functional behavior or firmware support."
+  },
+  {
+    "name": "For",
+    "success": true,
+    "compile_only": false,
+    "errors": [],
+    "parameter_count": 0,
+    "note": "Default-only local emission probe; does not verify functional behavior or firmware support."
+  },
+  {
+    "name": "ForEnd",
+    "success": true,
+    "compile_only": false,
+    "errors": [],
+    "parameter_count": 0,
+    "note": "Default-only local emission probe; does not verify functional behavior or firmware support."
+  },
+  {
+    "name": "While",
+    "success": true,
+    "compile_only": false,
+    "errors": [],
+    "parameter_count": 0,
+    "note": "Default-only local emission probe; does not verify functional behavior or firmware support."
+  },
+  {
+    "name": "WhileEnd",
+    "success": true,
+    "compile_only": false,
+    "errors": [],
+    "parameter_count": 0,
+    "note": "Default-only local emission probe; does not verify functional behavior or firmware support."
+  },
+  {
+    "name": "LoopBreak",
+    "success": true,
+    "compile_only": false,
+    "errors": [],
+    "parameter_count": 0,
+    "note": "Default-only local emission probe; does not verify functional behavior or firmware support."
+  },
+  {
+    "name": "LoopContinue",
+    "success": true,
+    "compile_only": false,
+    "errors": [],
+    "parameter_count": 0,
+    "note": "Default-only local emission probe; does not verify functional behavior or firmware support."
+  },
+  {
+    "name": "Return",
+    "success": true,
+    "compile_only": false,
+    "errors": [],
+    "parameter_count": 0,
+    "note": "Default-only local emission probe; does not verify functional behavior or firmware support."
+  },
+  {
+    "name": "Counter",
+    "success": true,
+    "compile_only": false,
+    "errors": [],
+    "parameter_count": 0,
+    "note": "Default-only local emission probe; does not verify functional behavior or firmware support."
+  },
+  {
+    "name": "CTU",
+    "success": true,
+    "compile_only": false,
+    "errors": [],
+    "parameter_count": 0,
+    "note": "Default-only local emission probe; does not verify functional behavior or firmware support."
+  },
+  {
+    "name": "CTD",
+    "success": true,
+    "compile_only": false,
+    "errors": [],
+    "parameter_count": 0,
+    "note": "Default-only local emission probe; does not verify functional behavior or firmware support."
+  },
+  {
+    "name": "CTUD",
+    "success": true,
+    "compile_only": false,
+    "errors": [],
+    "parameter_count": 0,
+    "note": "Default-only local emission probe; does not verify functional behavior or firmware support."
+  },
+  {
+    "name": "CounterReset",
+    "success": true,
+    "compile_only": false,
+    "errors": [],
+    "parameter_count": 0,
+    "note": "Default-only local emission probe; does not verify functional behavior or firmware support."
+  },
+  {
+    "name": "KeyScan",
+    "success": false,
+    "compile_only": false,
+    "errors": [
+      "第 1 行: 功能块 'KeyScan' 尚未完善契约定义 (已保存 LM 功能候选证据；LH 固件版本对应的指令、引用和字段布局尚未核实)，禁止生成控制代码",
+      "第 1 行: 未声明的功能块实例: b"
+    ],
+    "parameter_count": 0,
+    "note": "Default-only local emission probe; does not verify functional behavior or firmware support."
+  },
+  {
+    "name": "SCIDispTrans",
+    "success": false,
+    "compile_only": false,
+    "errors": [
+      "第 1 行: 功能块 'SCIDispTrans' 尚未完善契约定义 (已保存 LM 功能候选证据；LH 固件版本对应的指令、引用和字段布局尚未核实)，禁止生成控制代码",
+      "第 1 行: 未声明的功能块实例: b"
+    ],
+    "parameter_count": 0,
+    "note": "Default-only local emission probe; does not verify functional behavior or firmware support."
+  },
+  {
+    "name": "SCIDispInit",
+    "success": false,
+    "compile_only": false,
+    "errors": [
+      "第 1 行: 功能块 'SCIDispInit' 尚未完善契约定义 (已保存 LM 功能候选证据；LH 固件版本对应的指令、引用和字段布局尚未核实)，禁止生成控制代码",
+      "第 1 行: 未声明的功能块实例: b"
+    ],
+    "parameter_count": 0,
+    "note": "Default-only local emission probe; does not verify functional behavior or firmware support."
+  },
+  {
+    "name": "M600TextDisp",
+    "success": false,
+    "compile_only": false,
+    "errors": [
+      "第 1 行: 功能块 'M600TextDisp' 尚未完善契约定义 (已保存 LM 功能候选证据；LH 固件版本对应的指令、引用和字段布局尚未核实)，禁止生成控制代码",
+      "第 1 行: 未声明的功能块实例: b"
+    ],
+    "parameter_count": 0,
+    "note": "Default-only local emission probe; does not verify functional behavior or firmware support."
+  },
+  {
+    "name": "M600ProgressBar",
+    "success": false,
+    "compile_only": false,
+    "errors": [
+      "第 1 行: 功能块 'M600ProgressBar' 尚未完善契约定义 (已保存 LM 功能候选证据；LH 固件版本对应的指令、引用和字段布局尚未核实)，禁止生成控制代码",
+      "第 1 行: 未声明的功能块实例: b"
+    ],
+    "parameter_count": 0,
+    "note": "Default-only local emission probe; does not verify functional behavior or firmware support."
+  },
+  {
+    "name": "EXCACycDisp",
+    "success": false,
+    "compile_only": false,
+    "errors": [
+      "第 1 行: 功能块 'EXCACycDisp' 尚未完善契约定义 (已保存 LM 功能候选证据；LH 固件版本对应的指令、引用和字段布局尚未核实)，禁止生成控制代码",
+      "第 1 行: 未声明的功能块实例: b"
+    ],
+    "parameter_count": 0,
+    "note": "Default-only local emission probe; does not verify functional behavior or firmware support."
+  },
+  {
+    "name": "FilterBW",
+    "success": false,
+    "compile_only": false,
+    "errors": [
+      "第 1 行: 功能块 'FilterBW' 尚未完善契约定义 (已保存 LM 功能候选证据；LH 固件版本对应的指令、引用和字段布局尚未核实)，禁止生成控制代码",
+      "第 1 行: 未声明的功能块实例: b"
+    ],
+    "parameter_count": 0,
+    "note": "Default-only local emission probe; does not verify functional behavior or firmware support."
+  },
+  {
+    "name": "DrvAI",
+    "success": true,
+    "compile_only": false,
+    "errors": [],
+    "parameter_count": 3,
+    "note": "Default-only local emission probe; does not verify functional behavior or firmware support."
+  },
+  {
+    "name": "DrvAO",
+    "success": true,
+    "compile_only": false,
+    "errors": [],
+    "parameter_count": 2,
+    "note": "Default-only local emission probe; does not verify functional behavior or firmware support."
+  },
+  {
+    "name": "DrvDI",
+    "success": true,
+    "compile_only": false,
+    "errors": [],
+    "parameter_count": 3,
+    "note": "Default-only local emission probe; does not verify functional behavior or firmware support."
+  },
+  {
+    "name": "DrvDO",
+    "success": true,
+    "compile_only": false,
+    "errors": [],
+    "parameter_count": 4,
+    "note": "Default-only local emission probe; does not verify functional behavior or firmware support."
+  },
+  {
+    "name": "PortSet",
+    "success": true,
+    "compile_only": false,
+    "errors": [],
+    "parameter_count": 2,
+    "note": "Default-only local emission probe; does not verify functional behavior or firmware support."
+  },
+  {
+    "name": "PortReset",
+    "success": true,
+    "compile_only": false,
+    "errors": [],
+    "parameter_count": 2,
+    "note": "Default-only local emission probe; does not verify functional behavior or firmware support."
+  },
+  {
+    "name": "PortToggle",
+    "success": true,
+    "compile_only": false,
+    "errors": [],
+    "parameter_count": 2,
+    "note": "Default-only local emission probe; does not verify functional behavior or firmware support."
+  },
+  {
+    "name": "DrvT2PeriodIn",
+    "success": false,
+    "compile_only": false,
+    "errors": [
+      "第 1 行: 功能块 'DrvT2PeriodIn' 参数 'Mask' 的值 65535 超出 INT 有效范围 [-32768, 32767]"
+    ],
+    "parameter_count": 4,
+    "note": "Default-only local emission probe; does not verify functional behavior or firmware support."
+  },
+  {
+    "name": "DrvTimeIn",
+    "success": false,
+    "compile_only": false,
+    "errors": [
+      "第 1 行: 功能块 'DrvTimeIn' 参数 'Mask' 的值 65535 超出 INT 有效范围 [-32768, 32767]"
+    ],
+    "parameter_count": 4,
+    "note": "Default-only local emission probe; does not verify functional behavior or firmware support."
+  },
+  {
+    "name": "And",
+    "success": true,
+    "compile_only": false,
+    "errors": [],
+    "parameter_count": 0,
+    "note": "Default-only local emission probe; does not verify functional behavior or firmware support."
+  },
+  {
+    "name": "Or",
+    "success": true,
+    "compile_only": false,
+    "errors": [],
+    "parameter_count": 0,
+    "note": "Default-only local emission probe; does not verify functional behavior or firmware support."
+  },
+  {
+    "name": "Not",
+    "success": true,
+    "compile_only": false,
+    "errors": [],
+    "parameter_count": 0,
+    "note": "Default-only local emission probe; does not verify functional behavior or firmware support."
+  },
+  {
+    "name": "Xor",
+    "success": true,
+    "compile_only": false,
+    "errors": [],
+    "parameter_count": 0,
+    "note": "Default-only local emission probe; does not verify functional behavior or firmware support."
+  },
+  {
+    "name": "Shl",
+    "success": true,
+    "compile_only": false,
+    "errors": [],
+    "parameter_count": 0,
+    "note": "Default-only local emission probe; does not verify functional behavior or firmware support."
+  },
+  {
+    "name": "Shr",
+    "success": true,
+    "compile_only": false,
+    "errors": [],
+    "parameter_count": 0,
+    "note": "Default-only local emission probe; does not verify functional behavior or firmware support."
+  },
+  {
+    "name": "Rol",
+    "success": true,
+    "compile_only": false,
+    "errors": [],
+    "parameter_count": 0,
+    "note": "Default-only local emission probe; does not verify functional behavior or firmware support."
+  },
+  {
+    "name": "Ror",
+    "success": true,
+    "compile_only": false,
+    "errors": [],
+    "parameter_count": 0,
+    "note": "Default-only local emission probe; does not verify functional behavior or firmware support."
+  },
+  {
+    "name": "Add",
+    "success": true,
+    "compile_only": false,
+    "errors": [],
+    "parameter_count": 0,
+    "note": "Default-only local emission probe; does not verify functional behavior or firmware support."
+  },
+  {
+    "name": "Sub",
+    "success": true,
+    "compile_only": false,
+    "errors": [],
+    "parameter_count": 0,
+    "note": "Default-only local emission probe; does not verify functional behavior or firmware support."
+  },
+  {
+    "name": "Mul",
+    "success": true,
+    "compile_only": false,
+    "errors": [],
+    "parameter_count": 0,
+    "note": "Default-only local emission probe; does not verify functional behavior or firmware support."
+  },
+  {
+    "name": "Div",
+    "success": true,
+    "compile_only": false,
+    "errors": [],
+    "parameter_count": 0,
+    "note": "Default-only local emission probe; does not verify functional behavior or firmware support."
+  },
+  {
+    "name": "Mod",
+    "success": true,
+    "compile_only": false,
+    "errors": [],
+    "parameter_count": 0,
+    "note": "Default-only local emission probe; does not verify functional behavior or firmware support."
+  },
+  {
+    "name": "Abs",
+    "success": true,
+    "compile_only": false,
+    "errors": [],
+    "parameter_count": 0,
+    "note": "Default-only local emission probe; does not verify functional behavior or firmware support."
+  },
+  {
+    "name": "Sqrt",
+    "success": true,
+    "compile_only": false,
+    "errors": [],
+    "parameter_count": 0,
+    "note": "Default-only local emission probe; does not verify functional behavior or firmware support."
+  },
+  {
+    "name": "Exp",
+    "success": true,
+    "compile_only": false,
+    "errors": [],
+    "parameter_count": 0,
+    "note": "Default-only local emission probe; does not verify functional behavior or firmware support."
+  },
+  {
+    "name": "Ln",
+    "success": true,
+    "compile_only": false,
+    "errors": [],
+    "parameter_count": 0,
+    "note": "Default-only local emission probe; does not verify functional behavior or firmware support."
+  },
+  {
+    "name": "Log",
+    "success": true,
+    "compile_only": false,
+    "errors": [],
+    "parameter_count": 0,
+    "note": "Default-only local emission probe; does not verify functional behavior or firmware support."
+  },
+  {
+    "name": "Sin",
+    "success": true,
+    "compile_only": false,
+    "errors": [],
+    "parameter_count": 0,
+    "note": "Default-only local emission probe; does not verify functional behavior or firmware support."
+  },
+  {
+    "name": "Cos",
+    "success": true,
+    "compile_only": false,
+    "errors": [],
+    "parameter_count": 0,
+    "note": "Default-only local emission probe; does not verify functional behavior or firmware support."
+  },
+  {
+    "name": "Tan",
+    "success": true,
+    "compile_only": false,
+    "errors": [],
+    "parameter_count": 0,
+    "note": "Default-only local emission probe; does not verify functional behavior or firmware support."
+  },
+  {
+    "name": "Limit",
+    "success": true,
+    "compile_only": false,
+    "errors": [],
+    "parameter_count": 0,
+    "note": "Default-only local emission probe; does not verify functional behavior or firmware support."
+  },
+  {
+    "name": "Min",
+    "success": true,
+    "compile_only": false,
+    "errors": [],
+    "parameter_count": 0,
+    "note": "Default-only local emission probe; does not verify functional behavior or firmware support."
+  },
+  {
+    "name": "Max",
+    "success": true,
+    "compile_only": false,
+    "errors": [],
+    "parameter_count": 0,
+    "note": "Default-only local emission probe; does not verify functional behavior or firmware support."
+  },
+  {
+    "name": "PID",
+    "success": true,
+    "compile_only": false,
+    "errors": [],
+    "parameter_count": 10,
+    "note": "Default-only local emission probe; does not verify functional behavior or firmware support."
+  },
+  {
+    "name": "PIDAutoTune",
+    "success": true,
+    "compile_only": false,
+    "errors": [],
+    "parameter_count": 6,
+    "note": "Default-only local emission probe; does not verify functional behavior or firmware support."
+  },
+  {
+    "name": "System",
+    "success": true,
+    "compile_only": false,
+    "errors": [],
+    "parameter_count": 5,
+    "note": "Default-only local emission probe; does not verify functional behavior or firmware support."
+  },
+  {
+    "name": "SystemEnd",
+    "success": true,
+    "compile_only": false,
+    "errors": [],
+    "parameter_count": 1,
+    "note": "Default-only local emission probe; does not verify functional behavior or firmware support."
+  },
+  {
+    "name": "Exception",
+    "success": true,
+    "compile_only": false,
+    "errors": [],
+    "parameter_count": 3,
+    "note": "Default-only local emission probe; does not verify functional behavior or firmware support."
+  },
+  {
+    "name": "Nop",
+    "success": true,
+    "compile_only": false,
+    "errors": [],
+    "parameter_count": 0,
+    "note": "Default-only local emission probe; does not verify functional behavior or firmware support."
+  },
+  {
+    "name": "Task",
+    "success": false,
+    "compile_only": false,
+    "errors": [
+      "第 1 行: 功能块 'Task' 尚未完善契约定义 (已保存 LM 功能候选证据；LH 固件版本对应的指令、引用和字段布局尚未核实)，禁止生成控制代码",
+      "第 1 行: 未声明的功能块实例: b"
+    ],
+    "parameter_count": 0,
+    "note": "Default-only local emission probe; does not verify functional behavior or firmware support."
+  },
+  {
+    "name": "TaskPeriodic",
+    "success": false,
+    "compile_only": false,
+    "errors": [
+      "第 1 行: 功能块 'TaskPeriodic' 尚未完善契约定义 (已保存 LM 功能候选证据；LH 固件版本对应的指令、引用和字段布局尚未核实)，禁止生成控制代码",
+      "第 1 行: 未声明的功能块实例: b"
+    ],
+    "parameter_count": 0,
+    "note": "Default-only local emission probe; does not verify functional behavior or firmware support."
+  },
+  {
+    "name": "TaskWake",
+    "success": false,
+    "compile_only": false,
+    "errors": [
+      "第 1 行: 功能块 'TaskWake' 尚未完善契约定义 (已保存 LM 功能候选证据；LH 固件版本对应的指令、引用和字段布局尚未核实)，禁止生成控制代码",
+      "第 1 行: 未声明的功能块实例: b"
+    ],
+    "parameter_count": 0,
+    "note": "Default-only local emission probe; does not verify functional behavior or firmware support."
+  },
+  {
+    "name": "TaskDataWake",
+    "success": false,
+    "compile_only": false,
+    "errors": [
+      "第 1 行: 功能块 'TaskDataWake' 尚未完善契约定义 (已保存 LM 功能候选证据；LH 固件版本对应的指令、引用和字段布局尚未核实)，禁止生成控制代码",
+      "第 1 行: 未声明的功能块实例: b"
+    ],
+    "parameter_count": 0,
+    "note": "Default-only local emission probe; does not verify functional behavior or firmware support."
+  },
+  {
+    "name": "TaskLock",
+    "success": false,
+    "compile_only": false,
+    "errors": [
+      "第 1 行: 功能块 'TaskLock' 尚未完善契约定义 (已保存 LM 功能候选证据；LH 固件版本对应的指令、引用和字段布局尚未核实)，禁止生成控制代码",
+      "第 1 行: 未声明的功能块实例: b"
+    ],
+    "parameter_count": 0,
+    "note": "Default-only local emission probe; does not verify functional behavior or firmware support."
+  },
+  {
+    "name": "TaskUnlock",
+    "success": false,
+    "compile_only": false,
+    "errors": [
+      "第 1 行: 功能块 'TaskUnlock' 尚未完善契约定义 (已保存 LM 功能候选证据；LH 固件版本对应的指令、引用和字段布局尚未核实)，禁止生成控制代码",
+      "第 1 行: 未声明的功能块实例: b"
+    ],
+    "parameter_count": 0,
+    "note": "Default-only local emission probe; does not verify functional behavior or firmware support."
+  },
+  {
+    "name": "TaskSemDef",
+    "success": false,
+    "compile_only": false,
+    "errors": [
+      "第 1 行: 功能块 'TaskSemDef' 尚未完善契约定义 (已保存 LM 功能候选证据；LH 固件版本对应的指令、引用和字段布局尚未核实)，禁止生成控制代码",
+      "第 1 行: 未声明的功能块实例: b"
+    ],
+    "parameter_count": 0,
+    "note": "Default-only local emission probe; does not verify functional behavior or firmware support."
+  },
+  {
+    "name": "TaskSemWait",
+    "success": false,
+    "compile_only": false,
+    "errors": [
+      "第 1 行: 功能块 'TaskSemWait' 尚未完善契约定义 (已保存 LM 功能候选证据；LH 固件版本对应的指令、引用和字段布局尚未核实)，禁止生成控制代码",
+      "第 1 行: 未声明的功能块实例: b"
+    ],
+    "parameter_count": 0,
+    "note": "Default-only local emission probe; does not verify functional behavior or firmware support."
+  },
+  {
+    "name": "TaskSemPost",
+    "success": false,
+    "compile_only": false,
+    "errors": [
+      "第 1 行: 功能块 'TaskSemPost' 尚未完善契约定义 (已保存 LM 功能候选证据；LH 固件版本对应的指令、引用和字段布局尚未核实)，禁止生成控制代码",
+      "第 1 行: 未声明的功能块实例: b"
+    ],
+    "parameter_count": 0,
+    "note": "Default-only local emission probe; does not verify functional behavior or firmware support."
+  },
+  {
+    "name": "TaskEnd",
+    "success": false,
+    "compile_only": false,
+    "errors": [
+      "第 1 行: 功能块 'TaskEnd' 尚未完善契约定义 (已保存 LM 功能候选证据；LH 固件版本对应的指令、引用和字段布局尚未核实)，禁止生成控制代码",
+      "第 1 行: 未声明的功能块实例: b"
+    ],
+    "parameter_count": 0,
+    "note": "Default-only local emission probe; does not verify functional behavior or firmware support."
+  },
+  {
+    "name": "Timer",
+    "success": true,
+    "compile_only": false,
+    "errors": [],
+    "parameter_count": 0,
+    "note": "Default-only local emission probe; does not verify functional behavior or firmware support."
+  },
+  {
+    "name": "TON",
+    "success": true,
+    "compile_only": false,
+    "errors": [],
+    "parameter_count": 0,
+    "note": "Default-only local emission probe; does not verify functional behavior or firmware support."
+  },
+  {
+    "name": "TOF",
+    "success": true,
+    "compile_only": false,
+    "errors": [],
+    "parameter_count": 0,
+    "note": "Default-only local emission probe; does not verify functional behavior or firmware support."
+  },
+  {
+    "name": "TP",
+    "success": true,
+    "compile_only": false,
+    "errors": [],
+    "parameter_count": 0,
+    "note": "Default-only local emission probe; does not verify functional behavior or firmware support."
+  },
+  {
+    "name": "TimerStop",
+    "success": true,
+    "compile_only": false,
+    "errors": [],
+    "parameter_count": 0,
+    "note": "Default-only local emission probe; does not verify functional behavior or firmware support."
+  },
+  {
+    "name": "TSO",
+    "success": false,
+    "compile_only": false,
+    "errors": [
+      "第 1 行: 功能块 'TSO' 尚未完善契约定义 (已保存 LM 功能候选证据；LH 固件版本对应的指令、引用和字段布局尚未核实)，禁止生成控制代码",
+      "第 1 行: 未声明的功能块实例: b"
+    ],
+    "parameter_count": 0,
+    "note": "Default-only local emission probe; does not verify functional behavior or firmware support."
+  },
+  {
+    "name": "TSOAutoTune",
+    "success": false,
+    "compile_only": false,
+    "errors": [
+      "第 1 行: 功能块 'TSOAutoTune' 尚未完善契约定义 (已保存 LM 功能候选证据；LH 固件版本对应的指令、引用和字段布局尚未核实)，禁止生成控制代码",
+      "第 1 行: 未声明的功能块实例: b"
+    ],
+    "parameter_count": 0,
+    "note": "Default-only local emission probe; does not verify functional behavior or firmware support."
+  },
+  {
+    "name": "TwoPosition",
+    "success": false,
+    "compile_only": false,
+    "errors": [
+      "第 1 行: 功能块 'TwoPosition' 尚未完善契约定义 (已保存 LM 功能候选证据；LH 固件版本对应的指令、引用和字段布局尚未核实)，禁止生成控制代码",
+      "第 1 行: 未声明的功能块实例: b"
+    ],
+    "parameter_count": 0,
+    "note": "Default-only local emission probe; does not verify functional behavior or firmware support."
+  },
+  {
+    "name": "RelayCtrl2",
+    "success": false,
+    "compile_only": false,
+    "errors": [
+      "第 1 行: 功能块 'RelayCtrl2' 尚未完善契约定义 (已保存 LM 功能候选证据；LH 固件版本对应的指令、引用和字段布局尚未核实)，禁止生成控制代码",
+      "第 1 行: 未声明的功能块实例: b"
+    ],
+    "parameter_count": 0,
+    "note": "Default-only local emission probe; does not verify functional behavior or firmware support."
+  },
+  {
+    "name": "EXCAKeyParamt",
+    "success": true,
+    "compile_only": false,
+    "errors": [],
+    "parameter_count": 0,
+    "note": "Default-only local emission probe; does not verify functional behavior or firmware support."
+  },
+  {
+    "name": "EXCAModifyParamt",
+    "success": true,
+    "compile_only": false,
+    "errors": [],
+    "parameter_count": 0,
+    "note": "Default-only local emission probe; does not verify functional behavior or firmware support."
+  },
+  {
+    "name": "EXCAOperComp",
+    "success": true,
+    "compile_only": false,
+    "errors": [],
+    "parameter_count": 0,
+    "note": "Default-only local emission probe; does not verify functional behavior or firmware support."
+  },
+  {
+    "name": "EXCASpdUnify",
+    "success": true,
+    "compile_only": false,
+    "errors": [],
+    "parameter_count": 0,
+    "note": "Default-only local emission probe; does not verify functional behavior or firmware support."
+  },
+  {
+    "name": "IntBuild",
+    "success": true,
+    "compile_only": false,
+    "errors": [],
+    "parameter_count": 0,
+    "note": "Default-only local emission probe; does not verify functional behavior or firmware support."
+  },
+  {
+    "name": "IntDirectBuild",
+    "success": true,
+    "compile_only": false,
+    "errors": [],
+    "parameter_count": 0,
+    "note": "Default-only local emission probe; does not verify functional behavior or firmware support."
+  },
+  {
+    "name": "FloatBuild",
+    "success": true,
+    "compile_only": false,
+    "errors": [],
+    "parameter_count": 0,
+    "note": "Default-only local emission probe; does not verify functional behavior or firmware support."
+  },
+  {
+    "name": "FloatConstBuild",
+    "success": true,
+    "compile_only": false,
+    "errors": [],
+    "parameter_count": 0,
+    "note": "Default-only local emission probe; does not verify functional behavior or firmware support."
+  },
+  {
+    "name": "IntComp",
+    "success": true,
+    "compile_only": false,
+    "errors": [],
+    "parameter_count": 0,
+    "note": "Default-only local emission probe; does not verify functional behavior or firmware support."
+  },
+  {
+    "name": "FloatComp",
+    "success": true,
+    "compile_only": false,
+    "errors": [],
+    "parameter_count": 0,
+    "note": "Default-only local emission probe; does not verify functional behavior or firmware support."
+  },
+  {
+    "name": "IntMax",
+    "success": true,
+    "compile_only": false,
+    "errors": [],
+    "parameter_count": 0,
+    "note": "Default-only local emission probe; does not verify functional behavior or firmware support."
+  },
+  {
+    "name": "IntMin",
+    "success": true,
+    "compile_only": false,
+    "errors": [],
+    "parameter_count": 0,
+    "note": "Default-only local emission probe; does not verify functional behavior or firmware support."
+  },
+  {
+    "name": "FloatMax",
+    "success": true,
+    "compile_only": false,
+    "errors": [],
+    "parameter_count": 0,
+    "note": "Default-only local emission probe; does not verify functional behavior or firmware support."
+  },
+  {
+    "name": "FloatMin",
+    "success": true,
+    "compile_only": false,
+    "errors": [],
+    "parameter_count": 0,
+    "note": "Default-only local emission probe; does not verify functional behavior or firmware support."
+  },
+  {
+    "name": "IntLimt",
+    "success": true,
+    "compile_only": false,
+    "errors": [],
+    "parameter_count": 0,
+    "note": "Default-only local emission probe; does not verify functional behavior or firmware support."
+  },
+  {
+    "name": "FloatLimt",
+    "success": true,
+    "compile_only": false,
+    "errors": [],
+    "parameter_count": 0,
+    "note": "Default-only local emission probe; does not verify functional behavior or firmware support."
+  },
+  {
+    "name": "FloatVariLimt",
+    "success": true,
+    "compile_only": false,
+    "errors": [],
+    "parameter_count": 0,
+    "note": "Default-only local emission probe; does not verify functional behavior or firmware support."
+  },
+  {
+    "name": "IntBuffOper",
+    "success": true,
+    "compile_only": false,
+    "errors": [],
+    "parameter_count": 0,
+    "note": "Default-only local emission probe; does not verify functional behavior or firmware support."
+  },
+  {
+    "name": "FloatBuffOper",
+    "success": true,
+    "compile_only": false,
+    "errors": [],
+    "parameter_count": 0,
+    "note": "Default-only local emission probe; does not verify functional behavior or firmware support."
+  },
+  {
+    "name": "IntBuffLogicOper",
+    "success": true,
+    "compile_only": false,
+    "errors": [],
+    "parameter_count": 0,
+    "note": "Default-only local emission probe; does not verify functional behavior or firmware support."
+  },
+  {
+    "name": "IntModOper",
+    "success": true,
+    "compile_only": false,
+    "errors": [],
+    "parameter_count": 0,
+    "note": "Default-only local emission probe; does not verify functional behavior or firmware support."
+  },
+  {
+    "name": "FloatRoughFilter",
+    "success": true,
+    "compile_only": false,
+    "errors": [],
+    "parameter_count": 0,
+    "note": "Default-only local emission probe; does not verify functional behavior or firmware support."
+  },
+  {
+    "name": "DataRedundancy",
+    "success": true,
+    "compile_only": false,
+    "errors": [],
+    "parameter_count": 0,
+    "note": "Default-only local emission probe; does not verify functional behavior or firmware support."
+  },
+  {
+    "name": "DealInUnify",
+    "success": true,
+    "compile_only": false,
+    "errors": [],
+    "parameter_count": 0,
+    "note": "Default-only local emission probe; does not verify functional behavior or firmware support."
+  },
+  {
+    "name": "DealOutUnify",
+    "success": true,
+    "compile_only": false,
+    "errors": [],
+    "parameter_count": 0,
+    "note": "Default-only local emission probe; does not verify functional behavior or firmware support."
+  },
+  {
+    "name": "DealToData",
+    "success": true,
+    "compile_only": false,
+    "errors": [],
+    "parameter_count": 0,
+    "note": "Default-only local emission probe; does not verify functional behavior or firmware support."
+  },
+  {
+    "name": "DealToSwit",
+    "success": true,
+    "compile_only": false,
+    "errors": [],
+    "parameter_count": 0,
+    "note": "Default-only local emission probe; does not verify functional behavior or firmware support."
+  },
+  {
+    "name": "FloatBelowWatch",
+    "success": true,
+    "compile_only": false,
+    "errors": [],
+    "parameter_count": 0,
+    "note": "Default-only local emission probe; does not verify functional behavior or firmware support."
+  },
+  {
+    "name": "FloatOverWatch",
+    "success": true,
+    "compile_only": false,
+    "errors": [],
+    "parameter_count": 0,
+    "note": "Default-only local emission probe; does not verify functional behavior or firmware support."
+  },
+  {
+    "name": "EXCASFC",
+    "success": true,
+    "compile_only": false,
+    "errors": [],
+    "parameter_count": 0,
+    "note": "Default-only local emission probe; does not verify functional behavior or firmware support."
+  },
+  {
+    "name": "ParamtEngBuild",
+    "success": true,
+    "compile_only": false,
+    "errors": [],
+    "parameter_count": 0,
+    "note": "Default-only local emission probe; does not verify functional behavior or firmware support."
+  }
+]

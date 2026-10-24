@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<testsuite errors="8" failures="0" tests="7" name="LmParitySoftwareTest">
+  <properties>
+    <property value="5.15.2" name="QTestVersion"/>
+    <property value="5.15.2" name="QtVersion"/>
+    <property value="Qt 5.15.2 (x86_64&#x002D;little_endian&#x002D;llp64 shared (dynamic) release build; by GCC 8.1.0)" name="QtBuild"/>
+  </properties>
+  <testcase result="pass" name="initTestCase"/>
+  <testcase result="pass" name="parameterValidationAndAtomicBatch"/>
+  <testcase result="pass" name="snapshotPreviewAndRollback">
+    <!-- message="[DEBUG] 09:10:25.969 ProjectController 已创建" type="qdebug" -->
+    <!-- message="[DEBUG] 09:10:25.978 ProjectController 已销毁" type="qdebug" -->
+  </testcase>
+  <testcase result="pass" name="newProjectTemplateCompiles">
+    <!-- message="[DEBUG] 09:10:25.981 ProjectController 已创建" type="qdebug" -->
+    <!-- message="[DEBUG] 09:10:26.800 ProjectController 已销毁" type="qdebug" -->
+  </testcase>
+  <testcase result="pass" name="continuousStepWaitsForCompletion">
+    <!-- message="[MonitorManager] device backend set: ControllerDeviceBackend(0x6b3eea0)" type="qdebug" -->
+    <!-- message="[MonitorManager] backend connectionStateChanged: false" type="qdebug" -->
+  </testcase>
+  <testcase result="pass" name="continuousStepSerializesAndCancels">
+    <!-- message="[MonitorManager] device backend set: ControllerDeviceBackend(0x6b3ef50)" type="qdebug" -->
+    <!-- message="[MonitorManager] backend connectionStateChanged: false" type="qdebug" -->
+  </testcase>
+  <testcase result="pass" name="cleanupTestCase"/>
+  <system-err>
+<![CDATA[[DEBUG] 09:10:25.969 ProjectController 已创建]]>
+<![CDATA[[DEBUG] 09:10:25.978 ProjectController 已销毁]]>
+<![CDATA[[DEBUG] 09:10:25.981 ProjectController 已创建]]>
+<![CDATA[[DEBUG] 09:10:26.800 ProjectController 已销毁]]>
+<![CDATA[[MonitorManager] device backend set: ControllerDeviceBackend(0x6b3eea0)]]>
+<![CDATA[[MonitorManager] backend connectionStateChanged: false]]>
+<![CDATA[[MonitorManager] device backend set: ControllerDeviceBackend(0x6b3ef50)]]>
+<![CDATA[[MonitorManager] backend connectionStateChanged: false]]>
+  </system-err>
+</testsuite>

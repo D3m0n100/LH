@@ -276,7 +276,7 @@ QList<FunctionSnippet> SnippetRepository::mergeSnippets(
             FunctionSnippet merged = overlayMap.value(baseSnippet.id);
             // Project templates may change presentation, never promote a built-in compiler capability.
             for (const QString& key : {QStringLiteral("compilerName"), QStringLiteral("status"),
-                                       QStringLiteral("incompleteReason"), QStringLiteral("capability")}) {
+                                       QStringLiteral("incompleteReason"), QStringLiteral("capability"), QStringLiteral("capabilityState")}) {
                 if (baseSnippet.metadata.contains(key)) merged.metadata.insert(key, baseSnippet.metadata.value(key));
             }
             result.append(merged);
@@ -294,6 +294,18 @@ QList<FunctionSnippet> SnippetRepository::mergeSnippets(
         }
     }
     
+    // Alias IDs cannot promote the capability of an existing compiler block.
+    for (auto& snippet : result) {
+        const auto compilerName = snippet.metadata.value(QStringLiteral("compilerName")).toString();
+        if (compilerName.isEmpty()) continue;
+        for (const auto& builtin : base) {
+            if (compilerName.compare(builtin.metadata.value(QStringLiteral("compilerName")).toString(), Qt::CaseInsensitive) != 0) continue;
+            for (const QString& key : {QStringLiteral("compilerName"), QStringLiteral("status"),
+                    QStringLiteral("incompleteReason"), QStringLiteral("capability"), QStringLiteral("capabilityState")})
+                if (builtin.metadata.contains(key)) snippet.metadata.insert(key, builtin.metadata.value(key));
+            break;
+        }
+    }
     return result;
 }
 

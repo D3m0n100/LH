@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="Win32-mingw32-make"
+	tests="4"
+	failures="0"
+	disabled="0"
+	skipped="0"
+	hostname="DESKTOP-HJIINHN"
+	time="81"
+	timestamp="2026-10-23T11:56:39"
+	>
+	<testcase name="MainWindowIntegrationTest" classname="MainWindowIntegrationTest" time="47.3558" status="run">
+		<properties/>
+		<system-out>2026-10-23T03:56:44.357Z [INFO] [category=business_event] [thread=0x5724] [BUSINESS_EVENT] event=parameter_readback_started opId=op-param-rb-1792727804357 phase=readback status=started code=0 target=param.kp attempt=1 maxRetries=2 retryIntervalMs=100
+2026-10-23T03:56:44.397Z [INFO] [category=business_event] [thread=0x5724] [BUSINESS_EVENT] event=parameter_readback_attempt opId=op-param-rb-1792727804357 phase=readback status=polling code=0 target=param.kp attempt=1 attempt=1 maxRetries=2
+2026-10-23T03:56:44.411Z [INFO] [category=business_event] [thread=0x5724] [BUSINESS_EVENT] event=parameter_readback_succeeded opId=op-param-rb-1792727804357 phase=readback status=succeeded code=0 target=param.kp attempt=1 attempts=1 message=
+2026-10-23T03:56:45.394Z [INFO] [category=business_event] [thread=0x5724] [BUSINESS_EVENT] event=session_state_changed opId= phase=session status=state_change code=0 target=RuntimeSessionController attempt=1 from=0 to=4
+2026-10-23T03:56:45.396Z [INFO] [category=business_event] [thread=0x57...
+[This part of the test output was removed since it exceeds the threshold of 1024 bytes.]
+</system-out>
+	</testcase>
+	<testcase name="ProjectSaveCloseTest" classname="ProjectSaveCloseTest" time="6.83359" status="run">
+		<properties/>
+		<system-out></system-out>
+	</testcase>
+	<testcase name="InstallLayoutTest" classname="InstallLayoutTest" time="6.49264" status="run">
+		<properties/>
+		<system-out>-- 安装布局及独立公共接口消费者测试通过: D:/Table/LH/build_current_mingw/install_layout_test_prefix
+</system-out>
+	</testcase>
+	<testcase name="Review20261023Test" classname="Review20261023Test" time="21.1855" status="run">
+		<properties/>
+		<system-out>Ϊ C:\Users\Ryan\AppData\Local\Temp\review_20261023_test-POryAf\external-junction &lt;&lt;===&gt;&gt; C:\Users\Ryan\AppData\Local\Temp\review_20261023_test-VknWER [NON-UTF-8-BYTE-0xB4][NON-UTF-8-BYTE-0xB4][NON-UTF-8-BYTE-0xBD][NON-UTF-8-BYTE-0xA8][NON-UTF-8-BYTE-0xB5][NON-UTF-8-BYTE-0xC4][NON-UTF-8-BYTE-0xC1][NON-UTF-8-BYTE-0xAA][NON-UTF-8-BYTE-0xBD][NON-UTF-8-BYTE-0xD3]
+</system-out>
+	</testcase>
+</testsuite>

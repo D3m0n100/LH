@@ -133,6 +133,7 @@ bool EthernetInterface::openTcpClient()
 bool EthernetInterface::openTcpServer()
 {
     m_tcpServer = new QTcpServer(this);
+    m_tcpServer->setMaxPendingConnections(MAX_ACTIVE_CLIENTS);
 
     connect(m_tcpServer, &QTcpServer::newConnection,
             this, &EthernetInterface::onNewConnection);
@@ -245,6 +246,24 @@ int EthernetInterface::send(const QByteArray& data)
     qint64 written = 0;
 
     if (m_config.protocol == Protocol::TCP) {
+        QList<QTcpSocket*> targets;
+        if (m_tcpSocket && m_tcpSocket->state() == QAbstractSocket::ConnectedState) targets.append(m_tcpSocket);
+        else for (auto* client : m_clientSockets)
+            if (client && client->state() == QAbstractSocket::ConnectedState) targets.append(client);
+        qint64 pending = 0;
+        for (auto* client : targets) {
+            pending += client->bytesToWrite();
+            if (data.size() > MAX_PENDING_SEND_PER_CLIENT - client->bytesToWrite()) {
+                ++m_backpressuredSends;
+                reportError(CommErrorCode::SendFailed, "TCP 发送积压已达上限，请稍后重试");
+                return -1;
+            }
+        }
+        if (static_cast<qint64>(data.size()) * targets.size() > MAX_PENDING_SEND_TOTAL - pending) {
+            ++m_backpressuredSends;
+            reportError(CommErrorCode::SendFailed, "TCP 总发送积压已达上限，请稍后重试");
+            return -1;
+        }
         if (m_tcpSocket && m_tcpSocket->state() == QAbstractSocket::ConnectedState) {
             written = m_tcpSocket->write(data);
         } else if (!m_clientSockets.isEmpty()) {
@@ -564,6 +583,13 @@ void EthernetInterface::onNewConnection()
 {
     while (m_tcpServer && m_tcpServer->hasPendingConnections()) {
         QTcpSocket* clientSocket = m_tcpServer->nextPendingConnection();
+        if (!clientSocket) continue;
+        if (m_clientSockets.size() >= MAX_ACTIVE_CLIENTS) {
+            ++m_rejectedTcpConnections;
+            clientSocket->abort();
+            clientSocket->deleteLater();
+            continue;
+        }
         clientSocket->setReadBufferSize(m_config.receiveBufferSize);
 
         connect(clientSocket, &QTcpSocket::readyRead,

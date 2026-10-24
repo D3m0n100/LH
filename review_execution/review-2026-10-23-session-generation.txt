@@ -1,0 +1,26 @@
+********* Start testing of RuntimeSessionControllerTest *********
+Config: Using QtTest library 5.15.2, Qt 5.15.2 (x86_64-little_endian-llp64 shared (dynamic) release build; by GCC 8.1.0), windows 10
+PASS   : RuntimeSessionControllerTest::initTestCase()
+QDEBUG : RuntimeSessionControllerTest::reviewLateConnectionCannotConnectChangedSession(project-switch) [DEBUG] 12:17:14.368 ProjectController 已创建
+QDEBUG : RuntimeSessionControllerTest::reviewLateConnectionCannotConnectChangedSession(project-switch) [DEBUG] 12:17:14.381 ProjectController 已创建
+QDEBUG : RuntimeSessionControllerTest::reviewLateConnectionCannotConnectChangedSession(project-switch) [MonitorManager] device backend set: ControllerDeviceBackend(0x6cef2c0)
+QDEBUG : RuntimeSessionControllerTest::reviewLateConnectionCannotConnectChangedSession(project-switch) [DEBUG] 12:17:14.450 ProjectController 已销毁
+QDEBUG : RuntimeSessionControllerTest::reviewLateConnectionCannotConnectChangedSession(project-switch) [DEBUG] 12:17:14.450 ProjectController 已销毁
+PASS   : RuntimeSessionControllerTest::reviewLateConnectionCannotConnectChangedSession(project-switch)
+QDEBUG : RuntimeSessionControllerTest::reviewLateConnectionCannotConnectChangedSession(user-stop) [DEBUG] 12:17:14.450 ProjectController 已创建
+QDEBUG : RuntimeSessionControllerTest::reviewLateConnectionCannotConnectChangedSession(user-stop) [DEBUG] 12:17:14.450 ProjectController 已创建
+QDEBUG : RuntimeSessionControllerTest::reviewLateConnectionCannotConnectChangedSession(user-stop) [MonitorManager] device backend set: ControllerDeviceBackend(0x6ceeee0)
+QDEBUG : RuntimeSessionControllerTest::reviewLateConnectionCannotConnectChangedSession(user-stop) [DEBUG] 12:17:14.583 ProjectController 已销毁
+QDEBUG : RuntimeSessionControllerTest::reviewLateConnectionCannotConnectChangedSession(user-stop) [DEBUG] 12:17:14.583 ProjectController 已销毁
+PASS   : RuntimeSessionControllerTest::reviewLateConnectionCannotConnectChangedSession(user-stop)
+QDEBUG : RuntimeSessionControllerTest::reviewLateConnectionCannotConnectChangedSession(configuration-change) [DEBUG] 12:17:14.584 ProjectController 已创建
+QDEBUG : RuntimeSessionControllerTest::reviewLateConnectionCannotConnectChangedSession(configuration-change) [DEBUG] 12:17:14.584 ProjectController 已创建
+QDEBUG : RuntimeSessionControllerTest::reviewLateConnectionCannotConnectChangedSession(configuration-change) [MonitorManager] device backend set: ControllerDeviceBackend(0x6ceeee0)
+QDEBUG : RuntimeSessionControllerTest::reviewLateConnectionCannotConnectChangedSession(configuration-change) [MonitorManager] backend connectionStateChanged: true
+QDEBUG : RuntimeSessionControllerTest::reviewLateConnectionCannotConnectChangedSession(configuration-change) [MonitorManager] backend connectionStateChanged: false
+QDEBUG : RuntimeSessionControllerTest::reviewLateConnectionCannotConnectChangedSession(configuration-change) [DEBUG] 12:17:14.716 ProjectController 已销毁
+QDEBUG : RuntimeSessionControllerTest::reviewLateConnectionCannotConnectChangedSession(configuration-change) [DEBUG] 12:17:14.716 ProjectController 已销毁
+PASS   : RuntimeSessionControllerTest::reviewLateConnectionCannotConnectChangedSession(configuration-change)
+PASS   : RuntimeSessionControllerTest::cleanupTestCase()
+Totals: 5 passed, 0 failed, 0 skipped, 0 blacklisted, 349ms
+********* Finished testing of RuntimeSessionControllerTest *********

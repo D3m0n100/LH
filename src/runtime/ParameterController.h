@@ -32,6 +32,8 @@ public:
     void clear();
 
     bool editParameter(const QString& name, const QString& value);
+    static bool validateValue(const ParameterDefinition& definition, const QString& value,
+                              QString* errorMessage = nullptr);
     bool editParameterByPointId(const QString& pointId, const QString& value);
     bool applyModifiedParameters(IDeviceBackend* backend);
     bool applyModifiedParametersWithReadback(IDeviceBackend* backend,
@@ -68,6 +70,7 @@ private:
         ParameterState current;
     };
     bool notifyStateChanges(const QList<StateChange>& changes);
+    bool validateModifiedParametersForTargets(const QStringList& targetPointIds, QString* errorMessage) const;
     enum class ReadbackDecision {
         Success,
         Continue,

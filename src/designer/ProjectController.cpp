@@ -1,9 +1,11 @@
-﻿/**
+/**
  * @file ProjectController.cpp
  * @brief 项目控制器实现
  */
 
 #include "ProjectController.h"
+#include "ParameterController.h"
+#include <QJsonArray>
 #include "common/ProjectMutationGuard.h"
 #include "ProjectConfigValidation.h"
 using namespace ProjectConfigValidation;
@@ -63,31 +65,9 @@ bool isContainedProjectPath(const QString& projectPath, const QString& configure
     }
 
     const QFileInfo info(clean);
-    if (info.exists()) {
-        const QString canonical = info.canonicalFilePath();
-        const QString canonicalRelative = QDir(root).relativeFilePath(canonical);
-        return !canonical.isEmpty()
-                && canonicalRelative != QStringLiteral("..")
-                && !canonicalRelative.startsWith(QStringLiteral("../"))
-                && !canonicalRelative.startsWith(QStringLiteral("..\\"))
-                && !QDir::isAbsolutePath(canonicalRelative);
-    }
-
-    QDir parent = info.dir();
-    while (!parent.exists()) {
-        const QString currentPath = parent.absolutePath();
-        const QDir nextParent = QFileInfo(currentPath).dir();
-        if (nextParent.absolutePath() == currentPath)
-            break;
-        parent = nextParent;
-    }
-    const QString canonicalParent = parent.canonicalPath();
-    const QString parentRelative = QDir(root).relativeFilePath(canonicalParent);
-    return !canonicalParent.isEmpty()
-            && parentRelative != QStringLiteral("..")
-            && !parentRelative.startsWith(QStringLiteral("../"))
-            && !parentRelative.startsWith(QStringLiteral("..\\"))
-            && !QDir::isAbsolutePath(parentRelative);
+    if (info.exists()) return PathSecurityUtils::pathWithinRoot(root, clean);
+    const QString ancestor = PathSecurityUtils::canonicalExistingAncestor(info.dir());
+    return !ancestor.isEmpty() && PathSecurityUtils::pathWithinRoot(root, ancestor);
 }
 
 QString relativeProjectPath(const QString& projectPath, const QString& configuredPath)
@@ -393,25 +373,9 @@ void ProjectController::createNewProject()
                << QDateTime::currentDateTime().toString(Qt::ISODate)
                << QString::fromUtf8(u8"\n");
         stream << "\n";
-        stream << QString::fromUtf8(u8"// 示例：从左侧函数列表拖拽功能块，或按以下 LH 结构编写\n");
-        stream << QString::fromUtf8(u8"PROGRAM Main\n");
-        stream << QString::fromUtf8(u8"VAR\n");
-        stream << QString::fromUtf8(u8"    system_1 : System;\n");
-        stream << QString::fromUtf8(u8"    drv_ai_1 : DrvAI;\n");
-        stream << QString::fromUtf8(u8"    add_1 : Add;\n");
-        stream << QString::fromUtf8(u8"END_VAR\n\n");
-        stream << QString::fromUtf8(u8"system_1(\n");
-        stream << QString::fromUtf8(u8"    Author := 1,\n");
-        stream << QString::fromUtf8(u8"    Config := 100,\n");
-        stream << QString::fromUtf8(u8"    Date := 2601\n");
-        stream << QString::fromUtf8(u8");\n\n");
-        stream << QString::fromUtf8(u8"drv_ai_1(\n");
-        stream << QString::fromUtf8(u8"    NumChannels := 1,\n");
-        stream << QString::fromUtf8(u8"    InputNum := 0,\n");
-        stream << QString::fromUtf8(u8"    DivisionNum := 4096\n");
-        stream << QString::fromUtf8(u8");\n\n");
-        stream << QString::fromUtf8(u8"add_1();\n\n");
-        stream << QString::fromUtf8(u8"END_PROGRAM\n");
+        stream << QString::fromUtf8(u8"// 最小编译示例；运行需要配置并验证目标控制器。\n");
+        stream << "PROGRAM Main\nVAR\n    system_1 : System;\nEND_VAR\n\n";
+        stream << "system_1(Author := 1, Config := 100, Date := 2601);\nEND_PROGRAM\n";
         stream.flush();
         if (stream.status() != QTextStream::Ok || !scriptFile.commit()) {
             scriptFile.cancelWriting();
@@ -448,11 +412,18 @@ void ProjectController::createNewProject()
     }
 
     QFile file(scriptPath);
-    if (file.open(QIODevice::ReadOnly | QIODevice::Text)) {
-        const QString content = TextEncoding::decodeUtf8WithLocalFallback(file.readAll());
-        file.close();
-        emit scriptLoadRequired(scriptPath, content);
+    QByteArray bytes;
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text) || !FileSnapshot::readComplete(file, &bytes)) {
+        const QString reason = file.errorString();
+        restorePrevious();
+        emit errorOccurred(QStringLiteral("读取失败"),
+            QStringLiteral("%1: %2；原工程保持打开，新建文件保留在 %3")
+                .arg(scriptPath, reason, fullPath));
+        return;
     }
+    const QString content = TextEncoding::decodeUtf8WithLocalFallback(bytes);
+    file.close();
+    emit scriptLoadRequired(scriptPath, content);
 
     setModified(false);
     addToRecentProjects(fullPath);
@@ -609,7 +580,12 @@ bool ProjectController::openProjectFromPath(const QString& projectPath)
         emit errorOccurred("打开失败", QString("主 DSL 脚本不存在或不可读: %1").arg(mainScript));
         return false;
     }
-    const QString content = TextEncoding::decodeUtf8WithLocalFallback(scriptFile.readAll());
+    QByteArray scriptBytes;
+    if (!FileSnapshot::readComplete(scriptFile, &scriptBytes)) {
+        emit errorOccurred(QStringLiteral("打开失败"), mainScript + QStringLiteral(": ") + scriptFile.errorString());
+        return false;
+    }
+    const QString content = TextEncoding::decodeUtf8WithLocalFallback(scriptBytes);
     scriptFile.close();
     const QString relativeMainScript = relativeProjectPath(projectRoot, mainScript);
     loadedConfig.mainScriptPath = relativeMainScript;
@@ -797,7 +773,11 @@ bool ProjectController::loadProjectConfig(const QString& projectDir, ProjectRunt
         return false;
     }
 
-    QByteArray data = file.readAll();
+    QByteArray data;
+    if (!FileSnapshot::readComplete(file, &data)) {
+        emit errorOccurred(QStringLiteral("加载失败"), configPath + QStringLiteral(": ") + file.errorString());
+        return false;
+    }
     file.close();
 
     QJsonParseError error;
@@ -1488,3 +1468,71 @@ QString ProjectController::timestampedMessage(const QString& msg) const
         .arg(msg);
 }
 
+
+QJsonObject ProjectController::parameterSnapshot() const
+{
+    QJsonArray values;
+    for (const auto& def : m_runtimeConfig.parameters) {
+        if (!def.onlineEditable) continue;
+        values.append(QJsonObject{{"id", def.id}, {"dataType", def.dataType},
+                                  {"value", def.currentValue.isEmpty() ? def.defaultValue : def.currentValue}});
+    }
+    return QJsonObject{{"format", "lh-project-parameters"}, {"version", 1}, {"parameters", values}};
+}
+
+bool ProjectController::previewParameterSnapshot(const QJsonObject& snapshot, QStringList* changes, QString* error) const
+{
+    if (changes) changes->clear();
+    if (error) error->clear();
+    const auto fail = [&](const QString& message) {
+        if (changes) changes->clear();
+        if (error) *error = message;
+        return false;
+    };
+    if (!hasOpenProject()) return fail(QStringLiteral("没有打开的项目"));
+    if (snapshot.value("format").toString() != "lh-project-parameters"
+            || snapshot.value("version").toDouble(-1) != 1
+            || !snapshot.value("parameters").isArray())
+        return fail(QStringLiteral("参数快照格式或版本无效"));
+    QSet<QString> seen;
+    for (const auto& value : snapshot.value("parameters").toArray()) {
+        if (!value.isObject()) return fail(QStringLiteral("参数快照条目无效"));
+        const auto entry = value.toObject();
+        const QString id = entry.value("id").toString();
+        if (id.isEmpty() || seen.contains(id) || !entry.value("value").isString())
+            return fail(QStringLiteral("参数快照点位为空、重复或值无效"));
+        seen.insert(id);
+        const ParameterDefinition* matched = nullptr;
+        for (const auto& def : m_runtimeConfig.parameters) {
+            if (def.id != id) continue;
+            if (matched) return fail(QStringLiteral("项目参数点位重复：%1").arg(id));
+            matched = &def;
+        }
+        if (!matched || matched->dataType.trimmed().compare(entry.value("dataType").toString().trimmed(), Qt::CaseInsensitive) != 0)
+            return fail(QStringLiteral("参数点位或类型不匹配：%1").arg(id));
+        QString validationError;
+        if (!ParameterController::validateValue(*matched, entry.value("value").toString(), &validationError))
+            return fail(validationError);
+        if (changes) changes->append(QStringLiteral("%1: %2 → %3").arg(matched->name,
+                matched->currentValue.isEmpty() ? matched->defaultValue : matched->currentValue,
+                entry.value("value").toString()));
+    }
+    return true;
+}
+
+bool ProjectController::restoreParameterSnapshot(const QJsonObject& snapshot, QString* error)
+{
+    if (!previewParameterSnapshot(snapshot, nullptr, error)) return false;
+    auto parameters = m_runtimeConfig.parameters;
+    for (const auto& value : snapshot.value("parameters").toArray()) {
+        const auto entry = value.toObject();
+        for (auto& def : parameters) {
+            if (def.id != entry.value("id").toString()) continue;
+            def.currentValue = entry.value("value").toString();
+            def.confirmed = false;
+        }
+    }
+    m_runtimeConfig.parameters = parameters;
+    setModified(true);
+    return true;
+}

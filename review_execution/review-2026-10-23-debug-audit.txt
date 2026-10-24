@@ -1,0 +1,7 @@
+********* Start testing of RuntimeSessionControllerTest *********
+Config: Using QtTest library 5.15.2, Qt 5.15.2 (x86_64-little_endian-llp64 shared (dynamic) release build; by GCC 8.1.0), windows 10
+PASS   : RuntimeSessionControllerTest::initTestCase()
+PASS   : RuntimeSessionControllerTest::reviewDebugOperationsHaveExactlyOnePersistentTerminal()
+PASS   : RuntimeSessionControllerTest::cleanupTestCase()
+Totals: 3 passed, 0 failed, 0 skipped, 0 blacklisted, 152ms
+********* Finished testing of RuntimeSessionControllerTest *********

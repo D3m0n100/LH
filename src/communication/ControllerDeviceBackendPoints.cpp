@@ -4,6 +4,7 @@
 #include "ControllerDeviceBackend.h"
 
 #include "ControllerDebugProtocol.h"
+#include "ProtocolUtils.h"
 
 #include <QMap>
 #include <QMetaType>
@@ -26,18 +27,7 @@ QString busyMessage()
     return QStringLiteral("控制器后端正忙，点位操作被拒绝。");
 }
 
-bool readPositiveInt(const QVariantMap& map, const QStringList& keys, int* value)
-{
-    for (const QString& key : keys) {
-        bool ok = false;
-        const int candidate = map.value(key).toInt(&ok);
-        if (ok && candidate > 0) {
-            *value = candidate;
-            return true;
-        }
-    }
-    return false;
-}
+using Communication::readPositiveInt;
 
 bool readNonNegativeInt(const QVariantMap& map, const QStringList& keys, int* value)
 {

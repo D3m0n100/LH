@@ -1,0 +1,366 @@
+{
+  "grammar": {
+    "path": "third_party/custom_dsp_language/compile/grammar/LH.g4",
+    "absolute_path": "D:/Table/LH/third_party/custom_dsp_language/compile/grammar/LH.g4",
+    "line": 32,
+    "sha256": "96cfacd703ad9321e55fba00d09c11ca0e964f22b9ccb2c6d4813456dd64f443",
+    "needle": "program"
+  },
+  "input": {
+    "path": "src/compiler/DSLCompilerInput.cpp",
+    "absolute_path": "D:/Table/LH/src/compiler/DSLCompilerInput.cpp",
+    "line": 89,
+    "sha256": "99980eba05e7266beac51573be1843a4f592fddef172771ddc06b92c86e77a92",
+    "needle": "MappedLines normalizeLegacyDslSource"
+  },
+  "refs": {
+    "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+    "absolute_path": "D:/Table/LH/third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+    "line": 470,
+    "sha256": "f63e37af7d86086ab8513e8b901e6467be5ad5ea1f288935b98e469a1a5b077c",
+    "needle": "def _process_fb_call"
+  },
+  "init": {
+    "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+    "absolute_path": "D:/Table/LH/third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+    "line": 360,
+    "sha256": "f63e37af7d86086ab8513e8b901e6467be5ad5ea1f288935b98e469a1a5b077c",
+    "needle": "def _process_variables"
+  },
+  "flow": {
+    "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+    "absolute_path": "D:/Table/LH/third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+    "line": 456,
+    "sha256": "f63e37af7d86086ab8513e8b901e6467be5ad5ea1f288935b98e469a1a5b077c",
+    "needle": "elif isinstance(stmt, (IfStatement"
+  },
+  "assignment": {
+    "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+    "absolute_path": "D:/Table/LH/third_party/custom_dsp_language/compile/src/lh_compiler/backend/codegen.py",
+    "line": 598,
+    "sha256": "f63e37af7d86086ab8513e8b901e6467be5ad5ea1f288935b98e469a1a5b077c",
+    "needle": "def _process_assignment"
+  },
+  "registry": {
+    "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/registry.py",
+    "absolute_path": "D:/Table/LH/third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/registry.py",
+    "line": 54,
+    "sha256": "4fa84360d06ff8b8309dd81c9bb043c1e3bf87967ac17ee22069772832193374",
+    "needle": "class FunctionBlockMeta"
+  },
+  "fields": {
+    "path": "third_party/custom_dsp_language/compile/src/lh_compiler/backend/emitter.py",
+    "absolute_path": "D:/Table/LH/third_party/custom_dsp_language/compile/src/lh_compiler/backend/emitter.py",
+    "line": 206,
+    "sha256": "9d95040a090ae5b4bc1ccbe68c1721c309a2b336327b2fe1d5b09e7ed812117d",
+    "needle": "def _build_typ"
+  },
+  "task": {
+    "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_task.py",
+    "absolute_path": "D:/Table/LH/third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_task.py",
+    "line": 26,
+    "sha256": "a5bb16d7149388eb7535fc9e3fc8257dd1067dc2a17509017aec97d243beb389",
+    "needle": "def _define_task()"
+  },
+  "param": {
+    "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_param.py",
+    "absolute_path": "D:/Table/LH/third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_param.py",
+    "line": 11,
+    "sha256": "d7764fabe6d586d930e7965c9c372e44ce30c375edbf3f7065d0c60ad4530c34",
+    "needle": "def get_param_blocks"
+  },
+  "io": {
+    "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_io.py",
+    "absolute_path": "D:/Table/LH/third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_io.py",
+    "line": 135,
+    "sha256": "78432a733c2a9caa517d677413477bf0b8b4ed43941580143abbf205e4108581",
+    "needle": "def _define_drvt2periodin"
+  },
+  "math": {
+    "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_math.py",
+    "absolute_path": "D:/Table/LH/third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_math.py",
+    "line": 32,
+    "sha256": "64291fd76b1bbd8abbe55c9d288715df67016b684bee9f70ac99a5fbbf641516",
+    "needle": "def _define_add"
+  },
+  "pid": {
+    "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_pid.py",
+    "absolute_path": "D:/Table/LH/third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_pid.py",
+    "line": 19,
+    "sha256": "015591ce365957a3173cfa9ad6932404bc2c318a342880d8113167e698d8eb2a",
+    "needle": "def _define_pid()"
+  },
+  "tso": {
+    "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_tso.py",
+    "absolute_path": "D:/Table/LH/third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_tso.py",
+    "line": 10,
+    "sha256": "c689c695651ad232d45403061cd30b419154a47e489f56622c2d54f1e3b5d2e4",
+    "needle": "def get_tso_blocks"
+  },
+  "display": {
+    "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_display.py",
+    "absolute_path": "D:/Table/LH/third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_display.py",
+    "line": 10,
+    "sha256": "44398c73bee935f289df520a83a4226fde415a45359ce0b343ff493aead041f3",
+    "needle": "def get_display_blocks"
+  },
+  "comm": {
+    "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_comm.py",
+    "absolute_path": "D:/Table/LH/third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_comm.py",
+    "line": 10,
+    "sha256": "804c008500f163c050f84cb387edf938e37ae394cf7862c576de1bcb611ea402",
+    "needle": "def get_comm_blocks"
+  },
+  "filter": {
+    "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_filter.py",
+    "absolute_path": "D:/Table/LH/third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_filter.py",
+    "line": 17,
+    "sha256": "9fb09b2c328a04781620bc03d8b46035c0d3fa43f46f00bc08f788a9e75deeda",
+    "needle": "def _define_filterbw"
+  },
+  "application": {
+    "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_application.py",
+    "absolute_path": "D:/Table/LH/third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_application.py",
+    "line": 10,
+    "sha256": "76a04ea2c33c5d0c235e257e85db9281d7bd34d162f919fe94ff26b63bfcafc4",
+    "needle": "def get_application_blocks"
+  },
+  "exca": {
+    "path": "third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_exca.py",
+    "absolute_path": "D:/Table/LH/third_party/custom_dsp_language/compile/src/lh_compiler/function_blocks/definitions/_exca.py",
+    "line": 14,
+    "sha256": "d6b5aef82265e94a8170abefbf81542b33b64590d8ad615a1e81a6ccf5fada85",
+    "needle": "def get_exca_blocks"
+  },
+  "param_artifacts": {
+    "path": "src/designer/BuildController.cpp",
+    "absolute_path": "D:/Table/LH/src/designer/BuildController.cpp",
+    "line": 962,
+    "sha256": "67d3d6f6525f2f6583a48ccb640934a1ca0cdaf7df6657ca92a946f909eefec9",
+    "needle": "CompileResult BuildController::generateParameterArtifacts"
+  },
+  "comm_artifacts": {
+    "path": "src/designer/BuildController.cpp",
+    "absolute_path": "D:/Table/LH/src/designer/BuildController.cpp",
+    "line": 1025,
+    "sha256": "67d3d6f6525f2f6583a48ccb640934a1ca0cdaf7df6657ca92a946f909eefec9",
+    "needle": "CompileResult BuildController::generateCommunicationArtifacts"
+  },
+  "artifact_gate": {
+    "path": "src/common/CompileArtifactPolicy.h",
+    "absolute_path": "D:/Table/LH/src/common/CompileArtifactPolicy.h",
+    "line": 14,
+    "sha256": "8f31b91f2e3444a79173dac126954c50522fd41bdd5334a0cda8d3068ce4a701",
+    "needle": "inline bool containsMarker"
+  },
+  "artifact_metadata": {
+    "path": "src/compiler/DSLCompilerArtifacts.cpp",
+    "absolute_path": "D:/Table/LH/src/compiler/DSLCompilerArtifacts.cpp",
+    "line": 397,
+    "sha256": "ec041fb95268dd40cf17a12b1a842a6805b283aef6d336faa35b4a6dad5af441",
+    "needle": "artifact.type = requiresTargetValidation"
+  },
+  "project": {
+    "path": "src/designer/ProjectController.cpp",
+    "absolute_path": "D:/Table/LH/src/designer/ProjectController.cpp",
+    "line": 1153,
+    "sha256": "6d5069f875a34d8335b15c9ea33017bcbcc31c9c8f20e93027b8fec9bafc9780",
+    "needle": "bool ProjectController::validateConfiguration"
+  },
+  "config": {
+    "path": "src/common/ConfigTypes.h",
+    "absolute_path": "D:/Table/LH/src/common/ConfigTypes.h",
+    "line": 134,
+    "sha256": "0e116b5666fba649e283eeea96f2218c5512fc3ad4a310f714f08509c65bb186",
+    "needle": "struct ParameterDefinition"
+  },
+  "points": {
+    "path": "src/common/RuntimePointTypes.h",
+    "absolute_path": "D:/Table/LH/src/common/RuntimePointTypes.h",
+    "line": 345,
+    "sha256": "c9496aca356ae4e52f9515b8e5286ece8f6efa4168e5820527f0b3e123581caa",
+    "needle": "fromParameter(const ParameterDefinition"
+  },
+  "editor": {
+    "path": "src/designer/DslScriptEditor.cpp",
+    "absolute_path": "D:/Table/LH/src/designer/DslScriptEditor.cpp",
+    "line": 583,
+    "sha256": "bf214cd638e07fa864dac87e1201faad547e72d1104f4fb7fc97a5c8001715c9",
+    "needle": "void DslScriptEditor::setupUi"
+  },
+  "completion": {
+    "path": "src/designer/DslCompletionEngine.cpp",
+    "absolute_path": "D:/Table/LH/src/designer/DslCompletionEngine.cpp",
+    "line": 134,
+    "sha256": "7b0ba627b67315cc0e23d68113a84e6c0d6b0315fd2c2befb8c80506d8d169b5",
+    "needle": "snippet.canInsert()"
+  },
+  "snippets": {
+    "path": "src/designer/SnippetRepository.cpp",
+    "absolute_path": "D:/Table/LH/src/designer/SnippetRepository.cpp",
+    "line": 279,
+    "sha256": "f3c4470f15c0bad3833c387c0753e09ab16c7cd358bbb04054b262675d9db840",
+    "needle": "QStringLiteral(\"incompleteReason\")"
+  },
+  "ui_actions": {
+    "path": "src/designer/MainWindowUi.cpp",
+    "absolute_path": "D:/Table/LH/src/designer/MainWindowUi.cpp",
+    "line": 182,
+    "sha256": "625b1efa583ac8852ee0d83f0dffde6d180aad48bace4b3747b405ad63d78be2",
+    "needle": "m_actCompile ="
+  },
+  "debug_ui": {
+    "path": "src/designer/MainWindow.cpp",
+    "absolute_path": "D:/Table/LH/src/designer/MainWindow.cpp",
+    "line": 1407,
+    "sha256": "ed6f857c8cf08c2b6e7a0311d0f05304ebb005a2abfb73d9c5d498e9d829fb69",
+    "needle": "void MainWindow::onRunControllerToCursor"
+  },
+  "display_ui": {
+    "path": "src/designer/MainWindowWorkspace.cpp",
+    "absolute_path": "D:/Table/LH/src/designer/MainWindowWorkspace.cpp",
+    "line": 376,
+    "sha256": "7ed4c1278ac4b80d9115dac3dab5b6af2d2c98e18f7ff723c92214a52a9cce94",
+    "needle": "void MainWindow::onOpenDisplayBlocksWindow"
+  },
+  "debug_session": {
+    "path": "src/designer/RuntimeSessionDebug.cpp",
+    "absolute_path": "D:/Table/LH/src/designer/RuntimeSessionDebug.cpp",
+    "line": 28,
+    "sha256": "ad06cc933aeb8caf10e5f2438414c0870b292c74a16eb2c7ff595ba2615aa38b",
+    "needle": "bool RuntimeSessionController::requestControllerDebug"
+  },
+  "debug_client": {
+    "path": "src/communication/ControllerDebugClient.h",
+    "absolute_path": "D:/Table/LH/src/communication/ControllerDebugClient.h",
+    "line": 90,
+    "sha256": "47e5b7f0169b3e56b14ce53ec84de3c0493ec4e28f75802fe5da29e23c9fd236",
+    "needle": "bool pause();"
+  },
+  "debug_protocol": {
+    "path": "src/communication/ControllerDebugProtocol.h",
+    "absolute_path": "D:/Table/LH/src/communication/ControllerDebugProtocol.h",
+    "line": 12,
+    "sha256": "f1b76f00223092c7c0c2aee14102fad050ca9a10974d8eb4881255240b4e09f9",
+    "needle": "enum class ControllerSystemRegister"
+  },
+  "backend": {
+    "path": "src/communication/ControllerDeviceBackend.cpp",
+    "absolute_path": "D:/Table/LH/src/communication/ControllerDeviceBackend.cpp",
+    "line": 90,
+    "sha256": "8bdbcabb75bc6c76b1cd3ea4b5474111b75261a63b8bab1cc61416bf7b78c707",
+    "needle": "const bool isRtu"
+  },
+  "download": {
+    "path": "src/designer/RuntimeSessionDownload.cpp",
+    "absolute_path": "D:/Table/LH/src/designer/RuntimeSessionDownload.cpp",
+    "line": 479,
+    "sha256": "b9d2c3ec6f8914aed596337b29ce699bfc6d7e634bfd9a25ca68905eeed33df7",
+    "needle": "void RuntimeSessionController::"
+  },
+  "parameters": {
+    "path": "src/runtime/ParameterController.cpp",
+    "absolute_path": "D:/Table/LH/src/runtime/ParameterController.cpp",
+    "line": 323,
+    "sha256": "6c794c02be5e39a1c38302c12b5f3fe1b5ff08f8b7c6dc4dbed1ffb1ab26bf01",
+    "needle": "bool ParameterController::editParameter("
+  },
+  "parameter_api": {
+    "path": "src/runtime/ParameterController.h",
+    "absolute_path": "D:/Table/LH/src/runtime/ParameterController.h",
+    "line": 41,
+    "sha256": "5ece3e76cb285a30225916e0d179d279416f60469dea203b70ae625199a5dfb8",
+    "needle": "bool applyModifiedParametersWithReadbackAsync("
+  },
+  "monitor": {
+    "path": "src/monitor/MonitorChartView.h",
+    "absolute_path": "D:/Table/LH/src/monitor/MonitorChartView.h",
+    "line": 115,
+    "sha256": "5ac4fda96b2c07121f8d279d67f8eac35b55167be02caae226aa76acc80dd0e8",
+    "needle": "void addChannel("
+  },
+  "monitor_export": {
+    "path": "src/monitor/MonitorExportHelper.cpp",
+    "absolute_path": "D:/Table/LH/src/monitor/MonitorExportHelper.cpp",
+    "line": 97,
+    "sha256": "140518ff4fcad5c9ee104800fa1a8c73accb8cd2a774bdc54bdbee3601fc1c38",
+    "needle": "bool MonitorExportHelper::"
+  },
+  "monitor_channel": {
+    "path": "src/monitor/MonitorChannel.cpp",
+    "absolute_path": "D:/Table/LH/src/monitor/MonitorChannel.cpp",
+    "line": 174,
+    "sha256": "56b16a08f6d18dda8c67ee3816c7296a52654c8fc367d8016b4923627dad4d11",
+    "needle": "void MonitorChannel::checkThresholds"
+  },
+  "sampling": {
+    "path": "src/monitor/BackendSampler.cpp",
+    "absolute_path": "D:/Table/LH/src/monitor/BackendSampler.cpp",
+    "line": 14,
+    "sha256": "036effcd36da825993f5f00ed5df0eeb1ab9b04986b5d07cbe9457c263050705",
+    "needle": "void BackendSampler::configure"
+  },
+  "opc": {
+    "path": "src/communication/MatrikonOpcServer.cpp",
+    "absolute_path": "D:/Table/LH/src/communication/MatrikonOpcServer.cpp",
+    "line": 796,
+    "sha256": "515e9eab8babb18809e39a392db6f3ef201cf2ece6b19e69565de3c83bbfa6db",
+    "needle": "bool MatrikonOpcServer::createServerInstance"
+  },
+  "opc_config": {
+    "path": "src/designer/OpcServerSettingsDialog.cpp",
+    "absolute_path": "D:/Table/LH/src/designer/OpcServerSettingsDialog.cpp",
+    "line": 14,
+    "sha256": "680d8a54086525840a7b4a29b1087a38f6a59cf400f3090e86dd5609ddb6a5f5",
+    "needle": "OpcServerSettingsDialog::"
+  },
+  "virtual": {
+    "path": "src/communication/VirtualDeviceBackend.cpp",
+    "absolute_path": "D:/Table/LH/src/communication/VirtualDeviceBackend.cpp",
+    "line": 90,
+    "sha256": "0913d1c08dc5af90511f3dcd07a7539db6654ace425ab9998d8afc6540fe266e",
+    "needle": "bool VirtualDeviceBackend::readPointsImpl"
+  },
+  "run": {
+    "path": "src/designer/RuntimeSessionController.cpp",
+    "absolute_path": "D:/Table/LH/src/designer/RuntimeSessionController.cpp",
+    "line": 191,
+    "sha256": "b1da24ab992bdaed880aef1ac7266d8ba42796749bf5e81a9004fc1953cd4595",
+    "needle": "bool RuntimeSessionController::prepareRun"
+  },
+  "debug_test": {
+    "path": "tests/controller_debug_protocol_test.cpp",
+    "absolute_path": "D:/Table/LH/tests/controller_debug_protocol_test.cpp",
+    "line": 137,
+    "sha256": "39033c0557b99064a5808388a261dad5a731987d7efbb25b44b4ac9e294fbcdd",
+    "needle": "void debugCommandsWriteExpectedRegisters"
+  },
+  "main_test": {
+    "path": "tests/main_window_integration_test.cpp",
+    "absolute_path": "D:/Table/LH/tests/main_window_integration_test.cpp",
+    "line": 198,
+    "sha256": "9edd430407a0f6ce35a18f36370b1b277f7a389dd143625390e7e9c94891c631",
+    "needle": "void ordinaryCompileActionGeneratesConstantsAndClearsOldDownload"
+  },
+  "generated_test": {
+    "path": "tests/main_window_integration_test.cpp",
+    "absolute_path": "D:/Table/LH/tests/main_window_integration_test.cpp",
+    "line": 456,
+    "sha256": "9edd430407a0f6ce35a18f36370b1b277f7a389dd143625390e7e9c94891c631",
+    "needle": "void generatedBuildArtifactsUseLhProjectModel"
+  },
+  "readback_test": {
+    "path": "tests/parameter_controller_test.cpp",
+    "absolute_path": "D:/Table/LH/tests/parameter_controller_test.cpp",
+    "line": 993,
+    "sha256": "5d0a20210c16525cffa080f5e278244acebda93e9dbcc876159a62e100479f4a",
+    "needle": "void typedRealReadbackUsesFloat32AndRejectsInvalid"
+  },
+  "history": {
+    "path": "src/monitor/MonitorHistoryService.h",
+    "absolute_path": "D:/Table/LH/src/monitor/MonitorHistoryService.h",
+    "line": 19,
+    "sha256": "5f0de8e9e10dd2f3d724c6db43f59ef4bc8302018ae6f1fefdee2f0996846c79",
+    "needle": "class MonitorHistoryService"
+  }
+}

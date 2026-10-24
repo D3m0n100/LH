@@ -1,0 +1,11 @@
+{
+  "exit_code": 0,
+  "waited_for_actual_process_exit": true,
+  "executable": "D:/Table/LH/build_current_mingw/lm_parity_install/bin/LH.exe",
+  "arguments": [
+    "--smoke-test"
+  ],
+  "qt_platform": "windows",
+  "path_isolated_to_install_bin_and_windows": true,
+  "real_controller_tested": false
+}

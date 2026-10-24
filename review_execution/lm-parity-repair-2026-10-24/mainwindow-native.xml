@@ -1,0 +1,1605 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<testsuite errors="761" failures="1" tests="37" name="MainWindowIntegrationTest">
+  <properties>
+    <property value="5.15.2" name="QTestVersion"/>
+    <property value="5.15.2" name="QtVersion"/>
+    <property value="Qt 5.15.2 (x86_64&#x002D;little_endian&#x002D;llp64 shared (dynamic) release build; by GCC 8.1.0)" name="QtBuild"/>
+  </properties>
+  <testcase result="pass" name="initTestCase"/>
+  <testcase result="pass" name="parityDebugAndSnapshotActions">
+    <!-- message="[MonitorManager] applyConfiguration 开始 project= &quot;&quot; providers= 0 mappings= 0" type="qdebug" -->
+    <!-- message="[MonitorManager] applyConfiguration 结束 success=true channels= 0 providers= 0" type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:26.490 SettingsController 已创建" type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:26.492 已加载应用设置: 项目目录=C:/Users/Ryan, 自动滚动=1, 字体索引=1, 布局版本=1" type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:26.493 ProjectController 已创建" type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:26.493 已加载 5 个最近项目" type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:26.493 BuildController created." type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:26.494 控制器已创建" type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:27.033 SnippetRepository 已创建" type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:27.038 已加载 140 个默认 Snippets" type="qdebug" -->
+    <!-- message="[MonitorExportHelper] 导出助手已创建" type="qdebug" -->
+    <!-- message="[MonitorManager] 数据处理器已设置: 启用增量分发" type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:27.358 控制器信号已连接" type="qdebug" -->
+    <!-- message="[INFO] 09:13:28.591 MainWindow 初始化完成" type="qinfo" -->
+    <!-- message="[DEBUG] 09:13:28.651 已保存应用设置" type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:28.651 已保存最近项目列表" type="qdebug" -->
+    <!-- message="[INFO] 09:13:28.651 MainWindow 已销毁" type="qinfo" -->
+    <!-- message="[DEBUG] 09:13:28.651 SettingsController 已销毁" type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:28.651 ProjectController 已销毁" type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:28.652 BuildController destroyed." type="qdebug" -->
+    <!-- message="[MonitorManager] 数据处理器已设置: 禁用增量分发" type="qdebug" -->
+    <!-- message="[MonitorExportHelper] 导出助手已销毁" type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:28.670 SnippetRepository 已销毁" type="qdebug" -->
+    <!-- message="[MonitorManager] applyConfiguration 开始 project= &quot;&quot; providers= 0 mappings= 0" type="qdebug" -->
+    <!-- message="[MonitorManager] applyConfiguration 结束 success=true channels= 0 providers= 0" type="qdebug" -->
+  </testcase>
+  <testcase result="pass" name="ordinaryCompileActionGeneratesConstantsAndClearsOldDownload">
+    <!-- message="[MonitorManager] applyConfiguration 开始 project= &quot;&quot; providers= 0 mappings= 0" type="qdebug" -->
+    <!-- message="[MonitorManager] applyConfiguration 结束 success=true channels= 0 providers= 0" type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:28.679 SettingsController 已创建" type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:28.681 已加载应用设置: 项目目录=C:/Users/Ryan, 自动滚动=1, 字体索引=1, 布局版本=1" type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:28.681 ProjectController 已创建" type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:28.682 已加载 5 个最近项目" type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:28.682 BuildController created." type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:28.682 控制器已创建" type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:28.704 SnippetRepository 已创建" type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:28.709 已加载 140 个默认 Snippets" type="qdebug" -->
+    <!-- message="[MonitorExportHelper] 导出助手已创建" type="qdebug" -->
+    <!-- message="[MonitorManager] 数据处理器已设置: 启用增量分发" type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:29.132 控制器信号已连接" type="qdebug" -->
+    <!-- message="[INFO] 09:13:29.905 MainWindow 初始化完成" type="qinfo" -->
+    <!-- message="[DEBUG] 09:13:30.457 已加载 140 个默认 Snippets" type="qdebug" -->
+    <!-- message="[DSLCompilerInterface] Selected compiler runtime: &quot;D:/Table/LH/third_party/custom_dsp_language/compile&quot; &quot;(mode: developer, entry: D:/Table/LH/third_party/custom_dsp_language/compile/lmc.py)&quot;" type="qinfo" -->
+    <!-- message="[DSLCompilerInterface] Detected Python interpreter: &quot;D:/Table/LH/third_party/custom_dsp_language/compile/venv/Scripts/python.exe&quot; for runtime: &quot;D:/Table/LH/third_party/custom_dsp_language/compile&quot;" type="qinfo" -->
+    <!-- message="[INFO] 09:13:31.740 [DSLCompilerInterface] Running project compile (async): D:/Table/LH/third_party/custom_dsp_language/compile/venv/Scripts/python.exe D:/Table/LH/third_party/custom_dsp_language/compile/lmc.py C:\Users\Ryan\AppData\Local\Temp\main_window_integration_test&#x002D;TpPmsD\build_output\configuration\generations\52e3c13b&#x002D;53d0&#x002D;4aa1&#x002D;9517&#x002D;782dc6a8c2c2\.compiler_staging\main_assembled.lh &#x002D;o C:\Users\Ryan\AppData\Local\Temp\main_window_integration_test&#x002D;TpPmsD\build_output\configuration\generations\52e3c13b&#x002D;53d0&#x002D;4aa1&#x002D;9517&#x002D;782dc6a8c2c2\main.code &#x002D;v, cwd = D:/Table/LH/third_party/custom_dsp_language/compile" type="qinfo" -->
+    <!-- message="[INFO] 09:13:32.637 [DSLCompilerInterface] async compile succeeded." type="qinfo" -->
+    <!-- message="[DEBUG] 09:13:33.026 已保存应用设置" type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:33.027 已保存最近项目列表" type="qdebug" -->
+    <!-- message="[INFO] 09:13:33.027 MainWindow 已销毁" type="qinfo" -->
+    <!-- message="[DEBUG] 09:13:33.043 SettingsController 已销毁" type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:33.043 ProjectController 已销毁" type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:33.043 BuildController destroyed." type="qdebug" -->
+    <!-- message="[MonitorManager] 数据处理器已设置: 禁用增量分发" type="qdebug" -->
+    <!-- message="[MonitorExportHelper] 导出助手已销毁" type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:33.060 SnippetRepository 已销毁" type="qdebug" -->
+    <!-- message="[MonitorManager] applyConfiguration 开始 project= &quot;&quot; providers= 0 mappings= 0" type="qdebug" -->
+    <!-- message="[MonitorManager] applyConfiguration 结束 success=true channels= 0 providers= 0" type="qdebug" -->
+  </testcase>
+  <testcase result="pass" name="applyParameterSyncsConfirmedAndCurrentValue">
+    <!-- message="[MonitorManager] applyConfiguration 开始 project= &quot;&quot; providers= 0 mappings= 0" type="qdebug" -->
+    <!-- message="[MonitorManager] applyConfiguration 结束 success=true channels= 0 providers= 0" type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:33.084 SettingsController 已创建" type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:33.085 已加载应用设置: 项目目录=C:/Users/Ryan, 自动滚动=1, 字体索引=1, 布局版本=1" type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:33.086 ProjectController 已创建" type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:33.086 已加载 5 个最近项目" type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:33.086 BuildController created." type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:33.086 控制器已创建" type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:33.099 SnippetRepository 已创建" type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:33.103 已加载 140 个默认 Snippets" type="qdebug" -->
+    <!-- message="[MonitorExportHelper] 导出助手已创建" type="qdebug" -->
+    <!-- message="[MonitorManager] 数据处理器已设置: 启用增量分发" type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:33.529 控制器信号已连接" type="qdebug" -->
+    <!-- message="[INFO] 09:13:34.301 MainWindow 初始化完成" type="qinfo" -->
+    <!-- message="[DEBUG] 09:13:34.311 已加载 140 个默认 Snippets" type="qdebug" -->
+    <!-- message="[INFO] 09:13:34.328 [VirtualDeviceBackend] connected" type="qinfo" -->
+    <!-- message="[MonitorManager] device backend set: VirtualDeviceBackend(0x6cce490)" type="qdebug" -->
+    <!-- message="[MonitorManager] device backend cleared" type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:34.910 已保存应用设置" type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:34.910 已保存最近项目列表" type="qdebug" -->
+    <!-- message="[INFO] 09:13:34.911 MainWindow 已销毁" type="qinfo" -->
+    <!-- message="[DEBUG] 09:13:34.911 SettingsController 已销毁" type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:34.911 ProjectController 已销毁" type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:34.911 BuildController destroyed." type="qdebug" -->
+    <!-- message="[MonitorManager] 数据处理器已设置: 禁用增量分发" type="qdebug" -->
+    <!-- message="[MonitorExportHelper] 导出助手已销毁" type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:34.924 SnippetRepository 已销毁" type="qdebug" -->
+    <!-- message="[MonitorManager] applyConfiguration 开始 project= &quot;&quot; providers= 0 mappings= 0" type="qdebug" -->
+    <!-- message="[MonitorManager] applyConfiguration 结束 success=true channels= 0 providers= 0" type="qdebug" -->
+  </testcase>
+  <testcase result="pass" name="downloadDiagnosticAddsProblemEntry">
+    <!-- message="[MonitorManager] applyConfiguration 开始 project= &quot;&quot; providers= 0 mappings= 0" type="qdebug" -->
+    <!-- message="[MonitorManager] applyConfiguration 结束 success=true channels= 0 providers= 0" type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:34.926 SettingsController 已创建" type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:34.928 已加载应用设置: 项目目录=C:/Users/Ryan, 自动滚动=1, 字体索引=1, 布局版本=1" type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:34.929 ProjectController 已创建" type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:34.929 已加载 5 个最近项目" type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:34.929 BuildController created." type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:34.929 控制器已创建" type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:34.943 SnippetRepository 已创建" type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:34.948 已加载 140 个默认 Snippets" type="qdebug" -->
+    <!-- message="[MonitorExportHelper] 导出助手已创建" type="qdebug" -->
+    <!-- message="[MonitorManager] 数据处理器已设置: 启用增量分发" type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:35.400 控制器信号已连接" type="qdebug" -->
+    <!-- message="[INFO] 09:13:36.203 MainWindow 初始化完成" type="qinfo" -->
+    <!-- message="[DEBUG] 09:13:36.252 已保存应用设置" type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:36.252 已保存最近项目列表" type="qdebug" -->
+    <!-- message="[INFO] 09:13:36.252 MainWindow 已销毁" type="qinfo" -->
+    <!-- message="[DEBUG] 09:13:36.252 SettingsController 已销毁" type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:36.252 ProjectController 已销毁" type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:36.252 BuildController destroyed." type="qdebug" -->
+    <!-- message="[MonitorManager] 数据处理器已设置: 禁用增量分发" type="qdebug" -->
+    <!-- message="[MonitorExportHelper] 导出助手已销毁" type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:36.271 SnippetRepository 已销毁" type="qdebug" -->
+    <!-- message="[MonitorManager] applyConfiguration 开始 project= &quot;&quot; providers= 0 mappings= 0" type="qdebug" -->
+    <!-- message="[MonitorManager] applyConfiguration 结束 success=true channels= 0 providers= 0" type="qdebug" -->
+  </testcase>
+  <testcase result="pass" name="runtimeStatusAndMonitorButtonFollowSessionSignals">
+    <!-- message="[MonitorManager] applyConfiguration 开始 project= &quot;&quot; providers= 0 mappings= 0" type="qdebug" -->
+    <!-- message="[MonitorManager] applyConfiguration 结束 success=true channels= 0 providers= 0" type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:36.272 SettingsController 已创建" type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:36.274 已加载应用设置: 项目目录=C:/Users/Ryan, 自动滚动=1, 字体索引=1, 布局版本=1" type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:36.274 ProjectController 已创建" type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:36.275 已加载 5 个最近项目" type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:36.275 BuildController created." type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:36.275 控制器已创建" type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:36.285 SnippetRepository 已创建" type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:36.289 已加载 140 个默认 Snippets" type="qdebug" -->
+    <!-- message="[MonitorExportHelper] 导出助手已创建" type="qdebug" -->
+    <!-- message="[MonitorManager] 数据处理器已设置: 启用增量分发" type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:36.731 控制器信号已连接" type="qdebug" -->
+    <!-- message="[INFO] 09:13:37.513 MainWindow 初始化完成" type="qinfo" -->
+    <!-- message="[MonitorManager] 注册通道: &quot;系统压力&quot;" type="qdebug" -->
+    <!-- message="[MonitorManager] 注册通道: &quot;系统流量&quot;" type="qdebug" -->
+    <!-- message="[MonitorManager] 注册通道: &quot;系统温度&quot;" type="qdebug" -->
+    <!-- message="[MonitorManager] 注册通道: &quot;阀芯位置&quot;" type="qdebug" -->
+    <!-- message="[MonitorManager] 监控已启动" type="qdebug" -->
+    <!-- message="[MonitorManager] 监控已停止" type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:37.592 已保存应用设置" type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:37.592 已保存最近项目列表" type="qdebug" -->
+    <!-- message="[INFO] 09:13:37.593 MainWindow 已销毁" type="qinfo" -->
+    <!-- message="[DEBUG] 09:13:37.593 SettingsController 已销毁" type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:37.593 ProjectController 已销毁" type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:37.593 BuildController destroyed." type="qdebug" -->
+    <!-- message="[MonitorManager] 数据处理器已设置: 禁用增量分发" type="qdebug" -->
+    <!-- message="[MonitorExportHelper] 导出助手已销毁" type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:37.614 SnippetRepository 已销毁" type="qdebug" -->
+    <!-- message="[MonitorManager] applyConfiguration 开始 project= &quot;&quot; providers= 0 mappings= 0" type="qdebug" -->
+    <!-- message="[MonitorManager] applyConfiguration 结束 success=true channels= 4 providers= 0" type="qdebug" -->
+  </testcase>
+  <testcase result="pass" name="monitoringWithoutDataSourceStaysRunningAndReportsError">
+    <!-- message="[MonitorManager] applyConfiguration 开始 project= &quot;&quot; providers= 0 mappings= 0" type="qdebug" -->
+    <!-- message="[MonitorManager] applyConfiguration 结束 success=true channels= 4 providers= 0" type="qdebug" -->
+    <!-- message="[MonitorManager] applyConfiguration 开始 project= &quot;&quot; providers= 0 mappings= 0" type="qdebug" -->
+    <!-- message="[MonitorManager] applyConfiguration 结束 success=true channels= 4 providers= 0" type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:37.615 ProjectController 已创建" type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:37.617 ProjectController 已销毁" type="qdebug" -->
+    <!-- message="[MonitorManager] applyConfiguration 开始 project= &quot;&quot; providers= 0 mappings= 0" type="qdebug" -->
+    <!-- message="[MonitorManager] applyConfiguration 结束 success=true channels= 4 providers= 0" type="qdebug" -->
+  </testcase>
+  <testcase result="pass" name="projectClosedStopsRuntimeSession">
+    <!-- message="[MonitorManager] applyConfiguration 开始 project= &quot;&quot; providers= 0 mappings= 0" type="qdebug" -->
+    <!-- message="[MonitorManager] applyConfiguration 结束 success=true channels= 4 providers= 0" type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:37.618 SettingsController 已创建" type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:37.621 已加载应用设置: 项目目录=C:/Users/Ryan, 自动滚动=1, 字体索引=1, 布局版本=1" type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:37.621 ProjectController 已创建" type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:37.622 已加载 5 个最近项目" type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:37.622 BuildController created." type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:37.622 控制器已创建" type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:37.632 SnippetRepository 已创建" type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:37.636 已加载 140 个默认 Snippets" type="qdebug" -->
+    <!-- message="[MonitorExportHelper] 导出助手已创建" type="qdebug" -->
+    <!-- message="[MonitorManager] 数据处理器已设置: 启用增量分发" type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:38.118 控制器信号已连接" type="qdebug" -->
+    <!-- message="[INFO] 09:13:38.971 MainWindow 初始化完成" type="qinfo" -->
+    <!-- message="[DEBUG] 09:13:38.995 已加载 140 个默认 Snippets" type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:39.056 已保存应用设置" type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:39.057 已保存最近项目列表" type="qdebug" -->
+    <!-- message="[INFO] 09:13:39.057 MainWindow 已销毁" type="qinfo" -->
+    <!-- message="[DEBUG] 09:13:39.057 SettingsController 已销毁" type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:39.057 ProjectController 已销毁" type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:39.057 BuildController destroyed." type="qdebug" -->
+    <!-- message="[MonitorManager] 数据处理器已设置: 禁用增量分发" type="qdebug" -->
+    <!-- message="[MonitorExportHelper] 导出助手已销毁" type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:39.083 SnippetRepository 已销毁" type="qdebug" -->
+    <!-- message="[MonitorManager] applyConfiguration 开始 project= &quot;&quot; providers= 0 mappings= 0" type="qdebug" -->
+    <!-- message="[MonitorManager] applyConfiguration 结束 success=true channels= 4 providers= 0" type="qdebug" -->
+  </testcase>
+  <testcase result="pass" name="stopActionStopsConnectedAndFaultSessions">
+    <!-- message="[MonitorManager] applyConfiguration 开始 project= &quot;&quot; providers= 0 mappings= 0" type="qdebug" -->
+    <!-- message="[MonitorManager] applyConfiguration 结束 success=true channels= 4 providers= 0" type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:39.084 SettingsController 已创建" type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:39.086 已加载应用设置: 项目目录=C:/Users/Ryan, 自动滚动=1, 字体索引=1, 布局版本=1" type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:39.086 ProjectController 已创建" type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:39.087 已加载 5 个最近项目" type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:39.087 BuildController created." type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:39.087 控制器已创建" type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:39.098 SnippetRepository 已创建" type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:39.102 已加载 140 个默认 Snippets" type="qdebug" -->
+    <!-- message="[MonitorExportHelper] 导出助手已创建" type="qdebug" -->
+    <!-- message="[MonitorManager] 数据处理器已设置: 启用增量分发" type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:39.581 控制器信号已连接" type="qdebug" -->
+    <!-- message="[INFO] 09:13:40.427 MainWindow 初始化完成" type="qinfo" -->
+    <!-- message="[INFO] 09:13:40.428 [VirtualDeviceBackend] connected" type="qinfo" -->
+    <!-- message="[MonitorManager] device backend set: VirtualDeviceBackend(0x6cce710)" type="qdebug" -->
+    <!-- message="[MonitorManager] backend connectionStateChanged: false" type="qdebug" -->
+    <!-- message="[INFO] 09:13:40.437 [VirtualDeviceBackend] disconnected" type="qinfo" -->
+    <!-- message="[MonitorManager] backend connectionStateChanged: true" type="qdebug" -->
+    <!-- message="[INFO] 09:13:40.442 [VirtualDeviceBackend] connected" type="qinfo" -->
+    <!-- message="[MonitorManager] backend connectionStateChanged: false" type="qdebug" -->
+    <!-- message="[INFO] 09:13:40.453 [VirtualDeviceBackend] disconnected" type="qinfo" -->
+    <!-- message="[MonitorManager] device backend cleared" type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:40.504 已保存应用设置" type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:40.504 已保存最近项目列表" type="qdebug" -->
+    <!-- message="[INFO] 09:13:40.504 MainWindow 已销毁" type="qinfo" -->
+    <!-- message="[DEBUG] 09:13:40.504 SettingsController 已销毁" type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:40.504 ProjectController 已销毁" type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:40.504 BuildController destroyed." type="qdebug" -->
+    <!-- message="[MonitorManager] 数据处理器已设置: 禁用增量分发" type="qdebug" -->
+    <!-- message="[MonitorExportHelper] 导出助手已销毁" type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:40.531 SnippetRepository 已销毁" type="qdebug" -->
+    <!-- message="[MonitorManager] applyConfiguration 开始 project= &quot;&quot; providers= 0 mappings= 0" type="qdebug" -->
+    <!-- message="[MonitorManager] applyConfiguration 结束 success=true channels= 4 providers= 0" type="qdebug" -->
+  </testcase>
+  <testcase result="pass" name="generatedBuildArtifactsUseLhProjectModel">
+    <!-- message="[MonitorManager] applyConfiguration 开始 project= &quot;&quot; providers= 0 mappings= 0" type="qdebug" -->
+    <!-- message="[MonitorManager] applyConfiguration 结束 success=true channels= 4 providers= 0" type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:40.535 BuildController created." type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:40.755 BuildController destroyed." type="qdebug" -->
+    <!-- message="[MonitorManager] applyConfiguration 开始 project= &quot;&quot; providers= 0 mappings= 0" type="qdebug" -->
+    <!-- message="[MonitorManager] applyConfiguration 结束 success=true channels= 4 providers= 0" type="qdebug" -->
+  </testcase>
+  <testcase name="parameterArtifactFailurePreservesPreviousFiles">
+    <!-- message="[MonitorManager] applyConfiguration 开始 project= &quot;&quot; providers= 0 mappings= 0" type="qdebug" -->
+    <!-- message="[MonitorManager] applyConfiguration 结束 success=true channels= 4 providers= 0" type="qdebug" -->
+    <!-- message="需要以 LH_ENABLE_TEST_FAILURE_INJECTION=ON 构建测试注入路径。" type="skip" -->
+    <!-- message="[MonitorManager] applyConfiguration 开始 project= &quot;&quot; providers= 0 mappings= 0" type="qdebug" -->
+    <!-- message="[MonitorManager] applyConfiguration 结束 success=true channels= 4 providers= 0" type="qdebug" -->
+  </testcase>
+  <testcase result="pass" name="productionBuildIgnoresFaultInjectionProperties">
+    <!-- message="[MonitorManager] applyConfiguration 开始 project= &quot;&quot; providers= 0 mappings= 0" type="qdebug" -->
+    <!-- message="[MonitorManager] applyConfiguration 结束 success=true channels= 4 providers= 0" type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:40.770 BuildController created." type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:40.797 BuildController destroyed." type="qdebug" -->
+    <!-- message="[MonitorManager] applyConfiguration 开始 project= &quot;&quot; providers= 0 mappings= 0" type="qdebug" -->
+    <!-- message="[MonitorManager] applyConfiguration 结束 success=true channels= 4 providers= 0" type="qdebug" -->
+  </testcase>
+  <testcase result="pass" name="cancelBeforeCompilerStartEmitsSingleTerminal">
+    <!-- message="[MonitorManager] applyConfiguration 开始 project= &quot;&quot; providers= 0 mappings= 0" type="qdebug" -->
+    <!-- message="[MonitorManager] applyConfiguration 结束 success=true channels= 4 providers= 0" type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:40.806 BuildController created." type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:40.807 BuildController destroyed." type="qdebug" -->
+    <!-- message="[MonitorManager] applyConfiguration 开始 project= &quot;&quot; providers= 0 mappings= 0" type="qdebug" -->
+    <!-- message="[MonitorManager] applyConfiguration 结束 success=true channels= 4 providers= 0" type="qdebug" -->
+  </testcase>
+  <testcase name="parameterArtifactFailureLeavesNoNewFormalFiles">
+    <!-- message="[MonitorManager] applyConfiguration 开始 project= &quot;&quot; providers= 0 mappings= 0" type="qdebug" -->
+    <!-- message="[MonitorManager] applyConfiguration 结束 success=true channels= 4 providers= 0" type="qdebug" -->
+    <!-- message="需要以 LH_ENABLE_TEST_FAILURE_INJECTION=ON 构建测试注入路径。" type="skip" -->
+    <!-- message="[MonitorManager] applyConfiguration 开始 project= &quot;&quot; providers= 0 mappings= 0" type="qdebug" -->
+    <!-- message="[MonitorManager] applyConfiguration 结束 success=true channels= 4 providers= 0" type="qdebug" -->
+  </testcase>
+  <testcase name="communicationArtifactFailureLeavesNoNewFormalFiles">
+    <!-- message="[MonitorManager] applyConfiguration 开始 project= &quot;&quot; providers= 0 mappings= 0" type="qdebug" -->
+    <!-- message="[MonitorManager] applyConfiguration 结束 success=true channels= 4 providers= 0" type="qdebug" -->
+    <!-- message="需要以 LH_ENABLE_TEST_FAILURE_INJECTION=ON 构建测试注入路径。" type="skip" -->
+    <!-- message="[MonitorManager] applyConfiguration 开始 project= &quot;&quot; providers= 0 mappings= 0" type="qdebug" -->
+    <!-- message="[MonitorManager] applyConfiguration 结束 success=true channels= 4 providers= 0" type="qdebug" -->
+  </testcase>
+  <testcase result="pass" name="outputPanePlainTextSafetyAndFormatting">
+    <!-- message="[MonitorManager] applyConfiguration 开始 project= &quot;&quot; providers= 0 mappings= 0" type="qdebug" -->
+    <!-- message="[MonitorManager] applyConfiguration 结束 success=true channels= 4 providers= 0" type="qdebug" -->
+    <!-- message="[MonitorManager] applyConfiguration 开始 project= &quot;&quot; providers= 0 mappings= 0" type="qdebug" -->
+    <!-- message="[MonitorManager] applyConfiguration 结束 success=true channels= 4 providers= 0" type="qdebug" -->
+  </testcase>
+  <testcase result="pass" name="outputPaneCapacityBlockLimitAndTruncation">
+    <!-- message="[MonitorManager] applyConfiguration 开始 project= &quot;&quot; providers= 0 mappings= 0" type="qdebug" -->
+    <!-- message="[MonitorManager] applyConfiguration 结束 success=true channels= 4 providers= 0" type="qdebug" -->
+    <!-- message="[MonitorManager] applyConfiguration 开始 project= &quot;&quot; providers= 0 mappings= 0" type="qdebug" -->
+    <!-- message="[MonitorManager] applyConfiguration 结束 success=true channels= 4 providers= 0" type="qdebug" -->
+  </testcase>
+  <testcase result="pass" name="captureBaselineEvidence">
+    <!-- message="[MonitorManager] applyConfiguration 开始 project= &quot;&quot; providers= 0 mappings= 0" type="qdebug" -->
+    <!-- message="[MonitorManager] applyConfiguration 结束 success=true channels= 4 providers= 0" type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:48.381 SettingsController 已创建" type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:48.383 已加载应用设置: 项目目录=C:/Users/Ryan, 自动滚动=1, 字体索引=1, 布局版本=1" type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:48.383 ProjectController 已创建" type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:48.383 已加载 5 个最近项目" type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:48.383 BuildController created." type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:48.383 控制器已创建" type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:48.394 SnippetRepository 已创建" type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:48.398 已加载 140 个默认 Snippets" type="qdebug" -->
+    <!-- message="[MonitorExportHelper] 导出助手已创建" type="qdebug" -->
+    <!-- message="[MonitorManager] 数据处理器已设置: 启用增量分发" type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:48.827 控制器信号已连接" type="qdebug" -->
+    <!-- message="[INFO] 09:13:49.610 MainWindow 初始化完成" type="qinfo" -->
+    <!-- message="[DEBUG] 09:13:50.160 已加载 140 个默认 Snippets" type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:51.202 已保存应用设置" type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:51.203 已保存最近项目列表" type="qdebug" -->
+    <!-- message="[INFO] 09:13:51.203 MainWindow 已销毁" type="qinfo" -->
+    <!-- message="[DEBUG] 09:13:51.224 SettingsController 已销毁" type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:51.224 ProjectController 已销毁" type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:51.224 BuildController destroyed." type="qdebug" -->
+    <!-- message="[MonitorManager] 数据处理器已设置: 禁用增量分发" type="qdebug" -->
+    <!-- message="[MonitorExportHelper] 导出助手已销毁" type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:51.247 SnippetRepository 已销毁" type="qdebug" -->
+    <!-- message="[MonitorManager] applyConfiguration 开始 project= &quot;&quot; providers= 0 mappings= 0" type="qdebug" -->
+    <!-- message="[MonitorManager] applyConfiguration 结束 success=true channels= 4 providers= 0" type="qdebug" -->
+  </testcase>
+  <testcase result="pass" name="unifiedQActionConsistencyTest">
+    <!-- message="[MonitorManager] applyConfiguration 开始 project= &quot;&quot; providers= 0 mappings= 0" type="qdebug" -->
+    <!-- message="[MonitorManager] applyConfiguration 结束 success=true channels= 4 providers= 0" type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:51.261 SettingsController 已创建" type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:51.263 已加载应用设置: 项目目录=C:/Users/Ryan, 自动滚动=1, 字体索引=1, 布局版本=1" type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:51.263 ProjectController 已创建" type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:51.263 已加载 5 个最近项目" type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:51.263 BuildController created." type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:51.264 控制器已创建" type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:51.276 SnippetRepository 已创建" type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:51.280 已加载 140 个默认 Snippets" type="qdebug" -->
+    <!-- message="[MonitorExportHelper] 导出助手已创建" type="qdebug" -->
+    <!-- message="[MonitorManager] 数据处理器已设置: 启用增量分发" type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:51.722 控制器信号已连接" type="qdebug" -->
+    <!-- message="[INFO] 09:13:52.520 MainWindow 初始化完成" type="qinfo" -->
+    <!-- message="[DEBUG] 09:13:52.564 已保存应用设置" type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:52.564 已保存最近项目列表" type="qdebug" -->
+    <!-- message="[INFO] 09:13:52.564 MainWindow 已销毁" type="qinfo" -->
+    <!-- message="[DEBUG] 09:13:52.564 SettingsController 已销毁" type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:52.564 ProjectController 已销毁" type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:52.564 BuildController destroyed." type="qdebug" -->
+    <!-- message="[MonitorManager] 数据处理器已设置: 禁用增量分发" type="qdebug" -->
+    <!-- message="[MonitorExportHelper] 导出助手已销毁" type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:52.583 SnippetRepository 已销毁" type="qdebug" -->
+    <!-- message="[MonitorManager] applyConfiguration 开始 project= &quot;&quot; providers= 0 mappings= 0" type="qdebug" -->
+    <!-- message="[MonitorManager] applyConfiguration 结束 success=true channels= 4 providers= 0" type="qdebug" -->
+  </testcase>
+  <testcase result="pass" name="defaultLayoutAndResetU02Test">
+    <!-- message="[MonitorManager] applyConfiguration 开始 project= &quot;&quot; providers= 0 mappings= 0" type="qdebug" -->
+    <!-- message="[MonitorManager] applyConfiguration 结束 success=true channels= 4 providers= 0" type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:52.585 SettingsController 已创建" type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:52.587 已加载应用设置: 项目目录=C:/Users/Ryan, 自动滚动=1, 字体索引=1, 布局版本=1" type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:52.587 ProjectController 已创建" type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:52.588 已加载 5 个最近项目" type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:52.588 BuildController created." type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:52.588 控制器已创建" type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:52.598 SnippetRepository 已创建" type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:52.602 已加载 140 个默认 Snippets" type="qdebug" -->
+    <!-- message="[MonitorExportHelper] 导出助手已创建" type="qdebug" -->
+    <!-- message="[MonitorManager] 数据处理器已设置: 启用增量分发" type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:53.053 控制器信号已连接" type="qdebug" -->
+    <!-- message="[INFO] 09:13:53.835 MainWindow 初始化完成" type="qinfo" -->
+    <!-- message="[DEBUG] 09:13:53.837 已加载应用设置: 项目目录=C:/Users/Ryan, 自动滚动=1, 字体索引=1, 布局版本=1" type="qdebug" -->
+    <!-- message="logDock minimumHeight: 162 minimumSizeHint: QSize(415, 162)" type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:54.726 已保存应用设置" type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:54.726 已保存最近项目列表" type="qdebug" -->
+    <!-- message="[INFO] 09:13:54.726 MainWindow 已销毁" type="qinfo" -->
+    <!-- message="[DEBUG] 09:13:54.738 SettingsController 已销毁" type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:54.738 ProjectController 已销毁" type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:54.738 BuildController destroyed." type="qdebug" -->
+    <!-- message="[MonitorManager] 数据处理器已设置: 禁用增量分发" type="qdebug" -->
+    <!-- message="[MonitorExportHelper] 导出助手已销毁" type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:54.753 SnippetRepository 已销毁" type="qdebug" -->
+    <!-- message="[MonitorManager] applyConfiguration 开始 project= &quot;&quot; providers= 0 mappings= 0" type="qdebug" -->
+    <!-- message="[MonitorManager] applyConfiguration 结束 success=true channels= 4 providers= 0" type="qdebug" -->
+  </testcase>
+  <testcase result="pass" name="workspaceRoutingAndPersistenceU03Test">
+    <!-- message="[MonitorManager] applyConfiguration 开始 project= &quot;&quot; providers= 0 mappings= 0" type="qdebug" -->
+    <!-- message="[MonitorManager] applyConfiguration 结束 success=true channels= 4 providers= 0" type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:54.765 SettingsController 已创建" type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:54.766 已加载应用设置: 项目目录=C:/Users/Ryan, 自动滚动=1, 字体索引=1, 布局版本=1" type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:54.767 ProjectController 已创建" type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:54.767 已加载 5 个最近项目" type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:54.767 BuildController created." type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:54.767 控制器已创建" type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:54.779 SnippetRepository 已创建" type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:54.783 已加载 140 个默认 Snippets" type="qdebug" -->
+    <!-- message="[MonitorExportHelper] 导出助手已创建" type="qdebug" -->
+    <!-- message="[MonitorManager] 数据处理器已设置: 启用增量分发" type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:55.219 控制器信号已连接" type="qdebug" -->
+    <!-- message="[INFO] 09:13:56.023 MainWindow 初始化完成" type="qinfo" -->
+    <!-- message="[DEBUG] 09:13:56.024 已加载应用设置: 项目目录=C:/Users/Ryan, 自动滚动=1, 字体索引=1, 布局版本=0" type="qdebug" -->
+    <!-- message="[INFO] 09:13:56.802 [VirtualDeviceBackend] connected" type="qinfo" -->
+    <!-- message="[MonitorManager] device backend set: VirtualDeviceBackend(0x6cce390)" type="qdebug" -->
+    <!-- message="[MonitorManager] 通道已存在，更新配置: &quot;系统压力&quot;" type="qdebug" -->
+    <!-- message="[MonitorManager] 通道已存在，更新配置: &quot;系统流量&quot;" type="qdebug" -->
+    <!-- message="[MonitorManager] 通道已存在，更新配置: &quot;系统温度&quot;" type="qdebug" -->
+    <!-- message="[MonitorManager] 通道已存在，更新配置: &quot;阀芯位置&quot;" type="qdebug" -->
+    <!-- message="[MonitorManager] 监控已启动" type="qdebug" -->
+    <!-- message="[MonitorManager] 监控已停止" type="qdebug" -->
+    <!-- message="[MonitorManager] device backend cleared" type="qdebug" -->
+    <!-- message="[INFO] 09:13:58.221 [VirtualDeviceBackend] disconnected" type="qinfo" -->
+    <!-- message="[DEBUG] 09:13:58.667 SettingsController 已创建" type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:58.669 已加载应用设置: 项目目录=C:/Users/Ryan, 自动滚动=1, 字体索引=1, 布局版本=1" type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:58.670 ProjectController 已创建" type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:58.670 已加载 5 个最近项目" type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:58.670 BuildController created." type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:58.670 控制器已创建" type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:58.682 SnippetRepository 已创建" type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:58.688 已加载 140 个默认 Snippets" type="qdebug" -->
+    <!-- message="[MonitorExportHelper] 导出助手已创建" type="qdebug" -->
+    <!-- message="[MonitorManager] 数据处理器已设置: 启用增量分发" type="qdebug" -->
+    <!-- message="[DEBUG] 09:13:59.157 控制器信号已连接" type="qdebug" -->
+    <!-- message="[INFO] 09:14:00.885 MainWindow 初始化完成" type="qinfo" -->
+    <!-- message="[DEBUG] 09:14:00.887 已加载应用设置: 项目目录=C:/Users/Ryan, 自动滚动=1, 字体索引=1, 布局版本=1" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:01.424 已保存应用设置" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:01.424 已保存最近项目列表" type="qdebug" -->
+    <!-- message="[INFO] 09:14:01.424 MainWindow 已销毁" type="qinfo" -->
+    <!-- message="[DEBUG] 09:14:01.443 SettingsController 已销毁" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:01.443 ProjectController 已销毁" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:01.443 BuildController destroyed." type="qdebug" -->
+    <!-- message="[MonitorManager] 数据处理器已设置: 禁用增量分发" type="qdebug" -->
+    <!-- message="[MonitorExportHelper] 导出助手已销毁" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:01.457 SnippetRepository 已销毁" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:01.469 SettingsController 已创建" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:01.471 已加载应用设置: 项目目录=C:/Users/Ryan, 自动滚动=1, 字体索引=1, 布局版本=1" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:01.472 ProjectController 已创建" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:01.472 已加载 5 个最近项目" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:01.472 BuildController created." type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:01.472 控制器已创建" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:01.486 SnippetRepository 已创建" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:01.490 已加载 140 个默认 Snippets" type="qdebug" -->
+    <!-- message="[MonitorExportHelper] 导出助手已创建" type="qdebug" -->
+    <!-- message="[MonitorManager] 数据处理器已设置: 启用增量分发" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:01.919 控制器信号已连接" type="qdebug" -->
+    <!-- message="[INFO] 09:14:03.642 MainWindow 初始化完成" type="qinfo" -->
+    <!-- message="[DEBUG] 09:14:03.643 已加载应用设置: 项目目录=C:/Users/Ryan, 自动滚动=1, 字体索引=1, 布局版本=9999" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:03.939 已保存应用设置" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:03.939 已保存最近项目列表" type="qdebug" -->
+    <!-- message="[INFO] 09:14:03.939 MainWindow 已销毁" type="qinfo" -->
+    <!-- message="[DEBUG] 09:14:03.958 SettingsController 已销毁" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:03.958 ProjectController 已销毁" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:03.958 BuildController destroyed." type="qdebug" -->
+    <!-- message="[MonitorManager] 数据处理器已设置: 禁用增量分发" type="qdebug" -->
+    <!-- message="[MonitorExportHelper] 导出助手已销毁" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:03.970 SnippetRepository 已销毁" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:04.205 已保存应用设置" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:04.206 已保存最近项目列表" type="qdebug" -->
+    <!-- message="[INFO] 09:14:04.206 MainWindow 已销毁" type="qinfo" -->
+    <!-- message="[DEBUG] 09:14:04.226 SettingsController 已销毁" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:04.227 ProjectController 已销毁" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:04.227 BuildController destroyed." type="qdebug" -->
+    <!-- message="[MonitorExportHelper] 导出助手已销毁" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:04.292 SnippetRepository 已销毁" type="qdebug" -->
+    <!-- message="[MonitorManager] applyConfiguration 开始 project= &quot;&quot; providers= 0 mappings= 0" type="qdebug" -->
+    <!-- message="[MonitorManager] applyConfiguration 结束 success=true channels= 4 providers= 0" type="qdebug" -->
+  </testcase>
+  <testcase result="pass" name="centralizedStatusAndDemandOutputU04Test">
+    <!-- message="[MonitorManager] applyConfiguration 开始 project= &quot;&quot; providers= 0 mappings= 0" type="qdebug" -->
+    <!-- message="[MonitorManager] applyConfiguration 结束 success=true channels= 4 providers= 0" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:04.329 SettingsController 已创建" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:04.331 已加载应用设置: 项目目录=C:/Users/Ryan, 自动滚动=1, 字体索引=1, 布局版本=1" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:04.332 ProjectController 已创建" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:04.332 已加载 5 个最近项目" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:04.332 BuildController created." type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:04.332 控制器已创建" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:04.346 SnippetRepository 已创建" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:04.351 已加载 140 个默认 Snippets" type="qdebug" -->
+    <!-- message="[MonitorExportHelper] 导出助手已创建" type="qdebug" -->
+    <!-- message="[MonitorManager] 数据处理器已设置: 启用增量分发" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:04.867 控制器信号已连接" type="qdebug" -->
+    <!-- message="[INFO] 09:14:05.617 MainWindow 初始化完成" type="qinfo" -->
+    <!-- message="[DEBUG] 09:14:05.624 已加载应用设置: 项目目录=C:/Users/Ryan, 自动滚动=1, 字体索引=1, 布局版本=1" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:06.813 已保存应用设置" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:06.813 已保存最近项目列表" type="qdebug" -->
+    <!-- message="[INFO] 09:14:06.814 MainWindow 已销毁" type="qinfo" -->
+    <!-- message="[DEBUG] 09:14:06.831 SettingsController 已销毁" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:06.831 ProjectController 已销毁" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:06.831 BuildController destroyed." type="qdebug" -->
+    <!-- message="[MonitorManager] 数据处理器已设置: 禁用增量分发" type="qdebug" -->
+    <!-- message="[MonitorExportHelper] 导出助手已销毁" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:06.847 SnippetRepository 已销毁" type="qdebug" -->
+    <!-- message="[MonitorManager] applyConfiguration 开始 project= &quot;&quot; providers= 0 mappings= 0" type="qdebug" -->
+    <!-- message="[MonitorManager] applyConfiguration 结束 success=true channels= 4 providers= 0" type="qdebug" -->
+  </testcase>
+  <testcase result="pass" name="programmingSidebarAndEditorU05Test">
+    <!-- message="[MonitorManager] applyConfiguration 开始 project= &quot;&quot; providers= 0 mappings= 0" type="qdebug" -->
+    <!-- message="[MonitorManager] applyConfiguration 结束 success=true channels= 4 providers= 0" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:06.863 SettingsController 已创建" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:06.865 已加载应用设置: 项目目录=C:/Users/Ryan, 自动滚动=1, 字体索引=1, 布局版本=1" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:06.866 ProjectController 已创建" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:06.866 已加载 5 个最近项目" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:06.866 BuildController created." type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:06.866 控制器已创建" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:06.880 SnippetRepository 已创建" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:06.884 已加载 140 个默认 Snippets" type="qdebug" -->
+    <!-- message="[MonitorExportHelper] 导出助手已创建" type="qdebug" -->
+    <!-- message="[MonitorManager] 数据处理器已设置: 启用增量分发" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:07.319 控制器信号已连接" type="qdebug" -->
+    <!-- message="[INFO] 09:14:08.098 MainWindow 初始化完成" type="qinfo" -->
+    <!-- message="[DEBUG] 09:14:08.100 已加载应用设置: 项目目录=C:/Users/Ryan, 自动滚动=1, 字体索引=1, 布局版本=1" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:10.126 已保存应用设置" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:10.126 已保存最近项目列表" type="qdebug" -->
+    <!-- message="[INFO] 09:14:10.126 MainWindow 已销毁" type="qinfo" -->
+    <!-- message="[DEBUG] 09:14:10.136 SettingsController 已销毁" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:10.137 ProjectController 已销毁" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:10.137 BuildController destroyed." type="qdebug" -->
+    <!-- message="[MonitorManager] 数据处理器已设置: 禁用增量分发" type="qdebug" -->
+    <!-- message="[MonitorExportHelper] 导出助手已销毁" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:10.152 SnippetRepository 已销毁" type="qdebug" -->
+    <!-- message="[MonitorManager] applyConfiguration 开始 project= &quot;&quot; providers= 0 mappings= 0" type="qdebug" -->
+    <!-- message="[MonitorManager] applyConfiguration 结束 success=true channels= 4 providers= 0" type="qdebug" -->
+  </testcase>
+  <testcase result="pass" name="monitorStreamliningU06Test">
+    <!-- message="[MonitorManager] applyConfiguration 开始 project= &quot;&quot; providers= 0 mappings= 0" type="qdebug" -->
+    <!-- message="[MonitorManager] applyConfiguration 结束 success=true channels= 4 providers= 0" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:10.172 SettingsController 已创建" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:10.174 已加载应用设置: 项目目录=C:/Users/Ryan, 自动滚动=1, 字体索引=1, 布局版本=1" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:10.175 ProjectController 已创建" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:10.175 已加载 5 个最近项目" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:10.175 BuildController created." type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:10.176 控制器已创建" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:10.197 SnippetRepository 已创建" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:10.202 已加载 140 个默认 Snippets" type="qdebug" -->
+    <!-- message="[MonitorExportHelper] 导出助手已创建" type="qdebug" -->
+    <!-- message="[MonitorManager] 数据处理器已设置: 启用增量分发" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:10.712 控制器信号已连接" type="qdebug" -->
+    <!-- message="[INFO] 09:14:11.562 MainWindow 初始化完成" type="qinfo" -->
+    <!-- message="[DEBUG] 09:14:11.564 已加载应用设置: 项目目录=C:/Users/Ryan, 自动滚动=1, 字体索引=1, 布局版本=1" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:12.513 已保存应用设置" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:12.513 已保存最近项目列表" type="qdebug" -->
+    <!-- message="[INFO] 09:14:12.513 MainWindow 已销毁" type="qinfo" -->
+    <!-- message="[DEBUG] 09:14:12.533 SettingsController 已销毁" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:12.533 ProjectController 已销毁" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:12.533 BuildController destroyed." type="qdebug" -->
+    <!-- message="[MonitorManager] 数据处理器已设置: 禁用增量分发" type="qdebug" -->
+    <!-- message="[MonitorExportHelper] 导出助手已销毁" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:12.554 SnippetRepository 已销毁" type="qdebug" -->
+    <!-- message="[MonitorManager] applyConfiguration 开始 project= &quot;&quot; providers= 0 mappings= 0" type="qdebug" -->
+    <!-- message="[MonitorManager] applyConfiguration 结束 success=true channels= 4 providers= 0" type="qdebug" -->
+  </testcase>
+  <testcase result="pass" name="parameterTuningCompatibilityU07Test">
+    <!-- message="[MonitorManager] applyConfiguration 开始 project= &quot;&quot; providers= 0 mappings= 0" type="qdebug" -->
+    <!-- message="[MonitorManager] applyConfiguration 结束 success=true channels= 4 providers= 0" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:12.577 SettingsController 已创建" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:12.580 已加载应用设置: 项目目录=C:/Users/Ryan, 自动滚动=1, 字体索引=1, 布局版本=1" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:12.581 ProjectController 已创建" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:12.581 已加载 5 个最近项目" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:12.581 BuildController created." type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:12.581 控制器已创建" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:12.603 SnippetRepository 已创建" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:12.608 已加载 140 个默认 Snippets" type="qdebug" -->
+    <!-- message="[MonitorExportHelper] 导出助手已创建" type="qdebug" -->
+    <!-- message="[MonitorManager] 数据处理器已设置: 启用增量分发" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:13.189 控制器信号已连接" type="qdebug" -->
+    <!-- message="[INFO] 09:14:14.135 MainWindow 初始化完成" type="qinfo" -->
+    <!-- message="[MonitorManager] 通道已存在，更新配置: &quot;系统压力&quot;" type="qdebug" -->
+    <!-- message="[MonitorManager] 通道已存在，更新配置: &quot;系统流量&quot;" type="qdebug" -->
+    <!-- message="[MonitorManager] 通道已存在，更新配置: &quot;系统温度&quot;" type="qdebug" -->
+    <!-- message="[MonitorManager] 通道已存在，更新配置: &quot;阀芯位置&quot;" type="qdebug" -->
+    <!-- message="[MonitorManager] 监控已启动" type="qdebug" -->
+    <!-- message="[MonitorWidget] 监控已启动，providers= 0" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:15.964 已保存应用设置" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:15.964 已保存最近项目列表" type="qdebug" -->
+    <!-- message="[INFO] 09:14:15.964 MainWindow 已销毁" type="qinfo" -->
+    <!-- message="[DEBUG] 09:14:15.983 SettingsController 已销毁" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:15.983 ProjectController 已销毁" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:15.983 BuildController destroyed." type="qdebug" -->
+    <!-- message="[MonitorManager] 监控已停止" type="qdebug" -->
+    <!-- message="[MonitorWidget] Monitoring stopped." type="qdebug" -->
+    <!-- message="[MonitorManager] 数据处理器已设置: 禁用增量分发" type="qdebug" -->
+    <!-- message="[MonitorExportHelper] 导出助手已销毁" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:16.043 SnippetRepository 已销毁" type="qdebug" -->
+    <!-- message="[MonitorManager] applyConfiguration 开始 project= &quot;&quot; providers= 0 mappings= 0" type="qdebug" -->
+    <!-- message="[MonitorManager] applyConfiguration 结束 success=true channels= 4 providers= 0" type="qdebug" -->
+  </testcase>
+  <testcase result="pass" name="deviceWorkspaceHierarchyU08Test">
+    <!-- message="[MonitorManager] applyConfiguration 开始 project= &quot;&quot; providers= 0 mappings= 0" type="qdebug" -->
+    <!-- message="[MonitorManager] applyConfiguration 结束 success=true channels= 4 providers= 0" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:16.081 SettingsController 已创建" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:16.082 已加载应用设置: 项目目录=C:/Users/Ryan, 自动滚动=1, 字体索引=1, 布局版本=1" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:16.083 ProjectController 已创建" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:16.083 已加载 5 个最近项目" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:16.083 BuildController created." type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:16.083 控制器已创建" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:16.094 SnippetRepository 已创建" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:16.098 已加载 140 个默认 Snippets" type="qdebug" -->
+    <!-- message="[MonitorExportHelper] 导出助手已创建" type="qdebug" -->
+    <!-- message="[MonitorManager] 数据处理器已设置: 启用增量分发" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:16.558 控制器信号已连接" type="qdebug" -->
+    <!-- message="[INFO] 09:14:17.375 MainWindow 初始化完成" type="qinfo" -->
+    <!-- message="[DEBUG] 09:14:18.430 已保存应用设置" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:18.430 已保存最近项目列表" type="qdebug" -->
+    <!-- message="[INFO] 09:14:18.430 MainWindow 已销毁" type="qinfo" -->
+    <!-- message="[DEBUG] 09:14:18.448 SettingsController 已销毁" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:18.448 ProjectController 已销毁" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:18.448 BuildController destroyed." type="qdebug" -->
+    <!-- message="[MonitorManager] 数据处理器已设置: 禁用增量分发" type="qdebug" -->
+    <!-- message="[MonitorExportHelper] 导出助手已销毁" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:18.467 SnippetRepository 已销毁" type="qdebug" -->
+    <!-- message="[MonitorManager] applyConfiguration 开始 project= &quot;&quot; providers= 0 mappings= 0" type="qdebug" -->
+    <!-- message="[MonitorManager] applyConfiguration 结束 success=true channels= 4 providers= 0" type="qdebug" -->
+  </testcase>
+  <testcase result="pass" name="unifiedVisualAndSettingsU09Test">
+    <!-- message="[MonitorManager] applyConfiguration 开始 project= &quot;&quot; providers= 0 mappings= 0" type="qdebug" -->
+    <!-- message="[MonitorManager] applyConfiguration 结束 success=true channels= 4 providers= 0" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:18.485 SettingsController 已创建" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:18.488 已加载应用设置: 项目目录=C:/Users/Ryan, 自动滚动=1, 字体索引=1, 布局版本=1" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:18.488 ProjectController 已创建" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:18.489 已加载 5 个最近项目" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:18.489 BuildController created." type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:18.489 控制器已创建" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:18.500 SnippetRepository 已创建" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:18.505 已加载 140 个默认 Snippets" type="qdebug" -->
+    <!-- message="[MonitorExportHelper] 导出助手已创建" type="qdebug" -->
+    <!-- message="[MonitorManager] 数据处理器已设置: 启用增量分发" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:18.990 控制器信号已连接" type="qdebug" -->
+    <!-- message="[INFO] 09:14:19.828 MainWindow 初始化完成" type="qinfo" -->
+    <!-- message="[DEBUG] 09:14:21.473 已保存应用设置" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:21.473 已保存最近项目列表" type="qdebug" -->
+    <!-- message="[INFO] 09:14:21.473 MainWindow 已销毁" type="qinfo" -->
+    <!-- message="[DEBUG] 09:14:21.491 SettingsController 已销毁" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:21.492 ProjectController 已销毁" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:21.492 BuildController destroyed." type="qdebug" -->
+    <!-- message="[MonitorManager] 数据处理器已设置: 禁用增量分发" type="qdebug" -->
+    <!-- message="[MonitorExportHelper] 导出助手已销毁" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:21.512 SnippetRepository 已销毁" type="qdebug" -->
+    <!-- message="[MonitorManager] applyConfiguration 开始 project= &quot;&quot; providers= 0 mappings= 0" type="qdebug" -->
+    <!-- message="[MonitorManager] applyConfiguration 结束 success=true channels= 4 providers= 0" type="qdebug" -->
+  </testcase>
+  <testcase result="pass" name="devicePauseStateAndActionsF01F02Test">
+    <!-- message="[MonitorManager] applyConfiguration 开始 project= &quot;&quot; providers= 0 mappings= 0" type="qdebug" -->
+    <!-- message="[MonitorManager] applyConfiguration 结束 success=true channels= 4 providers= 0" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:21.531 SettingsController 已创建" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:21.533 已加载应用设置: 项目目录=C:/Users/Ryan, 自动滚动=1, 字体索引=1, 布局版本=1" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:21.534 ProjectController 已创建" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:21.535 已加载 5 个最近项目" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:21.535 BuildController created." type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:21.535 控制器已创建" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:21.551 SnippetRepository 已创建" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:21.555 已加载 140 个默认 Snippets" type="qdebug" -->
+    <!-- message="[MonitorExportHelper] 导出助手已创建" type="qdebug" -->
+    <!-- message="[MonitorManager] 数据处理器已设置: 启用增量分发" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:21.994 控制器信号已连接" type="qdebug" -->
+    <!-- message="[INFO] 09:14:22.816 MainWindow 初始化完成" type="qinfo" -->
+    <!-- message="[DEBUG] 09:14:23.113 已加载 140 个默认 Snippets" type="qdebug" -->
+    <!-- message="[MonitorManager] 通道已存在，更新配置: &quot;系统压力&quot;" type="qdebug" -->
+    <!-- message="[MonitorManager] 通道已存在，更新配置: &quot;系统流量&quot;" type="qdebug" -->
+    <!-- message="[MonitorManager] 通道已存在，更新配置: &quot;系统温度&quot;" type="qdebug" -->
+    <!-- message="[MonitorManager] 通道已存在，更新配置: &quot;阀芯位置&quot;" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:23.324 已保存应用设置" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:23.325 已保存最近项目列表" type="qdebug" -->
+    <!-- message="[INFO] 09:14:23.325 MainWindow 已销毁" type="qinfo" -->
+    <!-- message="[DEBUG] 09:14:23.340 SettingsController 已销毁" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:23.340 ProjectController 已销毁" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:23.340 BuildController destroyed." type="qdebug" -->
+    <!-- message="[MonitorManager] 数据处理器已设置: 禁用增量分发" type="qdebug" -->
+    <!-- message="[MonitorExportHelper] 导出助手已销毁" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:23.362 SnippetRepository 已销毁" type="qdebug" -->
+    <!-- message="[MonitorManager] applyConfiguration 开始 project= &quot;&quot; providers= 0 mappings= 0" type="qdebug" -->
+    <!-- message="[MonitorManager] applyConfiguration 结束 success=true channels= 4 providers= 0" type="qdebug" -->
+  </testcase>
+  <testcase result="pass" name="workspaceToolBarTaskSwitchingF03Test">
+    <!-- message="[MonitorManager] applyConfiguration 开始 project= &quot;&quot; providers= 0 mappings= 0" type="qdebug" -->
+    <!-- message="[MonitorManager] applyConfiguration 结束 success=true channels= 4 providers= 0" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:23.377 SettingsController 已创建" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:23.378 已加载应用设置: 项目目录=C:/Users/Ryan, 自动滚动=1, 字体索引=1, 布局版本=1" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:23.379 ProjectController 已创建" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:23.379 已加载 5 个最近项目" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:23.380 BuildController created." type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:23.380 控制器已创建" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:23.395 SnippetRepository 已创建" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:23.400 已加载 140 个默认 Snippets" type="qdebug" -->
+    <!-- message="[MonitorExportHelper] 导出助手已创建" type="qdebug" -->
+    <!-- message="[MonitorManager] 数据处理器已设置: 启用增量分发" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:23.851 控制器信号已连接" type="qdebug" -->
+    <!-- message="[INFO] 09:14:24.651 MainWindow 初始化完成" type="qinfo" -->
+    <!-- message="[DEBUG] 09:14:25.114 已保存应用设置" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:25.114 已保存最近项目列表" type="qdebug" -->
+    <!-- message="[INFO] 09:14:25.114 MainWindow 已销毁" type="qinfo" -->
+    <!-- message="[DEBUG] 09:14:25.133 SettingsController 已销毁" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:25.133 ProjectController 已销毁" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:25.133 BuildController destroyed." type="qdebug" -->
+    <!-- message="[MonitorManager] 数据处理器已设置: 禁用增量分发" type="qdebug" -->
+    <!-- message="[MonitorExportHelper] 导出助手已销毁" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:25.156 SnippetRepository 已销毁" type="qdebug" -->
+    <!-- message="[MonitorManager] applyConfiguration 开始 project= &quot;&quot; providers= 0 mappings= 0" type="qdebug" -->
+    <!-- message="[MonitorManager] applyConfiguration 结束 success=true channels= 4 providers= 0" type="qdebug" -->
+  </testcase>
+  <testcase result="pass" name="deviceWorkspaceTargetSummaryF04Test">
+    <!-- message="[MonitorManager] applyConfiguration 开始 project= &quot;&quot; providers= 0 mappings= 0" type="qdebug" -->
+    <!-- message="[MonitorManager] applyConfiguration 结束 success=true channels= 4 providers= 0" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:25.169 SettingsController 已创建" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:25.171 已加载应用设置: 项目目录=C:/Users/Ryan, 自动滚动=1, 字体索引=1, 布局版本=1" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:25.172 ProjectController 已创建" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:25.172 已加载 5 个最近项目" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:25.172 BuildController created." type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:25.172 控制器已创建" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:25.196 SnippetRepository 已创建" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:25.201 已加载 140 个默认 Snippets" type="qdebug" -->
+    <!-- message="[MonitorExportHelper] 导出助手已创建" type="qdebug" -->
+    <!-- message="[MonitorManager] 数据处理器已设置: 启用增量分发" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:25.659 控制器信号已连接" type="qdebug" -->
+    <!-- message="[INFO] 09:14:26.479 MainWindow 初始化完成" type="qinfo" -->
+    <!-- message="[DEBUG] 09:14:26.767 已加载 140 个默认 Snippets" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:27.121 已保存应用设置" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:27.121 已保存最近项目列表" type="qdebug" -->
+    <!-- message="[INFO] 09:14:27.121 MainWindow 已销毁" type="qinfo" -->
+    <!-- message="[DEBUG] 09:14:27.141 SettingsController 已销毁" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:27.141 ProjectController 已销毁" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:27.141 BuildController destroyed." type="qdebug" -->
+    <!-- message="[MonitorManager] 数据处理器已设置: 禁用增量分发" type="qdebug" -->
+    <!-- message="[MonitorExportHelper] 导出助手已销毁" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:27.161 SnippetRepository 已销毁" type="qdebug" -->
+    <!-- message="[MonitorManager] applyConfiguration 开始 project= &quot;&quot; providers= 0 mappings= 0" type="qdebug" -->
+    <!-- message="[MonitorManager] applyConfiguration 结束 success=true channels= 4 providers= 0" type="qdebug" -->
+  </testcase>
+  <testcase result="pass" name="parameterTuningDataSemanticsF05Test">
+    <!-- message="[MonitorManager] applyConfiguration 开始 project= &quot;&quot; providers= 0 mappings= 0" type="qdebug" -->
+    <!-- message="[MonitorManager] applyConfiguration 结束 success=true channels= 4 providers= 0" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:27.176 SettingsController 已创建" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:27.178 已加载应用设置: 项目目录=C:/Users/Ryan, 自动滚动=1, 字体索引=1, 布局版本=1" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:27.178 ProjectController 已创建" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:27.179 已加载 5 个最近项目" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:27.179 BuildController created." type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:27.179 控制器已创建" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:27.193 SnippetRepository 已创建" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:27.200 已加载 140 个默认 Snippets" type="qdebug" -->
+    <!-- message="[MonitorExportHelper] 导出助手已创建" type="qdebug" -->
+    <!-- message="[MonitorManager] 数据处理器已设置: 启用增量分发" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:27.643 控制器信号已连接" type="qdebug" -->
+    <!-- message="[INFO] 09:14:28.424 MainWindow 初始化完成" type="qinfo" -->
+    <!-- message="[DEBUG] 09:14:28.921 已加载 140 个默认 Snippets" type="qdebug" -->
+    <!-- message="[INFO] 09:14:29.465 [VirtualDeviceBackend] connected" type="qinfo" -->
+    <!-- message="[DEBUG] 09:14:29.761 已保存应用设置" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:29.761 已保存最近项目列表" type="qdebug" -->
+    <!-- message="[INFO] 09:14:29.761 MainWindow 已销毁" type="qinfo" -->
+    <!-- message="[DEBUG] 09:14:29.785 SettingsController 已销毁" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:29.785 ProjectController 已销毁" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:29.785 BuildController destroyed." type="qdebug" -->
+    <!-- message="[MonitorManager] 数据处理器已设置: 禁用增量分发" type="qdebug" -->
+    <!-- message="[MonitorExportHelper] 导出助手已销毁" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:29.810 SnippetRepository 已销毁" type="qdebug" -->
+    <!-- message="[MonitorManager] applyConfiguration 开始 project= &quot;&quot; providers= 0 mappings= 0" type="qdebug" -->
+    <!-- message="[MonitorManager] applyConfiguration 结束 success=true channels= 4 providers= 0" type="qdebug" -->
+  </testcase>
+  <testcase result="pass" name="chartWidgetPlaceholderF06Test">
+    <!-- message="[MonitorManager] applyConfiguration 开始 project= &quot;&quot; providers= 0 mappings= 0" type="qdebug" -->
+    <!-- message="[MonitorManager] applyConfiguration 结束 success=true channels= 4 providers= 0" type="qdebug" -->
+    <!-- message="[MonitorManager] applyConfiguration 开始 project= &quot;&quot; providers= 0 mappings= 0" type="qdebug" -->
+    <!-- message="[MonitorManager] applyConfiguration 结束 success=true channels= 4 providers= 0" type="qdebug" -->
+  </testcase>
+  <testcase result="pass" name="testSettingsIsolationAndMultiResolutionF07Test">
+    <!-- message="[MonitorManager] applyConfiguration 开始 project= &quot;&quot; providers= 0 mappings= 0" type="qdebug" -->
+    <!-- message="[MonitorManager] applyConfiguration 结束 success=true channels= 4 providers= 0" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:30.193 SettingsController 已创建" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:30.195 已加载应用设置: 项目目录=C:/Users/Ryan, 自动滚动=1, 字体索引=1, 布局版本=1" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:30.196 ProjectController 已创建" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:30.197 已加载 5 个最近项目" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:30.197 BuildController created." type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:30.197 控制器已创建" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:30.215 SnippetRepository 已创建" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:30.219 已加载 140 个默认 Snippets" type="qdebug" -->
+    <!-- message="[MonitorExportHelper] 导出助手已创建" type="qdebug" -->
+    <!-- message="[MonitorManager] 数据处理器已设置: 启用增量分发" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:30.658 控制器信号已连接" type="qdebug" -->
+    <!-- message="[INFO] 09:14:31.459 MainWindow 初始化完成" type="qinfo" -->
+    <!-- message="[DEBUG] 09:14:31.460 已加载应用设置: 项目目录=C:/Users/Ryan, 自动滚动=1, 字体索引=1, 布局版本=1" type="qdebug" -->
+    <!-- message="setGeometry: Unable to set geometry 1920x1080+0+20 (frame: 1936x1119&#x002D;8&#x002D;11) on QWidgetWindow/&quot;MainWindowClassWindow&quot; on &quot;\\.\DISPLAY1&quot;. Resulting geometry: 1920x1061+0+20 (frame: 1936x1100&#x002D;8&#x002D;11) margins: 8, 31, 8, 8 minimum size: 343x306 MINMAXINFO maxSize=0,0 maxpos=0,0 mintrack=359,345 maxtrack=0,0)" type="qwarn" -->
+    <!-- message="[DEBUG] 09:14:31.945 已保存应用设置" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:31.945 已保存最近项目列表" type="qdebug" -->
+    <!-- message="[INFO] 09:14:31.945 MainWindow 已销毁" type="qinfo" -->
+    <!-- message="[DEBUG] 09:14:31.963 SettingsController 已销毁" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:31.964 ProjectController 已销毁" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:31.964 BuildController destroyed." type="qdebug" -->
+    <!-- message="[MonitorManager] 数据处理器已设置: 禁用增量分发" type="qdebug" -->
+    <!-- message="[MonitorExportHelper] 导出助手已销毁" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:31.986 SnippetRepository 已销毁" type="qdebug" -->
+    <!-- message="[MonitorManager] applyConfiguration 开始 project= &quot;&quot; providers= 0 mappings= 0" type="qdebug" -->
+    <!-- message="[MonitorManager] applyConfiguration 结束 success=true channels= 4 providers= 0" type="qdebug" -->
+  </testcase>
+  <testcase result="pass" name="deviceWorkspaceProfileConsistencyV01Test">
+    <!-- message="[MonitorManager] applyConfiguration 开始 project= &quot;&quot; providers= 0 mappings= 0" type="qdebug" -->
+    <!-- message="[MonitorManager] applyConfiguration 结束 success=true channels= 4 providers= 0" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:32.000 SettingsController 已创建" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:32.002 已加载应用设置: 项目目录=C:/Users/Ryan, 自动滚动=1, 字体索引=1, 布局版本=1" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:32.003 ProjectController 已创建" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:32.004 已加载 5 个最近项目" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:32.004 BuildController created." type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:32.004 控制器已创建" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:32.020 SnippetRepository 已创建" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:32.025 已加载 140 个默认 Snippets" type="qdebug" -->
+    <!-- message="[MonitorExportHelper] 导出助手已创建" type="qdebug" -->
+    <!-- message="[MonitorManager] 数据处理器已设置: 启用增量分发" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:32.494 控制器信号已连接" type="qdebug" -->
+    <!-- message="[INFO] 09:14:33.366 MainWindow 初始化完成" type="qinfo" -->
+    <!-- message="[DEBUG] 09:14:33.540 已加载 140 个默认 Snippets" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:33.621 已保存应用设置" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:33.622 已保存最近项目列表" type="qdebug" -->
+    <!-- message="[INFO] 09:14:33.622 MainWindow 已销毁" type="qinfo" -->
+    <!-- message="[DEBUG] 09:14:33.622 SettingsController 已销毁" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:33.622 ProjectController 已销毁" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:33.622 BuildController destroyed." type="qdebug" -->
+    <!-- message="[MonitorManager] 数据处理器已设置: 禁用增量分发" type="qdebug" -->
+    <!-- message="[MonitorExportHelper] 导出助手已销毁" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:33.636 SnippetRepository 已销毁" type="qdebug" -->
+    <!-- message="[MonitorManager] applyConfiguration 开始 project= &quot;&quot; providers= 0 mappings= 0" type="qdebug" -->
+    <!-- message="[MonitorManager] applyConfiguration 结束 success=true channels= 4 providers= 0" type="qdebug" -->
+  </testcase>
+  <testcase result="fail" name="testMultiResolutionDpiMatrixV02Test">
+    <!-- message="[MonitorManager] applyConfiguration 开始 project= &quot;&quot; providers= 0 mappings= 0" type="qdebug" -->
+    <!-- message="[MonitorManager] applyConfiguration 结束 success=true channels= 4 providers= 0" type="qdebug" -->
+    <failure message="&apos;child.exitStatus() == QProcess::NormalExit &amp;&amp; child.exitCode() == 0&apos; returned FALSE. ()" result="fail"/>
+    <!-- message="[MonitorManager] applyConfiguration 开始 project= &quot;&quot; providers= 0 mappings= 0" type="qdebug" -->
+    <!-- message="[MonitorManager] applyConfiguration 结束 success=true channels= 4 providers= 0" type="qdebug" -->
+  </testcase>
+  <testcase result="pass" name="chartWidgetReadabilityAndResponsiveTest">
+    <!-- message="[MonitorManager] applyConfiguration 开始 project= &quot;&quot; providers= 0 mappings= 0" type="qdebug" -->
+    <!-- message="[MonitorManager] applyConfiguration 结束 success=true channels= 4 providers= 0" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:52.807 SettingsController 已创建" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:52.808 已加载应用设置: 项目目录=C:/Users/Ryan, 自动滚动=1, 字体索引=1, 布局版本=1" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:52.809 ProjectController 已创建" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:52.809 已加载 5 个最近项目" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:52.809 BuildController created." type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:52.809 控制器已创建" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:52.822 SnippetRepository 已创建" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:52.825 已加载 140 个默认 Snippets" type="qdebug" -->
+    <!-- message="[MonitorExportHelper] 导出助手已创建" type="qdebug" -->
+    <!-- message="[MonitorManager] 数据处理器已设置: 启用增量分发" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:53.288 控制器信号已连接" type="qdebug" -->
+    <!-- message="[INFO] 09:14:54.095 MainWindow 初始化完成" type="qinfo" -->
+    <!-- message="[DEBUG] 09:14:54.997 已保存应用设置" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:54.997 已保存最近项目列表" type="qdebug" -->
+    <!-- message="[INFO] 09:14:54.997 MainWindow 已销毁" type="qinfo" -->
+    <!-- message="[DEBUG] 09:14:55.013 SettingsController 已销毁" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:55.013 ProjectController 已销毁" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:55.013 BuildController destroyed." type="qdebug" -->
+    <!-- message="[MonitorManager] 数据处理器已设置: 禁用增量分发" type="qdebug" -->
+    <!-- message="[MonitorExportHelper] 导出助手已销毁" type="qdebug" -->
+    <!-- message="[DEBUG] 09:14:55.028 SnippetRepository 已销毁" type="qdebug" -->
+    <!-- message="[MonitorManager] applyConfiguration 开始 project= &quot;&quot; providers= 0 mappings= 0" type="qdebug" -->
+    <!-- message="[MonitorManager] applyConfiguration 结束 success=true channels= 4 providers= 0" type="qdebug" -->
+  </testcase>
+  <testcase result="pass" name="cleanupTestCase"/>
+  <system-err>
+<![CDATA[[MonitorManager] applyConfiguration 开始 project= "" providers= 0 mappings= 0]]>
+<![CDATA[[MonitorManager] applyConfiguration 结束 success=true channels= 0 providers= 0]]>
+<![CDATA[[DEBUG] 09:13:26.490 SettingsController 已创建]]>
+<![CDATA[[DEBUG] 09:13:26.492 已加载应用设置: 项目目录=C:/Users/Ryan, 自动滚动=1, 字体索引=1, 布局版本=1]]>
+<![CDATA[[DEBUG] 09:13:26.493 ProjectController 已创建]]>
+<![CDATA[[DEBUG] 09:13:26.493 已加载 5 个最近项目]]>
+<![CDATA[[DEBUG] 09:13:26.493 BuildController created.]]>
+<![CDATA[[DEBUG] 09:13:26.494 控制器已创建]]>
+<![CDATA[[DEBUG] 09:13:27.033 SnippetRepository 已创建]]>
+<![CDATA[[DEBUG] 09:13:27.038 已加载 140 个默认 Snippets]]>
+<![CDATA[[MonitorExportHelper] 导出助手已创建]]>
+<![CDATA[[MonitorManager] 数据处理器已设置: 启用增量分发]]>
+<![CDATA[[DEBUG] 09:13:27.358 控制器信号已连接]]>
+<![CDATA[[INFO] 09:13:28.591 MainWindow 初始化完成]]>
+<![CDATA[[DEBUG] 09:13:28.651 已保存应用设置]]>
+<![CDATA[[DEBUG] 09:13:28.651 已保存最近项目列表]]>
+<![CDATA[[INFO] 09:13:28.651 MainWindow 已销毁]]>
+<![CDATA[[DEBUG] 09:13:28.651 SettingsController 已销毁]]>
+<![CDATA[[DEBUG] 09:13:28.651 ProjectController 已销毁]]>
+<![CDATA[[DEBUG] 09:13:28.652 BuildController destroyed.]]>
+<![CDATA[[MonitorManager] 数据处理器已设置: 禁用增量分发]]>
+<![CDATA[[MonitorExportHelper] 导出助手已销毁]]>
+<![CDATA[[DEBUG] 09:13:28.670 SnippetRepository 已销毁]]>
+<![CDATA[[MonitorManager] applyConfiguration 开始 project= "" providers= 0 mappings= 0]]>
+<![CDATA[[MonitorManager] applyConfiguration 结束 success=true channels= 0 providers= 0]]>
+<![CDATA[[MonitorManager] applyConfiguration 开始 project= "" providers= 0 mappings= 0]]>
+<![CDATA[[MonitorManager] applyConfiguration 结束 success=true channels= 0 providers= 0]]>
+<![CDATA[[DEBUG] 09:13:28.679 SettingsController 已创建]]>
+<![CDATA[[DEBUG] 09:13:28.681 已加载应用设置: 项目目录=C:/Users/Ryan, 自动滚动=1, 字体索引=1, 布局版本=1]]>
+<![CDATA[[DEBUG] 09:13:28.681 ProjectController 已创建]]>
+<![CDATA[[DEBUG] 09:13:28.682 已加载 5 个最近项目]]>
+<![CDATA[[DEBUG] 09:13:28.682 BuildController created.]]>
+<![CDATA[[DEBUG] 09:13:28.682 控制器已创建]]>
+<![CDATA[[DEBUG] 09:13:28.704 SnippetRepository 已创建]]>
+<![CDATA[[DEBUG] 09:13:28.709 已加载 140 个默认 Snippets]]>
+<![CDATA[[MonitorExportHelper] 导出助手已创建]]>
+<![CDATA[[MonitorManager] 数据处理器已设置: 启用增量分发]]>
+<![CDATA[[DEBUG] 09:13:29.132 控制器信号已连接]]>
+<![CDATA[[INFO] 09:13:29.905 MainWindow 初始化完成]]>
+<![CDATA[[DEBUG] 09:13:30.457 已加载 140 个默认 Snippets]]>
+<![CDATA[[DSLCompilerInterface] Selected compiler runtime: "D:/Table/LH/third_party/custom_dsp_language/compile" "(mode: developer, entry: D:/Table/LH/third_party/custom_dsp_language/compile/lmc.py)"]]>
+<![CDATA[[DSLCompilerInterface] Detected Python interpreter: "D:/Table/LH/third_party/custom_dsp_language/compile/venv/Scripts/python.exe" for runtime: "D:/Table/LH/third_party/custom_dsp_language/compile"]]>
+<![CDATA[[INFO] 09:13:31.740 [DSLCompilerInterface] Running project compile (async): D:/Table/LH/third_party/custom_dsp_language/compile/venv/Scripts/python.exe D:/Table/LH/third_party/custom_dsp_language/compile/lmc.py C:\Users\Ryan\AppData\Local\Temp\main_window_integration_test-TpPmsD\build_output\configuration\generations\52e3c13b-53d0-4aa1-9517-782dc6a8c2c2\.compiler_staging\main_assembled.lh -o C:\Users\Ryan\AppData\Local\Temp\main_window_integration_test-TpPmsD\build_output\configuration\generations\52e3c13b-53d0-4aa1-9517-782dc6a8c2c2\main.code -v, cwd = D:/Table/LH/third_party/custom_dsp_language/compile]]>
+<![CDATA[[INFO] 09:13:32.637 [DSLCompilerInterface] async compile succeeded.]]>
+<![CDATA[[DEBUG] 09:13:33.026 已保存应用设置]]>
+<![CDATA[[DEBUG] 09:13:33.027 已保存最近项目列表]]>
+<![CDATA[[INFO] 09:13:33.027 MainWindow 已销毁]]>
+<![CDATA[[DEBUG] 09:13:33.043 SettingsController 已销毁]]>
+<![CDATA[[DEBUG] 09:13:33.043 ProjectController 已销毁]]>
+<![CDATA[[DEBUG] 09:13:33.043 BuildController destroyed.]]>
+<![CDATA[[MonitorManager] 数据处理器已设置: 禁用增量分发]]>
+<![CDATA[[MonitorExportHelper] 导出助手已销毁]]>
+<![CDATA[[DEBUG] 09:13:33.060 SnippetRepository 已销毁]]>
+<![CDATA[[MonitorManager] applyConfiguration 开始 project= "" providers= 0 mappings= 0]]>
+<![CDATA[[MonitorManager] applyConfiguration 结束 success=true channels= 0 providers= 0]]>
+<![CDATA[[MonitorManager] applyConfiguration 开始 project= "" providers= 0 mappings= 0]]>
+<![CDATA[[MonitorManager] applyConfiguration 结束 success=true channels= 0 providers= 0]]>
+<![CDATA[[DEBUG] 09:13:33.084 SettingsController 已创建]]>
+<![CDATA[[DEBUG] 09:13:33.085 已加载应用设置: 项目目录=C:/Users/Ryan, 自动滚动=1, 字体索引=1, 布局版本=1]]>
+<![CDATA[[DEBUG] 09:13:33.086 ProjectController 已创建]]>
+<![CDATA[[DEBUG] 09:13:33.086 已加载 5 个最近项目]]>
+<![CDATA[[DEBUG] 09:13:33.086 BuildController created.]]>
+<![CDATA[[DEBUG] 09:13:33.086 控制器已创建]]>
+<![CDATA[[DEBUG] 09:13:33.099 SnippetRepository 已创建]]>
+<![CDATA[[DEBUG] 09:13:33.103 已加载 140 个默认 Snippets]]>
+<![CDATA[[MonitorExportHelper] 导出助手已创建]]>
+<![CDATA[[MonitorManager] 数据处理器已设置: 启用增量分发]]>
+<![CDATA[[DEBUG] 09:13:33.529 控制器信号已连接]]>
+<![CDATA[[INFO] 09:13:34.301 MainWindow 初始化完成]]>
+<![CDATA[[DEBUG] 09:13:34.311 已加载 140 个默认 Snippets]]>
+<![CDATA[[INFO] 09:13:34.328 [VirtualDeviceBackend] connected]]>
+<![CDATA[[MonitorManager] device backend set: VirtualDeviceBackend(0x6cce490)]]>
+<![CDATA[[MonitorManager] device backend cleared]]>
+<![CDATA[[DEBUG] 09:13:34.910 已保存应用设置]]>
+<![CDATA[[DEBUG] 09:13:34.910 已保存最近项目列表]]>
+<![CDATA[[INFO] 09:13:34.911 MainWindow 已销毁]]>
+<![CDATA[[DEBUG] 09:13:34.911 SettingsController 已销毁]]>
+<![CDATA[[DEBUG] 09:13:34.911 ProjectController 已销毁]]>
+<![CDATA[[DEBUG] 09:13:34.911 BuildController destroyed.]]>
+<![CDATA[[MonitorManager] 数据处理器已设置: 禁用增量分发]]>
+<![CDATA[[MonitorExportHelper] 导出助手已销毁]]>
+<![CDATA[[DEBUG] 09:13:34.924 SnippetRepository 已销毁]]>
+<![CDATA[[MonitorManager] applyConfiguration 开始 project= "" providers= 0 mappings= 0]]>
+<![CDATA[[MonitorManager] applyConfiguration 结束 success=true channels= 0 providers= 0]]>
+<![CDATA[[MonitorManager] applyConfiguration 开始 project= "" providers= 0 mappings= 0]]>
+<![CDATA[[MonitorManager] applyConfiguration 结束 success=true channels= 0 providers= 0]]>
+<![CDATA[[DEBUG] 09:13:34.926 SettingsController 已创建]]>
+<![CDATA[[DEBUG] 09:13:34.928 已加载应用设置: 项目目录=C:/Users/Ryan, 自动滚动=1, 字体索引=1, 布局版本=1]]>
+<![CDATA[[DEBUG] 09:13:34.929 ProjectController 已创建]]>
+<![CDATA[[DEBUG] 09:13:34.929 已加载 5 个最近项目]]>
+<![CDATA[[DEBUG] 09:13:34.929 BuildController created.]]>
+<![CDATA[[DEBUG] 09:13:34.929 控制器已创建]]>
+<![CDATA[[DEBUG] 09:13:34.943 SnippetRepository 已创建]]>
+<![CDATA[[DEBUG] 09:13:34.948 已加载 140 个默认 Snippets]]>
+<![CDATA[[MonitorExportHelper] 导出助手已创建]]>
+<![CDATA[[MonitorManager] 数据处理器已设置: 启用增量分发]]>
+<![CDATA[[DEBUG] 09:13:35.400 控制器信号已连接]]>
+<![CDATA[[INFO] 09:13:36.203 MainWindow 初始化完成]]>
+<![CDATA[[DEBUG] 09:13:36.252 已保存应用设置]]>
+<![CDATA[[DEBUG] 09:13:36.252 已保存最近项目列表]]>
+<![CDATA[[INFO] 09:13:36.252 MainWindow 已销毁]]>
+<![CDATA[[DEBUG] 09:13:36.252 SettingsController 已销毁]]>
+<![CDATA[[DEBUG] 09:13:36.252 ProjectController 已销毁]]>
+<![CDATA[[DEBUG] 09:13:36.252 BuildController destroyed.]]>
+<![CDATA[[MonitorManager] 数据处理器已设置: 禁用增量分发]]>
+<![CDATA[[MonitorExportHelper] 导出助手已销毁]]>
+<![CDATA[[DEBUG] 09:13:36.271 SnippetRepository 已销毁]]>
+<![CDATA[[MonitorManager] applyConfiguration 开始 project= "" providers= 0 mappings= 0]]>
+<![CDATA[[MonitorManager] applyConfiguration 结束 success=true channels= 0 providers= 0]]>
+<![CDATA[[MonitorManager] applyConfiguration 开始 project= "" providers= 0 mappings= 0]]>
+<![CDATA[[MonitorManager] applyConfiguration 结束 success=true channels= 0 providers= 0]]>
+<![CDATA[[DEBUG] 09:13:36.272 SettingsController 已创建]]>
+<![CDATA[[DEBUG] 09:13:36.274 已加载应用设置: 项目目录=C:/Users/Ryan, 自动滚动=1, 字体索引=1, 布局版本=1]]>
+<![CDATA[[DEBUG] 09:13:36.274 ProjectController 已创建]]>
+<![CDATA[[DEBUG] 09:13:36.275 已加载 5 个最近项目]]>
+<![CDATA[[DEBUG] 09:13:36.275 BuildController created.]]>
+<![CDATA[[DEBUG] 09:13:36.275 控制器已创建]]>
+<![CDATA[[DEBUG] 09:13:36.285 SnippetRepository 已创建]]>
+<![CDATA[[DEBUG] 09:13:36.289 已加载 140 个默认 Snippets]]>
+<![CDATA[[MonitorExportHelper] 导出助手已创建]]>
+<![CDATA[[MonitorManager] 数据处理器已设置: 启用增量分发]]>
+<![CDATA[[DEBUG] 09:13:36.731 控制器信号已连接]]>
+<![CDATA[[INFO] 09:13:37.513 MainWindow 初始化完成]]>
+<![CDATA[[MonitorManager] 注册通道: "系统压力"]]>
+<![CDATA[[MonitorManager] 注册通道: "系统流量"]]>
+<![CDATA[[MonitorManager] 注册通道: "系统温度"]]>
+<![CDATA[[MonitorManager] 注册通道: "阀芯位置"]]>
+<![CDATA[[MonitorManager] 监控已启动]]>
+<![CDATA[[MonitorManager] 监控已停止]]>
+<![CDATA[[DEBUG] 09:13:37.592 已保存应用设置]]>
+<![CDATA[[DEBUG] 09:13:37.592 已保存最近项目列表]]>
+<![CDATA[[INFO] 09:13:37.593 MainWindow 已销毁]]>
+<![CDATA[[DEBUG] 09:13:37.593 SettingsController 已销毁]]>
+<![CDATA[[DEBUG] 09:13:37.593 ProjectController 已销毁]]>
+<![CDATA[[DEBUG] 09:13:37.593 BuildController destroyed.]]>
+<![CDATA[[MonitorManager] 数据处理器已设置: 禁用增量分发]]>
+<![CDATA[[MonitorExportHelper] 导出助手已销毁]]>
+<![CDATA[[DEBUG] 09:13:37.614 SnippetRepository 已销毁]]>
+<![CDATA[[MonitorManager] applyConfiguration 开始 project= "" providers= 0 mappings= 0]]>
+<![CDATA[[MonitorManager] applyConfiguration 结束 success=true channels= 4 providers= 0]]>
+<![CDATA[[MonitorManager] applyConfiguration 开始 project= "" providers= 0 mappings= 0]]>
+<![CDATA[[MonitorManager] applyConfiguration 结束 success=true channels= 4 providers= 0]]>
+<![CDATA[[MonitorManager] applyConfiguration 开始 project= "" providers= 0 mappings= 0]]>
+<![CDATA[[MonitorManager] applyConfiguration 结束 success=true channels= 4 providers= 0]]>
+<![CDATA[[DEBUG] 09:13:37.615 ProjectController 已创建]]>
+<![CDATA[[DEBUG] 09:13:37.617 ProjectController 已销毁]]>
+<![CDATA[[MonitorManager] applyConfiguration 开始 project= "" providers= 0 mappings= 0]]>
+<![CDATA[[MonitorManager] applyConfiguration 结束 success=true channels= 4 providers= 0]]>
+<![CDATA[[MonitorManager] applyConfiguration 开始 project= "" providers= 0 mappings= 0]]>
+<![CDATA[[MonitorManager] applyConfiguration 结束 success=true channels= 4 providers= 0]]>
+<![CDATA[[DEBUG] 09:13:37.618 SettingsController 已创建]]>
+<![CDATA[[DEBUG] 09:13:37.621 已加载应用设置: 项目目录=C:/Users/Ryan, 自动滚动=1, 字体索引=1, 布局版本=1]]>
+<![CDATA[[DEBUG] 09:13:37.621 ProjectController 已创建]]>
+<![CDATA[[DEBUG] 09:13:37.622 已加载 5 个最近项目]]>
+<![CDATA[[DEBUG] 09:13:37.622 BuildController created.]]>
+<![CDATA[[DEBUG] 09:13:37.622 控制器已创建]]>
+<![CDATA[[DEBUG] 09:13:37.632 SnippetRepository 已创建]]>
+<![CDATA[[DEBUG] 09:13:37.636 已加载 140 个默认 Snippets]]>
+<![CDATA[[MonitorExportHelper] 导出助手已创建]]>
+<![CDATA[[MonitorManager] 数据处理器已设置: 启用增量分发]]>
+<![CDATA[[DEBUG] 09:13:38.118 控制器信号已连接]]>
+<![CDATA[[INFO] 09:13:38.971 MainWindow 初始化完成]]>
+<![CDATA[[DEBUG] 09:13:38.995 已加载 140 个默认 Snippets]]>
+<![CDATA[[DEBUG] 09:13:39.056 已保存应用设置]]>
+<![CDATA[[DEBUG] 09:13:39.057 已保存最近项目列表]]>
+<![CDATA[[INFO] 09:13:39.057 MainWindow 已销毁]]>
+<![CDATA[[DEBUG] 09:13:39.057 SettingsController 已销毁]]>
+<![CDATA[[DEBUG] 09:13:39.057 ProjectController 已销毁]]>
+<![CDATA[[DEBUG] 09:13:39.057 BuildController destroyed.]]>
+<![CDATA[[MonitorManager] 数据处理器已设置: 禁用增量分发]]>
+<![CDATA[[MonitorExportHelper] 导出助手已销毁]]>
+<![CDATA[[DEBUG] 09:13:39.083 SnippetRepository 已销毁]]>
+<![CDATA[[MonitorManager] applyConfiguration 开始 project= "" providers= 0 mappings= 0]]>
+<![CDATA[[MonitorManager] applyConfiguration 结束 success=true channels= 4 providers= 0]]>
+<![CDATA[[MonitorManager] applyConfiguration 开始 project= "" providers= 0 mappings= 0]]>
+<![CDATA[[MonitorManager] applyConfiguration 结束 success=true channels= 4 providers= 0]]>
+<![CDATA[[DEBUG] 09:13:39.084 SettingsController 已创建]]>
+<![CDATA[[DEBUG] 09:13:39.086 已加载应用设置: 项目目录=C:/Users/Ryan, 自动滚动=1, 字体索引=1, 布局版本=1]]>
+<![CDATA[[DEBUG] 09:13:39.086 ProjectController 已创建]]>
+<![CDATA[[DEBUG] 09:13:39.087 已加载 5 个最近项目]]>
+<![CDATA[[DEBUG] 09:13:39.087 BuildController created.]]>
+<![CDATA[[DEBUG] 09:13:39.087 控制器已创建]]>
+<![CDATA[[DEBUG] 09:13:39.098 SnippetRepository 已创建]]>
+<![CDATA[[DEBUG] 09:13:39.102 已加载 140 个默认 Snippets]]>
+<![CDATA[[MonitorExportHelper] 导出助手已创建]]>
+<![CDATA[[MonitorManager] 数据处理器已设置: 启用增量分发]]>
+<![CDATA[[DEBUG] 09:13:39.581 控制器信号已连接]]>
+<![CDATA[[INFO] 09:13:40.427 MainWindow 初始化完成]]>
+<![CDATA[[INFO] 09:13:40.428 [VirtualDeviceBackend] connected]]>
+<![CDATA[[MonitorManager] device backend set: VirtualDeviceBackend(0x6cce710)]]>
+<![CDATA[[MonitorManager] backend connectionStateChanged: false]]>
+<![CDATA[[INFO] 09:13:40.437 [VirtualDeviceBackend] disconnected]]>
+<![CDATA[[MonitorManager] backend connectionStateChanged: true]]>
+<![CDATA[[INFO] 09:13:40.442 [VirtualDeviceBackend] connected]]>
+<![CDATA[[MonitorManager] backend connectionStateChanged: false]]>
+<![CDATA[[INFO] 09:13:40.453 [VirtualDeviceBackend] disconnected]]>
+<![CDATA[[MonitorManager] device backend cleared]]>
+<![CDATA[[DEBUG] 09:13:40.504 已保存应用设置]]>
+<![CDATA[[DEBUG] 09:13:40.504 已保存最近项目列表]]>
+<![CDATA[[INFO] 09:13:40.504 MainWindow 已销毁]]>
+<![CDATA[[DEBUG] 09:13:40.504 SettingsController 已销毁]]>
+<![CDATA[[DEBUG] 09:13:40.504 ProjectController 已销毁]]>
+<![CDATA[[DEBUG] 09:13:40.504 BuildController destroyed.]]>
+<![CDATA[[MonitorManager] 数据处理器已设置: 禁用增量分发]]>
+<![CDATA[[MonitorExportHelper] 导出助手已销毁]]>
+<![CDATA[[DEBUG] 09:13:40.531 SnippetRepository 已销毁]]>
+<![CDATA[[MonitorManager] applyConfiguration 开始 project= "" providers= 0 mappings= 0]]>
+<![CDATA[[MonitorManager] applyConfiguration 结束 success=true channels= 4 providers= 0]]>
+<![CDATA[[MonitorManager] applyConfiguration 开始 project= "" providers= 0 mappings= 0]]>
+<![CDATA[[MonitorManager] applyConfiguration 结束 success=true channels= 4 providers= 0]]>
+<![CDATA[[DEBUG] 09:13:40.535 BuildController created.]]>
+<![CDATA[[DEBUG] 09:13:40.755 BuildController destroyed.]]>
+<![CDATA[[MonitorManager] applyConfiguration 开始 project= "" providers= 0 mappings= 0]]>
+<![CDATA[[MonitorManager] applyConfiguration 结束 success=true channels= 4 providers= 0]]>
+<![CDATA[[MonitorManager] applyConfiguration 开始 project= "" providers= 0 mappings= 0]]>
+<![CDATA[[MonitorManager] applyConfiguration 结束 success=true channels= 4 providers= 0]]>
+<![CDATA[需要以 LH_ENABLE_TEST_FAILURE_INJECTION=ON 构建测试注入路径。]]>
+<![CDATA[[MonitorManager] applyConfiguration 开始 project= "" providers= 0 mappings= 0]]>
+<![CDATA[[MonitorManager] applyConfiguration 结束 success=true channels= 4 providers= 0]]>
+<![CDATA[[MonitorManager] applyConfiguration 开始 project= "" providers= 0 mappings= 0]]>
+<![CDATA[[MonitorManager] applyConfiguration 结束 success=true channels= 4 providers= 0]]>
+<![CDATA[[DEBUG] 09:13:40.770 BuildController created.]]>
+<![CDATA[[DEBUG] 09:13:40.797 BuildController destroyed.]]>
+<![CDATA[[MonitorManager] applyConfiguration 开始 project= "" providers= 0 mappings= 0]]>
+<![CDATA[[MonitorManager] applyConfiguration 结束 success=true channels= 4 providers= 0]]>
+<![CDATA[[MonitorManager] applyConfiguration 开始 project= "" providers= 0 mappings= 0]]>
+<![CDATA[[MonitorManager] applyConfiguration 结束 success=true channels= 4 providers= 0]]>
+<![CDATA[[DEBUG] 09:13:40.806 BuildController created.]]>
+<![CDATA[[DEBUG] 09:13:40.807 BuildController destroyed.]]>
+<![CDATA[[MonitorManager] applyConfiguration 开始 project= "" providers= 0 mappings= 0]]>
+<![CDATA[[MonitorManager] applyConfiguration 结束 success=true channels= 4 providers= 0]]>
+<![CDATA[[MonitorManager] applyConfiguration 开始 project= "" providers= 0 mappings= 0]]>
+<![CDATA[[MonitorManager] applyConfiguration 结束 success=true channels= 4 providers= 0]]>
+<![CDATA[需要以 LH_ENABLE_TEST_FAILURE_INJECTION=ON 构建测试注入路径。]]>
+<![CDATA[[MonitorManager] applyConfiguration 开始 project= "" providers= 0 mappings= 0]]>
+<![CDATA[[MonitorManager] applyConfiguration 结束 success=true channels= 4 providers= 0]]>
+<![CDATA[[MonitorManager] applyConfiguration 开始 project= "" providers= 0 mappings= 0]]>
+<![CDATA[[MonitorManager] applyConfiguration 结束 success=true channels= 4 providers= 0]]>
+<![CDATA[需要以 LH_ENABLE_TEST_FAILURE_INJECTION=ON 构建测试注入路径。]]>
+<![CDATA[[MonitorManager] applyConfiguration 开始 project= "" providers= 0 mappings= 0]]>
+<![CDATA[[MonitorManager] applyConfiguration 结束 success=true channels= 4 providers= 0]]>
+<![CDATA[[MonitorManager] applyConfiguration 开始 project= "" providers= 0 mappings= 0]]>
+<![CDATA[[MonitorManager] applyConfiguration 结束 success=true channels= 4 providers= 0]]>
+<![CDATA[[MonitorManager] applyConfiguration 开始 project= "" providers= 0 mappings= 0]]>
+<![CDATA[[MonitorManager] applyConfiguration 结束 success=true channels= 4 providers= 0]]>
+<![CDATA[[MonitorManager] applyConfiguration 开始 project= "" providers= 0 mappings= 0]]>
+<![CDATA[[MonitorManager] applyConfiguration 结束 success=true channels= 4 providers= 0]]>
+<![CDATA[[MonitorManager] applyConfiguration 开始 project= "" providers= 0 mappings= 0]]>
+<![CDATA[[MonitorManager] applyConfiguration 结束 success=true channels= 4 providers= 0]]>
+<![CDATA[[MonitorManager] applyConfiguration 开始 project= "" providers= 0 mappings= 0]]>
+<![CDATA[[MonitorManager] applyConfiguration 结束 success=true channels= 4 providers= 0]]>
+<![CDATA[[DEBUG] 09:13:48.381 SettingsController 已创建]]>
+<![CDATA[[DEBUG] 09:13:48.383 已加载应用设置: 项目目录=C:/Users/Ryan, 自动滚动=1, 字体索引=1, 布局版本=1]]>
+<![CDATA[[DEBUG] 09:13:48.383 ProjectController 已创建]]>
+<![CDATA[[DEBUG] 09:13:48.383 已加载 5 个最近项目]]>
+<![CDATA[[DEBUG] 09:13:48.383 BuildController created.]]>
+<![CDATA[[DEBUG] 09:13:48.383 控制器已创建]]>
+<![CDATA[[DEBUG] 09:13:48.394 SnippetRepository 已创建]]>
+<![CDATA[[DEBUG] 09:13:48.398 已加载 140 个默认 Snippets]]>
+<![CDATA[[MonitorExportHelper] 导出助手已创建]]>
+<![CDATA[[MonitorManager] 数据处理器已设置: 启用增量分发]]>
+<![CDATA[[DEBUG] 09:13:48.827 控制器信号已连接]]>
+<![CDATA[[INFO] 09:13:49.610 MainWindow 初始化完成]]>
+<![CDATA[[DEBUG] 09:13:50.160 已加载 140 个默认 Snippets]]>
+<![CDATA[[DEBUG] 09:13:51.202 已保存应用设置]]>
+<![CDATA[[DEBUG] 09:13:51.203 已保存最近项目列表]]>
+<![CDATA[[INFO] 09:13:51.203 MainWindow 已销毁]]>
+<![CDATA[[DEBUG] 09:13:51.224 SettingsController 已销毁]]>
+<![CDATA[[DEBUG] 09:13:51.224 ProjectController 已销毁]]>
+<![CDATA[[DEBUG] 09:13:51.224 BuildController destroyed.]]>
+<![CDATA[[MonitorManager] 数据处理器已设置: 禁用增量分发]]>
+<![CDATA[[MonitorExportHelper] 导出助手已销毁]]>
+<![CDATA[[DEBUG] 09:13:51.247 SnippetRepository 已销毁]]>
+<![CDATA[[MonitorManager] applyConfiguration 开始 project= "" providers= 0 mappings= 0]]>
+<![CDATA[[MonitorManager] applyConfiguration 结束 success=true channels= 4 providers= 0]]>
+<![CDATA[[MonitorManager] applyConfiguration 开始 project= "" providers= 0 mappings= 0]]>
+<![CDATA[[MonitorManager] applyConfiguration 结束 success=true channels= 4 providers= 0]]>
+<![CDATA[[DEBUG] 09:13:51.261 SettingsController 已创建]]>
+<![CDATA[[DEBUG] 09:13:51.263 已加载应用设置: 项目目录=C:/Users/Ryan, 自动滚动=1, 字体索引=1, 布局版本=1]]>
+<![CDATA[[DEBUG] 09:13:51.263 ProjectController 已创建]]>
+<![CDATA[[DEBUG] 09:13:51.263 已加载 5 个最近项目]]>
+<![CDATA[[DEBUG] 09:13:51.263 BuildController created.]]>
+<![CDATA[[DEBUG] 09:13:51.264 控制器已创建]]>
+<![CDATA[[DEBUG] 09:13:51.276 SnippetRepository 已创建]]>
+<![CDATA[[DEBUG] 09:13:51.280 已加载 140 个默认 Snippets]]>
+<![CDATA[[MonitorExportHelper] 导出助手已创建]]>
+<![CDATA[[MonitorManager] 数据处理器已设置: 启用增量分发]]>
+<![CDATA[[DEBUG] 09:13:51.722 控制器信号已连接]]>
+<![CDATA[[INFO] 09:13:52.520 MainWindow 初始化完成]]>
+<![CDATA[[DEBUG] 09:13:52.564 已保存应用设置]]>
+<![CDATA[[DEBUG] 09:13:52.564 已保存最近项目列表]]>
+<![CDATA[[INFO] 09:13:52.564 MainWindow 已销毁]]>
+<![CDATA[[DEBUG] 09:13:52.564 SettingsController 已销毁]]>
+<![CDATA[[DEBUG] 09:13:52.564 ProjectController 已销毁]]>
+<![CDATA[[DEBUG] 09:13:52.564 BuildController destroyed.]]>
+<![CDATA[[MonitorManager] 数据处理器已设置: 禁用增量分发]]>
+<![CDATA[[MonitorExportHelper] 导出助手已销毁]]>
+<![CDATA[[DEBUG] 09:13:52.583 SnippetRepository 已销毁]]>
+<![CDATA[[MonitorManager] applyConfiguration 开始 project= "" providers= 0 mappings= 0]]>
+<![CDATA[[MonitorManager] applyConfiguration 结束 success=true channels= 4 providers= 0]]>
+<![CDATA[[MonitorManager] applyConfiguration 开始 project= "" providers= 0 mappings= 0]]>
+<![CDATA[[MonitorManager] applyConfiguration 结束 success=true channels= 4 providers= 0]]>
+<![CDATA[[DEBUG] 09:13:52.585 SettingsController 已创建]]>
+<![CDATA[[DEBUG] 09:13:52.587 已加载应用设置: 项目目录=C:/Users/Ryan, 自动滚动=1, 字体索引=1, 布局版本=1]]>
+<![CDATA[[DEBUG] 09:13:52.587 ProjectController 已创建]]>
+<![CDATA[[DEBUG] 09:13:52.588 已加载 5 个最近项目]]>
+<![CDATA[[DEBUG] 09:13:52.588 BuildController created.]]>
+<![CDATA[[DEBUG] 09:13:52.588 控制器已创建]]>
+<![CDATA[[DEBUG] 09:13:52.598 SnippetRepository 已创建]]>
+<![CDATA[[DEBUG] 09:13:52.602 已加载 140 个默认 Snippets]]>
+<![CDATA[[MonitorExportHelper] 导出助手已创建]]>
+<![CDATA[[MonitorManager] 数据处理器已设置: 启用增量分发]]>
+<![CDATA[[DEBUG] 09:13:53.053 控制器信号已连接]]>
+<![CDATA[[INFO] 09:13:53.835 MainWindow 初始化完成]]>
+<![CDATA[[DEBUG] 09:13:53.837 已加载应用设置: 项目目录=C:/Users/Ryan, 自动滚动=1, 字体索引=1, 布局版本=1]]>
+<![CDATA[logDock minimumHeight: 162 minimumSizeHint: QSize(415, 162)]]>
+<![CDATA[[DEBUG] 09:13:54.726 已保存应用设置]]>
+<![CDATA[[DEBUG] 09:13:54.726 已保存最近项目列表]]>
+<![CDATA[[INFO] 09:13:54.726 MainWindow 已销毁]]>
+<![CDATA[[DEBUG] 09:13:54.738 SettingsController 已销毁]]>
+<![CDATA[[DEBUG] 09:13:54.738 ProjectController 已销毁]]>
+<![CDATA[[DEBUG] 09:13:54.738 BuildController destroyed.]]>
+<![CDATA[[MonitorManager] 数据处理器已设置: 禁用增量分发]]>
+<![CDATA[[MonitorExportHelper] 导出助手已销毁]]>
+<![CDATA[[DEBUG] 09:13:54.753 SnippetRepository 已销毁]]>
+<![CDATA[[MonitorManager] applyConfiguration 开始 project= "" providers= 0 mappings= 0]]>
+<![CDATA[[MonitorManager] applyConfiguration 结束 success=true channels= 4 providers= 0]]>
+<![CDATA[[MonitorManager] applyConfiguration 开始 project= "" providers= 0 mappings= 0]]>
+<![CDATA[[MonitorManager] applyConfiguration 结束 success=true channels= 4 providers= 0]]>
+<![CDATA[[DEBUG] 09:13:54.765 SettingsController 已创建]]>
+<![CDATA[[DEBUG] 09:13:54.766 已加载应用设置: 项目目录=C:/Users/Ryan, 自动滚动=1, 字体索引=1, 布局版本=1]]>
+<![CDATA[[DEBUG] 09:13:54.767 ProjectController 已创建]]>
+<![CDATA[[DEBUG] 09:13:54.767 已加载 5 个最近项目]]>
+<![CDATA[[DEBUG] 09:13:54.767 BuildController created.]]>
+<![CDATA[[DEBUG] 09:13:54.767 控制器已创建]]>
+<![CDATA[[DEBUG] 09:13:54.779 SnippetRepository 已创建]]>
+<![CDATA[[DEBUG] 09:13:54.783 已加载 140 个默认 Snippets]]>
+<![CDATA[[MonitorExportHelper] 导出助手已创建]]>
+<![CDATA[[MonitorManager] 数据处理器已设置: 启用增量分发]]>
+<![CDATA[[DEBUG] 09:13:55.219 控制器信号已连接]]>
+<![CDATA[[INFO] 09:13:56.023 MainWindow 初始化完成]]>
+<![CDATA[[DEBUG] 09:13:56.024 已加载应用设置: 项目目录=C:/Users/Ryan, 自动滚动=1, 字体索引=1, 布局版本=0]]>
+<![CDATA[[INFO] 09:13:56.802 [VirtualDeviceBackend] connected]]>
+<![CDATA[[MonitorManager] device backend set: VirtualDeviceBackend(0x6cce390)]]>
+<![CDATA[[MonitorManager] 通道已存在，更新配置: "系统压力"]]>
+<![CDATA[[MonitorManager] 通道已存在，更新配置: "系统流量"]]>
+<![CDATA[[MonitorManager] 通道已存在，更新配置: "系统温度"]]>
+<![CDATA[[MonitorManager] 通道已存在，更新配置: "阀芯位置"]]>
+<![CDATA[[MonitorManager] 监控已启动]]>
+<![CDATA[[MonitorManager] 监控已停止]]>
+<![CDATA[[MonitorManager] device backend cleared]]>
+<![CDATA[[INFO] 09:13:58.221 [VirtualDeviceBackend] disconnected]]>
+<![CDATA[[DEBUG] 09:13:58.667 SettingsController 已创建]]>
+<![CDATA[[DEBUG] 09:13:58.669 已加载应用设置: 项目目录=C:/Users/Ryan, 自动滚动=1, 字体索引=1, 布局版本=1]]>
+<![CDATA[[DEBUG] 09:13:58.670 ProjectController 已创建]]>
+<![CDATA[[DEBUG] 09:13:58.670 已加载 5 个最近项目]]>
+<![CDATA[[DEBUG] 09:13:58.670 BuildController created.]]>
+<![CDATA[[DEBUG] 09:13:58.670 控制器已创建]]>
+<![CDATA[[DEBUG] 09:13:58.682 SnippetRepository 已创建]]>
+<![CDATA[[DEBUG] 09:13:58.688 已加载 140 个默认 Snippets]]>
+<![CDATA[[MonitorExportHelper] 导出助手已创建]]>
+<![CDATA[[MonitorManager] 数据处理器已设置: 启用增量分发]]>
+<![CDATA[[DEBUG] 09:13:59.157 控制器信号已连接]]>
+<![CDATA[[INFO] 09:14:00.885 MainWindow 初始化完成]]>
+<![CDATA[[DEBUG] 09:14:00.887 已加载应用设置: 项目目录=C:/Users/Ryan, 自动滚动=1, 字体索引=1, 布局版本=1]]>
+<![CDATA[[DEBUG] 09:14:01.424 已保存应用设置]]>
+<![CDATA[[DEBUG] 09:14:01.424 已保存最近项目列表]]>
+<![CDATA[[INFO] 09:14:01.424 MainWindow 已销毁]]>
+<![CDATA[[DEBUG] 09:14:01.443 SettingsController 已销毁]]>
+<![CDATA[[DEBUG] 09:14:01.443 ProjectController 已销毁]]>
+<![CDATA[[DEBUG] 09:14:01.443 BuildController destroyed.]]>
+<![CDATA[[MonitorManager] 数据处理器已设置: 禁用增量分发]]>
+<![CDATA[[MonitorExportHelper] 导出助手已销毁]]>
+<![CDATA[[DEBUG] 09:14:01.457 SnippetRepository 已销毁]]>
+<![CDATA[[DEBUG] 09:14:01.469 SettingsController 已创建]]>
+<![CDATA[[DEBUG] 09:14:01.471 已加载应用设置: 项目目录=C:/Users/Ryan, 自动滚动=1, 字体索引=1, 布局版本=1]]>
+<![CDATA[[DEBUG] 09:14:01.472 ProjectController 已创建]]>
+<![CDATA[[DEBUG] 09:14:01.472 已加载 5 个最近项目]]>
+<![CDATA[[DEBUG] 09:14:01.472 BuildController created.]]>
+<![CDATA[[DEBUG] 09:14:01.472 控制器已创建]]>
+<![CDATA[[DEBUG] 09:14:01.486 SnippetRepository 已创建]]>
+<![CDATA[[DEBUG] 09:14:01.490 已加载 140 个默认 Snippets]]>
+<![CDATA[[MonitorExportHelper] 导出助手已创建]]>
+<![CDATA[[MonitorManager] 数据处理器已设置: 启用增量分发]]>
+<![CDATA[[DEBUG] 09:14:01.919 控制器信号已连接]]>
+<![CDATA[[INFO] 09:14:03.642 MainWindow 初始化完成]]>
+<![CDATA[[DEBUG] 09:14:03.643 已加载应用设置: 项目目录=C:/Users/Ryan, 自动滚动=1, 字体索引=1, 布局版本=9999]]>
+<![CDATA[[DEBUG] 09:14:03.939 已保存应用设置]]>
+<![CDATA[[DEBUG] 09:14:03.939 已保存最近项目列表]]>
+<![CDATA[[INFO] 09:14:03.939 MainWindow 已销毁]]>
+<![CDATA[[DEBUG] 09:14:03.958 SettingsController 已销毁]]>
+<![CDATA[[DEBUG] 09:14:03.958 ProjectController 已销毁]]>
+<![CDATA[[DEBUG] 09:14:03.958 BuildController destroyed.]]>
+<![CDATA[[MonitorManager] 数据处理器已设置: 禁用增量分发]]>
+<![CDATA[[MonitorExportHelper] 导出助手已销毁]]>
+<![CDATA[[DEBUG] 09:14:03.970 SnippetRepository 已销毁]]>
+<![CDATA[[DEBUG] 09:14:04.205 已保存应用设置]]>
+<![CDATA[[DEBUG] 09:14:04.206 已保存最近项目列表]]>
+<![CDATA[[INFO] 09:14:04.206 MainWindow 已销毁]]>
+<![CDATA[[DEBUG] 09:14:04.226 SettingsController 已销毁]]>
+<![CDATA[[DEBUG] 09:14:04.227 ProjectController 已销毁]]>
+<![CDATA[[DEBUG] 09:14:04.227 BuildController destroyed.]]>
+<![CDATA[[MonitorExportHelper] 导出助手已销毁]]>
+<![CDATA[[DEBUG] 09:14:04.292 SnippetRepository 已销毁]]>
+<![CDATA[[MonitorManager] applyConfiguration 开始 project= "" providers= 0 mappings= 0]]>
+<![CDATA[[MonitorManager] applyConfiguration 结束 success=true channels= 4 providers= 0]]>
+<![CDATA[[MonitorManager] applyConfiguration 开始 project= "" providers= 0 mappings= 0]]>
+<![CDATA[[MonitorManager] applyConfiguration 结束 success=true channels= 4 providers= 0]]>
+<![CDATA[[DEBUG] 09:14:04.329 SettingsController 已创建]]>
+<![CDATA[[DEBUG] 09:14:04.331 已加载应用设置: 项目目录=C:/Users/Ryan, 自动滚动=1, 字体索引=1, 布局版本=1]]>
+<![CDATA[[DEBUG] 09:14:04.332 ProjectController 已创建]]>
+<![CDATA[[DEBUG] 09:14:04.332 已加载 5 个最近项目]]>
+<![CDATA[[DEBUG] 09:14:04.332 BuildController created.]]>
+<![CDATA[[DEBUG] 09:14:04.332 控制器已创建]]>
+<![CDATA[[DEBUG] 09:14:04.346 SnippetRepository 已创建]]>
+<![CDATA[[DEBUG] 09:14:04.351 已加载 140 个默认 Snippets]]>
+<![CDATA[[MonitorExportHelper] 导出助手已创建]]>
+<![CDATA[[MonitorManager] 数据处理器已设置: 启用增量分发]]>
+<![CDATA[[DEBUG] 09:14:04.867 控制器信号已连接]]>
+<![CDATA[[INFO] 09:14:05.617 MainWindow 初始化完成]]>
+<![CDATA[[DEBUG] 09:14:05.624 已加载应用设置: 项目目录=C:/Users/Ryan, 自动滚动=1, 字体索引=1, 布局版本=1]]>
+<![CDATA[[DEBUG] 09:14:06.813 已保存应用设置]]>
+<![CDATA[[DEBUG] 09:14:06.813 已保存最近项目列表]]>
+<![CDATA[[INFO] 09:14:06.814 MainWindow 已销毁]]>
+<![CDATA[[DEBUG] 09:14:06.831 SettingsController 已销毁]]>
+<![CDATA[[DEBUG] 09:14:06.831 ProjectController 已销毁]]>
+<![CDATA[[DEBUG] 09:14:06.831 BuildController destroyed.]]>
+<![CDATA[[MonitorManager] 数据处理器已设置: 禁用增量分发]]>
+<![CDATA[[MonitorExportHelper] 导出助手已销毁]]>
+<![CDATA[[DEBUG] 09:14:06.847 SnippetRepository 已销毁]]>
+<![CDATA[[MonitorManager] applyConfiguration 开始 project= "" providers= 0 mappings= 0]]>
+<![CDATA[[MonitorManager] applyConfiguration 结束 success=true channels= 4 providers= 0]]>
+<![CDATA[[MonitorManager] applyConfiguration 开始 project= "" providers= 0 mappings= 0]]>
+<![CDATA[[MonitorManager] applyConfiguration 结束 success=true channels= 4 providers= 0]]>
+<![CDATA[[DEBUG] 09:14:06.863 SettingsController 已创建]]>
+<![CDATA[[DEBUG] 09:14:06.865 已加载应用设置: 项目目录=C:/Users/Ryan, 自动滚动=1, 字体索引=1, 布局版本=1]]>
+<![CDATA[[DEBUG] 09:14:06.866 ProjectController 已创建]]>
+<![CDATA[[DEBUG] 09:14:06.866 已加载 5 个最近项目]]>
+<![CDATA[[DEBUG] 09:14:06.866 BuildController created.]]>
+<![CDATA[[DEBUG] 09:14:06.866 控制器已创建]]>
+<![CDATA[[DEBUG] 09:14:06.880 SnippetRepository 已创建]]>
+<![CDATA[[DEBUG] 09:14:06.884 已加载 140 个默认 Snippets]]>
+<![CDATA[[MonitorExportHelper] 导出助手已创建]]>
+<![CDATA[[MonitorManager] 数据处理器已设置: 启用增量分发]]>
+<![CDATA[[DEBUG] 09:14:07.319 控制器信号已连接]]>
+<![CDATA[[INFO] 09:14:08.098 MainWindow 初始化完成]]>
+<![CDATA[[DEBUG] 09:14:08.100 已加载应用设置: 项目目录=C:/Users/Ryan, 自动滚动=1, 字体索引=1, 布局版本=1]]>
+<![CDATA[[DEBUG] 09:14:10.126 已保存应用设置]]>
+<![CDATA[[DEBUG] 09:14:10.126 已保存最近项目列表]]>
+<![CDATA[[INFO] 09:14:10.126 MainWindow 已销毁]]>
+<![CDATA[[DEBUG] 09:14:10.136 SettingsController 已销毁]]>
+<![CDATA[[DEBUG] 09:14:10.137 ProjectController 已销毁]]>
+<![CDATA[[DEBUG] 09:14:10.137 BuildController destroyed.]]>
+<![CDATA[[MonitorManager] 数据处理器已设置: 禁用增量分发]]>
+<![CDATA[[MonitorExportHelper] 导出助手已销毁]]>
+<![CDATA[[DEBUG] 09:14:10.152 SnippetRepository 已销毁]]>
+<![CDATA[[MonitorManager] applyConfiguration 开始 project= "" providers= 0 mappings= 0]]>
+<![CDATA[[MonitorManager] applyConfiguration 结束 success=true channels= 4 providers= 0]]>
+<![CDATA[[MonitorManager] applyConfiguration 开始 project= "" providers= 0 mappings= 0]]>
+<![CDATA[[MonitorManager] applyConfiguration 结束 success=true channels= 4 providers= 0]]>
+<![CDATA[[DEBUG] 09:14:10.172 SettingsController 已创建]]>
+<![CDATA[[DEBUG] 09:14:10.174 已加载应用设置: 项目目录=C:/Users/Ryan, 自动滚动=1, 字体索引=1, 布局版本=1]]>
+<![CDATA[[DEBUG] 09:14:10.175 ProjectController 已创建]]>
+<![CDATA[[DEBUG] 09:14:10.175 已加载 5 个最近项目]]>
+<![CDATA[[DEBUG] 09:14:10.175 BuildController created.]]>
+<![CDATA[[DEBUG] 09:14:10.176 控制器已创建]]>
+<![CDATA[[DEBUG] 09:14:10.197 SnippetRepository 已创建]]>
+<![CDATA[[DEBUG] 09:14:10.202 已加载 140 个默认 Snippets]]>
+<![CDATA[[MonitorExportHelper] 导出助手已创建]]>
+<![CDATA[[MonitorManager] 数据处理器已设置: 启用增量分发]]>
+<![CDATA[[DEBUG] 09:14:10.712 控制器信号已连接]]>
+<![CDATA[[INFO] 09:14:11.562 MainWindow 初始化完成]]>
+<![CDATA[[DEBUG] 09:14:11.564 已加载应用设置: 项目目录=C:/Users/Ryan, 自动滚动=1, 字体索引=1, 布局版本=1]]>
+<![CDATA[[DEBUG] 09:14:12.513 已保存应用设置]]>
+<![CDATA[[DEBUG] 09:14:12.513 已保存最近项目列表]]>
+<![CDATA[[INFO] 09:14:12.513 MainWindow 已销毁]]>
+<![CDATA[[DEBUG] 09:14:12.533 SettingsController 已销毁]]>
+<![CDATA[[DEBUG] 09:14:12.533 ProjectController 已销毁]]>
+<![CDATA[[DEBUG] 09:14:12.533 BuildController destroyed.]]>
+<![CDATA[[MonitorManager] 数据处理器已设置: 禁用增量分发]]>
+<![CDATA[[MonitorExportHelper] 导出助手已销毁]]>
+<![CDATA[[DEBUG] 09:14:12.554 SnippetRepository 已销毁]]>
+<![CDATA[[MonitorManager] applyConfiguration 开始 project= "" providers= 0 mappings= 0]]>
+<![CDATA[[MonitorManager] applyConfiguration 结束 success=true channels= 4 providers= 0]]>
+<![CDATA[[MonitorManager] applyConfiguration 开始 project= "" providers= 0 mappings= 0]]>
+<![CDATA[[MonitorManager] applyConfiguration 结束 success=true channels= 4 providers= 0]]>
+<![CDATA[[DEBUG] 09:14:12.577 SettingsController 已创建]]>
+<![CDATA[[DEBUG] 09:14:12.580 已加载应用设置: 项目目录=C:/Users/Ryan, 自动滚动=1, 字体索引=1, 布局版本=1]]>
+<![CDATA[[DEBUG] 09:14:12.581 ProjectController 已创建]]>
+<![CDATA[[DEBUG] 09:14:12.581 已加载 5 个最近项目]]>
+<![CDATA[[DEBUG] 09:14:12.581 BuildController created.]]>
+<![CDATA[[DEBUG] 09:14:12.581 控制器已创建]]>
+<![CDATA[[DEBUG] 09:14:12.603 SnippetRepository 已创建]]>
+<![CDATA[[DEBUG] 09:14:12.608 已加载 140 个默认 Snippets]]>
+<![CDATA[[MonitorExportHelper] 导出助手已创建]]>
+<![CDATA[[MonitorManager] 数据处理器已设置: 启用增量分发]]>
+<![CDATA[[DEBUG] 09:14:13.189 控制器信号已连接]]>
+<![CDATA[[INFO] 09:14:14.135 MainWindow 初始化完成]]>
+<![CDATA[[MonitorManager] 通道已存在，更新配置: "系统压力"]]>
+<![CDATA[[MonitorManager] 通道已存在，更新配置: "系统流量"]]>
+<![CDATA[[MonitorManager] 通道已存在，更新配置: "系统温度"]]>
+<![CDATA[[MonitorManager] 通道已存在，更新配置: "阀芯位置"]]>
+<![CDATA[[MonitorManager] 监控已启动]]>
+<![CDATA[[MonitorWidget] 监控已启动，providers= 0]]>
+<![CDATA[[DEBUG] 09:14:15.964 已保存应用设置]]>
+<![CDATA[[DEBUG] 09:14:15.964 已保存最近项目列表]]>
+<![CDATA[[INFO] 09:14:15.964 MainWindow 已销毁]]>
+<![CDATA[[DEBUG] 09:14:15.983 SettingsController 已销毁]]>
+<![CDATA[[DEBUG] 09:14:15.983 ProjectController 已销毁]]>
+<![CDATA[[DEBUG] 09:14:15.983 BuildController destroyed.]]>
+<![CDATA[[MonitorManager] 监控已停止]]>
+<![CDATA[[MonitorWidget] Monitoring stopped.]]>
+<![CDATA[[MonitorManager] 数据处理器已设置: 禁用增量分发]]>
+<![CDATA[[MonitorExportHelper] 导出助手已销毁]]>
+<![CDATA[[DEBUG] 09:14:16.043 SnippetRepository 已销毁]]>
+<![CDATA[[MonitorManager] applyConfiguration 开始 project= "" providers= 0 mappings= 0]]>
+<![CDATA[[MonitorManager] applyConfiguration 结束 success=true channels= 4 providers= 0]]>
+<![CDATA[[MonitorManager] applyConfiguration 开始 project= "" providers= 0 mappings= 0]]>
+<![CDATA[[MonitorManager] applyConfiguration 结束 success=true channels= 4 providers= 0]]>
+<![CDATA[[DEBUG] 09:14:16.081 SettingsController 已创建]]>
+<![CDATA[[DEBUG] 09:14:16.082 已加载应用设置: 项目目录=C:/Users/Ryan, 自动滚动=1, 字体索引=1, 布局版本=1]]>
+<![CDATA[[DEBUG] 09:14:16.083 ProjectController 已创建]]>
+<![CDATA[[DEBUG] 09:14:16.083 已加载 5 个最近项目]]>
+<![CDATA[[DEBUG] 09:14:16.083 BuildController created.]]>
+<![CDATA[[DEBUG] 09:14:16.083 控制器已创建]]>
+<![CDATA[[DEBUG] 09:14:16.094 SnippetRepository 已创建]]>
+<![CDATA[[DEBUG] 09:14:16.098 已加载 140 个默认 Snippets]]>
+<![CDATA[[MonitorExportHelper] 导出助手已创建]]>
+<![CDATA[[MonitorManager] 数据处理器已设置: 启用增量分发]]>
+<![CDATA[[DEBUG] 09:14:16.558 控制器信号已连接]]>
+<![CDATA[[INFO] 09:14:17.375 MainWindow 初始化完成]]>
+<![CDATA[[DEBUG] 09:14:18.430 已保存应用设置]]>
+<![CDATA[[DEBUG] 09:14:18.430 已保存最近项目列表]]>
+<![CDATA[[INFO] 09:14:18.430 MainWindow 已销毁]]>
+<![CDATA[[DEBUG] 09:14:18.448 SettingsController 已销毁]]>
+<![CDATA[[DEBUG] 09:14:18.448 ProjectController 已销毁]]>
+<![CDATA[[DEBUG] 09:14:18.448 BuildController destroyed.]]>
+<![CDATA[[MonitorManager] 数据处理器已设置: 禁用增量分发]]>
+<![CDATA[[MonitorExportHelper] 导出助手已销毁]]>
+<![CDATA[[DEBUG] 09:14:18.467 SnippetRepository 已销毁]]>
+<![CDATA[[MonitorManager] applyConfiguration 开始 project= "" providers= 0 mappings= 0]]>
+<![CDATA[[MonitorManager] applyConfiguration 结束 success=true channels= 4 providers= 0]]>
+<![CDATA[[MonitorManager] applyConfiguration 开始 project= "" providers= 0 mappings= 0]]>
+<![CDATA[[MonitorManager] applyConfiguration 结束 success=true channels= 4 providers= 0]]>
+<![CDATA[[DEBUG] 09:14:18.485 SettingsController 已创建]]>
+<![CDATA[[DEBUG] 09:14:18.488 已加载应用设置: 项目目录=C:/Users/Ryan, 自动滚动=1, 字体索引=1, 布局版本=1]]>
+<![CDATA[[DEBUG] 09:14:18.488 ProjectController 已创建]]>
+<![CDATA[[DEBUG] 09:14:18.489 已加载 5 个最近项目]]>
+<![CDATA[[DEBUG] 09:14:18.489 BuildController created.]]>
+<![CDATA[[DEBUG] 09:14:18.489 控制器已创建]]>
+<![CDATA[[DEBUG] 09:14:18.500 SnippetRepository 已创建]]>
+<![CDATA[[DEBUG] 09:14:18.505 已加载 140 个默认 Snippets]]>
+<![CDATA[[MonitorExportHelper] 导出助手已创建]]>
+<![CDATA[[MonitorManager] 数据处理器已设置: 启用增量分发]]>
+<![CDATA[[DEBUG] 09:14:18.990 控制器信号已连接]]>
+<![CDATA[[INFO] 09:14:19.828 MainWindow 初始化完成]]>
+<![CDATA[[DEBUG] 09:14:21.473 已保存应用设置]]>
+<![CDATA[[DEBUG] 09:14:21.473 已保存最近项目列表]]>
+<![CDATA[[INFO] 09:14:21.473 MainWindow 已销毁]]>
+<![CDATA[[DEBUG] 09:14:21.491 SettingsController 已销毁]]>
+<![CDATA[[DEBUG] 09:14:21.492 ProjectController 已销毁]]>
+<![CDATA[[DEBUG] 09:14:21.492 BuildController destroyed.]]>
+<![CDATA[[MonitorManager] 数据处理器已设置: 禁用增量分发]]>
+<![CDATA[[MonitorExportHelper] 导出助手已销毁]]>
+<![CDATA[[DEBUG] 09:14:21.512 SnippetRepository 已销毁]]>
+<![CDATA[[MonitorManager] applyConfiguration 开始 project= "" providers= 0 mappings= 0]]>
+<![CDATA[[MonitorManager] applyConfiguration 结束 success=true channels= 4 providers= 0]]>
+<![CDATA[[MonitorManager] applyConfiguration 开始 project= "" providers= 0 mappings= 0]]>
+<![CDATA[[MonitorManager] applyConfiguration 结束 success=true channels= 4 providers= 0]]>
+<![CDATA[[DEBUG] 09:14:21.531 SettingsController 已创建]]>
+<![CDATA[[DEBUG] 09:14:21.533 已加载应用设置: 项目目录=C:/Users/Ryan, 自动滚动=1, 字体索引=1, 布局版本=1]]>
+<![CDATA[[DEBUG] 09:14:21.534 ProjectController 已创建]]>
+<![CDATA[[DEBUG] 09:14:21.535 已加载 5 个最近项目]]>
+<![CDATA[[DEBUG] 09:14:21.535 BuildController created.]]>
+<![CDATA[[DEBUG] 09:14:21.535 控制器已创建]]>
+<![CDATA[[DEBUG] 09:14:21.551 SnippetRepository 已创建]]>
+<![CDATA[[DEBUG] 09:14:21.555 已加载 140 个默认 Snippets]]>
+<![CDATA[[MonitorExportHelper] 导出助手已创建]]>
+<![CDATA[[MonitorManager] 数据处理器已设置: 启用增量分发]]>
+<![CDATA[[DEBUG] 09:14:21.994 控制器信号已连接]]>
+<![CDATA[[INFO] 09:14:22.816 MainWindow 初始化完成]]>
+<![CDATA[[DEBUG] 09:14:23.113 已加载 140 个默认 Snippets]]>
+<![CDATA[[MonitorManager] 通道已存在，更新配置: "系统压力"]]>
+<![CDATA[[MonitorManager] 通道已存在，更新配置: "系统流量"]]>
+<![CDATA[[MonitorManager] 通道已存在，更新配置: "系统温度"]]>
+<![CDATA[[MonitorManager] 通道已存在，更新配置: "阀芯位置"]]>
+<![CDATA[[DEBUG] 09:14:23.324 已保存应用设置]]>
+<![CDATA[[DEBUG] 09:14:23.325 已保存最近项目列表]]>
+<![CDATA[[INFO] 09:14:23.325 MainWindow 已销毁]]>
+<![CDATA[[DEBUG] 09:14:23.340 SettingsController 已销毁]]>
+<![CDATA[[DEBUG] 09:14:23.340 ProjectController 已销毁]]>
+<![CDATA[[DEBUG] 09:14:23.340 BuildController destroyed.]]>
+<![CDATA[[MonitorManager] 数据处理器已设置: 禁用增量分发]]>
+<![CDATA[[MonitorExportHelper] 导出助手已销毁]]>
+<![CDATA[[DEBUG] 09:14:23.362 SnippetRepository 已销毁]]>
+<![CDATA[[MonitorManager] applyConfiguration 开始 project= "" providers= 0 mappings= 0]]>
+<![CDATA[[MonitorManager] applyConfiguration 结束 success=true channels= 4 providers= 0]]>
+<![CDATA[[MonitorManager] applyConfiguration 开始 project= "" providers= 0 mappings= 0]]>
+<![CDATA[[MonitorManager] applyConfiguration 结束 success=true channels= 4 providers= 0]]>
+<![CDATA[[DEBUG] 09:14:23.377 SettingsController 已创建]]>
+<![CDATA[[DEBUG] 09:14:23.378 已加载应用设置: 项目目录=C:/Users/Ryan, 自动滚动=1, 字体索引=1, 布局版本=1]]>
+<![CDATA[[DEBUG] 09:14:23.379 ProjectController 已创建]]>
+<![CDATA[[DEBUG] 09:14:23.379 已加载 5 个最近项目]]>
+<![CDATA[[DEBUG] 09:14:23.380 BuildController created.]]>
+<![CDATA[[DEBUG] 09:14:23.380 控制器已创建]]>
+<![CDATA[[DEBUG] 09:14:23.395 SnippetRepository 已创建]]>
+<![CDATA[[DEBUG] 09:14:23.400 已加载 140 个默认 Snippets]]>
+<![CDATA[[MonitorExportHelper] 导出助手已创建]]>
+<![CDATA[[MonitorManager] 数据处理器已设置: 启用增量分发]]>
+<![CDATA[[DEBUG] 09:14:23.851 控制器信号已连接]]>
+<![CDATA[[INFO] 09:14:24.651 MainWindow 初始化完成]]>
+<![CDATA[[DEBUG] 09:14:25.114 已保存应用设置]]>
+<![CDATA[[DEBUG] 09:14:25.114 已保存最近项目列表]]>
+<![CDATA[[INFO] 09:14:25.114 MainWindow 已销毁]]>
+<![CDATA[[DEBUG] 09:14:25.133 SettingsController 已销毁]]>
+<![CDATA[[DEBUG] 09:14:25.133 ProjectController 已销毁]]>
+<![CDATA[[DEBUG] 09:14:25.133 BuildController destroyed.]]>
+<![CDATA[[MonitorManager] 数据处理器已设置: 禁用增量分发]]>
+<![CDATA[[MonitorExportHelper] 导出助手已销毁]]>
+<![CDATA[[DEBUG] 09:14:25.156 SnippetRepository 已销毁]]>
+<![CDATA[[MonitorManager] applyConfiguration 开始 project= "" providers= 0 mappings= 0]]>
+<![CDATA[[MonitorManager] applyConfiguration 结束 success=true channels= 4 providers= 0]]>
+<![CDATA[[MonitorManager] applyConfiguration 开始 project= "" providers= 0 mappings= 0]]>
+<![CDATA[[MonitorManager] applyConfiguration 结束 success=true channels= 4 providers= 0]]>
+<![CDATA[[DEBUG] 09:14:25.169 SettingsController 已创建]]>
+<![CDATA[[DEBUG] 09:14:25.171 已加载应用设置: 项目目录=C:/Users/Ryan, 自动滚动=1, 字体索引=1, 布局版本=1]]>
+<![CDATA[[DEBUG] 09:14:25.172 ProjectController 已创建]]>
+<![CDATA[[DEBUG] 09:14:25.172 已加载 5 个最近项目]]>
+<![CDATA[[DEBUG] 09:14:25.172 BuildController created.]]>
+<![CDATA[[DEBUG] 09:14:25.172 控制器已创建]]>
+<![CDATA[[DEBUG] 09:14:25.196 SnippetRepository 已创建]]>
+<![CDATA[[DEBUG] 09:14:25.201 已加载 140 个默认 Snippets]]>
+<![CDATA[[MonitorExportHelper] 导出助手已创建]]>
+<![CDATA[[MonitorManager] 数据处理器已设置: 启用增量分发]]>
+<![CDATA[[DEBUG] 09:14:25.659 控制器信号已连接]]>
+<![CDATA[[INFO] 09:14:26.479 MainWindow 初始化完成]]>
+<![CDATA[[DEBUG] 09:14:26.767 已加载 140 个默认 Snippets]]>
+<![CDATA[[DEBUG] 09:14:27.121 已保存应用设置]]>
+<![CDATA[[DEBUG] 09:14:27.121 已保存最近项目列表]]>
+<![CDATA[[INFO] 09:14:27.121 MainWindow 已销毁]]>
+<![CDATA[[DEBUG] 09:14:27.141 SettingsController 已销毁]]>
+<![CDATA[[DEBUG] 09:14:27.141 ProjectController 已销毁]]>
+<![CDATA[[DEBUG] 09:14:27.141 BuildController destroyed.]]>
+<![CDATA[[MonitorManager] 数据处理器已设置: 禁用增量分发]]>
+<![CDATA[[MonitorExportHelper] 导出助手已销毁]]>
+<![CDATA[[DEBUG] 09:14:27.161 SnippetRepository 已销毁]]>
+<![CDATA[[MonitorManager] applyConfiguration 开始 project= "" providers= 0 mappings= 0]]>
+<![CDATA[[MonitorManager] applyConfiguration 结束 success=true channels= 4 providers= 0]]>
+<![CDATA[[MonitorManager] applyConfiguration 开始 project= "" providers= 0 mappings= 0]]>
+<![CDATA[[MonitorManager] applyConfiguration 结束 success=true channels= 4 providers= 0]]>
+<![CDATA[[DEBUG] 09:14:27.176 SettingsController 已创建]]>
+<![CDATA[[DEBUG] 09:14:27.178 已加载应用设置: 项目目录=C:/Users/Ryan, 自动滚动=1, 字体索引=1, 布局版本=1]]>
+<![CDATA[[DEBUG] 09:14:27.178 ProjectController 已创建]]>
+<![CDATA[[DEBUG] 09:14:27.179 已加载 5 个最近项目]]>
+<![CDATA[[DEBUG] 09:14:27.179 BuildController created.]]>
+<![CDATA[[DEBUG] 09:14:27.179 控制器已创建]]>
+<![CDATA[[DEBUG] 09:14:27.193 SnippetRepository 已创建]]>
+<![CDATA[[DEBUG] 09:14:27.200 已加载 140 个默认 Snippets]]>
+<![CDATA[[MonitorExportHelper] 导出助手已创建]]>
+<![CDATA[[MonitorManager] 数据处理器已设置: 启用增量分发]]>
+<![CDATA[[DEBUG] 09:14:27.643 控制器信号已连接]]>
+<![CDATA[[INFO] 09:14:28.424 MainWindow 初始化完成]]>
+<![CDATA[[DEBUG] 09:14:28.921 已加载 140 个默认 Snippets]]>
+<![CDATA[[INFO] 09:14:29.465 [VirtualDeviceBackend] connected]]>
+<![CDATA[[DEBUG] 09:14:29.761 已保存应用设置]]>
+<![CDATA[[DEBUG] 09:14:29.761 已保存最近项目列表]]>
+<![CDATA[[INFO] 09:14:29.761 MainWindow 已销毁]]>
+<![CDATA[[DEBUG] 09:14:29.785 SettingsController 已销毁]]>
+<![CDATA[[DEBUG] 09:14:29.785 ProjectController 已销毁]]>
+<![CDATA[[DEBUG] 09:14:29.785 BuildController destroyed.]]>
+<![CDATA[[MonitorManager] 数据处理器已设置: 禁用增量分发]]>
+<![CDATA[[MonitorExportHelper] 导出助手已销毁]]>
+<![CDATA[[DEBUG] 09:14:29.810 SnippetRepository 已销毁]]>
+<![CDATA[[MonitorManager] applyConfiguration 开始 project= "" providers= 0 mappings= 0]]>
+<![CDATA[[MonitorManager] applyConfiguration 结束 success=true channels= 4 providers= 0]]>
+<![CDATA[[MonitorManager] applyConfiguration 开始 project= "" providers= 0 mappings= 0]]>
+<![CDATA[[MonitorManager] applyConfiguration 结束 success=true channels= 4 providers= 0]]>
+<![CDATA[[MonitorManager] applyConfiguration 开始 project= "" providers= 0 mappings= 0]]>
+<![CDATA[[MonitorManager] applyConfiguration 结束 success=true channels= 4 providers= 0]]>
+<![CDATA[[MonitorManager] applyConfiguration 开始 project= "" providers= 0 mappings= 0]]>
+<![CDATA[[MonitorManager] applyConfiguration 结束 success=true channels= 4 providers= 0]]>
+<![CDATA[[DEBUG] 09:14:30.193 SettingsController 已创建]]>
+<![CDATA[[DEBUG] 09:14:30.195 已加载应用设置: 项目目录=C:/Users/Ryan, 自动滚动=1, 字体索引=1, 布局版本=1]]>
+<![CDATA[[DEBUG] 09:14:30.196 ProjectController 已创建]]>
+<![CDATA[[DEBUG] 09:14:30.197 已加载 5 个最近项目]]>
+<![CDATA[[DEBUG] 09:14:30.197 BuildController created.]]>
+<![CDATA[[DEBUG] 09:14:30.197 控制器已创建]]>
+<![CDATA[[DEBUG] 09:14:30.215 SnippetRepository 已创建]]>
+<![CDATA[[DEBUG] 09:14:30.219 已加载 140 个默认 Snippets]]>
+<![CDATA[[MonitorExportHelper] 导出助手已创建]]>
+<![CDATA[[MonitorManager] 数据处理器已设置: 启用增量分发]]>
+<![CDATA[[DEBUG] 09:14:30.658 控制器信号已连接]]>
+<![CDATA[[INFO] 09:14:31.459 MainWindow 初始化完成]]>
+<![CDATA[[DEBUG] 09:14:31.460 已加载应用设置: 项目目录=C:/Users/Ryan, 自动滚动=1, 字体索引=1, 布局版本=1]]>
+<![CDATA[setGeometry: Unable to set geometry 1920x1080+0+20 (frame: 1936x1119-8-11) on QWidgetWindow/"MainWindowClassWindow" on "\\.\DISPLAY1". Resulting geometry: 1920x1061+0+20 (frame: 1936x1100-8-11) margins: 8, 31, 8, 8 minimum size: 343x306 MINMAXINFO maxSize=0,0 maxpos=0,0 mintrack=359,345 maxtrack=0,0)]]>
+<![CDATA[[DEBUG] 09:14:31.945 已保存应用设置]]>
+<![CDATA[[DEBUG] 09:14:31.945 已保存最近项目列表]]>
+<![CDATA[[INFO] 09:14:31.945 MainWindow 已销毁]]>
+<![CDATA[[DEBUG] 09:14:31.963 SettingsController 已销毁]]>
+<![CDATA[[DEBUG] 09:14:31.964 ProjectController 已销毁]]>
+<![CDATA[[DEBUG] 09:14:31.964 BuildController destroyed.]]>
+<![CDATA[[MonitorManager] 数据处理器已设置: 禁用增量分发]]>
+<![CDATA[[MonitorExportHelper] 导出助手已销毁]]>
+<![CDATA[[DEBUG] 09:14:31.986 SnippetRepository 已销毁]]>
+<![CDATA[[MonitorManager] applyConfiguration 开始 project= "" providers= 0 mappings= 0]]>
+<![CDATA[[MonitorManager] applyConfiguration 结束 success=true channels= 4 providers= 0]]>
+<![CDATA[[MonitorManager] applyConfiguration 开始 project= "" providers= 0 mappings= 0]]>
+<![CDATA[[MonitorManager] applyConfiguration 结束 success=true channels= 4 providers= 0]]>
+<![CDATA[[DEBUG] 09:14:32.000 SettingsController 已创建]]>
+<![CDATA[[DEBUG] 09:14:32.002 已加载应用设置: 项目目录=C:/Users/Ryan, 自动滚动=1, 字体索引=1, 布局版本=1]]>
+<![CDATA[[DEBUG] 09:14:32.003 ProjectController 已创建]]>
+<![CDATA[[DEBUG] 09:14:32.004 已加载 5 个最近项目]]>
+<![CDATA[[DEBUG] 09:14:32.004 BuildController created.]]>
+<![CDATA[[DEBUG] 09:14:32.004 控制器已创建]]>
+<![CDATA[[DEBUG] 09:14:32.020 SnippetRepository 已创建]]>
+<![CDATA[[DEBUG] 09:14:32.025 已加载 140 个默认 Snippets]]>
+<![CDATA[[MonitorExportHelper] 导出助手已创建]]>
+<![CDATA[[MonitorManager] 数据处理器已设置: 启用增量分发]]>
+<![CDATA[[DEBUG] 09:14:32.494 控制器信号已连接]]>
+<![CDATA[[INFO] 09:14:33.366 MainWindow 初始化完成]]>
+<![CDATA[[DEBUG] 09:14:33.540 已加载 140 个默认 Snippets]]>
+<![CDATA[[DEBUG] 09:14:33.621 已保存应用设置]]>
+<![CDATA[[DEBUG] 09:14:33.622 已保存最近项目列表]]>
+<![CDATA[[INFO] 09:14:33.622 MainWindow 已销毁]]>
+<![CDATA[[DEBUG] 09:14:33.622 SettingsController 已销毁]]>
+<![CDATA[[DEBUG] 09:14:33.622 ProjectController 已销毁]]>
+<![CDATA[[DEBUG] 09:14:33.622 BuildController destroyed.]]>
+<![CDATA[[MonitorManager] 数据处理器已设置: 禁用增量分发]]>
+<![CDATA[[MonitorExportHelper] 导出助手已销毁]]>
+<![CDATA[[DEBUG] 09:14:33.636 SnippetRepository 已销毁]]>
+<![CDATA[[MonitorManager] applyConfiguration 开始 project= "" providers= 0 mappings= 0]]>
+<![CDATA[[MonitorManager] applyConfiguration 结束 success=true channels= 4 providers= 0]]>
+<![CDATA[[MonitorManager] applyConfiguration 开始 project= "" providers= 0 mappings= 0]]>
+<![CDATA[[MonitorManager] applyConfiguration 结束 success=true channels= 4 providers= 0]]>
+<![CDATA[[MonitorManager] applyConfiguration 开始 project= "" providers= 0 mappings= 0]]>
+<![CDATA[[MonitorManager] applyConfiguration 结束 success=true channels= 4 providers= 0]]>
+<![CDATA[[MonitorManager] applyConfiguration 开始 project= "" providers= 0 mappings= 0]]>
+<![CDATA[[MonitorManager] applyConfiguration 结束 success=true channels= 4 providers= 0]]>
+<![CDATA[[DEBUG] 09:14:52.807 SettingsController 已创建]]>
+<![CDATA[[DEBUG] 09:14:52.808 已加载应用设置: 项目目录=C:/Users/Ryan, 自动滚动=1, 字体索引=1, 布局版本=1]]>
+<![CDATA[[DEBUG] 09:14:52.809 ProjectController 已创建]]>
+<![CDATA[[DEBUG] 09:14:52.809 已加载 5 个最近项目]]>
+<![CDATA[[DEBUG] 09:14:52.809 BuildController created.]]>
+<![CDATA[[DEBUG] 09:14:52.809 控制器已创建]]>
+<![CDATA[[DEBUG] 09:14:52.822 SnippetRepository 已创建]]>
+<![CDATA[[DEBUG] 09:14:52.825 已加载 140 个默认 Snippets]]>
+<![CDATA[[MonitorExportHelper] 导出助手已创建]]>
+<![CDATA[[MonitorManager] 数据处理器已设置: 启用增量分发]]>
+<![CDATA[[DEBUG] 09:14:53.288 控制器信号已连接]]>
+<![CDATA[[INFO] 09:14:54.095 MainWindow 初始化完成]]>
+<![CDATA[[DEBUG] 09:14:54.997 已保存应用设置]]>
+<![CDATA[[DEBUG] 09:14:54.997 已保存最近项目列表]]>
+<![CDATA[[INFO] 09:14:54.997 MainWindow 已销毁]]>
+<![CDATA[[DEBUG] 09:14:55.013 SettingsController 已销毁]]>
+<![CDATA[[DEBUG] 09:14:55.013 ProjectController 已销毁]]>
+<![CDATA[[DEBUG] 09:14:55.013 BuildController destroyed.]]>
+<![CDATA[[MonitorManager] 数据处理器已设置: 禁用增量分发]]>
+<![CDATA[[MonitorExportHelper] 导出助手已销毁]]>
+<![CDATA[[DEBUG] 09:14:55.028 SnippetRepository 已销毁]]>
+<![CDATA[[MonitorManager] applyConfiguration 开始 project= "" providers= 0 mappings= 0]]>
+<![CDATA[[MonitorManager] applyConfiguration 结束 success=true channels= 4 providers= 0]]>
+  </system-err>
+</testsuite>

@@ -44,6 +44,12 @@ IDeviceBackend* RuntimeSessionController::deviceBackend() const
     return m_backend.data();
 }
 
+RuntimeSessionController::~RuntimeSessionController()
+{
+    if (m_connectionCancelled) m_connectionCancelled->store(true);
+    if (m_cancelDebugAudit) m_cancelDebugAudit();
+}
+
 void RuntimeSessionController::setDeviceBackend(IDeviceBackend* backend)
 {
     if (m_backend == backend) {
@@ -57,6 +63,8 @@ void RuntimeSessionController::setDeviceBackend(IDeviceBackend* backend)
     }
 
     const QString message = QStringLiteral("设备后端已切换，OPC 写入已取消");
+    if (m_connectionCancelled) m_connectionCancelled->store(true);
+    m_connectionCancelled.reset();
     cancelPendingOpcWrite(message);
     if (m_parameterController)
         m_parameterController->cancelPendingReadback(message);
@@ -72,6 +80,7 @@ void RuntimeSessionController::setDeviceBackend(IDeviceBackend* backend)
         m_ownedControllerBackend = nullptr;
     }
     const quint64 generation = ++m_backendGeneration;
+    stopContinuousStep();
     ++m_debugCommandGeneration;
     setDebugCommandPending(false);
     m_backend = backend;
@@ -88,6 +97,7 @@ void RuntimeSessionController::setDeviceBackend(IDeviceBackend* backend)
                     if (m_ownedControllerBackend == currentBackend)
                         m_ownedControllerBackend = nullptr;
                     m_backend = nullptr;
+                    stopContinuousStep();
                     ++m_debugCommandGeneration;
                     setDebugCommandPending(false);
                     const QString failure = QStringLiteral("设备后端已销毁，运行操作已取消");
@@ -143,7 +153,17 @@ void RuntimeSessionController::setSampleDataProvider(SampleDataProvider* provide
 
 void RuntimeSessionController::setProjectController(ProjectController* controller)
 {
+    if (m_connectionCancelled) m_connectionCancelled->store(true);
+    m_connectionCancelled.reset();
+    stopContinuousStep();
+    ++m_debugCommandGeneration;
+    setDebugCommandPending(false);
+    if (m_projectController) disconnect(m_projectController, nullptr, this, nullptr);
     m_projectController = controller;
+    if (controller) {
+        connect(controller, &ProjectController::projectClosed, this, &RuntimeSessionController::requestStop);
+        connect(controller, &ProjectController::projectOpened, this, [this](const ProjectRuntimeConfig&) { requestStop(); });
+    }
 }
 
 void RuntimeSessionController::setBuildController(BuildController* controller)
@@ -252,6 +272,22 @@ bool RuntimeSessionController::applyRuntimeConfig()
     return true;
 }
 
+void RuntimeSessionController::applyRuntimeConfigAsync(std::function<void(bool)> completed)
+{
+    if (!completed) return;
+    if (!m_projectController) { completed(false); return; }
+    QStringList errors;
+    if (!m_projectController->validateConfiguration(errors)) {
+        emit runtimeError(errors.join(QStringLiteral("; "))); completed(false); return;
+    }
+    if (!RunController::usesModbusTransport(m_projectController->runtimeConfig())) {
+        completed(applyRuntimeConfig()); return;
+    }
+    ensureControllerBackendAsync([this, completed](bool ok) {
+        completed(ok && applyRuntimeConfig());
+    });
+}
+
 void RuntimeSessionController::executeRun()
 {
     if (state() == RuntimeSessionState::Running || state() == RuntimeSessionState::Monitoring
@@ -294,6 +330,11 @@ void RuntimeSessionController::setPaused(bool paused)
 
 void RuntimeSessionController::requestStop()
 {
+    if (m_connectionCancelled) m_connectionCancelled->store(true);
+    m_connectionCancelled.reset();
+    stopContinuousStep();
+    ++m_debugCommandGeneration;
+    setDebugCommandPending(false);
     m_runtimeService->cancelOperations();
     setPaused(false);
     m_pendingRunAfterDownload = false;
@@ -369,11 +410,13 @@ bool RuntimeSessionController::onCompileSucceeded(const CompileResult& result)
         return false;
     }
 
-    if (!applyRuntimeConfig())
-        return false;
-
-    executeRun();
-    return true;
+    const auto resultState = std::make_shared<int>(0);
+    applyRuntimeConfigAsync([this, resultState](bool ok) {
+        *resultState = ok ? 1 : -1;
+        if (ok) executeRun();
+    });
+    // Deferred connection means admitted; inline validation preserves its result.
+    return *resultState >= 0;
 }
 
 void RuntimeSessionController::startDemoMode(const QString& reason)
@@ -502,7 +545,11 @@ void RuntimeSessionController::setDownloadState(DownloadState newState)
 
 void RuntimeSessionController::handleBackendConnectionStateChanged(bool connected)
 {
+    if (connected && m_connectionCancelled && m_backend == m_ownedControllerBackend
+            && (m_connectionCancelled->load() || !m_projectController
+                || m_ownedControllerBackend->runtimeConfig().toJson() != m_projectController->runtimeConfig().toJson())) return;
     if (!connected) {
+        stopContinuousStep();
         ++m_debugCommandGeneration;
         setDebugCommandPending(false);
     }

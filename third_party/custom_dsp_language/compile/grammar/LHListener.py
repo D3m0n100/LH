@@ -287,21 +287,21 @@ class LHListener(ParseTreeListener):
         pass
 
 
-    # Enter a parse tree produced by LHParser#XorExpr.
-    def enterXorExpr(self, ctx:LHParser.XorExprContext):
-        pass
-
-    # Exit a parse tree produced by LHParser#XorExpr.
-    def exitXorExpr(self, ctx:LHParser.XorExprContext):
-        pass
-
-
     # Enter a parse tree produced by LHParser#CompareExpr.
     def enterCompareExpr(self, ctx:LHParser.CompareExprContext):
         pass
 
     # Exit a parse tree produced by LHParser#CompareExpr.
     def exitCompareExpr(self, ctx:LHParser.CompareExprContext):
+        pass
+
+
+    # Enter a parse tree produced by LHParser#XorExpr.
+    def enterXorExpr(self, ctx:LHParser.XorExprContext):
+        pass
+
+    # Exit a parse tree produced by LHParser#XorExpr.
+    def exitXorExpr(self, ctx:LHParser.XorExprContext):
         pass
 
 

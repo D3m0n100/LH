@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<testsuite errors="49" failures="1" tests="13" name="DslCompletionEngineTest">
+  <properties>
+    <property value="5.15.2" name="QTestVersion"/>
+    <property value="5.15.2" name="QtVersion"/>
+    <property value="Qt 5.15.2 (x86_64&#x002D;little_endian&#x002D;llp64 shared (dynamic) release build; by GCC 8.1.0)" name="QtBuild"/>
+  </properties>
+  <testcase result="pass" name="initTestCase">
+    <!-- message="========================================" type="qinfo" -->
+    <!-- message="DslCompletionEngine Test Suite" type="qinfo" -->
+    <!-- message="========================================" type="qinfo" -->
+  </testcase>
+  <testcase result="pass" name="testEngineInitialization">
+    <!-- message="[DEBUG] 09:17:06.956 SnippetRepository 已创建" type="qdebug" -->
+    <!-- message="[DEBUG] 09:17:06.961 已加载 140 个默认 Snippets" type="qdebug" -->
+    <!-- message="Engine init success, loaded 140 snippets" type="qinfo" -->
+    <!-- message="[DEBUG] 09:17:06.962 SnippetRepository 已销毁" type="qdebug" -->
+  </testcase>
+  <testcase result="pass" name="testSnippetById">
+    <!-- message="[DEBUG] 09:17:06.963 SnippetRepository 已创建" type="qdebug" -->
+    <!-- message="[DEBUG] 09:17:06.967 已加载 140 个默认 Snippets" type="qdebug" -->
+    <!-- message="Query by ID test passed" type="qinfo" -->
+    <!-- message="[DEBUG] 09:17:06.968 SnippetRepository 已销毁" type="qdebug" -->
+  </testcase>
+  <testcase result="pass" name="testSnippetByName">
+    <!-- message="[DEBUG] 09:17:06.969 SnippetRepository 已创建" type="qdebug" -->
+    <!-- message="[DEBUG] 09:17:06.973 已加载 140 个默认 Snippets" type="qdebug" -->
+    <!-- message="Query by name test passed" type="qinfo" -->
+    <!-- message="[DEBUG] 09:17:06.974 SnippetRepository 已销毁" type="qdebug" -->
+  </testcase>
+  <testcase result="pass" name="testSnippetsByCategory">
+    <!-- message="[DEBUG] 09:17:06.975 SnippetRepository 已创建" type="qdebug" -->
+    <!-- message="[DEBUG] 09:17:06.979 已加载 140 个默认 Snippets" type="qdebug" -->
+    <!-- message="Query by category test passed, input category has 0 snippets" type="qinfo" -->
+    <!-- message="[DEBUG] 09:17:06.980 SnippetRepository 已销毁" type="qdebug" -->
+  </testcase>
+  <testcase result="pass" name="testSearchComponents">
+    <!-- message="[DEBUG] 09:17:06.980 SnippetRepository 已创建" type="qdebug" -->
+    <!-- message="[DEBUG] 09:17:06.985 已加载 140 个默认 Snippets" type="qdebug" -->
+    <!-- message="Search components test passed" type="qinfo" -->
+    <!-- message="[DEBUG] 09:17:06.986 SnippetRepository 已销毁" type="qdebug" -->
+  </testcase>
+  <testcase result="pass" name="testSearchResultLimit">
+    <!-- message="[DEBUG] 09:17:06.986 SnippetRepository 已创建" type="qdebug" -->
+    <!-- message="[DEBUG] 09:17:06.990 已加载 140 个默认 Snippets" type="qdebug" -->
+    <!-- message="Search result limit test passed" type="qinfo" -->
+    <!-- message="[DEBUG] 09:17:06.991 SnippetRepository 已销毁" type="qdebug" -->
+  </testcase>
+  <testcase result="fail" name="testGenerateInsertCode">
+    <!-- message="[DEBUG] 09:17:06.992 SnippetRepository 已创建" type="qdebug" -->
+    <!-- message="[DEBUG] 09:17:06.996 已加载 140 个默认 Snippets" type="qdebug" -->
+    <failure message="&apos;!code1.isEmpty()&apos; returned FALSE. ()" result="fail"/>
+    <!-- message="[DEBUG] 09:17:06.997 SnippetRepository 已销毁" type="qdebug" -->
+  </testcase>
+  <testcase result="pass" name="testProjectSnippetsIntegration">
+    <!-- message="[DEBUG] 09:17:07.003 SnippetRepository 已创建" type="qdebug" -->
+    <!-- message="[DEBUG] 09:17:07.007 已加载 140 个默认 Snippets" type="qdebug" -->
+    <!-- message="[DEBUG] 09:17:07.014 已加载 140 个默认 Snippets" type="qdebug" -->
+    <!-- message="[DEBUG] 09:17:07.015 已加载 1 个工程级 Snippets: C:/Users/Ryan/AppData/Local/Temp/dsl_completion_engine_test&#x002D;sUryFV/snippets.json" type="qdebug" -->
+    <!-- message="[DEBUG] 09:17:07.017 合并后共 141 个 Snippets" type="qdebug" -->
+    <!-- message="Project integration test passed, custom snippet loaded" type="qinfo" -->
+    <!-- message="Default count: 140 , after project load: 141" type="qinfo" -->
+    <!-- message="[DEBUG] 09:17:07.018 SnippetRepository 已销毁" type="qdebug" -->
+  </testcase>
+  <testcase result="pass" name="testUninitializedEngine">
+    <!-- message="[DEBUG] 09:17:07.021 SnippetRepository 已创建" type="qdebug" -->
+    <!-- message="Uninitialized state test passed" type="qinfo" -->
+    <!-- message="[DEBUG] 09:17:07.021 SnippetRepository 已销毁" type="qdebug" -->
+  </testcase>
+  <testcase result="pass" name="testMultipleInitialization">
+    <!-- message="[DEBUG] 09:17:07.021 SnippetRepository 已创建" type="qdebug" -->
+    <!-- message="[DEBUG] 09:17:07.026 已加载 140 个默认 Snippets" type="qdebug" -->
+    <!-- message="[DEBUG] 09:17:07.031 已加载 140 个默认 Snippets" type="qdebug" -->
+    <!-- message="[DEBUG] 09:17:07.037 已加载 140 个默认 Snippets" type="qdebug" -->
+    <!-- message="Multiple init test passed, stable count: 140" type="qinfo" -->
+    <!-- message="[DEBUG] 09:17:07.037 SnippetRepository 已销毁" type="qdebug" -->
+  </testcase>
+  <testcase result="pass" name="testSnippetValidity">
+    <!-- message="Snippet validity test passed" type="qinfo" -->
+  </testcase>
+  <testcase result="pass" name="cleanupTestCase">
+    <!-- message="All DslCompletionEngine tests completed." type="qinfo" -->
+  </testcase>
+  <system-err>
+<![CDATA[========================================]]>
+<![CDATA[DslCompletionEngine Test Suite]]>
+<![CDATA[========================================]]>
+<![CDATA[[DEBUG] 09:17:06.956 SnippetRepository 已创建]]>
+<![CDATA[[DEBUG] 09:17:06.961 已加载 140 个默认 Snippets]]>
+<![CDATA[Engine init success, loaded 140 snippets]]>
+<![CDATA[[DEBUG] 09:17:06.962 SnippetRepository 已销毁]]>
+<![CDATA[[DEBUG] 09:17:06.963 SnippetRepository 已创建]]>
+<![CDATA[[DEBUG] 09:17:06.967 已加载 140 个默认 Snippets]]>
+<![CDATA[Query by ID test passed]]>
+<![CDATA[[DEBUG] 09:17:06.968 SnippetRepository 已销毁]]>
+<![CDATA[[DEBUG] 09:17:06.969 SnippetRepository 已创建]]>
+<![CDATA[[DEBUG] 09:17:06.973 已加载 140 个默认 Snippets]]>
+<![CDATA[Query by name test passed]]>
+<![CDATA[[DEBUG] 09:17:06.974 SnippetRepository 已销毁]]>
+<![CDATA[[DEBUG] 09:17:06.975 SnippetRepository 已创建]]>
+<![CDATA[[DEBUG] 09:17:06.979 已加载 140 个默认 Snippets]]>
+<![CDATA[Query by category test passed, input category has 0 snippets]]>
+<![CDATA[[DEBUG] 09:17:06.980 SnippetRepository 已销毁]]>
+<![CDATA[[DEBUG] 09:17:06.980 SnippetRepository 已创建]]>
+<![CDATA[[DEBUG] 09:17:06.985 已加载 140 个默认 Snippets]]>
+<![CDATA[Search components test passed]]>
+<![CDATA[[DEBUG] 09:17:06.986 SnippetRepository 已销毁]]>
+<![CDATA[[DEBUG] 09:17:06.986 SnippetRepository 已创建]]>
+<![CDATA[[DEBUG] 09:17:06.990 已加载 140 个默认 Snippets]]>
+<![CDATA[Search result limit test passed]]>
+<![CDATA[[DEBUG] 09:17:06.991 SnippetRepository 已销毁]]>
+<![CDATA[[DEBUG] 09:17:06.992 SnippetRepository 已创建]]>
+<![CDATA[[DEBUG] 09:17:06.996 已加载 140 个默认 Snippets]]>
+<![CDATA[[DEBUG] 09:17:06.997 SnippetRepository 已销毁]]>
+<![CDATA[[DEBUG] 09:17:07.003 SnippetRepository 已创建]]>
+<![CDATA[[DEBUG] 09:17:07.007 已加载 140 个默认 Snippets]]>
+<![CDATA[[DEBUG] 09:17:07.014 已加载 140 个默认 Snippets]]>
+<![CDATA[[DEBUG] 09:17:07.015 已加载 1 个工程级 Snippets: C:/Users/Ryan/AppData/Local/Temp/dsl_completion_engine_test-sUryFV/snippets.json]]>
+<![CDATA[[DEBUG] 09:17:07.017 合并后共 141 个 Snippets]]>
+<![CDATA[Project integration test passed, custom snippet loaded]]>
+<![CDATA[Default count: 140 , after project load: 141]]>
+<![CDATA[[DEBUG] 09:17:07.018 SnippetRepository 已销毁]]>
+<![CDATA[[DEBUG] 09:17:07.021 SnippetRepository 已创建]]>
+<![CDATA[Uninitialized state test passed]]>
+<![CDATA[[DEBUG] 09:17:07.021 SnippetRepository 已销毁]]>
+<![CDATA[[DEBUG] 09:17:07.021 SnippetRepository 已创建]]>
+<![CDATA[[DEBUG] 09:17:07.026 已加载 140 个默认 Snippets]]>
+<![CDATA[[DEBUG] 09:17:07.031 已加载 140 个默认 Snippets]]>
+<![CDATA[[DEBUG] 09:17:07.037 已加载 140 个默认 Snippets]]>
+<![CDATA[Multiple init test passed, stable count: 140]]>
+<![CDATA[[DEBUG] 09:17:07.037 SnippetRepository 已销毁]]>
+<![CDATA[Snippet validity test passed]]>
+<![CDATA[All DslCompletionEngine tests completed.]]>
+  </system-err>
+</testsuite>

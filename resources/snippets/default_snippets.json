@@ -13,9 +13,19 @@
       "parameterCount": 0,
       "parameters": [],
       "compilerName": "EXCATMaintain",
-      "status": "supported",
-      "incompleteReason": "",
-      "capability": "registry-contract-only; firmware-unverified"
+      "status": "incomplete",
+      "incompleteReason": "参数契约未定义；空参数表不表示完整功能",
+      "capability": "compiler-contract-only; target-execution-unverified",
+      "capabilityState": {
+        "name": "EXCATMaintain",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      }
     }
   },
   {
@@ -32,9 +42,19 @@
       "parameterCount": 0,
       "parameters": [],
       "compilerName": "EXCAIntCheck",
-      "status": "supported",
-      "incompleteReason": "",
-      "capability": "registry-contract-only; firmware-unverified"
+      "status": "incomplete",
+      "incompleteReason": "参数契约未定义；空参数表不表示完整功能",
+      "capability": "compiler-contract-only; target-execution-unverified",
+      "capabilityState": {
+        "name": "EXCAIntCheck",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      }
     }
   },
   {
@@ -51,9 +71,19 @@
       "parameterCount": 0,
       "parameters": [],
       "compilerName": "PasswordVerify2",
-      "status": "supported",
-      "incompleteReason": "",
-      "capability": "registry-contract-only; firmware-unverified"
+      "status": "incomplete",
+      "incompleteReason": "参数契约未定义；空参数表不表示完整功能",
+      "capability": "compiler-contract-only; target-execution-unverified",
+      "capabilityState": {
+        "name": "PasswordVerify2",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      }
     }
   },
   {
@@ -70,9 +100,19 @@
       "parameterCount": 0,
       "parameters": [],
       "compilerName": "LockCmdGenery",
-      "status": "supported",
-      "incompleteReason": "",
-      "capability": "registry-contract-only; firmware-unverified"
+      "status": "incomplete",
+      "incompleteReason": "参数契约未定义；空参数表不表示完整功能",
+      "capability": "compiler-contract-only; target-execution-unverified",
+      "capabilityState": {
+        "name": "LockCmdGenery",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      }
     }
   },
   {
@@ -89,9 +129,19 @@
       "parameterCount": 0,
       "parameters": [],
       "compilerName": "OutRealTime3",
-      "status": "supported",
-      "incompleteReason": "",
-      "capability": "registry-contract-only; firmware-unverified"
+      "status": "incomplete",
+      "incompleteReason": "参数契约未定义；空参数表不表示完整功能",
+      "capability": "compiler-contract-only; target-execution-unverified",
+      "capabilityState": {
+        "name": "OutRealTime3",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      }
     }
   },
   {
@@ -108,9 +158,19 @@
       "parameterCount": 0,
       "parameters": [],
       "compilerName": "CommCANInit",
-      "status": "supported",
-      "incompleteReason": "",
-      "capability": "registry-contract-only; firmware-unverified"
+      "status": "incomplete",
+      "incompleteReason": "参数契约未定义；空参数表不表示完整功能",
+      "capability": "compiler-contract-only; target-execution-unverified",
+      "capabilityState": {
+        "name": "CommCANInit",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      }
     }
   },
   {
@@ -127,9 +187,19 @@
       "parameterCount": 0,
       "parameters": [],
       "compilerName": "CommGPRS",
-      "status": "supported",
-      "incompleteReason": "",
-      "capability": "registry-contract-only; firmware-unverified"
+      "status": "incomplete",
+      "incompleteReason": "参数契约未定义；空参数表不表示完整功能",
+      "capability": "compiler-contract-only; target-execution-unverified",
+      "capabilityState": {
+        "name": "CommGPRS",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      }
     }
   },
   {
@@ -146,9 +216,19 @@
       "parameterCount": 0,
       "parameters": [],
       "compilerName": "CommJ1939Trans",
-      "status": "supported",
-      "incompleteReason": "",
-      "capability": "registry-contract-only; firmware-unverified"
+      "status": "incomplete",
+      "incompleteReason": "参数契约未定义；空参数表不表示完整功能",
+      "capability": "compiler-contract-only; target-execution-unverified",
+      "capabilityState": {
+        "name": "CommJ1939Trans",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      }
     }
   },
   {
@@ -165,9 +245,19 @@
       "parameterCount": 0,
       "parameters": [],
       "compilerName": "CommTrans",
-      "status": "supported",
-      "incompleteReason": "",
-      "capability": "registry-contract-only; firmware-unverified"
+      "status": "incomplete",
+      "incompleteReason": "参数契约未定义；空参数表不表示完整功能",
+      "capability": "compiler-contract-only; target-execution-unverified",
+      "capabilityState": {
+        "name": "CommTrans",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      }
     }
   },
   {
@@ -184,9 +274,19 @@
       "parameterCount": 0,
       "parameters": [],
       "compilerName": "CommWatch",
-      "status": "supported",
-      "incompleteReason": "",
-      "capability": "registry-contract-only; firmware-unverified"
+      "status": "incomplete",
+      "incompleteReason": "参数契约未定义；空参数表不表示完整功能",
+      "capability": "compiler-contract-only; target-execution-unverified",
+      "capabilityState": {
+        "name": "CommWatch",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      }
     }
   },
   {
@@ -203,9 +303,19 @@
       "parameterCount": 0,
       "parameters": [],
       "compilerName": "GT",
-      "status": "supported",
-      "incompleteReason": "",
-      "capability": "registry-contract-only; firmware-unverified"
+      "status": "incomplete",
+      "incompleteReason": "参数契约未定义；空参数表不表示完整功能",
+      "capability": "compiler-contract-only; target-execution-unverified",
+      "capabilityState": {
+        "name": "GT",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      }
     }
   },
   {
@@ -222,9 +332,19 @@
       "parameterCount": 0,
       "parameters": [],
       "compilerName": "LT",
-      "status": "supported",
-      "incompleteReason": "",
-      "capability": "registry-contract-only; firmware-unverified"
+      "status": "incomplete",
+      "incompleteReason": "参数契约未定义；空参数表不表示完整功能",
+      "capability": "compiler-contract-only; target-execution-unverified",
+      "capabilityState": {
+        "name": "LT",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      }
     }
   },
   {
@@ -241,9 +361,19 @@
       "parameterCount": 0,
       "parameters": [],
       "compilerName": "LE",
-      "status": "supported",
-      "incompleteReason": "",
-      "capability": "registry-contract-only; firmware-unverified"
+      "status": "incomplete",
+      "incompleteReason": "参数契约未定义；空参数表不表示完整功能",
+      "capability": "compiler-contract-only; target-execution-unverified",
+      "capabilityState": {
+        "name": "LE",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      }
     }
   },
   {
@@ -260,9 +390,19 @@
       "parameterCount": 0,
       "parameters": [],
       "compilerName": "GE",
-      "status": "supported",
-      "incompleteReason": "",
-      "capability": "registry-contract-only; firmware-unverified"
+      "status": "incomplete",
+      "incompleteReason": "参数契约未定义；空参数表不表示完整功能",
+      "capability": "compiler-contract-only; target-execution-unverified",
+      "capabilityState": {
+        "name": "GE",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      }
     }
   },
   {
@@ -279,9 +419,19 @@
       "parameterCount": 0,
       "parameters": [],
       "compilerName": "EQ",
-      "status": "supported",
-      "incompleteReason": "",
-      "capability": "registry-contract-only; firmware-unverified"
+      "status": "incomplete",
+      "incompleteReason": "参数契约未定义；空参数表不表示完整功能",
+      "capability": "compiler-contract-only; target-execution-unverified",
+      "capabilityState": {
+        "name": "EQ",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      }
     }
   },
   {
@@ -298,9 +448,19 @@
       "parameterCount": 0,
       "parameters": [],
       "compilerName": "NE",
-      "status": "supported",
-      "incompleteReason": "",
-      "capability": "registry-contract-only; firmware-unverified"
+      "status": "incomplete",
+      "incompleteReason": "参数契约未定义；空参数表不表示完整功能",
+      "capability": "compiler-contract-only; target-execution-unverified",
+      "capabilityState": {
+        "name": "NE",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      }
     }
   },
   {
@@ -317,9 +477,19 @@
       "parameterCount": 0,
       "parameters": [],
       "compilerName": "IntConstBuild",
-      "status": "supported",
-      "incompleteReason": "",
-      "capability": "registry-contract-only; firmware-unverified"
+      "status": "incomplete",
+      "incompleteReason": "参数契约未定义；空参数表不表示完整功能",
+      "capability": "compiler-contract-only; target-execution-unverified",
+      "capabilityState": {
+        "name": "IntConstBuild",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      }
     }
   },
   {
@@ -336,9 +506,19 @@
       "parameterCount": 0,
       "parameters": [],
       "compilerName": "RealConstBuild",
-      "status": "supported",
-      "incompleteReason": "",
-      "capability": "registry-contract-only; firmware-unverified"
+      "status": "incomplete",
+      "incompleteReason": "参数契约未定义；空参数表不表示完整功能",
+      "capability": "compiler-contract-only; target-execution-unverified",
+      "capabilityState": {
+        "name": "RealConstBuild",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      }
     }
   },
   {
@@ -355,9 +535,19 @@
       "parameterCount": 0,
       "parameters": [],
       "compilerName": "BoolConstBuild",
-      "status": "supported",
-      "incompleteReason": "",
-      "capability": "registry-contract-only; firmware-unverified"
+      "status": "incomplete",
+      "incompleteReason": "参数契约未定义；空参数表不表示完整功能",
+      "capability": "compiler-contract-only; target-execution-unverified",
+      "capabilityState": {
+        "name": "BoolConstBuild",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      }
     }
   },
   {
@@ -374,9 +564,19 @@
       "parameterCount": 0,
       "parameters": [],
       "compilerName": "Switch1",
-      "status": "supported",
-      "incompleteReason": "",
-      "capability": "registry-contract-only; firmware-unverified"
+      "status": "incomplete",
+      "incompleteReason": "参数契约未定义；空参数表不表示完整功能",
+      "capability": "compiler-contract-only; target-execution-unverified",
+      "capabilityState": {
+        "name": "Switch1",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      }
     }
   },
   {
@@ -393,9 +593,19 @@
       "parameterCount": 0,
       "parameters": [],
       "compilerName": "Switch2",
-      "status": "supported",
-      "incompleteReason": "",
-      "capability": "registry-contract-only; firmware-unverified"
+      "status": "incomplete",
+      "incompleteReason": "参数契约未定义；空参数表不表示完整功能",
+      "capability": "compiler-contract-only; target-execution-unverified",
+      "capabilityState": {
+        "name": "Switch2",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      }
     }
   },
   {
@@ -412,9 +622,19 @@
       "parameterCount": 0,
       "parameters": [],
       "compilerName": "Switch3",
-      "status": "supported",
-      "incompleteReason": "",
-      "capability": "registry-contract-only; firmware-unverified"
+      "status": "incomplete",
+      "incompleteReason": "参数契约未定义；空参数表不表示完整功能",
+      "capability": "compiler-contract-only; target-execution-unverified",
+      "capabilityState": {
+        "name": "Switch3",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      }
     }
   },
   {
@@ -431,9 +651,19 @@
       "parameterCount": 0,
       "parameters": [],
       "compilerName": "Switch4",
-      "status": "supported",
-      "incompleteReason": "",
-      "capability": "registry-contract-only; firmware-unverified"
+      "status": "incomplete",
+      "incompleteReason": "参数契约未定义；空参数表不表示完整功能",
+      "capability": "compiler-contract-only; target-execution-unverified",
+      "capabilityState": {
+        "name": "Switch4",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      }
     }
   },
   {
@@ -450,9 +680,19 @@
       "parameterCount": 0,
       "parameters": [],
       "compilerName": "Switch5",
-      "status": "supported",
-      "incompleteReason": "",
-      "capability": "registry-contract-only; firmware-unverified"
+      "status": "incomplete",
+      "incompleteReason": "参数契约未定义；空参数表不表示完整功能",
+      "capability": "compiler-contract-only; target-execution-unverified",
+      "capabilityState": {
+        "name": "Switch5",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      }
     }
   },
   {
@@ -469,9 +709,19 @@
       "parameterCount": 0,
       "parameters": [],
       "compilerName": "SwitchCase",
-      "status": "supported",
-      "incompleteReason": "",
-      "capability": "registry-contract-only; firmware-unverified"
+      "status": "incomplete",
+      "incompleteReason": "参数契约未定义；空参数表不表示完整功能",
+      "capability": "compiler-contract-only; target-execution-unverified",
+      "capabilityState": {
+        "name": "SwitchCase",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      }
     }
   },
   {
@@ -488,9 +738,19 @@
       "parameterCount": 0,
       "parameters": [],
       "compilerName": "SwitchBreak",
-      "status": "supported",
-      "incompleteReason": "",
-      "capability": "registry-contract-only; firmware-unverified"
+      "status": "incomplete",
+      "incompleteReason": "参数契约未定义；空参数表不表示完整功能",
+      "capability": "compiler-contract-only; target-execution-unverified",
+      "capabilityState": {
+        "name": "SwitchBreak",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      }
     }
   },
   {
@@ -507,9 +767,19 @@
       "parameterCount": 0,
       "parameters": [],
       "compilerName": "SwitchEnd",
-      "status": "supported",
-      "incompleteReason": "",
-      "capability": "registry-contract-only; firmware-unverified"
+      "status": "incomplete",
+      "incompleteReason": "参数契约未定义；空参数表不表示完整功能",
+      "capability": "compiler-contract-only; target-execution-unverified",
+      "capabilityState": {
+        "name": "SwitchEnd",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      }
     }
   },
   {
@@ -526,9 +796,19 @@
       "parameterCount": 0,
       "parameters": [],
       "compilerName": "If1",
-      "status": "supported",
-      "incompleteReason": "",
-      "capability": "registry-contract-only; firmware-unverified"
+      "status": "incomplete",
+      "incompleteReason": "参数契约未定义；空参数表不表示完整功能",
+      "capability": "compiler-contract-only; target-execution-unverified",
+      "capabilityState": {
+        "name": "If1",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      }
     }
   },
   {
@@ -545,9 +825,19 @@
       "parameterCount": 0,
       "parameters": [],
       "compilerName": "If2",
-      "status": "supported",
-      "incompleteReason": "",
-      "capability": "registry-contract-only; firmware-unverified"
+      "status": "incomplete",
+      "incompleteReason": "参数契约未定义；空参数表不表示完整功能",
+      "capability": "compiler-contract-only; target-execution-unverified",
+      "capabilityState": {
+        "name": "If2",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      }
     }
   },
   {
@@ -564,9 +854,19 @@
       "parameterCount": 0,
       "parameters": [],
       "compilerName": "If3",
-      "status": "supported",
-      "incompleteReason": "",
-      "capability": "registry-contract-only; firmware-unverified"
+      "status": "incomplete",
+      "incompleteReason": "参数契约未定义；空参数表不表示完整功能",
+      "capability": "compiler-contract-only; target-execution-unverified",
+      "capabilityState": {
+        "name": "If3",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      }
     }
   },
   {
@@ -583,9 +883,19 @@
       "parameterCount": 0,
       "parameters": [],
       "compilerName": "IfElse",
-      "status": "supported",
-      "incompleteReason": "",
-      "capability": "registry-contract-only; firmware-unverified"
+      "status": "incomplete",
+      "incompleteReason": "参数契约未定义；空参数表不表示完整功能",
+      "capability": "compiler-contract-only; target-execution-unverified",
+      "capabilityState": {
+        "name": "IfElse",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      }
     }
   },
   {
@@ -602,9 +912,19 @@
       "parameterCount": 0,
       "parameters": [],
       "compilerName": "IfEnd",
-      "status": "supported",
-      "incompleteReason": "",
-      "capability": "registry-contract-only; firmware-unverified"
+      "status": "incomplete",
+      "incompleteReason": "参数契约未定义；空参数表不表示完整功能",
+      "capability": "compiler-contract-only; target-execution-unverified",
+      "capabilityState": {
+        "name": "IfEnd",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      }
     }
   },
   {
@@ -621,9 +941,19 @@
       "parameterCount": 0,
       "parameters": [],
       "compilerName": "For",
-      "status": "supported",
-      "incompleteReason": "",
-      "capability": "registry-contract-only; firmware-unverified"
+      "status": "incomplete",
+      "incompleteReason": "参数契约未定义；空参数表不表示完整功能",
+      "capability": "compiler-contract-only; target-execution-unverified",
+      "capabilityState": {
+        "name": "For",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      }
     }
   },
   {
@@ -640,9 +970,19 @@
       "parameterCount": 0,
       "parameters": [],
       "compilerName": "ForEnd",
-      "status": "supported",
-      "incompleteReason": "",
-      "capability": "registry-contract-only; firmware-unverified"
+      "status": "incomplete",
+      "incompleteReason": "参数契约未定义；空参数表不表示完整功能",
+      "capability": "compiler-contract-only; target-execution-unverified",
+      "capabilityState": {
+        "name": "ForEnd",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      }
     }
   },
   {
@@ -659,9 +999,19 @@
       "parameterCount": 0,
       "parameters": [],
       "compilerName": "While",
-      "status": "supported",
-      "incompleteReason": "",
-      "capability": "registry-contract-only; firmware-unverified"
+      "status": "incomplete",
+      "incompleteReason": "参数契约未定义；空参数表不表示完整功能",
+      "capability": "compiler-contract-only; target-execution-unverified",
+      "capabilityState": {
+        "name": "While",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      }
     }
   },
   {
@@ -678,9 +1028,19 @@
       "parameterCount": 0,
       "parameters": [],
       "compilerName": "WhileEnd",
-      "status": "supported",
-      "incompleteReason": "",
-      "capability": "registry-contract-only; firmware-unverified"
+      "status": "incomplete",
+      "incompleteReason": "参数契约未定义；空参数表不表示完整功能",
+      "capability": "compiler-contract-only; target-execution-unverified",
+      "capabilityState": {
+        "name": "WhileEnd",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      }
     }
   },
   {
@@ -697,9 +1057,19 @@
       "parameterCount": 0,
       "parameters": [],
       "compilerName": "LoopBreak",
-      "status": "supported",
-      "incompleteReason": "",
-      "capability": "registry-contract-only; firmware-unverified"
+      "status": "incomplete",
+      "incompleteReason": "参数契约未定义；空参数表不表示完整功能",
+      "capability": "compiler-contract-only; target-execution-unverified",
+      "capabilityState": {
+        "name": "LoopBreak",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      }
     }
   },
   {
@@ -716,9 +1086,19 @@
       "parameterCount": 0,
       "parameters": [],
       "compilerName": "LoopContinue",
-      "status": "supported",
-      "incompleteReason": "",
-      "capability": "registry-contract-only; firmware-unverified"
+      "status": "incomplete",
+      "incompleteReason": "参数契约未定义；空参数表不表示完整功能",
+      "capability": "compiler-contract-only; target-execution-unverified",
+      "capabilityState": {
+        "name": "LoopContinue",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      }
     }
   },
   {
@@ -735,9 +1115,19 @@
       "parameterCount": 0,
       "parameters": [],
       "compilerName": "Return",
-      "status": "supported",
-      "incompleteReason": "",
-      "capability": "registry-contract-only; firmware-unverified"
+      "status": "incomplete",
+      "incompleteReason": "参数契约未定义；空参数表不表示完整功能",
+      "capability": "compiler-contract-only; target-execution-unverified",
+      "capabilityState": {
+        "name": "Return",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      }
     }
   },
   {
@@ -754,9 +1144,19 @@
       "parameterCount": 0,
       "parameters": [],
       "compilerName": "Counter",
-      "status": "supported",
-      "incompleteReason": "",
-      "capability": "registry-contract-only; firmware-unverified"
+      "status": "incomplete",
+      "incompleteReason": "参数契约未定义；空参数表不表示完整功能",
+      "capability": "compiler-contract-only; target-execution-unverified",
+      "capabilityState": {
+        "name": "Counter",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      }
     }
   },
   {
@@ -773,9 +1173,19 @@
       "parameterCount": 0,
       "parameters": [],
       "compilerName": "CTU",
-      "status": "supported",
-      "incompleteReason": "",
-      "capability": "registry-contract-only; firmware-unverified"
+      "status": "incomplete",
+      "incompleteReason": "参数契约未定义；空参数表不表示完整功能",
+      "capability": "compiler-contract-only; target-execution-unverified",
+      "capabilityState": {
+        "name": "CTU",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      }
     }
   },
   {
@@ -792,9 +1202,19 @@
       "parameterCount": 0,
       "parameters": [],
       "compilerName": "CTD",
-      "status": "supported",
-      "incompleteReason": "",
-      "capability": "registry-contract-only; firmware-unverified"
+      "status": "incomplete",
+      "incompleteReason": "参数契约未定义；空参数表不表示完整功能",
+      "capability": "compiler-contract-only; target-execution-unverified",
+      "capabilityState": {
+        "name": "CTD",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      }
     }
   },
   {
@@ -811,9 +1231,19 @@
       "parameterCount": 0,
       "parameters": [],
       "compilerName": "CTUD",
-      "status": "supported",
-      "incompleteReason": "",
-      "capability": "registry-contract-only; firmware-unverified"
+      "status": "incomplete",
+      "incompleteReason": "参数契约未定义；空参数表不表示完整功能",
+      "capability": "compiler-contract-only; target-execution-unverified",
+      "capabilityState": {
+        "name": "CTUD",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      }
     }
   },
   {
@@ -830,9 +1260,19 @@
       "parameterCount": 0,
       "parameters": [],
       "compilerName": "CounterReset",
-      "status": "supported",
-      "incompleteReason": "",
-      "capability": "registry-contract-only; firmware-unverified"
+      "status": "incomplete",
+      "incompleteReason": "参数契约未定义；空参数表不表示完整功能",
+      "capability": "compiler-contract-only; target-execution-unverified",
+      "capabilityState": {
+        "name": "CounterReset",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      }
     }
   },
   {
@@ -850,8 +1290,18 @@
       "parameters": [],
       "compilerName": "KeyScan",
       "status": "incomplete",
-      "incompleteReason": "已保存 LM 功能候选证据；LH 固件版本对应的指令、引用和字段布局尚未核实",
-      "capability": "registry-contract-only; firmware-unverified"
+      "incompleteReason": "参数契约未定义；空参数表不表示完整功能",
+      "capability": "compiler-contract-only; target-execution-unverified",
+      "capabilityState": {
+        "name": "KeyScan",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      }
     }
   },
   {
@@ -869,8 +1319,18 @@
       "parameters": [],
       "compilerName": "SCIDispTrans",
       "status": "incomplete",
-      "incompleteReason": "已保存 LM 功能候选证据；LH 固件版本对应的指令、引用和字段布局尚未核实",
-      "capability": "registry-contract-only; firmware-unverified"
+      "incompleteReason": "参数契约未定义；空参数表不表示完整功能",
+      "capability": "compiler-contract-only; target-execution-unverified",
+      "capabilityState": {
+        "name": "SCIDispTrans",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      }
     }
   },
   {
@@ -888,8 +1348,18 @@
       "parameters": [],
       "compilerName": "SCIDispInit",
       "status": "incomplete",
-      "incompleteReason": "已保存 LM 功能候选证据；LH 固件版本对应的指令、引用和字段布局尚未核实",
-      "capability": "registry-contract-only; firmware-unverified"
+      "incompleteReason": "参数契约未定义；空参数表不表示完整功能",
+      "capability": "compiler-contract-only; target-execution-unverified",
+      "capabilityState": {
+        "name": "SCIDispInit",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      }
     }
   },
   {
@@ -907,8 +1377,18 @@
       "parameters": [],
       "compilerName": "M600TextDisp",
       "status": "incomplete",
-      "incompleteReason": "已保存 LM 功能候选证据；LH 固件版本对应的指令、引用和字段布局尚未核实",
-      "capability": "registry-contract-only; firmware-unverified"
+      "incompleteReason": "参数契约未定义；空参数表不表示完整功能",
+      "capability": "compiler-contract-only; target-execution-unverified",
+      "capabilityState": {
+        "name": "M600TextDisp",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      }
     }
   },
   {
@@ -926,8 +1406,18 @@
       "parameters": [],
       "compilerName": "M600ProgressBar",
       "status": "incomplete",
-      "incompleteReason": "已保存 LM 功能候选证据；LH 固件版本对应的指令、引用和字段布局尚未核实",
-      "capability": "registry-contract-only; firmware-unverified"
+      "incompleteReason": "参数契约未定义；空参数表不表示完整功能",
+      "capability": "compiler-contract-only; target-execution-unverified",
+      "capabilityState": {
+        "name": "M600ProgressBar",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      }
     }
   },
   {
@@ -945,8 +1435,18 @@
       "parameters": [],
       "compilerName": "EXCACycDisp",
       "status": "incomplete",
-      "incompleteReason": "已保存 LM 功能候选证据；LH 固件版本对应的指令、引用和字段布局尚未核实",
-      "capability": "registry-contract-only; firmware-unverified"
+      "incompleteReason": "参数契约未定义；空参数表不表示完整功能",
+      "capability": "compiler-contract-only; target-execution-unverified",
+      "capabilityState": {
+        "name": "EXCACycDisp",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      }
     }
   },
   {
@@ -964,8 +1464,18 @@
       "parameters": [],
       "compilerName": "FilterBW",
       "status": "incomplete",
-      "incompleteReason": "已保存 LM 功能候选证据；LH 固件版本对应的指令、引用和字段布局尚未核实",
-      "capability": "registry-contract-only; firmware-unverified"
+      "incompleteReason": "参数契约未定义；空参数表不表示完整功能",
+      "capability": "compiler-contract-only; target-execution-unverified",
+      "capabilityState": {
+        "name": "FilterBW",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      }
     }
   },
   {
@@ -1009,7 +1519,15 @@
       "compilerName": "DrvAI",
       "status": "supported",
       "incompleteReason": "",
-      "capability": "registry-contract-only; firmware-unverified"
+      "capability": "compiler-contract-only; target-execution-unverified",
+      "capabilityState": {
+        "name": "DrvAI",
+        "status": "supported",
+        "definitionValid": true,
+        "definitionErrors": [],
+        "compilerHandles": true,
+        "targetExecutionVerified": false
+      }
     }
   },
   {
@@ -1045,7 +1563,15 @@
       "compilerName": "DrvAO",
       "status": "supported",
       "incompleteReason": "",
-      "capability": "registry-contract-only; firmware-unverified"
+      "capability": "compiler-contract-only; target-execution-unverified",
+      "capabilityState": {
+        "name": "DrvAO",
+        "status": "supported",
+        "definitionValid": true,
+        "definitionErrors": [],
+        "compilerHandles": true,
+        "targetExecutionVerified": false
+      }
     }
   },
   {
@@ -1089,7 +1615,15 @@
       "compilerName": "DrvDI",
       "status": "supported",
       "incompleteReason": "",
-      "capability": "registry-contract-only; firmware-unverified"
+      "capability": "compiler-contract-only; target-execution-unverified",
+      "capabilityState": {
+        "name": "DrvDI",
+        "status": "supported",
+        "definitionValid": true,
+        "definitionErrors": [],
+        "compilerHandles": true,
+        "targetExecutionVerified": false
+      }
     }
   },
   {
@@ -1141,7 +1675,15 @@
       "compilerName": "DrvDO",
       "status": "supported",
       "incompleteReason": "",
-      "capability": "registry-contract-only; firmware-unverified"
+      "capability": "compiler-contract-only; target-execution-unverified",
+      "capabilityState": {
+        "name": "DrvDO",
+        "status": "supported",
+        "definitionValid": true,
+        "definitionErrors": [],
+        "compilerHandles": true,
+        "targetExecutionVerified": false
+      }
     }
   },
   {
@@ -1177,7 +1719,15 @@
       "compilerName": "PortSet",
       "status": "supported",
       "incompleteReason": "",
-      "capability": "registry-contract-only; firmware-unverified"
+      "capability": "compiler-contract-only; target-execution-unverified",
+      "capabilityState": {
+        "name": "PortSet",
+        "status": "supported",
+        "definitionValid": true,
+        "definitionErrors": [],
+        "compilerHandles": true,
+        "targetExecutionVerified": false
+      }
     }
   },
   {
@@ -1213,7 +1763,15 @@
       "compilerName": "PortReset",
       "status": "supported",
       "incompleteReason": "",
-      "capability": "registry-contract-only; firmware-unverified"
+      "capability": "compiler-contract-only; target-execution-unverified",
+      "capabilityState": {
+        "name": "PortReset",
+        "status": "supported",
+        "definitionValid": true,
+        "definitionErrors": [],
+        "compilerHandles": true,
+        "targetExecutionVerified": false
+      }
     }
   },
   {
@@ -1249,7 +1807,15 @@
       "compilerName": "PortToggle",
       "status": "supported",
       "incompleteReason": "",
-      "capability": "registry-contract-only; firmware-unverified"
+      "capability": "compiler-contract-only; target-execution-unverified",
+      "capabilityState": {
+        "name": "PortToggle",
+        "status": "supported",
+        "definitionValid": true,
+        "definitionErrors": [],
+        "compilerHandles": true,
+        "targetExecutionVerified": false
+      }
     }
   },
   {
@@ -1299,9 +1865,19 @@
         }
       ],
       "compilerName": "DrvT2PeriodIn",
-      "status": "supported",
-      "incompleteReason": "",
-      "capability": "registry-contract-only; firmware-unverified"
+      "status": "incomplete",
+      "incompleteReason": "Mask: 默认值 65535 超出 INT 类型范围或类型错误",
+      "capability": "compiler-contract-only; target-execution-unverified",
+      "capabilityState": {
+        "name": "DrvT2PeriodIn",
+        "status": "supported",
+        "definitionValid": false,
+        "definitionErrors": [
+          "Mask: 默认值 65535 超出 INT 类型范围或类型错误"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      }
     }
   },
   {
@@ -1351,9 +1927,19 @@
         }
       ],
       "compilerName": "DrvTimeIn",
-      "status": "supported",
-      "incompleteReason": "",
-      "capability": "registry-contract-only; firmware-unverified"
+      "status": "incomplete",
+      "incompleteReason": "Mask: 默认值 65535 超出 INT 类型范围或类型错误",
+      "capability": "compiler-contract-only; target-execution-unverified",
+      "capabilityState": {
+        "name": "DrvTimeIn",
+        "status": "supported",
+        "definitionValid": false,
+        "definitionErrors": [
+          "Mask: 默认值 65535 超出 INT 类型范围或类型错误"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      }
     }
   },
   {
@@ -1370,9 +1956,19 @@
       "parameterCount": 0,
       "parameters": [],
       "compilerName": "And",
-      "status": "supported",
-      "incompleteReason": "",
-      "capability": "registry-contract-only; firmware-unverified"
+      "status": "incomplete",
+      "incompleteReason": "参数契约未定义；空参数表不表示完整功能",
+      "capability": "compiler-contract-only; target-execution-unverified",
+      "capabilityState": {
+        "name": "And",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      }
     }
   },
   {
@@ -1389,9 +1985,19 @@
       "parameterCount": 0,
       "parameters": [],
       "compilerName": "Or",
-      "status": "supported",
-      "incompleteReason": "",
-      "capability": "registry-contract-only; firmware-unverified"
+      "status": "incomplete",
+      "incompleteReason": "参数契约未定义；空参数表不表示完整功能",
+      "capability": "compiler-contract-only; target-execution-unverified",
+      "capabilityState": {
+        "name": "Or",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      }
     }
   },
   {
@@ -1408,9 +2014,19 @@
       "parameterCount": 0,
       "parameters": [],
       "compilerName": "Not",
-      "status": "supported",
-      "incompleteReason": "",
-      "capability": "registry-contract-only; firmware-unverified"
+      "status": "incomplete",
+      "incompleteReason": "参数契约未定义；空参数表不表示完整功能",
+      "capability": "compiler-contract-only; target-execution-unverified",
+      "capabilityState": {
+        "name": "Not",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      }
     }
   },
   {
@@ -1427,9 +2043,19 @@
       "parameterCount": 0,
       "parameters": [],
       "compilerName": "Xor",
-      "status": "supported",
-      "incompleteReason": "",
-      "capability": "registry-contract-only; firmware-unverified"
+      "status": "incomplete",
+      "incompleteReason": "参数契约未定义；空参数表不表示完整功能",
+      "capability": "compiler-contract-only; target-execution-unverified",
+      "capabilityState": {
+        "name": "Xor",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      }
     }
   },
   {
@@ -1446,9 +2072,19 @@
       "parameterCount": 0,
       "parameters": [],
       "compilerName": "Shl",
-      "status": "supported",
-      "incompleteReason": "",
-      "capability": "registry-contract-only; firmware-unverified"
+      "status": "incomplete",
+      "incompleteReason": "参数契约未定义；空参数表不表示完整功能",
+      "capability": "compiler-contract-only; target-execution-unverified",
+      "capabilityState": {
+        "name": "Shl",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      }
     }
   },
   {
@@ -1465,9 +2101,19 @@
       "parameterCount": 0,
       "parameters": [],
       "compilerName": "Shr",
-      "status": "supported",
-      "incompleteReason": "",
-      "capability": "registry-contract-only; firmware-unverified"
+      "status": "incomplete",
+      "incompleteReason": "参数契约未定义；空参数表不表示完整功能",
+      "capability": "compiler-contract-only; target-execution-unverified",
+      "capabilityState": {
+        "name": "Shr",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      }
     }
   },
   {
@@ -1484,9 +2130,19 @@
       "parameterCount": 0,
       "parameters": [],
       "compilerName": "Rol",
-      "status": "supported",
-      "incompleteReason": "",
-      "capability": "registry-contract-only; firmware-unverified"
+      "status": "incomplete",
+      "incompleteReason": "参数契约未定义；空参数表不表示完整功能",
+      "capability": "compiler-contract-only; target-execution-unverified",
+      "capabilityState": {
+        "name": "Rol",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      }
     }
   },
   {
@@ -1503,9 +2159,19 @@
       "parameterCount": 0,
       "parameters": [],
       "compilerName": "Ror",
-      "status": "supported",
-      "incompleteReason": "",
-      "capability": "registry-contract-only; firmware-unverified"
+      "status": "incomplete",
+      "incompleteReason": "参数契约未定义；空参数表不表示完整功能",
+      "capability": "compiler-contract-only; target-execution-unverified",
+      "capabilityState": {
+        "name": "Ror",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      }
     }
   },
   {
@@ -1522,9 +2188,19 @@
       "parameterCount": 0,
       "parameters": [],
       "compilerName": "Add",
-      "status": "supported",
-      "incompleteReason": "",
-      "capability": "registry-contract-only; firmware-unverified"
+      "status": "incomplete",
+      "incompleteReason": "参数契约未定义；空参数表不表示完整功能",
+      "capability": "compiler-contract-only; target-execution-unverified",
+      "capabilityState": {
+        "name": "Add",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      }
     }
   },
   {
@@ -1541,9 +2217,19 @@
       "parameterCount": 0,
       "parameters": [],
       "compilerName": "Sub",
-      "status": "supported",
-      "incompleteReason": "",
-      "capability": "registry-contract-only; firmware-unverified"
+      "status": "incomplete",
+      "incompleteReason": "参数契约未定义；空参数表不表示完整功能",
+      "capability": "compiler-contract-only; target-execution-unverified",
+      "capabilityState": {
+        "name": "Sub",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      }
     }
   },
   {
@@ -1560,9 +2246,19 @@
       "parameterCount": 0,
       "parameters": [],
       "compilerName": "Mul",
-      "status": "supported",
-      "incompleteReason": "",
-      "capability": "registry-contract-only; firmware-unverified"
+      "status": "incomplete",
+      "incompleteReason": "参数契约未定义；空参数表不表示完整功能",
+      "capability": "compiler-contract-only; target-execution-unverified",
+      "capabilityState": {
+        "name": "Mul",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      }
     }
   },
   {
@@ -1579,9 +2275,19 @@
       "parameterCount": 0,
       "parameters": [],
       "compilerName": "Div",
-      "status": "supported",
-      "incompleteReason": "",
-      "capability": "registry-contract-only; firmware-unverified"
+      "status": "incomplete",
+      "incompleteReason": "参数契约未定义；空参数表不表示完整功能",
+      "capability": "compiler-contract-only; target-execution-unverified",
+      "capabilityState": {
+        "name": "Div",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      }
     }
   },
   {
@@ -1598,9 +2304,19 @@
       "parameterCount": 0,
       "parameters": [],
       "compilerName": "Mod",
-      "status": "supported",
-      "incompleteReason": "",
-      "capability": "registry-contract-only; firmware-unverified"
+      "status": "incomplete",
+      "incompleteReason": "参数契约未定义；空参数表不表示完整功能",
+      "capability": "compiler-contract-only; target-execution-unverified",
+      "capabilityState": {
+        "name": "Mod",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      }
     }
   },
   {
@@ -1617,9 +2333,19 @@
       "parameterCount": 0,
       "parameters": [],
       "compilerName": "Abs",
-      "status": "supported",
-      "incompleteReason": "",
-      "capability": "registry-contract-only; firmware-unverified"
+      "status": "incomplete",
+      "incompleteReason": "参数契约未定义；空参数表不表示完整功能",
+      "capability": "compiler-contract-only; target-execution-unverified",
+      "capabilityState": {
+        "name": "Abs",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      }
     }
   },
   {
@@ -1636,9 +2362,19 @@
       "parameterCount": 0,
       "parameters": [],
       "compilerName": "Sqrt",
-      "status": "supported",
-      "incompleteReason": "",
-      "capability": "registry-contract-only; firmware-unverified"
+      "status": "incomplete",
+      "incompleteReason": "参数契约未定义；空参数表不表示完整功能",
+      "capability": "compiler-contract-only; target-execution-unverified",
+      "capabilityState": {
+        "name": "Sqrt",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      }
     }
   },
   {
@@ -1655,9 +2391,19 @@
       "parameterCount": 0,
       "parameters": [],
       "compilerName": "Exp",
-      "status": "supported",
-      "incompleteReason": "",
-      "capability": "registry-contract-only; firmware-unverified"
+      "status": "incomplete",
+      "incompleteReason": "参数契约未定义；空参数表不表示完整功能",
+      "capability": "compiler-contract-only; target-execution-unverified",
+      "capabilityState": {
+        "name": "Exp",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      }
     }
   },
   {
@@ -1674,9 +2420,19 @@
       "parameterCount": 0,
       "parameters": [],
       "compilerName": "Ln",
-      "status": "supported",
-      "incompleteReason": "",
-      "capability": "registry-contract-only; firmware-unverified"
+      "status": "incomplete",
+      "incompleteReason": "参数契约未定义；空参数表不表示完整功能",
+      "capability": "compiler-contract-only; target-execution-unverified",
+      "capabilityState": {
+        "name": "Ln",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      }
     }
   },
   {
@@ -1693,9 +2449,19 @@
       "parameterCount": 0,
       "parameters": [],
       "compilerName": "Log",
-      "status": "supported",
-      "incompleteReason": "",
-      "capability": "registry-contract-only; firmware-unverified"
+      "status": "incomplete",
+      "incompleteReason": "参数契约未定义；空参数表不表示完整功能",
+      "capability": "compiler-contract-only; target-execution-unverified",
+      "capabilityState": {
+        "name": "Log",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      }
     }
   },
   {
@@ -1712,9 +2478,19 @@
       "parameterCount": 0,
       "parameters": [],
       "compilerName": "Sin",
-      "status": "supported",
-      "incompleteReason": "",
-      "capability": "registry-contract-only; firmware-unverified"
+      "status": "incomplete",
+      "incompleteReason": "参数契约未定义；空参数表不表示完整功能",
+      "capability": "compiler-contract-only; target-execution-unverified",
+      "capabilityState": {
+        "name": "Sin",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      }
     }
   },
   {
@@ -1731,9 +2507,19 @@
       "parameterCount": 0,
       "parameters": [],
       "compilerName": "Cos",
-      "status": "supported",
-      "incompleteReason": "",
-      "capability": "registry-contract-only; firmware-unverified"
+      "status": "incomplete",
+      "incompleteReason": "参数契约未定义；空参数表不表示完整功能",
+      "capability": "compiler-contract-only; target-execution-unverified",
+      "capabilityState": {
+        "name": "Cos",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      }
     }
   },
   {
@@ -1750,9 +2536,19 @@
       "parameterCount": 0,
       "parameters": [],
       "compilerName": "Tan",
-      "status": "supported",
-      "incompleteReason": "",
-      "capability": "registry-contract-only; firmware-unverified"
+      "status": "incomplete",
+      "incompleteReason": "参数契约未定义；空参数表不表示完整功能",
+      "capability": "compiler-contract-only; target-execution-unverified",
+      "capabilityState": {
+        "name": "Tan",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      }
     }
   },
   {
@@ -1769,9 +2565,19 @@
       "parameterCount": 0,
       "parameters": [],
       "compilerName": "Limit",
-      "status": "supported",
-      "incompleteReason": "",
-      "capability": "registry-contract-only; firmware-unverified"
+      "status": "incomplete",
+      "incompleteReason": "参数契约未定义；空参数表不表示完整功能",
+      "capability": "compiler-contract-only; target-execution-unverified",
+      "capabilityState": {
+        "name": "Limit",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      }
     }
   },
   {
@@ -1788,9 +2594,19 @@
       "parameterCount": 0,
       "parameters": [],
       "compilerName": "Min",
-      "status": "supported",
-      "incompleteReason": "",
-      "capability": "registry-contract-only; firmware-unverified"
+      "status": "incomplete",
+      "incompleteReason": "参数契约未定义；空参数表不表示完整功能",
+      "capability": "compiler-contract-only; target-execution-unverified",
+      "capabilityState": {
+        "name": "Min",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      }
     }
   },
   {
@@ -1807,9 +2623,19 @@
       "parameterCount": 0,
       "parameters": [],
       "compilerName": "Max",
-      "status": "supported",
-      "incompleteReason": "",
-      "capability": "registry-contract-only; firmware-unverified"
+      "status": "incomplete",
+      "incompleteReason": "参数契约未定义；空参数表不表示完整功能",
+      "capability": "compiler-contract-only; target-execution-unverified",
+      "capabilityState": {
+        "name": "Max",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      }
     }
   },
   {
@@ -1909,7 +2735,15 @@
       "compilerName": "PID",
       "status": "supported",
       "incompleteReason": "",
-      "capability": "registry-contract-only; firmware-unverified"
+      "capability": "compiler-contract-only; target-execution-unverified",
+      "capabilityState": {
+        "name": "PID",
+        "status": "supported",
+        "definitionValid": true,
+        "definitionErrors": [],
+        "compilerHandles": true,
+        "targetExecutionVerified": false
+      }
     }
   },
   {
@@ -1977,7 +2811,15 @@
       "compilerName": "PIDAutoTune",
       "status": "supported",
       "incompleteReason": "",
-      "capability": "registry-contract-only; firmware-unverified"
+      "capability": "compiler-contract-only; target-execution-unverified",
+      "capabilityState": {
+        "name": "PIDAutoTune",
+        "status": "supported",
+        "definitionValid": true,
+        "definitionErrors": [],
+        "compilerHandles": true,
+        "targetExecutionVerified": false
+      }
     }
   },
   {
@@ -2037,7 +2879,15 @@
       "compilerName": "System",
       "status": "supported",
       "incompleteReason": "",
-      "capability": "registry-contract-only; firmware-unverified"
+      "capability": "compiler-contract-only; target-execution-unverified",
+      "capabilityState": {
+        "name": "System",
+        "status": "supported",
+        "definitionValid": true,
+        "definitionErrors": [],
+        "compilerHandles": true,
+        "targetExecutionVerified": false
+      }
     }
   },
   {
@@ -2065,7 +2915,15 @@
       "compilerName": "SystemEnd",
       "status": "supported",
       "incompleteReason": "",
-      "capability": "registry-contract-only; firmware-unverified"
+      "capability": "compiler-contract-only; target-execution-unverified",
+      "capabilityState": {
+        "name": "SystemEnd",
+        "status": "supported",
+        "definitionValid": true,
+        "definitionErrors": [],
+        "compilerHandles": true,
+        "targetExecutionVerified": false
+      }
     }
   },
   {
@@ -2109,7 +2967,15 @@
       "compilerName": "Exception",
       "status": "supported",
       "incompleteReason": "",
-      "capability": "registry-contract-only; firmware-unverified"
+      "capability": "compiler-contract-only; target-execution-unverified",
+      "capabilityState": {
+        "name": "Exception",
+        "status": "supported",
+        "definitionValid": true,
+        "definitionErrors": [],
+        "compilerHandles": true,
+        "targetExecutionVerified": false
+      }
     }
   },
   {
@@ -2128,7 +2994,15 @@
       "compilerName": "Nop",
       "status": "supported",
       "incompleteReason": "",
-      "capability": "registry-contract-only; firmware-unverified"
+      "capability": "compiler-contract-only; target-execution-unverified",
+      "capabilityState": {
+        "name": "Nop",
+        "status": "supported",
+        "definitionValid": true,
+        "definitionErrors": [],
+        "compilerHandles": true,
+        "targetExecutionVerified": false
+      }
     }
   },
   {
@@ -2146,8 +3020,18 @@
       "parameters": [],
       "compilerName": "Task",
       "status": "incomplete",
-      "incompleteReason": "已保存 LM 功能候选证据；LH 固件版本对应的指令、引用和字段布局尚未核实",
-      "capability": "registry-contract-only; firmware-unverified"
+      "incompleteReason": "参数契约未定义；空参数表不表示完整功能",
+      "capability": "compiler-contract-only; target-execution-unverified",
+      "capabilityState": {
+        "name": "Task",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      }
     }
   },
   {
@@ -2165,8 +3049,18 @@
       "parameters": [],
       "compilerName": "TaskPeriodic",
       "status": "incomplete",
-      "incompleteReason": "已保存 LM 功能候选证据；LH 固件版本对应的指令、引用和字段布局尚未核实",
-      "capability": "registry-contract-only; firmware-unverified"
+      "incompleteReason": "参数契约未定义；空参数表不表示完整功能",
+      "capability": "compiler-contract-only; target-execution-unverified",
+      "capabilityState": {
+        "name": "TaskPeriodic",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      }
     }
   },
   {
@@ -2184,8 +3078,18 @@
       "parameters": [],
       "compilerName": "TaskWake",
       "status": "incomplete",
-      "incompleteReason": "已保存 LM 功能候选证据；LH 固件版本对应的指令、引用和字段布局尚未核实",
-      "capability": "registry-contract-only; firmware-unverified"
+      "incompleteReason": "参数契约未定义；空参数表不表示完整功能",
+      "capability": "compiler-contract-only; target-execution-unverified",
+      "capabilityState": {
+        "name": "TaskWake",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      }
     }
   },
   {
@@ -2203,8 +3107,18 @@
       "parameters": [],
       "compilerName": "TaskDataWake",
       "status": "incomplete",
-      "incompleteReason": "已保存 LM 功能候选证据；LH 固件版本对应的指令、引用和字段布局尚未核实",
-      "capability": "registry-contract-only; firmware-unverified"
+      "incompleteReason": "参数契约未定义；空参数表不表示完整功能",
+      "capability": "compiler-contract-only; target-execution-unverified",
+      "capabilityState": {
+        "name": "TaskDataWake",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      }
     }
   },
   {
@@ -2222,8 +3136,18 @@
       "parameters": [],
       "compilerName": "TaskLock",
       "status": "incomplete",
-      "incompleteReason": "已保存 LM 功能候选证据；LH 固件版本对应的指令、引用和字段布局尚未核实",
-      "capability": "registry-contract-only; firmware-unverified"
+      "incompleteReason": "参数契约未定义；空参数表不表示完整功能",
+      "capability": "compiler-contract-only; target-execution-unverified",
+      "capabilityState": {
+        "name": "TaskLock",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      }
     }
   },
   {
@@ -2241,8 +3165,18 @@
       "parameters": [],
       "compilerName": "TaskUnlock",
       "status": "incomplete",
-      "incompleteReason": "已保存 LM 功能候选证据；LH 固件版本对应的指令、引用和字段布局尚未核实",
-      "capability": "registry-contract-only; firmware-unverified"
+      "incompleteReason": "参数契约未定义；空参数表不表示完整功能",
+      "capability": "compiler-contract-only; target-execution-unverified",
+      "capabilityState": {
+        "name": "TaskUnlock",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      }
     }
   },
   {
@@ -2260,8 +3194,18 @@
       "parameters": [],
       "compilerName": "TaskSemDef",
       "status": "incomplete",
-      "incompleteReason": "已保存 LM 功能候选证据；LH 固件版本对应的指令、引用和字段布局尚未核实",
-      "capability": "registry-contract-only; firmware-unverified"
+      "incompleteReason": "参数契约未定义；空参数表不表示完整功能",
+      "capability": "compiler-contract-only; target-execution-unverified",
+      "capabilityState": {
+        "name": "TaskSemDef",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      }
     }
   },
   {
@@ -2279,8 +3223,18 @@
       "parameters": [],
       "compilerName": "TaskSemWait",
       "status": "incomplete",
-      "incompleteReason": "已保存 LM 功能候选证据；LH 固件版本对应的指令、引用和字段布局尚未核实",
-      "capability": "registry-contract-only; firmware-unverified"
+      "incompleteReason": "参数契约未定义；空参数表不表示完整功能",
+      "capability": "compiler-contract-only; target-execution-unverified",
+      "capabilityState": {
+        "name": "TaskSemWait",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      }
     }
   },
   {
@@ -2298,8 +3252,18 @@
       "parameters": [],
       "compilerName": "TaskSemPost",
       "status": "incomplete",
-      "incompleteReason": "已保存 LM 功能候选证据；LH 固件版本对应的指令、引用和字段布局尚未核实",
-      "capability": "registry-contract-only; firmware-unverified"
+      "incompleteReason": "参数契约未定义；空参数表不表示完整功能",
+      "capability": "compiler-contract-only; target-execution-unverified",
+      "capabilityState": {
+        "name": "TaskSemPost",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      }
     }
   },
   {
@@ -2317,8 +3281,18 @@
       "parameters": [],
       "compilerName": "TaskEnd",
       "status": "incomplete",
-      "incompleteReason": "已保存 LM 功能候选证据；LH 固件版本对应的指令、引用和字段布局尚未核实",
-      "capability": "registry-contract-only; firmware-unverified"
+      "incompleteReason": "参数契约未定义；空参数表不表示完整功能",
+      "capability": "compiler-contract-only; target-execution-unverified",
+      "capabilityState": {
+        "name": "TaskEnd",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      }
     }
   },
   {
@@ -2335,9 +3309,19 @@
       "parameterCount": 0,
       "parameters": [],
       "compilerName": "Timer",
-      "status": "supported",
-      "incompleteReason": "",
-      "capability": "registry-contract-only; firmware-unverified"
+      "status": "incomplete",
+      "incompleteReason": "参数契约未定义；空参数表不表示完整功能",
+      "capability": "compiler-contract-only; target-execution-unverified",
+      "capabilityState": {
+        "name": "Timer",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      }
     }
   },
   {
@@ -2354,9 +3338,19 @@
       "parameterCount": 0,
       "parameters": [],
       "compilerName": "TON",
-      "status": "supported",
-      "incompleteReason": "",
-      "capability": "registry-contract-only; firmware-unverified"
+      "status": "incomplete",
+      "incompleteReason": "参数契约未定义；空参数表不表示完整功能",
+      "capability": "compiler-contract-only; target-execution-unverified",
+      "capabilityState": {
+        "name": "TON",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      }
     }
   },
   {
@@ -2373,9 +3367,19 @@
       "parameterCount": 0,
       "parameters": [],
       "compilerName": "TOF",
-      "status": "supported",
-      "incompleteReason": "",
-      "capability": "registry-contract-only; firmware-unverified"
+      "status": "incomplete",
+      "incompleteReason": "参数契约未定义；空参数表不表示完整功能",
+      "capability": "compiler-contract-only; target-execution-unverified",
+      "capabilityState": {
+        "name": "TOF",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      }
     }
   },
   {
@@ -2392,9 +3396,19 @@
       "parameterCount": 0,
       "parameters": [],
       "compilerName": "TP",
-      "status": "supported",
-      "incompleteReason": "",
-      "capability": "registry-contract-only; firmware-unverified"
+      "status": "incomplete",
+      "incompleteReason": "参数契约未定义；空参数表不表示完整功能",
+      "capability": "compiler-contract-only; target-execution-unverified",
+      "capabilityState": {
+        "name": "TP",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      }
     }
   },
   {
@@ -2411,9 +3425,19 @@
       "parameterCount": 0,
       "parameters": [],
       "compilerName": "TimerStop",
-      "status": "supported",
-      "incompleteReason": "",
-      "capability": "registry-contract-only; firmware-unverified"
+      "status": "incomplete",
+      "incompleteReason": "参数契约未定义；空参数表不表示完整功能",
+      "capability": "compiler-contract-only; target-execution-unverified",
+      "capabilityState": {
+        "name": "TimerStop",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      }
     }
   },
   {
@@ -2431,8 +3455,18 @@
       "parameters": [],
       "compilerName": "TSO",
       "status": "incomplete",
-      "incompleteReason": "已保存 LM 功能候选证据；LH 固件版本对应的指令、引用和字段布局尚未核实",
-      "capability": "registry-contract-only; firmware-unverified"
+      "incompleteReason": "参数契约未定义；空参数表不表示完整功能",
+      "capability": "compiler-contract-only; target-execution-unverified",
+      "capabilityState": {
+        "name": "TSO",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      }
     }
   },
   {
@@ -2450,8 +3484,18 @@
       "parameters": [],
       "compilerName": "TSOAutoTune",
       "status": "incomplete",
-      "incompleteReason": "已保存 LM 功能候选证据；LH 固件版本对应的指令、引用和字段布局尚未核实",
-      "capability": "registry-contract-only; firmware-unverified"
+      "incompleteReason": "参数契约未定义；空参数表不表示完整功能",
+      "capability": "compiler-contract-only; target-execution-unverified",
+      "capabilityState": {
+        "name": "TSOAutoTune",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      }
     }
   },
   {
@@ -2469,8 +3513,18 @@
       "parameters": [],
       "compilerName": "TwoPosition",
       "status": "incomplete",
-      "incompleteReason": "已保存 LM 功能候选证据；LH 固件版本对应的指令、引用和字段布局尚未核实",
-      "capability": "registry-contract-only; firmware-unverified"
+      "incompleteReason": "参数契约未定义；空参数表不表示完整功能",
+      "capability": "compiler-contract-only; target-execution-unverified",
+      "capabilityState": {
+        "name": "TwoPosition",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      }
     }
   },
   {
@@ -2488,8 +3542,18 @@
       "parameters": [],
       "compilerName": "RelayCtrl2",
       "status": "incomplete",
-      "incompleteReason": "已保存 LM 功能候选证据；LH 固件版本对应的指令、引用和字段布局尚未核实",
-      "capability": "registry-contract-only; firmware-unverified"
+      "incompleteReason": "参数契约未定义；空参数表不表示完整功能",
+      "capability": "compiler-contract-only; target-execution-unverified",
+      "capabilityState": {
+        "name": "RelayCtrl2",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      }
     }
   },
   {
@@ -2506,9 +3570,19 @@
       "parameterCount": 0,
       "parameters": [],
       "compilerName": "EXCAKeyParamt",
-      "status": "supported",
-      "incompleteReason": "",
-      "capability": "registry-contract-only; firmware-unverified"
+      "status": "incomplete",
+      "incompleteReason": "参数契约未定义；空参数表不表示完整功能",
+      "capability": "compiler-contract-only; target-execution-unverified",
+      "capabilityState": {
+        "name": "EXCAKeyParamt",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      }
     }
   },
   {
@@ -2525,9 +3599,19 @@
       "parameterCount": 0,
       "parameters": [],
       "compilerName": "EXCAModifyParamt",
-      "status": "supported",
-      "incompleteReason": "",
-      "capability": "registry-contract-only; firmware-unverified"
+      "status": "incomplete",
+      "incompleteReason": "参数契约未定义；空参数表不表示完整功能",
+      "capability": "compiler-contract-only; target-execution-unverified",
+      "capabilityState": {
+        "name": "EXCAModifyParamt",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      }
     }
   },
   {
@@ -2544,9 +3628,19 @@
       "parameterCount": 0,
       "parameters": [],
       "compilerName": "EXCAOperComp",
-      "status": "supported",
-      "incompleteReason": "",
-      "capability": "registry-contract-only; firmware-unverified"
+      "status": "incomplete",
+      "incompleteReason": "参数契约未定义；空参数表不表示完整功能",
+      "capability": "compiler-contract-only; target-execution-unverified",
+      "capabilityState": {
+        "name": "EXCAOperComp",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      }
     }
   },
   {
@@ -2563,9 +3657,19 @@
       "parameterCount": 0,
       "parameters": [],
       "compilerName": "EXCASpdUnify",
-      "status": "supported",
-      "incompleteReason": "",
-      "capability": "registry-contract-only; firmware-unverified"
+      "status": "incomplete",
+      "incompleteReason": "参数契约未定义；空参数表不表示完整功能",
+      "capability": "compiler-contract-only; target-execution-unverified",
+      "capabilityState": {
+        "name": "EXCASpdUnify",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      }
     }
   },
   {
@@ -2582,9 +3686,19 @@
       "parameterCount": 0,
       "parameters": [],
       "compilerName": "IntBuild",
-      "status": "supported",
-      "incompleteReason": "",
-      "capability": "registry-contract-only; firmware-unverified"
+      "status": "incomplete",
+      "incompleteReason": "参数契约未定义；空参数表不表示完整功能",
+      "capability": "compiler-contract-only; target-execution-unverified",
+      "capabilityState": {
+        "name": "IntBuild",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      }
     }
   },
   {
@@ -2601,9 +3715,19 @@
       "parameterCount": 0,
       "parameters": [],
       "compilerName": "IntDirectBuild",
-      "status": "supported",
-      "incompleteReason": "",
-      "capability": "registry-contract-only; firmware-unverified"
+      "status": "incomplete",
+      "incompleteReason": "参数契约未定义；空参数表不表示完整功能",
+      "capability": "compiler-contract-only; target-execution-unverified",
+      "capabilityState": {
+        "name": "IntDirectBuild",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      }
     }
   },
   {
@@ -2620,9 +3744,19 @@
       "parameterCount": 0,
       "parameters": [],
       "compilerName": "FloatBuild",
-      "status": "supported",
-      "incompleteReason": "",
-      "capability": "registry-contract-only; firmware-unverified"
+      "status": "incomplete",
+      "incompleteReason": "参数契约未定义；空参数表不表示完整功能",
+      "capability": "compiler-contract-only; target-execution-unverified",
+      "capabilityState": {
+        "name": "FloatBuild",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      }
     }
   },
   {
@@ -2639,9 +3773,19 @@
       "parameterCount": 0,
       "parameters": [],
       "compilerName": "FloatConstBuild",
-      "status": "supported",
-      "incompleteReason": "",
-      "capability": "registry-contract-only; firmware-unverified"
+      "status": "incomplete",
+      "incompleteReason": "参数契约未定义；空参数表不表示完整功能",
+      "capability": "compiler-contract-only; target-execution-unverified",
+      "capabilityState": {
+        "name": "FloatConstBuild",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      }
     }
   },
   {
@@ -2658,9 +3802,19 @@
       "parameterCount": 0,
       "parameters": [],
       "compilerName": "IntComp",
-      "status": "supported",
-      "incompleteReason": "",
-      "capability": "registry-contract-only; firmware-unverified"
+      "status": "incomplete",
+      "incompleteReason": "参数契约未定义；空参数表不表示完整功能",
+      "capability": "compiler-contract-only; target-execution-unverified",
+      "capabilityState": {
+        "name": "IntComp",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      }
     }
   },
   {
@@ -2677,9 +3831,19 @@
       "parameterCount": 0,
       "parameters": [],
       "compilerName": "FloatComp",
-      "status": "supported",
-      "incompleteReason": "",
-      "capability": "registry-contract-only; firmware-unverified"
+      "status": "incomplete",
+      "incompleteReason": "参数契约未定义；空参数表不表示完整功能",
+      "capability": "compiler-contract-only; target-execution-unverified",
+      "capabilityState": {
+        "name": "FloatComp",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      }
     }
   },
   {
@@ -2696,9 +3860,19 @@
       "parameterCount": 0,
       "parameters": [],
       "compilerName": "IntMax",
-      "status": "supported",
-      "incompleteReason": "",
-      "capability": "registry-contract-only; firmware-unverified"
+      "status": "incomplete",
+      "incompleteReason": "参数契约未定义；空参数表不表示完整功能",
+      "capability": "compiler-contract-only; target-execution-unverified",
+      "capabilityState": {
+        "name": "IntMax",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      }
     }
   },
   {
@@ -2715,9 +3889,19 @@
       "parameterCount": 0,
       "parameters": [],
       "compilerName": "IntMin",
-      "status": "supported",
-      "incompleteReason": "",
-      "capability": "registry-contract-only; firmware-unverified"
+      "status": "incomplete",
+      "incompleteReason": "参数契约未定义；空参数表不表示完整功能",
+      "capability": "compiler-contract-only; target-execution-unverified",
+      "capabilityState": {
+        "name": "IntMin",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      }
     }
   },
   {
@@ -2734,9 +3918,19 @@
       "parameterCount": 0,
       "parameters": [],
       "compilerName": "FloatMax",
-      "status": "supported",
-      "incompleteReason": "",
-      "capability": "registry-contract-only; firmware-unverified"
+      "status": "incomplete",
+      "incompleteReason": "参数契约未定义；空参数表不表示完整功能",
+      "capability": "compiler-contract-only; target-execution-unverified",
+      "capabilityState": {
+        "name": "FloatMax",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      }
     }
   },
   {
@@ -2753,9 +3947,19 @@
       "parameterCount": 0,
       "parameters": [],
       "compilerName": "FloatMin",
-      "status": "supported",
-      "incompleteReason": "",
-      "capability": "registry-contract-only; firmware-unverified"
+      "status": "incomplete",
+      "incompleteReason": "参数契约未定义；空参数表不表示完整功能",
+      "capability": "compiler-contract-only; target-execution-unverified",
+      "capabilityState": {
+        "name": "FloatMin",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      }
     }
   },
   {
@@ -2772,9 +3976,19 @@
       "parameterCount": 0,
       "parameters": [],
       "compilerName": "IntLimt",
-      "status": "supported",
-      "incompleteReason": "",
-      "capability": "registry-contract-only; firmware-unverified"
+      "status": "incomplete",
+      "incompleteReason": "参数契约未定义；空参数表不表示完整功能",
+      "capability": "compiler-contract-only; target-execution-unverified",
+      "capabilityState": {
+        "name": "IntLimt",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      }
     }
   },
   {
@@ -2791,9 +4005,19 @@
       "parameterCount": 0,
       "parameters": [],
       "compilerName": "FloatLimt",
-      "status": "supported",
-      "incompleteReason": "",
-      "capability": "registry-contract-only; firmware-unverified"
+      "status": "incomplete",
+      "incompleteReason": "参数契约未定义；空参数表不表示完整功能",
+      "capability": "compiler-contract-only; target-execution-unverified",
+      "capabilityState": {
+        "name": "FloatLimt",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      }
     }
   },
   {
@@ -2810,9 +4034,19 @@
       "parameterCount": 0,
       "parameters": [],
       "compilerName": "FloatVariLimt",
-      "status": "supported",
-      "incompleteReason": "",
-      "capability": "registry-contract-only; firmware-unverified"
+      "status": "incomplete",
+      "incompleteReason": "参数契约未定义；空参数表不表示完整功能",
+      "capability": "compiler-contract-only; target-execution-unverified",
+      "capabilityState": {
+        "name": "FloatVariLimt",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      }
     }
   },
   {
@@ -2829,9 +4063,19 @@
       "parameterCount": 0,
       "parameters": [],
       "compilerName": "IntBuffOper",
-      "status": "supported",
-      "incompleteReason": "",
-      "capability": "registry-contract-only; firmware-unverified"
+      "status": "incomplete",
+      "incompleteReason": "参数契约未定义；空参数表不表示完整功能",
+      "capability": "compiler-contract-only; target-execution-unverified",
+      "capabilityState": {
+        "name": "IntBuffOper",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      }
     }
   },
   {
@@ -2848,9 +4092,19 @@
       "parameterCount": 0,
       "parameters": [],
       "compilerName": "FloatBuffOper",
-      "status": "supported",
-      "incompleteReason": "",
-      "capability": "registry-contract-only; firmware-unverified"
+      "status": "incomplete",
+      "incompleteReason": "参数契约未定义；空参数表不表示完整功能",
+      "capability": "compiler-contract-only; target-execution-unverified",
+      "capabilityState": {
+        "name": "FloatBuffOper",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      }
     }
   },
   {
@@ -2867,9 +4121,19 @@
       "parameterCount": 0,
       "parameters": [],
       "compilerName": "IntBuffLogicOper",
-      "status": "supported",
-      "incompleteReason": "",
-      "capability": "registry-contract-only; firmware-unverified"
+      "status": "incomplete",
+      "incompleteReason": "参数契约未定义；空参数表不表示完整功能",
+      "capability": "compiler-contract-only; target-execution-unverified",
+      "capabilityState": {
+        "name": "IntBuffLogicOper",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      }
     }
   },
   {
@@ -2886,9 +4150,19 @@
       "parameterCount": 0,
       "parameters": [],
       "compilerName": "IntModOper",
-      "status": "supported",
-      "incompleteReason": "",
-      "capability": "registry-contract-only; firmware-unverified"
+      "status": "incomplete",
+      "incompleteReason": "参数契约未定义；空参数表不表示完整功能",
+      "capability": "compiler-contract-only; target-execution-unverified",
+      "capabilityState": {
+        "name": "IntModOper",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      }
     }
   },
   {
@@ -2905,9 +4179,19 @@
       "parameterCount": 0,
       "parameters": [],
       "compilerName": "FloatRoughFilter",
-      "status": "supported",
-      "incompleteReason": "",
-      "capability": "registry-contract-only; firmware-unverified"
+      "status": "incomplete",
+      "incompleteReason": "参数契约未定义；空参数表不表示完整功能",
+      "capability": "compiler-contract-only; target-execution-unverified",
+      "capabilityState": {
+        "name": "FloatRoughFilter",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      }
     }
   },
   {
@@ -2924,9 +4208,19 @@
       "parameterCount": 0,
       "parameters": [],
       "compilerName": "DataRedundancy",
-      "status": "supported",
-      "incompleteReason": "",
-      "capability": "registry-contract-only; firmware-unverified"
+      "status": "incomplete",
+      "incompleteReason": "参数契约未定义；空参数表不表示完整功能",
+      "capability": "compiler-contract-only; target-execution-unverified",
+      "capabilityState": {
+        "name": "DataRedundancy",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      }
     }
   },
   {
@@ -2943,9 +4237,19 @@
       "parameterCount": 0,
       "parameters": [],
       "compilerName": "DealInUnify",
-      "status": "supported",
-      "incompleteReason": "",
-      "capability": "registry-contract-only; firmware-unverified"
+      "status": "incomplete",
+      "incompleteReason": "参数契约未定义；空参数表不表示完整功能",
+      "capability": "compiler-contract-only; target-execution-unverified",
+      "capabilityState": {
+        "name": "DealInUnify",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      }
     }
   },
   {
@@ -2962,9 +4266,19 @@
       "parameterCount": 0,
       "parameters": [],
       "compilerName": "DealOutUnify",
-      "status": "supported",
-      "incompleteReason": "",
-      "capability": "registry-contract-only; firmware-unverified"
+      "status": "incomplete",
+      "incompleteReason": "参数契约未定义；空参数表不表示完整功能",
+      "capability": "compiler-contract-only; target-execution-unverified",
+      "capabilityState": {
+        "name": "DealOutUnify",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      }
     }
   },
   {
@@ -2981,9 +4295,19 @@
       "parameterCount": 0,
       "parameters": [],
       "compilerName": "DealToData",
-      "status": "supported",
-      "incompleteReason": "",
-      "capability": "registry-contract-only; firmware-unverified"
+      "status": "incomplete",
+      "incompleteReason": "参数契约未定义；空参数表不表示完整功能",
+      "capability": "compiler-contract-only; target-execution-unverified",
+      "capabilityState": {
+        "name": "DealToData",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      }
     }
   },
   {
@@ -3000,9 +4324,19 @@
       "parameterCount": 0,
       "parameters": [],
       "compilerName": "DealToSwit",
-      "status": "supported",
-      "incompleteReason": "",
-      "capability": "registry-contract-only; firmware-unverified"
+      "status": "incomplete",
+      "incompleteReason": "参数契约未定义；空参数表不表示完整功能",
+      "capability": "compiler-contract-only; target-execution-unverified",
+      "capabilityState": {
+        "name": "DealToSwit",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      }
     }
   },
   {
@@ -3019,9 +4353,19 @@
       "parameterCount": 0,
       "parameters": [],
       "compilerName": "FloatBelowWatch",
-      "status": "supported",
-      "incompleteReason": "",
-      "capability": "registry-contract-only; firmware-unverified"
+      "status": "incomplete",
+      "incompleteReason": "参数契约未定义；空参数表不表示完整功能",
+      "capability": "compiler-contract-only; target-execution-unverified",
+      "capabilityState": {
+        "name": "FloatBelowWatch",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      }
     }
   },
   {
@@ -3038,9 +4382,19 @@
       "parameterCount": 0,
       "parameters": [],
       "compilerName": "FloatOverWatch",
-      "status": "supported",
-      "incompleteReason": "",
-      "capability": "registry-contract-only; firmware-unverified"
+      "status": "incomplete",
+      "incompleteReason": "参数契约未定义；空参数表不表示完整功能",
+      "capability": "compiler-contract-only; target-execution-unverified",
+      "capabilityState": {
+        "name": "FloatOverWatch",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      }
     }
   },
   {
@@ -3057,9 +4411,19 @@
       "parameterCount": 0,
       "parameters": [],
       "compilerName": "EXCASFC",
-      "status": "supported",
-      "incompleteReason": "",
-      "capability": "registry-contract-only; firmware-unverified"
+      "status": "incomplete",
+      "incompleteReason": "参数契约未定义；空参数表不表示完整功能",
+      "capability": "compiler-contract-only; target-execution-unverified",
+      "capabilityState": {
+        "name": "EXCASFC",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      }
     }
   },
   {
@@ -3076,9 +4440,19 @@
       "parameterCount": 0,
       "parameters": [],
       "compilerName": "ParamtEngBuild",
-      "status": "supported",
-      "incompleteReason": "",
-      "capability": "registry-contract-only; firmware-unverified"
+      "status": "incomplete",
+      "incompleteReason": "参数契约未定义；空参数表不表示完整功能",
+      "capability": "compiler-contract-only; target-execution-unverified",
+      "capabilityState": {
+        "name": "ParamtEngBuild",
+        "status": "incomplete",
+        "definitionValid": false,
+        "definitionErrors": [
+          "参数契约未定义；空参数表不表示完整功能"
+        ],
+        "compilerHandles": false,
+        "targetExecutionVerified": false
+      }
     }
   }
 ]

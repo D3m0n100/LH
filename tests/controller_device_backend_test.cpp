@@ -123,6 +123,7 @@ public:
 
     bool readHoldingRegisters(int address, int count) override
     {
+        if (readDelayMs > 0) QThread::msleep(readDelayMs);
         lastReadAddress = address;
         lastReadCount = count;
         lastReadStation = station;
@@ -191,6 +192,7 @@ public:
     CommError lastError() const override { return error; }
 
     bool connected = true;
+    int readDelayMs = 0;
     bool failRead = false;
     bool failWrite = false;
     int failReadAddress = -1;
@@ -227,6 +229,68 @@ class ControllerDeviceBackendTest : public QObject
     Q_OBJECT
 
 private slots:
+    void reviewAsyncConnectionMaintainsHeartbeatAndRejectsLateSuccess()
+    {
+        ControllerDebugClient client;
+        client.enableWorkerThread([] {
+            auto* transport = new FakeControllerTransport;
+            transport->readDelayMs = 100;
+            return transport;
+        });
+        ControllerDeviceBackend backend;
+        backend.setDebugClientForTest(&client);
+        ProjectRuntimeConfig config;
+        config.transport.parameters.insert("port", "review-async-connect");
+        QVERIFY(backend.configure(config));
+        int ticks = 0, completions = 0;
+        QTimer heartbeat;
+        connect(&heartbeat, &QTimer::timeout, this, [&] { ++ticks; });
+        heartbeat.start(5);
+        auto token = std::make_shared<std::atomic_bool>(false);
+        QElapsedTimer elapsed; elapsed.start();
+        bool success = true;
+        backend.connectBackendAsync(60, token, this, [&](bool ok, const QString&) {
+            ++completions; success = ok;
+        });
+        QVERIFY(elapsed.elapsed() < 50);
+        QTRY_COMPARE(completions, 1);
+        QVERIFY(!success); QVERIFY(elapsed.elapsed() < 300); QVERIFY(ticks >= 3);
+        QTest::qWait(700);
+        QCOMPARE(completions, 1);
+        QVERIFY(!backend.isOnline());
+        backend.disconnectBackend();
+    }
+    void reviewOnlineReconfigurationAndInvalidCandidatePreserveSnapshot()
+    {
+        FakeControllerTransport transport;
+        ControllerDebugClient client(&transport);
+        ControllerDeviceBackend backend;
+        backend.setDebugClientForTest(&client);
+        ProjectRuntimeConfig original;
+        original.transport.parameters.insert("port", "review-identity-A");
+        QVERIFY(backend.configure(original));
+        auto invalid = original;
+        invalid.transport.mode = "tcp";
+        QString error;
+        QVERIFY(!backend.configure(invalid, &error));
+        QCOMPARE(backend.runtimeConfig().toJson(), original.toJson());
+        QVERIFY(backend.connectBackend());
+        QVERIFY(backend.configure(original));
+        for (const QString& field : {QString("port"), QString("baudRate")}) {
+            auto other = original;
+            other.transport.parameters.insert(field, field == "port" ? QVariant("review-identity-B") : QVariant(9600));
+            QVERIFY(!backend.configure(other, &error));
+            QCOMPARE(backend.runtimeConfig().toJson(), original.toJson());
+            QVERIFY(backend.isOnline());
+        }
+        auto other = original;
+        other.controller.modbusSlaveId = 2;
+        QVERIFY(!backend.configure(other, &error));
+        QCOMPARE(backend.runtimeConfig().toJson(), original.toJson());
+        QVERIFY(backend.pause());
+        QCOMPARE(transport.lastWriteStation, 1);
+        backend.disconnectBackend();
+    }
     void unverifiedExecutionIsRejectedBeforeTransportWrites()
     {
         FakeControllerTransport transport;
