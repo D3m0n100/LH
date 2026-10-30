@@ -1,6 +1,7 @@
 #include "ThemeManager.h"
 #include "InspectorPanel.h"
 #include "ParameterController.h"
+#include "ParameterValueDelegate.h"
 #include "StatusTextHelper.h"
 
 #include <QGroupBox>
@@ -22,6 +23,7 @@
 #include <QToolButton>
 #include <QVariant>
 #include <QVBoxLayout>
+#include <algorithm>
 
 namespace {
 
@@ -231,6 +233,41 @@ QToolButton:pressed {
     m_parameterTable->setHorizontalScrollMode(QAbstractItemView::ScrollPerPixel);
     m_parameterTable->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
     m_parameterTable->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    auto* delegate = new ParameterValueDelegate(m_parameterTable);
+    delegate->editorCreated = [this](QWidget* editor) {
+        m_parameterEditor = editor;
+        editor->setProperty("parameterGeneration", QVariant::fromValue(m_parameterEditGeneration));
+        emit parameterEditStarted();
+        connect(editor, &QObject::destroyed, this, [this] {
+            m_parameterEditor.clear();
+            QTimer::singleShot(0, this, [this] { refreshParameterTable(); });
+        });
+    };
+    delegate->validate = [this](const QString& id, const QString& value, QString* error) {
+        if (!m_parameterEditor || m_parameterEditor->property("parameterGeneration").toULongLong() != m_parameterEditGeneration) {
+            if (error) *error = tr("工程或参数定义已变化，请取消并重新编辑。");
+            return false;
+        }
+        const auto it = std::find_if(m_parameterData.cbegin(), m_parameterData.cend(),
+                                     [&id](const ParameterDefinition& p) { return p.id == id; });
+        if (it == m_parameterData.cend()) {
+            if (error) *error = tr("参数定义已变化，请重新编辑。");
+            return false;
+        }
+        const auto state = m_parameterStateMap.value(id);
+        if (state.state == ParameterState::Applying || state.state == ParameterState::PendingReadback
+                || state.state == ParameterState::PendingApply) {
+            if (error) *error = tr("该参数正在写入或等待回读。");
+            return false;
+        }
+        return ParameterController::validateValue(*it, value, error);
+    };
+    delegate->submit = [this](const QString& id, const QString& value, bool apply, quint64 generation) {
+        if (generation == m_parameterEditGeneration) emit parameterValueCommitted(id, value, apply);
+    };
+    m_parameterTable->setItemDelegateForColumn(2, delegate);
+    connect(m_parameterTable, &QTableWidget::itemDoubleClicked,
+            this, &InspectorPanel::onParameterItemDoubleClicked);
     m_parameterTable->setSelectionBehavior(QAbstractItemView::SelectRows);
     m_parameterTable->setSelectionMode(QAbstractItemView::SingleSelection);
     m_parameterTable->setAlternatingRowColors(true);
@@ -535,8 +572,25 @@ void InspectorPanel::setResourceSummary(const QString& summary)
 
 void InspectorPanel::setParameterDetails(const QList<ParameterDefinition>& parameters)
 {
+    bool changed = m_parameterData.size() != parameters.size();
+    for (const auto& oldDef : m_parameterData) {
+        const auto newDef = std::find_if(parameters.cbegin(), parameters.cend(),
+                                         [&oldDef](const ParameterDefinition& p) { return p.id == oldDef.id; });
+        if (newDef == parameters.cend() || oldDef.dataType != newDef->dataType
+                || oldDef.minValue != newDef->minValue || oldDef.maxValue != newDef->maxValue
+                || oldDef.onlineEditable != newDef->onlineEditable) {
+            changed = true;
+            break;
+        }
+    }
+    if (changed) invalidateParameterEdits();
     m_parameterData = parameters;
     refreshParameterTable();
+}
+
+void InspectorPanel::invalidateParameterEdits()
+{
+    ++m_parameterEditGeneration;
 }
 
 void InspectorPanel::setParameterReadbackReady(const QStringList& readyParameterNames)
@@ -557,9 +611,18 @@ void InspectorPanel::setParameterStateMap(const QMap<QString, ParameterStateInfo
     refreshParameterTable();
 }
 
+void InspectorPanel::setParameterRuntimeOnline(bool online)
+{
+    if (m_parameterRuntimeOnline == online) {
+        return;
+    }
+    m_parameterRuntimeOnline = online;
+    refreshParameterTable();
+}
+
 void InspectorPanel::refreshParameterTable()
 {
-    if (!m_parameterTable) {
+    if (!m_parameterTable || m_parameterEditor) {
         return;
     }
 
@@ -570,6 +633,7 @@ void InspectorPanel::refreshParameterTable()
 
         const QString current = p.currentValue.isEmpty() ? p.defaultValue : p.currentValue;
         auto* nameItem = makeParameterItem(p.name);
+        nameItem->setData(Qt::UserRole, p.id);
         auto* valueItem = makeParameterItem(current);
         m_parameterTable->setItem(row, 0, nameItem);
         if (m_panelMode == PanelMode::Inspection) {
@@ -591,7 +655,7 @@ void InspectorPanel::refreshParameterTable()
             // 状态列：优先使用 ParameterController 的状态，并直接呈现错误与偏差原因
             QString stateText;
             bool stateIsError = false;
-            auto stIt = m_parameterStateMap.constFind(p.name);
+            auto stIt = m_parameterStateMap.constFind(p.id);
             QString readText = QStringLiteral("未读取");
             QString pendingText = QStringLiteral("-");
             if (stIt != m_parameterStateMap.constEnd()) {
@@ -609,6 +673,11 @@ void InspectorPanel::refreshParameterTable()
                 }
 
                 stateText = parameterStateText(stIt->state);
+                if (stIt->state == ParameterState::Modified && !m_parameterRuntimeOnline) {
+                    stateText = QStringLiteral("已修改（未下发）");
+                } else if (stIt->state == ParameterState::PendingApply && !m_parameterRuntimeOnline) {
+                    stateText = QStringLiteral("待下发（离线）");
+                }
                 stateIsError = (stIt->state == ParameterState::Modified
                                 || stIt->state == ParameterState::ApplyFailed
                                 || stIt->state == ParameterState::Mismatch
@@ -646,6 +715,20 @@ void InspectorPanel::refreshParameterTable()
                                                    deviationStateFor(p));
             auto* readItem = makeParameterItem(readText, QStringLiteral("本地配置值: %1").arg(localCfg));
             auto* pendingItem = makeParameterItem(pendingText);
+            pendingItem->setData(ParameterValueDelegate::PointIdRole, p.id);
+            pendingItem->setData(ParameterValueDelegate::DataTypeRole, p.dataType);
+            pendingItem->setData(ParameterValueDelegate::InitialValueRole,
+                                 stIt != m_parameterStateMap.constEnd() && !stIt->editedValue.isEmpty()
+                                     ? stIt->editedValue : current);
+            pendingItem->setData(ParameterValueDelegate::MinValueRole, p.minValue);
+            pendingItem->setData(ParameterValueDelegate::MaxValueRole, p.maxValue);
+            const bool pendingLocked = !p.onlineEditable || p.id.isEmpty()
+                    || (stIt != m_parameterStateMap.constEnd()
+                        && (stIt->state == ParameterState::Applying || stIt->state == ParameterState::PendingReadback
+                            || stIt->state == ParameterState::PendingApply));
+            pendingItem->setData(ParameterValueDelegate::ReadOnlyRole, pendingLocked);
+            if (pendingLocked)
+                pendingItem->setFlags(pendingItem->flags() & ~Qt::ItemIsEditable);
             auto* stateItem = makeParameterItem(stateText, detailToolTip);
             auto* confirmItem = makeParameterItem(p.confirmed ? QStringLiteral("已确认") : QStringLiteral("待确认"));
             auto* readbackItem = makeParameterItem(readbackStateFor(p));
@@ -709,17 +792,18 @@ void InspectorPanel::onParameterItemDoubleClicked(QTableWidgetItem* item)
         return;
     }
 
-    const int row = item->row();
-    if (row < 0 || row >= m_parameterData.size()) {
+    const auto* nameItem = m_parameterTable->item(item->row(), 0);
+    if (!nameItem) {
         return;
     }
-
-    const auto& param = m_parameterData[row];
-    if (!param.onlineEditable) {
+    const QString pointId = nameItem->data(Qt::UserRole).toString();
+    const auto it = std::find_if(m_parameterData.cbegin(), m_parameterData.cend(),
+                                 [&pointId](const ParameterDefinition& p) { return p.id == pointId; });
+    if (pointId.isEmpty() || it == m_parameterData.cend() || !it->onlineEditable) {
         return;
     }
-
-    emit requestEditParameter(param.name);
+    auto* target = m_parameterTable->item(item->row(), 2);
+    if (target && (target->flags() & Qt::ItemIsEditable)) m_parameterTable->editItem(target);
 }
 
 void InspectorPanel::applyStateStyle(QLabel* label, const QString& state)

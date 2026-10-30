@@ -122,6 +122,11 @@ inline bool initialize()
         meta.insert(QStringLiteral("screenLogicalWidth"), screen->size().width());
         meta.insert(QStringLiteral("screenLogicalHeight"), screen->size().height());
         meta.insert(QStringLiteral("screenDevicePixelRatio"), screen->devicePixelRatio());
+        const QRect available = screen->availableGeometry();
+        meta.insert(QStringLiteral("screenAvailableLogicalX"), available.x());
+        meta.insert(QStringLiteral("screenAvailableLogicalY"), available.y());
+        meta.insert(QStringLiteral("screenAvailableLogicalWidth"), available.width());
+        meta.insert(QStringLiteral("screenAvailableLogicalHeight"), available.height());
     }
     return writeJson(QStringLiteral("run_environment.json"), meta);
 }

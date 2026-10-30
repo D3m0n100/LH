@@ -6,6 +6,7 @@
 #include "MainWindow.h"
 #include "SettingsController.h"
 #include "ProgramBlocksWidget.h"
+#include "DeviceWorkspaceWidget.h"
 #include "ui/InspectorPanel.h"
 #include "ui/GlobalStatusBar.h"
 #include "Common.h"
@@ -13,6 +14,8 @@
 #include <QGuiApplication>
 #include <QScreen>
 #include <QTabWidget>
+#include <QMdiArea>
+#include <QMdiSubWindow>
 #include <QDialog>
 #include <QVBoxLayout>
 #include <QLabel>
@@ -57,20 +60,23 @@ void MainWindow::switchToWorkspace(const QString& targetWorkspaceId)
     }
     m_switchingWorkspace = true;
 
-    // 1. 保存当前工作区布局
-    if (!m_currentWorkspaceId.isEmpty()) {
-        saveWorkspaceLayout(m_currentWorkspaceId);
-    }
-
-    // 2. 切换 Tab 页面
+    // System views are peers of documents; showing them does not control the backend.
     m_currentWorkspaceId = targetWorkspaceId;
-    const int targetIndex = tabIndexForWorkspaceId(targetWorkspaceId);
-    if (m_workspaceTabs && targetIndex >= 0 && m_workspaceTabs->currentIndex() != targetIndex) {
-        m_workspaceTabs->setCurrentIndex(targetIndex);
+    QMdiSubWindow* target = targetWorkspaceId == WorkspaceId::Monitor ? m_monitorSubWindow
+            : targetWorkspaceId == WorkspaceId::Device ? m_deviceSubWindow : m_editorSubWindow;
+    QDockWidget* floatingTarget = target == m_monitorSubWindow ? m_monitorFloatingDock
+            : target == m_deviceSubWindow ? m_deviceFloatingDock : nullptr;
+    if (target && m_mdiArea) {
+        if (floatingTarget) {
+            floatingTarget->show();
+            floatingTarget->raise();
+        } else {
+            if (target->widget()) target->widget()->show();
+            target->show();
+            m_mdiArea->setActiveSubWindow(target);
+        }
     }
-
-    // 3. 恢复目标工作区布局状态
-    restoreWorkspaceLayout(targetWorkspaceId);
+    const int targetIndex = tabIndexForWorkspaceId(targetWorkspaceId);
 
     // 4. 更新相关视图动作 checked 状态
     if (m_actToggleDslEditor) {
@@ -110,10 +116,6 @@ void MainWindow::switchToWorkspace(const QString& targetWorkspaceId)
     // 7. 记录最后活动工作区到设置
     if (m_settingsController) {
         m_settingsController->setActiveWorkspaceId(targetWorkspaceId);
-    }
-
-    if (targetWorkspaceId != WorkspaceId::Monitor && m_tuningDock) {
-        m_tuningDock->setVisible(false);
     }
 
     m_switchingWorkspace = false;
@@ -173,13 +175,11 @@ void MainWindow::applyDefaultWorkspaceLayout(const QString& workspaceId)
             addDockWidget(Qt::LeftDockWidgetArea, m_explorerDock);
             m_explorerDock->setFloating(false);
             m_explorerDock->setVisible(true);
-            resizeDocks({m_explorerDock}, {230}, Qt::Horizontal);
         }
         if (m_inspectorDock) {
             addDockWidget(Qt::RightDockWidgetArea, m_inspectorDock);
             m_inspectorDock->setFloating(false);
-            m_inspectorDock->setVisible(false);
-            resizeDocks({m_inspectorDock}, {300}, Qt::Horizontal);
+            m_inspectorDock->setVisible(true);
         }
         if (m_tuningDock) {
             m_tuningDock->setFloating(false);
@@ -188,8 +188,11 @@ void MainWindow::applyDefaultWorkspaceLayout(const QString& workspaceId)
         if (m_logDock) {
             addDockWidget(Qt::BottomDockWidgetArea, m_logDock);
             m_logDock->setFloating(false);
-            m_logDock->setVisible(false);
+            m_logDock->setVisible(true);
             resizeDocks({m_logDock}, {220}, Qt::Vertical);
+        }
+        if (m_explorerDock && m_inspectorDock) {
+            resizeDocks({m_explorerDock, m_inspectorDock}, {145, 145}, Qt::Horizontal);
         }
     } else if (workspaceId == WorkspaceId::Monitor) {
         // 监控工作区：隐藏编程侧栏，隐藏检查面板与输出
@@ -245,9 +248,9 @@ void MainWindow::applyDefaultWorkspaceLayout(const QString& workspaceId)
 void MainWindow::onResetCurrentWorkspaceLayout()
 {
     if (m_settingsController) {
-        m_settingsController->setWorkspaceLayoutState(m_currentWorkspaceId, QByteArray());
+        m_settingsController->setWorkspaceLayoutState(WorkspaceId::Programming, QByteArray());
     }
-    applyDefaultWorkspaceLayout(m_currentWorkspaceId);
+    applyDefaultWorkspaceLayout(WorkspaceId::Programming);
 
     if (m_actToggleExplorerDock && m_explorerDock) {
         m_actToggleExplorerDock->setChecked(m_explorerDock->isVisible());
@@ -262,12 +265,16 @@ void MainWindow::onResetCurrentWorkspaceLayout()
 
 void MainWindow::onResetAllWorkspaceLayouts()
 {
+    // Rehost the existing frontends before discarding layout state. Otherwise a
+    // later save would persist the still-open floating docks again.
+    setSystemViewFloating(WorkspaceId::Monitor, false);
+    setSystemViewFloating(WorkspaceId::Device, false);
     if (m_settingsController) {
         m_settingsController->clearWorkspaceLayouts();
     }
 
     // 恢复所有工作区的默认布局状态，并应用到当前工作区
-    applyDefaultWorkspaceLayout(m_currentWorkspaceId);
+    applyDefaultWorkspaceLayout(WorkspaceId::Programming);
 
     if (m_actToggleExplorerDock && m_explorerDock) {
         m_actToggleExplorerDock->setChecked(m_explorerDock->isVisible());
@@ -288,6 +295,13 @@ void MainWindow::restoreWindowGeometryAndWorkspaces()
     if (!m_settingsController) {
         return;
     }
+    if (m_settingsController->layoutVersion() != 0
+            && m_settingsController->layoutVersion() != SettingsController::CURRENT_LAYOUT_VERSION) {
+        m_settingsController->clearWorkspaceLayouts();
+        appendOutput(QStringLiteral("旧版工作区布局已重置，主题、字体和最近工程设置已保留。"));
+    }
+    if (m_monitorFloatingDock) setSystemViewFloating(WorkspaceId::Monitor, false);
+    if (m_deviceFloatingDock) setSystemViewFloating(WorkspaceId::Device, false);
 
     // 1. 恢复窗口位置与尺寸
     const QByteArray geom = m_settingsController->windowGeometry();
@@ -318,13 +332,15 @@ void MainWindow::restoreWindowGeometryAndWorkspaces()
     // 3. 切换到目标工作区并恢复其保存的布局（不提前将初始未恢复状态覆盖保存）
     m_currentWorkspaceId = targetWorkspace;
     const int targetIndex = tabIndexForWorkspaceId(targetWorkspace);
-    if (m_workspaceTabs && targetIndex >= 0) {
-        m_switchingWorkspace = true;
-        m_workspaceTabs->setCurrentIndex(targetIndex);
-        m_switchingWorkspace = false;
+    QMdiSubWindow* target = targetWorkspace == WorkspaceId::Monitor ? m_monitorSubWindow
+            : targetWorkspace == WorkspaceId::Device ? m_deviceSubWindow : m_editorSubWindow;
+    if (target && m_mdiArea && !m_settingsController->systemViewFloating(targetWorkspace)) {
+        if (target->widget()) target->widget()->show();
+        target->show();
+        m_mdiArea->setActiveSubWindow(target);
     }
 
-    restoreWorkspaceLayout(targetWorkspace);
+    restoreWorkspaceLayout(WorkspaceId::Programming);
 
     // 同步视图动作 checked 状态
     if (m_actToggleDslEditor) {
@@ -345,6 +361,100 @@ void MainWindow::restoreWindowGeometryAndWorkspaces()
     if (m_inspectorPanel && m_workspaceTabs && targetIndex >= 0) {
         m_inspectorPanel->setWorkspaceName(m_workspaceTabs->tabText(targetIndex));
     }
+
+    const auto restoreFloat = [this](const QString& workspaceId, QDockWidget* dock) {
+        if (!dock) return;
+        const QByteArray saved = m_settingsController->systemViewFloatGeometry(workspaceId);
+        if (!saved.isEmpty()) dock->restoreGeometry(saved);
+        const auto screens = QGuiApplication::screens();
+        const QRect target = dock->frameGeometry();
+        const QScreen* matching = nullptr;
+        for (const QScreen* screen : screens) {
+            if (screen->availableGeometry().intersects(target)) {
+                matching = screen;
+                break;
+            }
+        }
+        if (!matching && !screens.isEmpty()) matching = screens.first();
+        if (matching) {
+            const QRect available = matching->availableGeometry();
+            const int width = qMin(dock->width(), available.width());
+            const int height = qMin(dock->height(), available.height());
+            if (width != dock->width() || height != dock->height()) dock->resize(width, height);
+            if (!available.contains(dock->frameGeometry())) {
+                dock->move(available.center() - dock->rect().center());
+            }
+        }
+        dock->show();
+        dock->raise();
+    };
+    for (const QString& workspaceId : {WorkspaceId::Monitor, WorkspaceId::Device}) {
+        if (!m_settingsController->systemViewFloating(workspaceId)) continue;
+        setSystemViewFloating(workspaceId, true);
+        restoreFloat(workspaceId,
+                     workspaceId == WorkspaceId::Monitor ? m_monitorFloatingDock
+                                                        : m_deviceFloatingDock);
+    }
+}
+
+void MainWindow::setSystemViewFloating(const QString& workspaceId, bool floating)
+{
+    const bool monitor = workspaceId == WorkspaceId::Monitor;
+    QMdiSubWindow* sub = monitor ? m_monitorSubWindow : m_deviceSubWindow;
+    QWidget* page = monitor ? m_workspaceMonitorPage
+                            : static_cast<QWidget*>(m_deviceWorkspaceWidget);
+    QDockWidget*& dock = monitor ? m_monitorFloatingDock : m_deviceFloatingDock;
+    QAction* action = monitor ? m_actFloatMonitor : m_actFloatDevice;
+    if (!sub || !page || !m_mdiArea) {
+        return;
+    }
+    if (floating) {
+        if (dock) {
+            dock->show();
+            dock->raise();
+            return;
+        }
+        dock = new QDockWidget(monitor ? tr("监控") : tr("设备"), this);
+        dock->setObjectName(monitor ? QStringLiteral("MonitorFloatingDock")
+                                    : QStringLiteral("DeviceFloatingDock"));
+        dock->setFeatures(QDockWidget::DockWidgetMovable | QDockWidget::DockWidgetFloatable
+                          | QDockWidget::DockWidgetClosable);
+        sub->setWidget(nullptr);
+        dock->setWidget(page);
+        dock->installEventFilter(this);
+        addDockWidget(Qt::RightDockWidgetArea, dock);
+        dock->setFloating(true);
+        dock->resize(720, 520);
+        dock->move(frameGeometry().center() - QPoint(360, 260));
+        dock->show();
+        dock->raise();
+        sub->hide();
+        if (action) {
+            QSignalBlocker blocker(action);
+            action->setChecked(true);
+        }
+        return;
+    }
+    if (!dock) {
+        return;
+    }
+    dock->removeEventFilter(this);
+    dock->setWidget(nullptr);
+    sub->setWidget(page);
+    sub->hide();
+    removeDockWidget(dock);
+    dock->setObjectName(QString());
+    dock->hide();
+    dock->deleteLater();
+    dock = nullptr;
+    if (action) {
+        QSignalBlocker blocker(action);
+        action->setChecked(false);
+    }
+    if (m_currentWorkspaceId == workspaceId) {
+        sub->show();
+        m_mdiArea->setActiveSubWindow(sub);
+    }
 }
 
 void MainWindow::saveWindowGeometryAndWorkspaces()
@@ -354,7 +464,17 @@ void MainWindow::saveWindowGeometryAndWorkspaces()
     }
     m_settingsController->setWindowGeometry(saveGeometry());
     m_settingsController->setActiveWorkspaceId(m_currentWorkspaceId);
-    saveWorkspaceLayout(m_currentWorkspaceId);
+    m_settingsController->setSystemViewFloating(WorkspaceId::Monitor, m_monitorFloatingDock != nullptr);
+    m_settingsController->setSystemViewFloating(WorkspaceId::Device, m_deviceFloatingDock != nullptr);
+    if (m_monitorFloatingDock) {
+        m_settingsController->setSystemViewFloatGeometry(WorkspaceId::Monitor,
+                                                         m_monitorFloatingDock->saveGeometry());
+    }
+    if (m_deviceFloatingDock) {
+        m_settingsController->setSystemViewFloatGeometry(WorkspaceId::Device,
+                                                         m_deviceFloatingDock->saveGeometry());
+    }
+    saveWorkspaceLayout(WorkspaceId::Programming);
 }
 
 void MainWindow::setSettingsStorage(const QString& organization, const QString& application)

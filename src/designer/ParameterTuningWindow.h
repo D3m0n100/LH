@@ -40,7 +40,6 @@ signals:
     void requestCompile();
     void requestRun();
     void requestOpenMonitor();
-    void requestEditParameter(const QString& parameterName);
     void requestApplyParameters();
     void requestDockBack();
 

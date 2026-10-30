@@ -43,12 +43,12 @@ set "PYTHON=%VENV_PY%"
 set "PATH=%VENV_DIR%\Scripts;C:\Qt\5.15.2\mingw81_64\bin;C:\Qt\Tools\mingw810_64\bin;%PATH%"
 
 REM === 4. Launch app ===
-set "APP_EXE=%CD%\build_current_mingw\bin\LH.exe"
+set "APP_EXE=%CD%\build\bin\LH.exe"
 
 if not exist "%APP_EXE%" (
     echo [ERROR] Executable not found:
     echo   %APP_EXE%
-    echo Build first to generate build_current_mingw\bin\LH.exe
+    echo Build first to generate build\bin\LH.exe
     pause
     goto :EOF
 )

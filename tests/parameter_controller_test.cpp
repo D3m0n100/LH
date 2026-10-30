@@ -79,6 +79,38 @@ private:
     }
 
 private slots:
+    void typedValueValidationBoundaries_data()
+    {
+        QTest::addColumn<QString>("type");
+        QTest::addColumn<QString>("value");
+        QTest::addColumn<bool>("valid");
+        QTest::newRow("int16-min") << QStringLiteral("INT16") << QStringLiteral("-32768") << true;
+        QTest::newRow("int16-over") << QStringLiteral("INT16") << QStringLiteral("32768") << false;
+        QTest::newRow("int32-min") << QStringLiteral("INT32") << QStringLiteral("-2147483648") << true;
+        QTest::newRow("int32-over") << QStringLiteral("INT32") << QStringLiteral("2147483648") << false;
+        QTest::newRow("uint32-max") << QStringLiteral("UINT32") << QStringLiteral("4294967295") << true;
+        QTest::newRow("uint32-over") << QStringLiteral("UINT32") << QStringLiteral("4294967296") << false;
+        QTest::newRow("uint-negative") << QStringLiteral("UINT16") << QStringLiteral("-1") << false;
+        QTest::newRow("real-nan") << QStringLiteral("REAL") << QStringLiteral("nan") << false;
+        QTest::newRow("real-infinity") << QStringLiteral("REAL") << QStringLiteral("inf") << false;
+        QTest::newRow("real-overflow") << QStringLiteral("REAL") << QStringLiteral("1e100") << false;
+        QTest::newRow("bool-true") << QStringLiteral("BOOL") << QStringLiteral("true") << true;
+        QTest::newRow("bool-invalid") << QStringLiteral("BOOL") << QStringLiteral("2") << false;
+        QTest::newRow("integer-empty") << QStringLiteral("INT32") << QString() << false;
+    }
+
+    void typedValueValidationBoundaries()
+    {
+        QFETCH(QString, type); QFETCH(QString, value); QFETCH(bool, valid);
+        auto def = makeParam(QStringLiteral("test"), true, QStringLiteral("0"), QStringLiteral("point"));
+        def.dataType = type;
+        QString error;
+        QCOMPARE(ParameterController::validateValue(def, value, &error), valid);
+        if (!valid) QVERIFY(!error.isEmpty());
+        def.onlineEditable = false;
+        QVERIFY(!ParameterController::validateValue(def, value, &error));
+    }
+
     void readbackNotificationReentry_data()
     {
         QTest::addColumn<int>("entry"); // external values, sync polling, async polling
@@ -200,6 +232,8 @@ private slots:
         QVERIFY(ctrl.editParameter("A", "2"));
         QVERIFY(ctrl.applyModifiedParametersWithReadbackAsync(&backend));
         QTRY_COMPARE_WITH_TIMEOUT(backend.reads.size(), 1, 1000);
+        QVERIFY(!ctrl.editParameterByPointId(QStringLiteral("param.a"), QStringLiteral("4")));
+        QCOMPARE(ctrl.parameterState("A").editedValue, QStringLiteral("2"));
         const auto oldRead = backend.reads.first();
         ctrl.cancelPendingReadback();
         QCOMPARE(finished.count(), 1);
@@ -218,6 +252,47 @@ private slots:
         QTest::qWait(30);
         QCOMPARE(finished.count(), 2);
         QCOMPARE(ctrl.parameterState("A").appliedValue, QStringLiteral("3"));
+    }
+
+    void secondApplyRejectedWhileReadbackPending()
+    {
+        class DeferredBackend : public VirtualDeviceBackend {
+        public:
+            QList<ReadCompletion> reads;
+            void readPointsAsync(const QStringList&, int, std::shared_ptr<std::atomic_bool>,
+                                 QObject*, ReadCompletion completion) override
+            {
+                reads.append(completion);
+            }
+        } backend;
+        ParameterController ctrl;
+        ctrl.loadDefinitions({makeParam("A", true, "0", "param.a"),
+                              makeParam("B", true, "0", "param.b")});
+        RuntimePointDefinition point;
+        point.id = QStringLiteral("param.a"); point.name = QStringLiteral("A");
+        point.kind = RuntimePointKind::Parameter; point.dataType = QStringLiteral("REAL");
+        point.access = RuntimePointAccess::ReadWrite;
+        RuntimePointDefinition other = point;
+        other.id = QStringLiteral("param.b"); other.name = QStringLiteral("B");
+        backend.loadPointDefinitions({point, other});
+        QVERIFY(backend.connectBackend());
+        QVERIFY(ctrl.editParameter("A", QStringLiteral("2")));
+        QVERIFY(ctrl.editParameter("B", QStringLiteral("3")));
+
+        QString error;
+        QVERIFY(ctrl.applyParameterByPointIdWithReadbackAsync(
+                    &backend, QStringLiteral("param.a"), 2, 100, &error));
+        QTRY_COMPARE_WITH_TIMEOUT(backend.reads.size(), 1, 1000);
+        QCOMPARE(ctrl.parameterState("A").state, ParameterState::PendingReadback);
+        QVERIFY(ctrl.editParameter("B", QStringLiteral("4")));
+
+        error.clear();
+        QVERIFY(!ctrl.applyParameterByPointIdWithReadbackAsync(
+                    &backend, QStringLiteral("param.b"), 2, 100, &error));
+        QVERIFY(error.contains(QStringLiteral("回读正在进行中")));
+        QCOMPARE(ctrl.parameterState("A").state, ParameterState::PendingReadback);
+        QCOMPARE(ctrl.parameterState("B").editedValue, QStringLiteral("4"));
+        ctrl.cancelPendingReadback();
     }
 
     void inspectorRefreshPreservesReadback_data()
@@ -346,6 +421,8 @@ private slots:
         QTimer::singleShot(0, &controller, [&] { heartbeat = true; });
         QVERIFY(controller.applyModifiedParametersWithReadbackAsync(&backend, 2, 0));
         QCOMPARE(controller.parameterState("Kp").state, ParameterState::Applying);
+        QVERIFY(!controller.editParameterByPointId(QStringLiteral("param.kp"), QStringLiteral("3.0")));
+        QCOMPARE(controller.parameterState("Kp").editedValue, QStringLiteral("2.0"));
         QTRY_VERIFY(heartbeat);
         QCOMPARE(finished.count(), 0);
         controller.cancelPendingReadback(QStringLiteral("cancel during write"));
@@ -373,15 +450,131 @@ private slots:
             QCOMPARE(state.state, ParameterState::Clean);
     }
 
+    void pendingApplyRejectsReentrantEdit()
+    {
+        ParameterController ctrl;
+        const auto def = makeParam("A", true, "0", "param.a");
+        ctrl.loadDefinitions({def});
+        RuntimePointDefinition point; point.id = def.id; point.name = def.name;
+        point.kind = RuntimePointKind::Parameter; point.dataType = QStringLiteral("REAL");
+        point.access = RuntimePointAccess::ReadWrite;
+        VirtualDeviceBackend backend; backend.loadPointDefinitions({point}); QVERIFY(backend.connectBackend());
+        QVERIFY(ctrl.editParameterByPointId(def.id, QStringLiteral("2")));
+        bool attempted = false;
+        connect(&ctrl, &ParameterController::stateChanged, &ctrl,
+                [&](const QString&, ParameterState, ParameterState next) {
+            if (next == ParameterState::PendingApply) {
+                attempted = true;
+                QVERIFY(!ctrl.editParameterByPointId(def.id, QStringLiteral("3")));
+            }
+        });
+        QVERIFY(ctrl.applyModifiedParameters(&backend));
+        QVERIFY(attempted);
+        QCOMPARE(ctrl.parameterStateByPointId(def.id).editedValue, QStringLiteral("2"));
+    }
+
     void loadDefinitionsPreservesState()
     {
         ParameterController ctrl;
-        ctrl.loadDefinitions({makeParam("Kp")});
+        const auto definition = makeParam("Kp");
+        ctrl.loadDefinitions({definition});
         ctrl.editParameter("Kp", "1.5");
 
-        ctrl.loadDefinitions({makeParam("Kp")});
+        ctrl.loadDefinitions({definition});
         QCOMPARE(ctrl.parameterState("Kp").state, ParameterState::Modified);
         QCOMPARE(ctrl.parameterState("Kp").editedValue, QStringLiteral("1.5"));
+    }
+
+    void duplicateNamesUsePointIdentityAndRejectNameLookup()
+    {
+        ParameterController ctrl;
+        auto first = makeParam("Kp", true, "0", "param.first");
+        auto second = makeParam("Kp", true, "0", "param.second");
+        ctrl.loadDefinitions({first, second});
+        QCOMPARE(ctrl.parameterStates().size(), 2);
+        QVERIFY(!ctrl.editParameter(QStringLiteral("Kp"), QStringLiteral("9")));
+        QVERIFY(ctrl.parameterState(QStringLiteral("Kp")).pointId.isEmpty());
+        QVERIFY(ctrl.editParameterByPointId(first.id, QStringLiteral("1")));
+        QVERIFY(ctrl.editParameterByPointId(second.id, QStringLiteral("2")));
+        QCOMPARE(ctrl.parameterStateByPointId(first.id).editedValue, QStringLiteral("1"));
+        QCOMPARE(ctrl.parameterStateByPointId(second.id).editedValue, QStringLiteral("2"));
+        ctrl.loadDefinitions({second});
+        QCOMPARE(ctrl.parameterStateByPointId(second.id).editedValue, QStringLiteral("2"));
+    }
+
+    void changedPointDoesNotInheritState()
+    {
+        ParameterController ctrl;
+        ctrl.loadDefinitions({makeParam("Kp", true, "0", "old")});
+        QVERIFY(ctrl.editParameterByPointId(QStringLiteral("old"), QStringLiteral("3")));
+        ctrl.loadDefinitions({makeParam("Kp", true, "0", "new")});
+        QCOMPARE(ctrl.parameterStateByPointId(QStringLiteral("new")).state, ParameterState::Clean);
+        QVERIFY(ctrl.parameterStateByPointId(QStringLiteral("new")).editedValue.isEmpty());
+    }
+
+    void duplicatePointIdsAreNotEditable()
+    {
+        ParameterController ctrl;
+        ctrl.loadDefinitions({makeParam("A", true, "0", "same"),
+                              makeParam("B", true, "0", "same")});
+        QVERIFY(!ctrl.editParameterByPointId(QStringLiteral("same"), QStringLiteral("1")));
+        QVERIFY(ctrl.parameterStateByPointId(QStringLiteral("same")).pointId.isEmpty());
+    }
+
+    void duplicateNamesNeverUseAmbiguousReadback()
+    {
+        ParameterController ctrl;
+        ctrl.loadDefinitions({makeParam("Kp", true, "0", "param.first"),
+                              makeParam("Kp", true, "0", "param.second")});
+        RuntimePointDefinition first;
+        first.id = QStringLiteral("param.first"); first.name = QStringLiteral("first");
+        first.kind = RuntimePointKind::Parameter; first.dataType = QStringLiteral("REAL");
+        first.access = RuntimePointAccess::ReadWrite;
+        RuntimePointDefinition second = first;
+        second.id = QStringLiteral("param.second"); second.name = QStringLiteral("second");
+        VirtualDeviceBackend backend;
+        backend.loadPointDefinitions({first, second});
+        QVERIFY(backend.connectBackend());
+        QVERIFY(ctrl.editParameterByPointId(first.id, QStringLiteral("1")));
+        QVERIFY(ctrl.editParameterByPointId(second.id, QStringLiteral("2")));
+        QVERIFY(ctrl.applyModifiedParameters(&backend));
+        ctrl.onReadbackValues({{QStringLiteral("Kp"), 1.0}});
+        QCOMPARE(ctrl.parameterStateByPointId(first.id).state, ParameterState::PendingReadback);
+        QCOMPARE(ctrl.parameterStateByPointId(second.id).state, ParameterState::PendingReadback);
+        ctrl.onReadbackValues({{first.id, 1.0}, {second.id, 2.0}});
+        QCOMPARE(ctrl.parameterStateByPointId(first.id).state, ParameterState::Confirmed);
+        QCOMPARE(ctrl.parameterStateByPointId(second.id).state, ParameterState::Confirmed);
+    }
+
+    void nameCollidingWithAnotherPointIdNeverConfirmedByAnotherPointReadback()
+    {
+        ParameterController ctrl;
+        ctrl.loadDefinitions({makeParam("point.b", true, "0", "point.a"),
+                              makeParam("second display name", true, "0", "point.b")});
+        RuntimePointDefinition first;
+        first.id = QStringLiteral("point.a"); first.name = QStringLiteral("point.b");
+        first.kind = RuntimePointKind::Parameter; first.dataType = QStringLiteral("INT32");
+        first.access = RuntimePointAccess::ReadWrite;
+        RuntimePointDefinition second;
+        second.id = QStringLiteral("point.b"); second.name = QStringLiteral("second display name");
+        second.kind = RuntimePointKind::Parameter; second.dataType = QStringLiteral("INT32");
+        second.access = RuntimePointAccess::ReadWrite;
+        VirtualDeviceBackend backend;
+        backend.loadPointDefinitions({first, second});
+        QVERIFY(backend.connectBackend());
+        QVERIFY(ctrl.editParameterByPointId(first.id, QStringLiteral("7")));
+        QVERIFY(ctrl.editParameterByPointId(second.id, QStringLiteral("7")));
+        QVERIFY(ctrl.applyModifiedParameters(&backend));
+
+        // When backend only returns point.b, point.a whose display name happens to be "point.b"
+        // must NOT be confirmed by point.b's readback.
+        ctrl.onReadbackValues({{QStringLiteral("point.b"), 7}});
+        QCOMPARE(ctrl.parameterStateByPointId(first.id).state, ParameterState::PendingReadback);
+        QCOMPARE(ctrl.parameterStateByPointId(second.id).state, ParameterState::Confirmed);
+
+        // Providing point.a's readback confirms point.a
+        ctrl.onReadbackValues({{QStringLiteral("point.a"), 7}});
+        QCOMPARE(ctrl.parameterStateByPointId(first.id).state, ParameterState::Confirmed);
     }
 
     void loadDefinitionsStoresCanonicalDataType()
@@ -617,6 +810,7 @@ private slots:
         QCOMPARE(ctrl.parameterState("Kp").state, ParameterState::Timeout);
         QVERIFY(!ctrl.parameterState("Kp").lastError.isEmpty());
         QVERIFY(!errorMessage.isEmpty());
+        QCOMPARE(ctrl.parameterState("Kp").editedValue, QStringLiteral("2.0"));
     }
 
     void mixedWriteConfirmsSuccessPointsButReturnsFalse()

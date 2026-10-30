@@ -17,6 +17,7 @@ public:
     ~BackendSampler() override;
     void setDeviceBackend(IDeviceBackend* backend);
     IDeviceBackend* backend() const { return m_backend.data(); }
+    bool hasPoint(const QString& id) const { return m_backendPointIds.contains(id); }
     void configure(QStringList ids, QHash<QString, QString> channels, QHash<QString, int> periods, int intervalMs);
     void start();
     void stop();

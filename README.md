@@ -22,14 +22,14 @@ LH 是一个基于 Qt 5 的桌面组态与控制应用。它提供 DSL 组态编
 从仓库根目录执行：
 
 ```bash
-cmake -S . -B build_current_mingw -DCMAKE_PREFIX_PATH=/path/to/Qt
-cmake --build build_current_mingw --config Release
-ctest --test-dir build_current_mingw --output-on-failure
+cmake -S . -B build -DCMAKE_PREFIX_PATH=/path/to/Qt
+cmake --build build --config Release
+ctest --test-dir build --output-on-failure
 ```
 
-生成的主程序目标为 `LH`。单配置生成器通常输出到 `build_current_mingw/bin/LH`；多配置生成器会在对应配置子目录下输出。
+生成的主程序目标为 `LH`。单配置生成器通常输出到 `build/bin/LH`；多配置生成器会在对应配置子目录下输出。
 
-Windows 本机可直接执行 `build.bat`，完成后用 `run_platform.bat` 启动。批处理、VS Code、开发检查脚本和 CI 均使用 `build_current_mingw`，不再创建根目录 `build` 或 `build_acceptance`。该目录名沿用本机历史命名；切换编译器或生成器前需清理其中的 CMake 缓存，不能混用缓存。
+Windows 本机可直接执行 `build.bat`，完成后用 `run_platform.bat` 启动。项目唯一构建目录为 `build`，主程序入口为 `build/bin/LH.exe`；构建批处理、启动脚本、开发检查和 CI 均使用该目录。旧构建目录已停用。切换编译器或生成器前需清理 `build` 中的 CMake 缓存，不能混用缓存。
 
 DSL 工程中的 `build_output` 保存控制器下载产物，与本平台的 CMake 构建目录用途不同，必须保留。
 
@@ -49,7 +49,7 @@ Windows 请使用 `venv\Scripts\activate` 激活虚拟环境。不要提交 `ven
 ## 安装与运行时数据
 
 ```bash
-cmake --install build_current_mingw --prefix /path/to/install
+cmake --install build --prefix /path/to/install
 ```
 
 安装包会包含 DSL 编译运行时所需的 Python 源文件和 `requirements.txt`，但不会包含虚拟环境或在安装时下载 Python 依赖。安装后，需在可执行文件上级的 `third_party/custom_dsp_language/compile` 中准备上述虚拟环境。

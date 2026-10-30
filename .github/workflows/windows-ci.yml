@@ -50,7 +50,7 @@ jobs:
       - name: Configure CMake
         shell: bash
         run: |
-          cmake -B build_current_mingw -S . \
+          cmake -B build -S . \
             -G "Ninja" \
             -DCMAKE_BUILD_TYPE=Release \
             -DBUILD_TESTING=ON \
@@ -60,22 +60,22 @@ jobs:
       - name: Build Project
         shell: bash
         run: |
-          cmake --build build_current_mingw --config Release
+          cmake --build build --config Release
 
       - name: Run CTest
         shell: bash
         run: |
-          cd build_current_mingw
+          cd build
           ctest --output-on-failure -C Release --timeout 300
 
       - name: Install and Deploy Runtime
         shell: bash
         run: |
           # Rebuild the delivery target with all deterministic fault hooks disabled.
-          cmake -B build_current_mingw -S . -DLH_ENABLE_TEST_FAILURE_INJECTION=OFF
-          cmake --build build_current_mingw --config Release
-          ctest --test-dir build_current_mingw --output-on-failure -C Release --timeout 300
-          cmake --install build_current_mingw --prefix "${{ github.workspace }}/install" --config Release
+          cmake -B build -S . -DLH_ENABLE_TEST_FAILURE_INJECTION=OFF
+          cmake --build build --config Release
+          ctest --test-dir build --output-on-failure -C Release --timeout 300
+          cmake --install build --prefix "${{ github.workspace }}/install" --config Release
 
       - name: Verify Installed Layout & Executable Smoke Test
         shell: bash

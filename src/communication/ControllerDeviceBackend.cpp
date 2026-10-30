@@ -177,13 +177,15 @@ bool ControllerDeviceBackend::connectBackend()
 }
 
 void ControllerDeviceBackend::connectBackendAsync(int budgetMs, std::shared_ptr<std::atomic_bool> cancelled,
-        QObject* context, std::function<void(bool, QString)> completed)
+        QObject* context, std::function<void(bool, QString)> completed,
+        bool publishConnectionOnSuccess)
 {
     if (!context || !completed) return;
     if (!cancelled) cancelled = std::make_shared<std::atomic_bool>(false);
     if (budgetMs <= 0 || m_asyncConnectActive.exchange(true)) {
         completed(false, QStringLiteral("控制器正在连接或连接期限无效")); return;
     }
+    emit asyncOperationBusyChanged(true);
     m_connectCancelled = cancelled;
     auto finished = std::make_shared<std::atomic_bool>(false);
     QPointer<QObject> guard(context);
@@ -209,13 +211,16 @@ void ControllerDeviceBackend::connectBackendAsync(int budgetMs, std::shared_ptr<
             disconnectBackend();
         }
         if (guard) QMetaObject::invokeMethod(guard, [=] {
-            if (self) self->m_asyncConnectActive = false;
+            if (self) {
+                self->m_asyncConnectActive = false;
+                emit self->asyncOperationBusyChanged(self->hasAsyncOperationInFlight());
+            }
             if (finished->exchange(true)) return;
             if (!self) { completed(false, QStringLiteral("控制器后端已释放")); return; }
             if (cancelled->load()) {
                 self->disconnectBackend(); completed(false, QStringLiteral("控制器连接已取消")); return;
             }
-            if (ok) emit self->connectionStateChanged(true);
+            if (ok && publishConnectionOnSuccess) emit self->connectionStateChanged(true);
             completed(ok, message);
         }, Qt::QueuedConnection);
     };
@@ -400,6 +405,7 @@ void ControllerDeviceBackend::disconnectBackend()
             if (wasClaimed) Communication::releaseRtuPort(port, token);
             m_disconnectPending = false;
             m_asyncConnectActive = false;
+            emit asyncOperationBusyChanged(hasAsyncOperationInFlight());
         });
         if (wasOnline) emit connectionStateChanged(false);
         return;

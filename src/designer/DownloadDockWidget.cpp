@@ -4,7 +4,6 @@
 
 #include <QComboBox>
 #include <QDir>
-#include <QMessageBox>
 #include <QFileDialog>
 #include <QFormLayout>
 #include <QGroupBox>
@@ -18,8 +17,66 @@
 #include <QTextCursor>
 #include <QTextDocument>
 #include <QVBoxLayout>
+#include <QCryptographicHash>
+#include <QFile>
+#include <QFileInfo>
+#include <QJsonDocument>
+#include <QUuid>
 
 #include "communication/DownloadManager.h"
+#include "DownloadConfirmation.h"
+
+namespace {
+QString fileSha256(const QString& path)
+{
+    QFile file(path);
+    if (!file.open(QIODevice::ReadOnly)) return QString();
+    QCryptographicHash hash(QCryptographicHash::Sha256);
+    if (!hash.addData(&file) || file.error() != QFileDevice::NoError) return QString();
+    return QString::fromLatin1(hash.result().toHex());
+}
+
+DownloadConfirmationSnapshot expertDownloadSnapshot(const QString& profile,
+                                                     const QString& payload,
+                                                     const QVariantMap& config,
+                                                     const QString& operationId)
+{
+    DownloadConfirmationSnapshot snapshot;
+    snapshot.operationId = operationId;
+    const QVariantMap comm = config.value(QStringLiteral("comm")).toMap();
+    const QVariantMap bridge = comm.value(QStringLiteral("bridge")).toMap();
+    const int controllerId = bridge.value(QStringLiteral("controller")).toMap()
+            .value(QStringLiteral("slaveId")).toInt();
+    const int targetId = bridge.value(QStringLiteral("target")).toMap()
+            .value(QStringLiteral("deviceId")).toInt();
+    snapshot.targetName = QStringLiteral("专家指定目标");
+    snapshot.targetIdentity = QStringLiteral("控制器站号 %1，目标站号 %2")
+            .arg(controllerId).arg(targetId);
+    snapshot.endpoint = QStringLiteral("%1 %2，%3 bps，%4N%5%6")
+            .arg(comm.value(QStringLiteral("protocol")).toString(),
+                 comm.value(QStringLiteral("mode")).toString(),
+                 comm.value(QStringLiteral("baudRate")).toString(),
+                 comm.value(QStringLiteral("dataBits")).toString(),
+                 comm.value(QStringLiteral("parity")).toString(),
+                 comm.value(QStringLiteral("stopBits")).toString());
+    snapshot.endpoint += QStringLiteral("，端口 %1；通信配置摘要 %2")
+            .arg(comm.value(QStringLiteral("port")).toString(),
+                 QString::fromLatin1(QCryptographicHash::hash(
+                     QJsonDocument::fromVariant(config).toJson(QJsonDocument::Compact),
+                     QCryptographicHash::Sha256).toHex()));
+    snapshot.projectName = QStringLiteral("专家诊断下载（外部文件）");
+    snapshot.entryPath = QFileInfo(profile).absoluteFilePath();
+    snapshot.artifactPath = QFileInfo(payload).absoluteFilePath();
+    snapshot.artifactBytes = QFileInfo(payload).size();
+    const QString profileHash = fileSha256(profile);
+    const QString payloadHash = fileSha256(payload);
+    snapshot.artifactChecksum = profileHash.isEmpty() || payloadHash.isEmpty()
+            ? QString() : profileHash + QLatin1Char(':') + payloadHash;
+    snapshot.versionEvidence = QStringLiteral("未知（无设备程序版本读回）");
+    snapshot.action = QStringLiteral("专家诊断直接下载");
+    return snapshot;
+}
+}
 
 DownloadDockWidget::DownloadDockWidget(QWidget* parent)
     : QWidget(parent)
@@ -96,6 +153,11 @@ DownloadDockWidget::DownloadDockWidget(QWidget* parent)
     connect(m_btnDownload, &QPushButton::clicked, this, &DownloadDockWidget::onDownload);
 
     connect(m_mgr, &DownloadManager::logLine, this, &DownloadDockWidget::appendLog);
+    connect(m_mgr, &DownloadManager::busyChanged, this, [this](bool busy) {
+        if (m_busy == busy) return;
+        m_busy = busy;
+        emit busyChanged(busy);
+    });
     connect(m_mgr, &DownloadManager::statusChanged, this, [this](DownloadManager::State, const QString& msg) {
         m_status->setText(QStringLiteral("状态：%1").arg(msg));
     });
@@ -180,22 +242,38 @@ void DownloadDockWidget::onDownload()
         return;
     }
 
-    const QMessageBox::StandardButton reply = QMessageBox::warning(
-        this,
-        QStringLiteral("专家诊断下载风险确认"),
-        QStringLiteral("警告：当前为「诊断下载（专家模式）」，该操作将直接下载外部指定的配置文件和载荷，"
-                       "绕过正式的工程编译检查、generation manifest 校验与源码 SHA-256 关联。\n\n"
-                       "仅限现场排障或专家诊断使用。是否确认继续执行下载？"),
-        QMessageBox::Yes | QMessageBox::No,
-        QMessageBox::No);
-    if (reply != QMessageBox::Yes) {
+    const QVariantMap config = buildCommConfig();
+    const QString operationId = QUuid::createUuid().toString();
+    const DownloadConfirmationSnapshot approvedSnapshot = expertDownloadSnapshot(
+                profile, payload, config, operationId);
+    if (approvedSnapshot.artifactChecksum.isEmpty()) {
+        appendLog(QStringLiteral("[界面] 无法读取外部配置或载荷摘要，已阻止下载。"));
+        return;
+    }
+    if (!m_confirmHandler) {
+        appendLog(QStringLiteral("[界面] 未配置下载确认处理器，已阻止下载。"));
+        return;
+    }
+    appendLog(QStringLiteral("[界面] 等待下载确认..."));
+    if (!m_confirmHandler(approvedSnapshot)) {
         appendLog(QStringLiteral("[界面] 用户已取消专家诊断下载。"));
         return;
     }
 
+    if (expertDownloadSnapshot(profile, payload, buildCommConfig(), operationId).fingerprint()
+            != approvedSnapshot.fingerprint()) {
+        appendLog(QStringLiteral("[界面] 专家下载批准快照已变化（目标、端点或文件内容改变），已取消。"));
+        return;
+    }
+
     appendLog(QStringLiteral("[界面] 用户确认专家诊断下载，开始下载..."));
-    m_mgr->setConfig(buildCommConfig());
-    m_mgr->startDownload(profile, payload);
+    m_mgr->setConfig(config);
+    const QStringList hashes = approvedSnapshot.artifactChecksum.split(QLatin1Char(':'));
+    if (hashes.size() != 2) {
+        appendLog(QStringLiteral("[界面] 批准快照不完整，已阻止下载。"));
+        return;
+    }
+    m_mgr->startDownload(profile, payload, hashes.at(0), hashes.at(1));
 }
 
 QString DownloadDockWidget::selectedPort() const

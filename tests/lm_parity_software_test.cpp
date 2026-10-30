@@ -141,7 +141,7 @@ private slots:
         QVERIFY(xmlParsed);
     }
     void newProjectTemplateCompiles() {
-        QTemporaryDir directory(QStringLiteral(LH_SOURCE_DIR) + "/build_current_mingw/parity-template-XXXXXX"); QVERIFY(directory.isValid());
+        QTemporaryDir directory(QStringLiteral(LH_SOURCE_DIR) + "/build/parity-template-XXXXXX"); QVERIFY(directory.isValid());
         ProjectController project; project.setDefaultProjectDir(directory.path());
         connect(&project,&ProjectController::projectNameRequired,this,[](QString& name,bool& accepted){name="parity";accepted=true;});
         connect(&project,&ProjectController::directorySelectionRequired,this,[&](const QString&,const QString&,QString& dir,bool& accepted){dir=directory.path();accepted=true;});

@@ -29,7 +29,7 @@ public:
     QString expertTargetText() const;
     QString downloadProfileText() const;
     void setConnectionStatus(bool connected, const QString& statusText);
-    void setControllerRunning(bool running, bool paused = false);
+    void setControllerRunning(bool running, bool paused = false, bool demoSession = false);
 
     void bindActions(QAction* actTest, QAction* actRun, QAction* actStop,
                      QAction* actPause, QAction* actResume, QAction* actStep,

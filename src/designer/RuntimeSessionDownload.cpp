@@ -14,6 +14,7 @@
 #include <QDateTime>
 #include <QDir>
 #include <QFileInfo>
+#include <QJsonDocument>
 
 namespace {
 
@@ -85,9 +86,209 @@ QString currentTimeLabel()
 
 } // namespace
 
+QString RuntimeSessionController::computeFileChecksum(const QString& path) const
+{
+    QFile file(path);
+    if (!file.open(QIODevice::ReadOnly)) {
+        return QString();
+    }
+    QCryptographicHash hash(QCryptographicHash::Sha256);
+    if (!hash.addData(&file)) {
+        return QString();
+    }
+    return QString::fromLatin1(hash.result().toHex());
+}
+
+QString RuntimeSessionController::currentEndpointDescription() const
+{
+    if (!m_projectController) {
+        return QString();
+    }
+    const ProjectRuntimeConfig& cfg = m_projectController->runtimeConfig();
+    const QVariantMap parameters = cfg.transport.parameters;
+    QString port = parameters.value(QStringLiteral("portName")).toString().trimmed();
+    if (port.isEmpty()) {
+        port = parameters.value(QStringLiteral("port")).toString().trimmed();
+    }
+    QStringList parts;
+    const QString protocol = cfg.transport.protocol.trimmed();
+    const QString mode = cfg.transport.mode.trimmed();
+    if (!protocol.isEmpty() || !mode.isEmpty()) {
+        parts << QStringLiteral("%1/%2")
+                 .arg(protocol.isEmpty() ? QStringLiteral("未知") : protocol,
+                      mode.isEmpty() ? QStringLiteral("未知") : mode);
+    }
+    if (!port.isEmpty()) {
+        parts << QStringLiteral("端口 %1").arg(port);
+    }
+    const QVariant baud = parameters.value(QStringLiteral("baudRate"));
+    if (baud.isValid() && !baud.toString().trimmed().isEmpty()) {
+        parts << QStringLiteral("%1 bps").arg(baud.toString().trimmed());
+    }
+    if (!cfg.controller.model.trimmed().isEmpty()) {
+        parts << QStringLiteral("控制器 %1").arg(cfg.controller.model.trimmed());
+    }
+    parts << QStringLiteral("从站 %1").arg(cfg.controller.modbusSlaveId);
+    return parts.join(QStringLiteral("，"));
+}
+
+DownloadConfirmationSnapshot RuntimeSessionController::buildDownloadSnapshot(
+        const QString& artifactPath, const QVariantMap& options) const
+{
+    DownloadConfirmationSnapshot snapshot;
+    snapshot.operationId = m_currentDownloadOperationId;
+    snapshot.endpoint = currentEndpointDescription();
+
+    ProjectRuntimeConfig cfg;
+    if (m_projectController) {
+        cfg = m_projectController->runtimeConfig();
+        snapshot.projectName = cfg.projectName;
+        snapshot.projectPath = m_projectController->currentProjectPath();
+        snapshot.entryPath = cfg.mainScriptPath;
+        snapshot.configurationFingerprint = QString::fromLatin1(
+                    QCryptographicHash::hash(QJsonDocument(cfg.toJson()).toJson(QJsonDocument::Compact),
+                                             QCryptographicHash::Sha256).toHex());
+    }
+
+    QStringList targetParts;
+    if (!cfg.target.family.trimmed().isEmpty()) targetParts << cfg.target.family.trimmed();
+    if (!cfg.target.model.trimmed().isEmpty()) targetParts << cfg.target.model.trimmed();
+    snapshot.targetName = targetParts.isEmpty() ? QString() : targetParts.join(QStringLiteral(" / "));
+
+    QStringList identityParts;
+    if (!cfg.target.nodeId.trimmed().isEmpty()) {
+        identityParts << QStringLiteral("节点 %1").arg(cfg.target.nodeId.trimmed());
+    }
+    if (!cfg.controller.model.trimmed().isEmpty()) {
+        identityParts << QStringLiteral("控制器 %1").arg(cfg.controller.model.trimmed());
+    }
+    identityParts << QStringLiteral("从站 %1").arg(cfg.controller.modbusSlaveId);
+    snapshot.targetIdentity = identityParts.join(QStringLiteral("，"));
+
+    const QFileInfo artifactInfo(artifactPath);
+    snapshot.artifactPath = artifactInfo.absoluteFilePath();
+    snapshot.artifactBytes = artifactInfo.exists() ? artifactInfo.size() : -1;
+    // The configuration checksum describes the published artifact, but the
+    // file may have changed since publication. Bind approval to the bytes that
+    // will actually be sent.
+    snapshot.artifactChecksum = artifactInfo.exists()
+            ? computeFileChecksum(snapshot.artifactPath) : QString();
+    snapshot.backendGeneration = m_backendGeneration;
+    QVariantMap boundOptions = options;
+    boundOptions.remove(QStringLiteral("reconnectBeforeAttempt"));
+    snapshot.optionsFingerprint = QString::fromLatin1(
+                QCryptographicHash::hash(QJsonDocument::fromVariant(boundOptions)
+                                         .toJson(QJsonDocument::Compact),
+                                         QCryptographicHash::Sha256).toHex());
+    snapshot.generationId = cfg.downloadArtifact.metadata
+            .value(QStringLiteral("generationId")).toString().trimmed();
+    snapshot.action = m_pendingRunAfterDownload
+            ? QStringLiteral("下载后尝试运行（当前协议不支持启动命令，设备运行状态未知）")
+                                                : QStringLiteral("仅下载");
+
+    if (!m_lastDownloadRecord.valid) {
+        snapshot.versionEvidence = QStringLiteral("未知（当前协议未提供设备程序版本查询）");
+    } else if (m_lastDownloadRecord.targetName != snapshot.targetName
+               || m_lastDownloadRecord.targetIdentity != snapshot.targetIdentity
+               || m_lastDownloadRecord.endpoint != snapshot.endpoint
+               || m_lastDownloadRecord.configurationFingerprint != snapshot.configurationFingerprint
+               || m_lastDownloadRecord.backendGeneration != snapshot.backendGeneration) {
+        snapshot.versionEvidence = QStringLiteral("未知（本会话下载记录属于其他目标、端点或配置）");
+    } else {
+        const QString time = m_lastDownloadRecord.completedAt
+                .toString(QStringLiteral("yyyy-MM-dd HH:mm:ss"));
+        if (!snapshot.artifactChecksum.isEmpty()
+                && m_lastDownloadRecord.checksum.compare(snapshot.artifactChecksum,
+                                                         Qt::CaseInsensitive) == 0) {
+            snapshot.versionEvidence = QStringLiteral(
+                    "本会话最近成功下载记录（%1），产物摘要一致；非实时设备读回").arg(time);
+        } else {
+            snapshot.versionEvidence = QStringLiteral(
+                    "本会话最近成功下载记录（%1），与本次产物无法确认一致；非实时设备读回").arg(time);
+        }
+    }
+    return snapshot;
+}
+
+bool RuntimeSessionController::confirmExternalDownload(
+        const DownloadConfirmationSnapshot& snapshot)
+{
+    if (!snapshot.isValid() || snapshot.artifactBytes < 0
+            || snapshot.artifactChecksum.trimmed().isEmpty()) {
+        return false;
+    }
+    if (!m_downloadConfirmationHook || m_downloadConfirmationPending) {
+        return false;
+    }
+    m_downloadConfirmationPending = true;
+    const bool approved = m_downloadConfirmationHook(snapshot);
+    m_downloadConfirmationPending = false;
+    return approved;
+}
+
+bool RuntimeSessionController::confirmDownloadSnapshot(
+        const DownloadConfirmationSnapshot& snapshot, const QVariantMap& options)
+{
+    if (!snapshot.isValid() || snapshot.artifactBytes < 0
+            || snapshot.artifactChecksum.trimmed().isEmpty()) {
+        return false;
+    }
+    const QString fingerprint = snapshot.fingerprint();
+    if (!m_approvedDownloadFingerprint.isEmpty()
+            && m_approvedDownloadFingerprint == fingerprint
+            && m_approvedDownloadOperationId == snapshot.operationId) {
+        return true;
+    }
+
+    if (!m_downloadConfirmationHook) return false;
+
+    m_downloadConfirmationPending = true;
+    m_pendingDownloadFingerprint = fingerprint;
+    const bool approved = m_downloadConfirmationHook(snapshot);
+    m_downloadConfirmationPending = false;
+    m_pendingDownloadFingerprint.clear();
+    const QFileInfo artifactInfo(snapshot.artifactPath);
+    const DownloadConfirmationSnapshot current = buildDownloadSnapshot(
+                snapshot.artifactPath, options);
+    if (!approved || m_backendGeneration != snapshot.backendGeneration
+            || !artifactInfo.exists() || !artifactInfo.isFile()
+            || current.fingerprint() != fingerprint) {
+        m_approvedDownloadFingerprint.clear();
+        m_approvedDownloadOperationId.clear();
+        return false;
+    }
+    m_approvedDownloadFingerprint = fingerprint;
+    m_approvedDownloadOperationId = snapshot.operationId;
+    return true;
+}
+
+void RuntimeSessionController::recordSuccessfulDownload(
+        const DownloadConfirmationSnapshot& snapshot)
+{
+    m_lastDownloadRecord.valid = true;
+    m_lastDownloadRecord.operationId = snapshot.operationId;
+    m_lastDownloadRecord.artifactPath = snapshot.artifactPath;
+    m_lastDownloadRecord.checksum = snapshot.artifactChecksum;
+    m_lastDownloadRecord.generationId = snapshot.generationId;
+    m_lastDownloadRecord.targetName = snapshot.targetName;
+    m_lastDownloadRecord.targetIdentity = snapshot.targetIdentity;
+    m_lastDownloadRecord.endpoint = snapshot.endpoint;
+    m_lastDownloadRecord.configurationFingerprint = snapshot.configurationFingerprint;
+    m_lastDownloadRecord.backendGeneration = snapshot.backendGeneration;
+    m_lastDownloadRecord.completedAt = QDateTime::currentDateTime();
+    emit logMessage(QStringLiteral("[%1] 已记录本会话最近成功下载：%2")
+                    .arg(m_lastDownloadRecord.completedAt.toString(QStringLiteral("HH:mm:ss")),
+                         QDir::toNativeSeparators(snapshot.artifactPath)));
+}
+
 bool RuntimeSessionController::requestDownload(const QString& artifactPath, const QVariantMap& options)
 {
-    if (m_backendDownloadInProgress || state() == RuntimeSessionState::Downloading) return false;
+    if (m_demoModeActive) {
+        emit runtimeError(QStringLiteral("演示模式不能向设备下载程序。请先停止演示监控。"));
+        return false;
+    }
+    if (m_backendDownloadInProgress || m_downloadConfirmationPending
+            || state() == RuntimeSessionState::Downloading) return false;
     // Reject before allocating an operation or publishing a transient state.
     if (state() != RuntimeSessionState::Running && state() != RuntimeSessionState::Connected) return false;
     m_downloadCancelled = false;
@@ -96,6 +297,8 @@ bool RuntimeSessionController::requestDownload(const QString& artifactPath, cons
     }
     m_internalReconnect = false;
     m_currentDownloadOperationId = options.value(QStringLiteral("operationId")).toString().trimmed();
+    if (m_currentDownloadOperationId.isEmpty())
+        m_currentDownloadOperationId = m_runFlowOperationIdContext;
     if (m_currentDownloadOperationId.isEmpty()) {
         m_currentDownloadOperationId = QStringLiteral("op-dl-%1-%2")
             .arg(QDateTime::currentMSecsSinceEpoch())
@@ -164,6 +367,7 @@ bool RuntimeSessionController::requestDownload(const QString& artifactPath, cons
                                    {{QStringLiteral("artifactPath"), trimmedArtifactPath}});
         }
         restoreStateAfterDownload();
+        m_runFlowOperationIdContext.clear();
         emit downloadFinished(false, message);
         emit runtimeError(message);
         return false;
@@ -183,7 +387,12 @@ bool RuntimeSessionController::requestDownload(const QString& artifactPath, cons
             return false;
 
         setDownloadState(failureState);
-        const QString finalMessage = QStringLiteral("下载失败[%1/%2,%3]：%4")
+        m_lastDownloadRecord.valid = false;
+        m_runFlowOperationIdContext.clear();
+        m_activeDownloadSnapshot = DownloadConfirmationSnapshot();
+        m_approvedDownloadFingerprint.clear();
+        m_approvedDownloadOperationId.clear();
+        const QString finalMessage = QStringLiteral("下载失败[%1/%2,%3]：%4。设备程序可能不完整，当前状态未知。")
                 .arg(QString::number(attemptsUsed),
                      QString::number(maxAttempts),
                      downloadStateLabel(failureState),
@@ -244,6 +453,36 @@ bool RuntimeSessionController::requestDownload(const QString& artifactPath, cons
                                    {{QStringLiteral("retryCount"), maxAttempts}},
                                    1);
 
+    // The confirmation snapshot covers target, endpoint, project/entry, artifact
+    // identity, version evidence and the action. It must be approved before the
+    // first program write; connection/precheck has completed but nothing has been
+    // written to the device yet.
+    m_activeDownloadSnapshot = buildDownloadSnapshot(trimmedArtifactPath, effectiveOptions);
+    if (!confirmDownloadSnapshot(m_activeDownloadSnapshot, effectiveOptions)) {
+        m_pendingRunAfterDownload = false;
+        m_runFlowOperationIdContext.clear();
+        m_approvedDownloadFingerprint.clear();
+        m_approvedDownloadOperationId.clear();
+        setDownloadState(DownloadState::Idle);
+        restoreStateAfterDownload();
+        const QString message = QStringLiteral("下载已取消：用户未确认下载快照，未向设备写入程序。");
+        emitDownloadDiagnostic(QStringLiteral("info"),
+                               QStringLiteral("confirmation"),
+                               message,
+                               {{QStringLiteral("artifactPath"), trimmedArtifactPath},
+                                {QStringLiteral("operationId"), m_currentDownloadOperationId}});
+        AppLogging::writeBusinessEvent(QStringLiteral("download_canceled"),
+                                       QtWarningMsg,
+                                       m_currentDownloadOperationId,
+                                       QStringLiteral("confirmation"),
+                                       QStringLiteral("canceled"),
+                                       static_cast<int>(CommErrorCode::OperationCancelled),
+                                       trimmedArtifactPath);
+        emit downloadFinished(false, message);
+        emit logMessage(QStringLiteral("[%1] %2").arg(currentTimeLabel(), message));
+        return false;
+    }
+
     if (auto* controller = qobject_cast<ControllerDeviceBackend*>(m_backend)) {
         if (controller->supportsAsyncDownload()) {
             requestControllerDownloadAttempt(controller, trimmedArtifactPath, effectiveOptions, prevState,
@@ -258,6 +497,7 @@ bool RuntimeSessionController::requestDownload(const QString& artifactPath, cons
 
     for (int attempt = 1; attempt <= maxAttempts; ++attempt) {
         if (m_downloadCancelled || state() == RuntimeSessionState::Idle) {
+            m_lastDownloadRecord.valid = false;
             AppLogging::writeBusinessEvent(QStringLiteral("download_canceled"),
                                            QtWarningMsg,
                                            m_currentDownloadOperationId,
@@ -268,6 +508,18 @@ bool RuntimeSessionController::requestDownload(const QString& artifactPath, cons
                                            {{QStringLiteral("attempt"), attempt}},
                                            attempt);
             return false;
+        }
+
+        DownloadConfirmationSnapshot attemptSnapshot = buildDownloadSnapshot(
+                    trimmedArtifactPath, effectiveOptions);
+        // Keep the operation's approved evidence stable across retries. The
+        // previously recorded program becomes unknown as soon as writing starts.
+        attemptSnapshot.versionEvidence = m_activeDownloadSnapshot.versionEvidence;
+        if (attemptSnapshot.fingerprint() != m_approvedDownloadFingerprint
+                || m_approvedDownloadOperationId != m_currentDownloadOperationId) {
+            return finishFailure(DownloadState::PrecheckFailed,
+                                 QStringLiteral("下载批准快照已变化，已阻止本次写入/重试。"),
+                                 attemptsUsed);
         }
 
         attemptsUsed = attempt;
@@ -292,6 +544,7 @@ bool RuntimeSessionController::requestDownload(const QString& artifactPath, cons
 
         setState(RuntimeSessionState::Downloading);
         if (m_downloadCancelled || state() == RuntimeSessionState::Idle) {
+            m_lastDownloadRecord.valid = false;
             AppLogging::writeBusinessEvent(QStringLiteral("download_canceled"),
                                            QtWarningMsg,
                                            m_currentDownloadOperationId,
@@ -321,12 +574,15 @@ bool RuntimeSessionController::requestDownload(const QString& artifactPath, cons
 
         QString errorMsg;
         CommError operationError;
+        m_lastDownloadRecord.valid = false;
         m_backendDownloadInProgress = true;
+        emit workerOperationBusyChanged(true);
         const bool ok = m_backend->downloadArtifact(trimmedArtifactPath,
                                                     effectiveOptions,
                                                     &errorMsg,
                                                     &operationError);
         m_backendDownloadInProgress = false;
+        emit workerOperationBusyChanged(hasWorkerOperationInFlight());
 
         // requestStop() may run through ModbusInterface's nested event loop while
         // downloadArtifact() owns the backend operation lock. Disconnect only
@@ -373,7 +629,7 @@ bool RuntimeSessionController::requestDownload(const QString& artifactPath, cons
             const BackendStatusSnapshot snapshot = m_backend->statusSnapshot();
             if (!isDownloadVerificationPassed(snapshot)) {
                 lastFailureState = DownloadState::VerifyFailed;
-                lastErrorMsg = QStringLiteral("下载后校验失败：后端状态未达成成功条件。");
+                lastErrorMsg = QStringLiteral("下载后传输状态核对失败：后端未保持在线、写入仍在进行或报告错误。");
                 AppLogging::writeBusinessEvent(QStringLiteral("download_verify_failed"),
                                                QtCriticalMsg,
                                                m_currentDownloadOperationId,
@@ -394,6 +650,9 @@ bool RuntimeSessionController::requestDownload(const QString& artifactPath, cons
 
             emit downloadProgressChanged(100);
             setDownloadState(DownloadState::Succeeded);
+            recordSuccessfulDownload(m_activeDownloadSnapshot);
+            m_runFlowOperationIdContext.clear();
+            m_activeDownloadSnapshot = DownloadConfirmationSnapshot();
             restoreStateAfterDownload();
             AppLogging::writeBusinessEvent(QStringLiteral("download_succeeded"),
                                            QtInfoMsg,
@@ -481,7 +740,26 @@ void RuntimeSessionController::requestControllerDownloadAttempt(ControllerDevice
     int attempt, int maxAttempts, const QString& operationId)
 {
     if (m_backend != controller || m_downloadCancelled || state() == RuntimeSessionState::Idle) return;
+    DownloadConfirmationSnapshot attemptSnapshot = buildDownloadSnapshot(path, options);
+    attemptSnapshot.versionEvidence = m_activeDownloadSnapshot.versionEvidence;
+    if (attemptSnapshot.fingerprint() != m_approvedDownloadFingerprint
+            || m_approvedDownloadOperationId != operationId) {
+        m_approvedDownloadFingerprint.clear();
+        m_approvedDownloadOperationId.clear();
+        m_pendingRunAfterDownload = false;
+        m_activeDownloadSnapshot = DownloadConfirmationSnapshot();
+        m_runFlowOperationIdContext.clear();
+        setDownloadState(DownloadState::PrecheckFailed);
+        setState(controller->isOnline() ? previousState : RuntimeSessionState::Fault);
+        const QString message = QStringLiteral("下载批准快照已变化，已阻止本次写入/重试。");
+        emitDownloadDiagnostic(QStringLiteral("error"), QStringLiteral("confirmation"), message,
+                               {{QStringLiteral("attempt"), attempt}});
+        emit downloadFinished(false, message);
+        emit runtimeError(message);
+        return;
+    }
     m_backendDownloadInProgress = true;
+    emit workerOperationBusyChanged(true);
     setState(RuntimeSessionState::Downloading);
     setDownloadState(attempt > 1 ? DownloadState::Retrying : DownloadState::Downloading);
     emit downloadProgressChanged(25);
@@ -490,9 +768,11 @@ void RuntimeSessionController::requestControllerDownloadAttempt(ControllerDevice
     QPointer<ControllerDeviceBackend> backendGuard(controller);
     const quint64 generation = m_backendGeneration;
     m_internalReconnect = options.value(QStringLiteral("reconnectBeforeAttempt")).toBool();
+    m_lastDownloadRecord.valid = false;
     controller->downloadArtifactAsync(path, options, this,
         [=](bool ok, QString message, CommError error) {
         m_backendDownloadInProgress = false;
+        emit workerOperationBusyChanged(hasWorkerOperationInFlight());
         m_internalReconnect = false;
         if (!backendGuard || m_backendGeneration != generation || m_backend != backendGuard || m_currentDownloadOperationId != operationId) return;
         if (m_downloadCancelled || state() == RuntimeSessionState::Idle) {
@@ -504,7 +784,10 @@ void RuntimeSessionController::requestControllerDownloadAttempt(ControllerDevice
             setDownloadState(DownloadState::Verifying);
             emit downloadProgressChanged(75);
             ok = isDownloadVerificationPassed(controller->statusSnapshot());
-            if (!ok) { failure = DownloadState::VerifyFailed; message = QStringLiteral("Post-download verification failed"); }
+            if (!ok) {
+                failure = DownloadState::VerifyFailed;
+                message = QStringLiteral("下载后传输状态核对失败：后端未保持在线、写入仍在进行或报告错误。");
+            }
         }
         if (!ok && attempt < maxAttempts && isDownloadRetryable(failure)) {
             AppLogging::writeBusinessEvent(QStringLiteral("download_retry"), QtWarningMsg, operationId,
@@ -518,18 +801,33 @@ void RuntimeSessionController::requestControllerDownloadAttempt(ControllerDevice
             return;
         }
         setDownloadState(ok ? DownloadState::Succeeded : failure);
+        if (!ok) m_lastDownloadRecord.valid = false;
         setState(controller->isOnline() ? previousState : RuntimeSessionState::Fault);
+        if (ok) {
+            recordSuccessfulDownload(m_activeDownloadSnapshot);
+            m_runFlowOperationIdContext.clear();
+        } else {
+            m_approvedDownloadFingerprint.clear();
+            m_approvedDownloadOperationId.clear();
+            m_runFlowOperationIdContext.clear();
+        }
+        m_activeDownloadSnapshot = DownloadConfirmationSnapshot();
         if (ok) emit downloadProgressChanged(100);
         AppLogging::writeBusinessEvent(ok ? QStringLiteral("download_succeeded") : QStringLiteral("download_failed"),
             ok ? QtInfoMsg : QtCriticalMsg, operationId, QStringLiteral("finish"),
             ok ? QStringLiteral("succeeded") : QStringLiteral("failed"), static_cast<int>(error.code), path,
             {{QStringLiteral("error"), message}}, attempt);
-        emitDownloadDiagnostic(ok ? QStringLiteral("info") : QStringLiteral("error"), QStringLiteral("download"),
-                               message, {{QStringLiteral("attemptsUsed"), attempt}});
         const bool startRun = m_pendingRunAfterDownload;
         m_pendingRunAfterDownload = false;
-        emit downloadFinished(ok, ok ? QStringLiteral("下载成功：%1").arg(path) : message);
-        if (!ok) emit runtimeError(message);
+        const QString terminalMessage = ok
+                ? QStringLiteral("下载成功：%1").arg(path)
+                : message + QStringLiteral(" 设备程序可能不完整，当前状态未知。");
+        emitDownloadDiagnostic(ok ? QStringLiteral("info") : QStringLiteral("error"), QStringLiteral("download"),
+                               terminalMessage, {{QStringLiteral("attemptsUsed"), attempt}});
+        emit downloadFinished(ok, terminalMessage);
+        if (!ok) {
+            emit runtimeError(terminalMessage);
+        }
         if (ok && startRun && !m_downloadCancelled && m_backendGeneration == generation
                 && m_currentDownloadOperationId == operationId && !m_backendDownloadInProgress) {
             finishRunStart();

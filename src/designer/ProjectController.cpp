@@ -175,6 +175,15 @@ bool ProjectController::setMainScriptFile(const QString& scriptFile)
         return false;
     }
     const QString relative = relativeProjectPath(m_currentProject, scriptFile);
+    const QString oldRelative = relativeProjectPath(m_currentProject, m_runtimeConfig.mainScriptPath);
+    const QString oldKey = QDir::cleanPath(oldRelative).toCaseFolded();
+    const QString newKey = QDir::cleanPath(relative).toCaseFolded();
+    if (oldKey != newKey) {
+        syncDslMappingsFromEditor();
+        if (!oldRelative.isEmpty())
+            m_runtimeConfig.documentDslMappings.insert(oldKey, m_runtimeConfig.dslMappings);
+        m_runtimeConfig.dslMappings = m_runtimeConfig.documentDslMappings.take(newKey);
+    }
     m_runtimeConfig.mainScriptPath = relative;
     m_runtimeConfig.dslScriptPath = relative;
     m_runtimeConfig.scriptFiles.removeAll(relative);
@@ -273,10 +282,18 @@ bool ProjectController::removeProjectPath(const QString& path, QString* errorMes
 
 void ProjectController::setModified(bool modified)
 {
+    const bool before = isModified();
     if (m_modified != modified) {
         m_modified = modified;
-        emit modifiedChanged(modified);
+        if (before != isModified()) emit modifiedChanged(isModified());
     }
+}
+
+void ProjectController::setScriptModified(bool modified)
+{
+    const bool before = isModified();
+    m_scriptModified = modified;
+    if (before != isModified()) emit modifiedChanged(isModified());
 }
 
 // ================= 最近项目列表 =================
@@ -634,7 +651,22 @@ bool ProjectController::readScriptBackup(const QString& path, QByteArray* bytes,
 
 bool ProjectController::saveProject()
 {
+    return saveProjectImpl(true, nullptr);
+}
+
+bool ProjectController::saveProjectForBuildInputs(QString* failureDescription)
+{
+    return saveProjectImpl(false, failureDescription);
+}
+
+bool ProjectController::saveProjectImpl(bool rollbackScriptOnConfigFailure,
+                                        QString* failureDescription)
+{
+    if (failureDescription)
+        failureDescription->clear();
     if (m_currentProject.isEmpty()) {
+        if (failureDescription)
+            *failureDescription = QStringLiteral("没有打开的工程，无法保存构建输入。");
         emit warningOccurred("警告", "没有打开的项目。");
         return false;
     }
@@ -645,6 +677,9 @@ bool ProjectController::saveProject()
 
     if (!m_currentScriptFile.isEmpty()
             && !isContainedProjectPath(m_currentProject, m_currentScriptFile)) {
+        if (failureDescription)
+            *failureDescription = QStringLiteral("主脚本路径超出工程目录：%1")
+                    .arg(QDir::toNativeSeparators(m_currentScriptFile));
         emit errorOccurred("保存失败", "当前 DSL 脚本路径越出项目根目录，已取消保存。");
         return false;
     }
@@ -654,12 +689,18 @@ bool ProjectController::saveProject()
     };
     for (const QString& script : configuredScriptPaths) {
         if (!script.isEmpty() && !isContainedProjectPath(m_currentProject, script)) {
+            if (failureDescription)
+                *failureDescription = QStringLiteral("工程脚本路径超出工程目录：%1")
+                        .arg(QDir::toNativeSeparators(script));
             emit errorOccurred("保存失败", QString("项目脚本路径越出项目根目录，已取消保存: %1").arg(script));
             return false;
         }
     }
     for (const QString& script : m_runtimeConfig.scriptFiles) {
         if (!isContainedProjectPath(m_currentProject, script)) {
+            if (failureDescription)
+                *failureDescription = QStringLiteral("参与构建的脚本路径超出工程目录：%1")
+                        .arg(QDir::toNativeSeparators(script));
             emit errorOccurred("保存失败", QString("项目脚本路径越出项目根目录，已取消保存: %1").arg(script));
             return false;
         }
@@ -669,6 +710,8 @@ bool ProjectController::saveProject()
     if (!normalizeDownloadArtifactPaths(m_currentProject,
                                         &m_runtimeConfig,
                                         &artifactPathError)) {
+        if (failureDescription)
+            *failureDescription = artifactPathError;
         emit errorOccurred("保存失败", artifactPathError);
         return false;
     }
@@ -678,9 +721,12 @@ bool ProjectController::saveProject()
     QByteArray previousScriptBytes;
     const bool scriptExistedBefore = hasDslScript && QFile::exists(m_currentScriptFile);
     bool hadPreviousScript = false;
-    if (scriptExistedBefore) {
+    if (rollbackScriptOnConfigFailure && scriptExistedBefore) {
         QString backupError;
         if (!readScriptBackup(m_currentScriptFile, &previousScriptBytes, &backupError)) {
+            if (failureDescription)
+                *failureDescription = QStringLiteral("无法读取主脚本以安全保存：%1（%2）")
+                        .arg(QDir::toNativeSeparators(m_currentScriptFile), backupError);
             emit errorOccurred("保存失败", QString("无法读取原 DSL 脚本，已取消保存: %1")
                                .arg(backupError));
             return false;
@@ -688,11 +734,28 @@ bool ProjectController::saveProject()
         hadPreviousScript = true;
     }
     if (!saveDslScript(savedScript)) {
+        if (failureDescription) {
+            *failureDescription = QStringLiteral("主脚本保存失败：%1")
+                    .arg(QDir::toNativeSeparators(m_currentScriptFile));
+        }
         return false;
     }
 
     // 保存项目配置
     if (!saveProjectConfig(m_currentProject)) {
+        if (!rollbackScriptOnConfigFailure) {
+            if (hasDslScript && m_dslEditor) {
+                if (savedScript != m_dslEditor->currentScript())
+                    m_dslEditor->setScript(savedScript);
+                m_dslEditor->setModified(false);
+            }
+            if (failureDescription) {
+                *failureDescription = QStringLiteral("项目配置保存失败：%1")
+                        .arg(QDir::toNativeSeparators(
+                                 QDir(m_currentProject).filePath(QStringLiteral("project_config.json"))));
+            }
+            return false;
+        }
         bool recovered = true;
         if (hadPreviousScript) {
             QSaveFile rollback(m_currentScriptFile);
@@ -706,6 +769,11 @@ bool ProjectController::saveProject()
         }
         if (!recovered) {
             emit errorOccurred("保存失败", "项目配置保存失败，脚本回滚或清理失败；请保留当前编辑内容并检查磁盘文件。");
+        }
+        if (failureDescription) {
+            *failureDescription = QStringLiteral("项目配置保存失败：%1")
+                    .arg(QDir::toNativeSeparators(
+                             QDir(m_currentProject).filePath(QStringLiteral("project_config.json"))));
         }
         return false;
     }
@@ -920,7 +988,7 @@ bool ProjectController::saveDslScript(QString& savedScript)
 
 bool ProjectController::confirmPendingChanges()
 {
-    if (!hasOpenProject() || !m_modified) {
+    if (!hasOpenProject() || !isModified()) {
         return true;
     }
 

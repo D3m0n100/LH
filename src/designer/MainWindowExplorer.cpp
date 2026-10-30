@@ -13,6 +13,7 @@
 #include "ui/ProblemsPanel.h"
 
 #include <QDir>
+#include <QAction>
 #include <QFile>
 #include <QFileInfo>
 #include <QIODevice>
@@ -169,10 +170,10 @@ QWidget* MainWindow::openAndActivateFile(const QString& filePath)
     }
 
     auto activateDocument = [this](QMdiSubWindow* sub) {
-        switchToWorkspace(WorkspaceId::Programming);
         sub->show();
         sub->raise();
         m_mdiArea->setActiveSubWindow(sub);
+        if (m_actSave) m_actSave->setEnabled(!sub->property("filePath").toString().isEmpty());
         if (auto* widget = sub->widget())
             widget->setFocus();
     };
@@ -220,42 +221,26 @@ QWidget* MainWindow::openAndActivateFile(const QString& filePath)
     const QString content = TextEncoding::decodeUtf8WithLocalFallback(file.readAll());
     file.close();
 
-    // 3. 仅在需要替换当前主 DSL 文档且处于未保存状态时，才确认保存
+    // Each additional LH file owns its own editor and undo history. The project
+    // controller remains bound to the build entry, not the selected document.
     if (info.suffix().compare("lh", Qt::CaseInsensitive) == 0) {
-        if (m_dslEditor && m_dslEditor->isModified()) {
-            const auto choice = showMessageBox(QStringLiteral("未保存修改"),
-                                               QStringLiteral("当前 DSL 脚本有未保存修改，是否保存？"),
-                                               QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel,
-                                               QMessageBox::Save);
-            if (choice == QMessageBox::Cancel) {
-                return nullptr;
-            }
-            if (choice == QMessageBox::Save) {
-                if (!m_projectController || !m_projectController->saveProject()) {
-                    return nullptr; // 保存失败中止切换
-                }
-            }
-        }
-
-        m_dslEditor->setCurrentFilePath(filePath);
-
-        m_dslEditor->setScript(content);
-        m_dslEditor->editor()->setReadOnly(false);
-        m_dslEditor->setModified(false);
-
-        if (m_projectController) {
-            m_projectController->setCurrentScriptFile(filePath);
-        }
-        if (m_editorSubWindow) {
-            m_dslEditor->show();
-            activateDocument(m_editorSubWindow);
-        }
+        auto* dsl = new DslScriptEditor;
+        if (m_dslEditor && m_dslEditor->editor()) dsl->editor()->setFont(m_dslEditor->editor()->font());
+        dsl->setCurrentFilePath(targetId);
+        dsl->setScript(content);
+        dsl->setModified(false);
+        dsl->setFunctionListVisible(false);
+        auto* sub = addDocumentSubWindow(dsl);
+        sub->setAttribute(Qt::WA_DeleteOnClose, true);
+        sub->setProperty("filePath", targetId);
+        sub->setProperty("modified", false);
+        sub->setWindowTitle(info.fileName());
+        sub->installEventFilter(this);
+        connectAuxiliaryDslEditor(dsl, sub);
+        activateDocument(sub);
         updateStatusBar(QStringLiteral("已打开文件: %1").arg(info.fileName()));
-        refreshInspectorPanel();
-        if (m_projectExplorerWidget) {
-            m_projectExplorerWidget->revealPath(filePath);
-        }
-        return m_dslEditor;
+        if (m_projectExplorerWidget) m_projectExplorerWidget->revealPath(filePath);
+        return dsl;
     }
 
     // 4. 打开辅助文本文件
@@ -291,6 +276,64 @@ QWidget* MainWindow::openAndActivateFile(const QString& filePath)
         m_projectExplorerWidget->revealPath(filePath);
     }
     return viewer;
+}
+
+void MainWindow::connectAuxiliaryDslEditor(DslScriptEditor* editor, QMdiSubWindow* sub)
+{
+    const QString path = normalizeDocumentIdentity(editor->currentFilePath());
+    sub->setProperty("filePath", path);
+    sub->setProperty("modified", editor->isModified());
+    sub->setWindowTitle(QFileInfo(path).fileName() + (editor->isModified() ? "*" : ""));
+    connect(editor, &DslScriptEditor::editorModified, this,
+            [sub = QPointer<QMdiSubWindow>(sub), path](bool modified) {
+        if (!sub) return;
+        sub->setProperty("modified", modified);
+        sub->setWindowTitle(QFileInfo(path).fileName() + (modified ? "*" : ""));
+    });
+    connect(editor->editor(), &QPlainTextEdit::textChanged, this,
+            [this, path] { onDocumentModified(path); });
+    connect(editor, &DslScriptEditor::cursorPositionChanged,
+            this, &MainWindow::onEditorCursorPositionChanged);
+    connect(editor, &DslScriptEditor::dropError, this, &MainWindow::onDropError);
+    editor->setStatusCallback([this](const QString& message) { updateStatusBar(message); });
+}
+
+void MainWindow::setMainScriptFromExplorer(const QString& path)
+{
+    if (!m_projectController || !m_projectController->hasOpenProject() || !m_mdiArea) return;
+    auto* editor = qobject_cast<DslScriptEditor*>(openAndActivateFile(path));
+    if (!editor) return;
+    QMdiSubWindow* sub = m_mdiArea->activeSubWindow();
+    if (!sub || sub->widget() != editor) return;
+    if (editor == m_dslEditor && isSameDocument(path, m_projectController->currentMainScriptFile())) return;
+    // Validate the target and preserve the old mapping before changing bindings.
+    if (!m_projectController->setMainScriptFile(path)) return;
+
+    invalidateActiveBuildForEntryChange();
+
+    DslScriptEditor* previousEditor = m_dslEditor;
+    QMdiSubWindow* previousSub = m_editorSubWindow;
+    if (previousEditor && previousSub && previousEditor != editor) {
+        previousEditor->disconnect(this);
+        previousEditor->editor()->disconnect(this);
+        previousSub->disconnect(this);
+        previousSub->setAttribute(Qt::WA_DeleteOnClose, true);
+        connectAuxiliaryDslEditor(previousEditor, previousSub);
+    }
+    editor->disconnect(this);
+    editor->editor()->disconnect(this);
+    m_dslEditor = editor;
+    m_editorSubWindow = sub;
+    sub->setAttribute(Qt::WA_DeleteOnClose, false);
+    connect(sub, &QObject::destroyed, this, &MainWindow::onDslEditorSubWindowDestroyed);
+    m_projectController->setCurrentScriptFile(normalizeDocumentIdentity(path));
+    m_projectController->setDslEditor(editor);
+    m_projectController->setScriptModified(editor->isModified());
+    m_projectController->syncDslMappingsFromEditor();
+    m_projectController->syncDslMappingsToEditor();
+    connectDslEditorSignals();
+    bindFunctionLibraryDataSource();
+    updateEditorSubWindowTitle();
 }
 
 void MainWindow::navigateEditorPosition(QWidget* editorWidget, int targetLine, int targetColumn, bool hasExactColumn)
@@ -396,15 +439,11 @@ void MainWindow::onLocateCurrentFileInExplorer()
         return;
     }
 
-    if (m_dslEditor && !m_dslEditor->currentFilePath().isEmpty()) {
-        m_projectExplorerWidget->revealPath(m_dslEditor->currentFilePath());
-        return;
-    }
-
     if (QMdiSubWindow* sub = m_mdiArea->activeSubWindow()) {
         const QString filePath = sub->property("filePath").toString();
         if (!filePath.isEmpty()) {
             m_projectExplorerWidget->revealPath(filePath);
+            return;
         }
     }
 }

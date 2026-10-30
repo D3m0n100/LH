@@ -13,6 +13,7 @@
 #include <QDateTime>
 #include <QVariantMap>
 #include <QList>
+#include <QMap>
 #include <QJsonObject>
 #include <QJsonArray>
 #include <QUuid>
@@ -523,6 +524,7 @@ struct ProjectRuntimeConfig
     QDateTime lastModified;                        ///< 最后修改时间
     QList<MonitorProviderRuntimeConfig> providers; ///< 监控 Provider 列表
     QList<DslMappingEntry> dslMappings;            ///< DSL 组态映射列表
+    QMap<QString, QList<DslMappingEntry>> documentDslMappings; ///< 非活动入口的文档映射快照
     QList<VariableDefinition> variables;           ///< 变量定义列表
     QList<ParameterDefinition> parameters;         ///< 参数定义列表
     QList<HardwareResourceBinding> resources;      ///< 硬件资源绑定列表
@@ -561,6 +563,13 @@ struct ProjectRuntimeConfig
             mappingsArray.append(m.toJson());
         }
         obj["dslMappings"] = mappingsArray;
+        QJsonObject documentMappings;
+        for (auto it = documentDslMappings.constBegin(); it != documentDslMappings.constEnd(); ++it) {
+            QJsonArray entries;
+            for (const auto& mapping : it.value()) entries.append(mapping.toJson());
+            documentMappings.insert(it.key(), entries);
+        }
+        if (!documentMappings.isEmpty()) obj["documentDslMappings"] = documentMappings;
 
         QJsonArray variablesArray;
         for (const auto& v : variables) {
@@ -697,6 +706,12 @@ struct ProjectRuntimeConfig
         for (const auto& m : mappingsArray) {
             cfg.dslMappings.append(DslMappingEntry::fromJson(m.toObject()));
         }
+        const QJsonObject documentMappings = obj["documentDslMappings"].toObject();
+        for (auto it = documentMappings.constBegin(); it != documentMappings.constEnd(); ++it) {
+            QList<DslMappingEntry> entries;
+            for (const auto& m : it.value().toArray()) entries.append(DslMappingEntry::fromJson(m.toObject()));
+            cfg.documentDslMappings.insert(it.key(), entries);
+        }
 
         QJsonArray variablesArray = obj["variables"].toArray();
         for (const auto& v : variablesArray) {
@@ -735,6 +750,7 @@ struct ProjectRuntimeConfig
         lastModified = QDateTime();
         providers.clear();
         dslMappings.clear();
+        documentDslMappings.clear();
         variables.clear();
         parameters.clear();
         resources.clear();

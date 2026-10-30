@@ -3,6 +3,7 @@
 
 add_library(designer_module STATIC
     MainWindow.cpp
+    MainWindowRunFlow.cpp
     MainWindowMonitor.cpp
     MainWindowOutput.cpp
     MainWindowUi.cpp
@@ -28,6 +29,7 @@ add_library(designer_module STATIC
     ../diagnostics/DiagnosticSnapshotService.cpp
     ui/ThemeManager.cpp
     ui/GlobalStatusBar.cpp
+    ui/NotificationBanner.cpp
     ui/InspectorPanel.cpp
     ParameterTuningPanel.cpp
     ParameterTuningWindow.cpp

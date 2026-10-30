@@ -49,14 +49,6 @@ void MainWindow::onToggleMonitorDock(bool checked)
 void MainWindow::onOpenMonitor()
 {
     switchToWorkspace(WorkspaceId::Monitor);
-
-    const bool demoWasActive = m_demoModeActive;
-    startDemoModeIfNeeded(QStringLiteral("打开监控"));
-
-    if (!demoWasActive && m_demoModeActive && m_monitorWidget && !m_monitorWidget->isMonitoring()) {
-        // Demo Mode 激活后，自动开始监控，方便一打开面板就能看到数据变化
-        m_monitorWidget->startMonitoring();
-    }
     refreshInspectorPanel();
 }
 
@@ -68,14 +60,8 @@ void MainWindow::onStartMonitoring()
         });
         return;
     } else {
-        appendOutput(QString("[%1] 未打开项目，进入演示模式进行监控")
+        appendOutput(QString("[%1] 未打开项目，无法启动真实监控。请先打开项目并配置采集器。")
                          .arg(QDateTime::currentDateTime().toString("HH:mm:ss")));
-    }
-
-    startDemoModeIfNeeded(QStringLiteral("开始监控"));
-
-    if (m_monitorWidget) {
-        m_monitorWidget->startMonitoring();
     }
     refreshInspectorPanel();
 }

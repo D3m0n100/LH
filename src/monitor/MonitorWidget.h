@@ -9,6 +9,7 @@
 #define MONITOR_WIDGET_H
 
 #include <QWidget>
+#include <QElapsedTimer>
 #include <QSet>
 #include <QTimer>
 #include <QDateTime>
@@ -175,7 +176,9 @@ private:
     void updateChannelCountLabel();
     void updateStatsDisplay();
     void syncChannelSelectionToChart();
-    void updateDataTableRow(const QString& channelName, double value, const QString& unit);
+    void updateDataTableRow(const QString& channelName, double value, const QString& unit, const QDateTime& timestamp, bool liveArrival = true);
+    void markDataRowsStale();
+    void updateDataFreshness();
     
     /**
      * @brief 构建导出数据包
@@ -242,6 +245,7 @@ private:
     bool m_demoModeActive;
     bool m_updatingChannelList;
     QTimer* m_statsTimer;
+    QElapsedTimer m_sampleArrivalClock;
 };
 
 #endif // MONITOR_WIDGET_H

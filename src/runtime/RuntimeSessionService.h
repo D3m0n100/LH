@@ -12,6 +12,7 @@ public:
     virtual ~RuntimeMonitorPort() = default;
     virtual void setDeviceBackend(IDeviceBackend*) = 0;
     virtual bool applyConfiguration(const ProjectRuntimeConfig&) = 0;
+    virtual void setSessionIdentity(const QString&) {}
     virtual QStringList providerIds() const = 0;
     virtual void startMonitoring() = 0;
     virtual void stopMonitoring() = 0;

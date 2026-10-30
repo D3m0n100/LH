@@ -56,7 +56,7 @@ ChartWidget::ChartWidget(QWidget* parent)
 {
     m_mainLayout->setContentsMargins(0, 0, 0, 0);
     m_mainLayout->setSpacing(2);
-    setMinimumHeight(120);
+    setMinimumHeight(160);
 
     setupControlButtons();
     setupChart();
@@ -83,10 +83,10 @@ void ChartWidget::setupControlButtons()
 {
     m_toolbarWidget = new QWidget(this);
     m_toolbarWidget->setObjectName("ChartToolbar");
-    m_toolbarWidget->setMinimumHeight(34);
+    m_toolbarWidget->setFixedHeight(34);
 
     m_toolbarLayout = new QHBoxLayout(m_toolbarWidget);
-    m_toolbarLayout->setContentsMargins(8, 4, 8, 4);
+    m_toolbarLayout->setContentsMargins(8, 2, 8, 2);
     m_toolbarLayout->setSpacing(10);
 
     // 重置缩放按钮
@@ -202,7 +202,7 @@ void ChartWidget::applyChartPalette()
     m_chart->setPlotAreaBackgroundBrush(colors.brush(QPalette::Base));
     m_chart->legend()->setLabelColor(text);
     if (m_toolbarWidget) m_toolbarWidget->setStyleSheet(QStringLiteral(
-        "#ChartToolbar { background-color: %1; border-bottom: 1px solid %2; padding: 2px; }"
+        "#ChartToolbar { background-color: %1; border-bottom: 1px solid %2; padding: 0px; }"
         "#ChartToolbar QLabel { color: %3; }")
         .arg(colors.color(QPalette::Window).name(), grid.name(), text.name()));
 }

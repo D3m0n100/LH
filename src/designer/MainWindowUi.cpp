@@ -12,8 +12,13 @@
 #include "ParameterTuningWindow.h"
 #include "ProgramBlocksWidget.h"
 #include "ProjectController.h"
+#include "RuntimeSessionController.h"
+#include "MonitorManager.h"
+#include "communication/IDeviceBackend.h"
+#include <QJsonDocument>
 #include "ProjectExplorerWidget.h"
 #include "ui/GlobalStatusBar.h"
+#include "ui/NotificationBanner.h"
 #include "ui/InspectorPanel.h"
 #include "ui/ProblemsPanel.h"
 #include "OutputPaneController.h"
@@ -37,6 +42,7 @@
 #include <QTextEdit>
 #include <QToolBar>
 #include <QToolButton>
+#include <QSignalBlocker>
 #include <QVBoxLayout>
 #include <QWidget>
 
@@ -165,6 +171,19 @@ void MainWindow::createActions()
     m_actToggleDownloadDock->setChecked(false);
     connect(m_actToggleDownloadDock, &QAction::toggled, this, &MainWindow::onToggleDownloadDock);
 
+    m_actFloatMonitor = makeSharedAction("actFloatMonitor", "", "监控窗口独立显示",
+                                         "将监控视图弹出为独立窗口；再次触发恢复为工作区标签");
+    m_actFloatMonitor->setCheckable(true);
+    connect(m_actFloatMonitor, &QAction::toggled, this, [this](bool checked) {
+        setSystemViewFloating(WorkspaceId::Monitor, checked);
+    });
+    m_actFloatDevice = makeSharedAction("actFloatDevice", "", "设备窗口独立显示",
+                                        "将设备视图弹出为独立窗口；再次触发恢复为工作区标签");
+    m_actFloatDevice->setCheckable(true);
+    connect(m_actFloatDevice, &QAction::toggled, this, [this](bool checked) {
+        setSystemViewFloating(WorkspaceId::Device, checked);
+    });
+
     m_actClearOutput = makeSharedAction("actClearOutput", "", "清空输出(&C)", "清空输出 (Ctrl+Shift+C)", QKeySequence("Ctrl+Shift+C"));
     connect(m_actClearOutput, &QAction::triggered, this, &MainWindow::onClearOutput);
 
@@ -190,16 +209,18 @@ void MainWindow::createActions()
     m_actCompileCommunication = makeSharedAction("actCompileCommunication", "", "编译通信", "编译通信配置");
     connect(m_actCompileCommunication, &QAction::triggered, this, &MainWindow::onCompileCommunication);
 
-    m_actCompileAndRunProject = makeSharedAction("actCompileAndRun", ":/icons/compile.svg", "编译并运行(&R)", "先编译当前工程，再在成功后立即运行 (F8)", QKeySequence("F8"));
+    m_actCompileAndRunProject = makeSharedAction("actCompileAndRun", ":/icons/compile.svg", "编译并运行(&R)", "编译并发布后，经确认下载到设备。当前协议不支持启动设备已有程序；下载完成后运行不受支持，设备运行状态仍未知。 (F8)", QKeySequence("F8"));
     connect(m_actCompileAndRunProject, &QAction::triggered, this, &MainWindow::onCompileAndRunProject);
 
-    // 控制器运行操作（按规范严格命名为“运行控制器”与“停止控制器”）
+    // F9 is unavailable for this device protocol; stop applies to the local session.
     m_actRunProject = makeSharedAction("actRunProject", ":/icons/run.svg", "运行控制器", "运行控制器 (F9)", QKeySequence(Qt::Key_F9));
     m_actRunProject->setIconText("运行控制器");
+    m_actRunProject->setEnabled(false);
+    m_actRunProject->setToolTip(QStringLiteral("设备协议未提供启动设备已有程序的命令，当前不可用。"));
     connect(m_actRunProject, &QAction::triggered, this, &MainWindow::onRunProject);
 
-    m_actStopProject = makeSharedAction("actStopProject", ":/icons/stop.svg", "停止控制器", "停止控制器 (Shift+F9)", QKeySequence("Shift+F9"));
-    m_actStopProject->setIconText("停止控制器");
+    m_actStopProject = makeSharedAction("actStopProject", ":/icons/stop.svg", "停止本地会话", "停止本地采集、OPC 与当前下载任务；不发送设备停止命令。取消下载不回滚已写入内容，设备程序状态可能不完整或未知。 (Shift+F9)", QKeySequence("Shift+F9"));
+    m_actStopProject->setIconText("停止本地会话");
     connect(m_actStopProject, &QAction::triggered, this, &MainWindow::onStopProject);
 
     m_actTestControllerConnection = makeSharedAction("actTestConnection", ":/icons/monitor.svg", "测试连接", "按当前运行配置测试控制器连接");
@@ -323,6 +344,8 @@ void MainWindow::createMenus()
     viewMenu->addAction(m_actToggleOutputDock);
     viewMenu->addAction(m_actToggleMonitorDock);
     viewMenu->addAction(m_actToggleDownloadDock);
+    viewMenu->addAction(m_actFloatMonitor);
+    viewMenu->addAction(m_actFloatDevice);
     viewMenu->addSeparator();
     viewMenu->addAction(m_actClearOutput);
     viewMenu->addAction(m_actOpenDisplayWorkspace);
@@ -356,6 +379,22 @@ void MainWindow::createMenus()
     monitorMenu->addSeparator();
     monitorMenu->addAction(m_actStartMonitor);
     monitorMenu->addAction(m_actStopMonitor);
+    auto* demoMonitorAction = monitorMenu->addAction(QStringLiteral("启动演示数据监控"));
+    demoMonitorAction->setObjectName(QStringLiteral("actStartDemoMonitoring"));
+    connect(demoMonitorAction, &QAction::triggered, this, [this]() {
+        auto* backend = Monitor::MonitorManager::instance().deviceBackend();
+        if (!m_sessionController || !m_monitorWidget || !m_projectController
+                || m_projectController->hasOpenProject() || (backend && backend->isOnline())
+                || m_opcRunning || m_sessionController->state() != RuntimeSessionState::Idle) {
+            appendOutput(QStringLiteral("演示监控仅可在未打开工程、设备离线且 OPC 停止时启动。"));
+            return;
+        }
+        startDemoModeIfNeeded(QStringLiteral("用户显式启动演示监控"));
+        if (!m_sessionController->isDemoMode()) return;
+        m_monitorWidget->startMonitoring();
+        switchToWorkspace(WorkspaceId::Monitor);
+        refreshInspectorPanel();
+    });
     monitorMenu->addSeparator();
     monitorMenu->addAction(m_actExportMonitorData);
     monitorMenu->addAction(m_actExportMonitorImage);
@@ -385,58 +424,31 @@ void MainWindow::createToolBars()
 
 void MainWindow::updateToolBarForWorkspace(const QString& workspaceId)
 {
-    if (!m_mainToolBar) {
-        return;
-    }
+    Q_UNUSED(workspaceId);
+    if (!m_mainToolBar || !m_mainToolBar->actions().isEmpty()) return;
 
-    m_mainToolBar->clear();
-
-    if (workspaceId == WorkspaceId::Monitor) {
-        // 监控工作区：开始监控、停止监控、调参窗口、运行控制器、停止控制器 (5 个常驻)
-        if (m_actStartMonitor) m_mainToolBar->addAction(m_actStartMonitor);
-        if (m_actStopMonitor) m_mainToolBar->addAction(m_actStopMonitor);
-        if (m_actParameterTuning) m_mainToolBar->addAction(m_actParameterTuning);
-        if (m_actRunProject) m_mainToolBar->addAction(m_actRunProject);
-        if (m_actStopProject) m_mainToolBar->addAction(m_actStopProject);
-    } else if (workspaceId == WorkspaceId::Device) {
-        // 设备工作区：测试连接、运行控制器、停止控制器、更多控制下拉 (4 个常驻)
-        if (m_actTestControllerConnection) m_mainToolBar->addAction(m_actTestControllerConnection);
-        if (m_actRunProject) m_mainToolBar->addAction(m_actRunProject);
-        if (m_actStopProject) m_mainToolBar->addAction(m_actStopProject);
-
-        auto* deviceMoreBtn = new QToolButton(m_mainToolBar);
-        deviceMoreBtn->setObjectName(QStringLiteral("btnDeviceMoreOpsDropdown"));
-        deviceMoreBtn->setText(tr("更多操作"));
-        deviceMoreBtn->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
-        deviceMoreBtn->setPopupMode(QToolButton::InstantPopup);
-        auto* deviceMenu = new QMenu(deviceMoreBtn);
-        if (m_actPauseController) deviceMenu->addAction(m_actPauseController);
-        if (m_actResumeController) deviceMenu->addAction(m_actResumeController);
-        if (m_actStepController) deviceMenu->addAction(m_actStepController);
-        deviceMenu->addSeparator();
-        if (m_actDiagnosis) deviceMenu->addAction(m_actDiagnosis);
-        deviceMoreBtn->setMenu(deviceMenu);
-        m_mainToolBar->addWidget(deviceMoreBtn);
-    } else {
-        // 编程工作区（默认）：保存、编译下拉、运行控制器、停止控制器 (4 个常驻)
-        if (m_actSave) m_mainToolBar->addAction(m_actSave);
-
-        auto* compileBtn = new QToolButton(m_mainToolBar);
-        compileBtn->setObjectName(QStringLiteral("btnCompileDropdown"));
-        compileBtn->setDefaultAction(m_actCompile);
-        compileBtn->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
-        compileBtn->setPopupMode(QToolButton::MenuButtonPopup);
-        auto* compileMenu = new QMenu(compileBtn);
-        if (m_actCompile) compileMenu->addAction(m_actCompile);
-        if (m_actCompileParameters) compileMenu->addAction(m_actCompileParameters);
-        if (m_actCompileCommunication) compileMenu->addAction(m_actCompileCommunication);
-        if (m_actCompileAndRunProject) compileMenu->addAction(m_actCompileAndRunProject);
-        compileBtn->setMenu(compileMenu);
-        m_mainToolBar->addWidget(compileBtn);
-
-        if (m_actRunProject) m_mainToolBar->addAction(m_actRunProject);
-        if (m_actStopProject) m_mainToolBar->addAction(m_actStopProject);
-    }
+    if (m_actNew) m_mainToolBar->addAction(m_actNew);
+    if (m_actOpen) m_mainToolBar->addAction(m_actOpen);
+    if (m_actSave) m_mainToolBar->addAction(m_actSave);
+    m_mainToolBar->addSeparator();
+    auto* compileBtn = new QToolButton(m_mainToolBar);
+    compileBtn->setObjectName(QStringLiteral("btnCompileDropdown"));
+    compileBtn->setDefaultAction(m_actCompile);
+    compileBtn->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
+    compileBtn->setPopupMode(QToolButton::MenuButtonPopup);
+    auto* compileMenu = new QMenu(compileBtn);
+    if (m_actCompile) compileMenu->addAction(m_actCompile);
+    if (m_actCompileParameters) compileMenu->addAction(m_actCompileParameters);
+    if (m_actCompileCommunication) compileMenu->addAction(m_actCompileCommunication);
+    compileBtn->setMenu(compileMenu);
+    m_mainToolBar->addWidget(compileBtn);
+    if (m_actCompileAndRunProject) m_mainToolBar->addAction(m_actCompileAndRunProject);
+    if (m_actRunProject) m_mainToolBar->addAction(m_actRunProject);
+    if (m_actStopProject) m_mainToolBar->addAction(m_actStopProject);
+    m_mainToolBar->addSeparator();
+    if (m_actOpenDslEditorToolBar) m_mainToolBar->addAction(m_actOpenDslEditorToolBar);
+    if (m_actToggleMonitorDock) m_mainToolBar->addAction(m_actToggleMonitorDock);
+    if (m_actToggleDownloadDock) m_mainToolBar->addAction(m_actToggleDownloadDock);
 }
 
 void MainWindow::createStatusBar()
@@ -490,6 +502,15 @@ void MainWindow::createStatusBar()
 }
 
 namespace {
+class CompactExplorerDock : public QDockWidget {
+public:
+    using QDockWidget::QDockWidget;
+    QSize minimumSizeHint() const override {
+        QSize hint = QDockWidget::minimumSizeHint();
+        hint.setWidth(130);
+        return hint;
+    }
+};
 class WorkspaceTabWidget : public QTabWidget {
 public:
     explicit WorkspaceTabWidget(QWidget* parent = nullptr) : QTabWidget(parent) {}
@@ -510,45 +531,80 @@ public:
 
 void MainWindow::createDockWidgets()
 {
-    m_workspaceTabs = new WorkspaceTabWidget(this);
-    m_workspaceTabs->setObjectName("WorkspaceTabs");
-    // Pages must be allowed to follow a narrow logical viewport. Their child
-    // controls remain reachable through the page scroll areas and docks.
-    m_workspaceTabs->setMinimumSize(0, 0);
-    setCentralWidget(m_workspaceTabs);
-
-    // 1. 编程工作区
-    m_workspaceDslPage = new QWidget(m_workspaceTabs);
-    m_workspaceDslPage->setMinimumWidth(0);
-    auto* dslLayout = new QVBoxLayout(m_workspaceDslPage);
-    dslLayout->setContentsMargins(0, 0, 0, 0);
-    dslLayout->setSpacing(0);
-    m_mdiArea = new QMdiArea(m_workspaceDslPage);
+    m_mdiArea = new QMdiArea(this);
+    m_mdiArea->setObjectName(QStringLiteral("WorkbenchContents"));
     m_mdiArea->setMinimumSize(0, 0);
+    m_mdiArea->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Expanding);
     m_mdiArea->setViewMode(QMdiArea::TabbedView);
     m_mdiArea->setTabsClosable(true);
     m_mdiArea->setTabsMovable(true);
-    dslLayout->addWidget(m_mdiArea);
-    m_workspaceTabs->addTab(m_workspaceDslPage, "编程");
-
+    auto* central = new QWidget(this);
+    central->setObjectName(QStringLiteral("WorkbenchCentral"));
+    auto* centralLayout = new QVBoxLayout(central);
+    centralLayout->setContentsMargins(0, 0, 0, 0);
+    centralLayout->setSpacing(0);
+    m_notificationBanner = new NotificationBanner(central);
+    centralLayout->addWidget(m_notificationBanner);
+    centralLayout->addWidget(m_mdiArea, 1);
+    setCentralWidget(central);
+    connect(m_notificationBanner, &NotificationBanner::detailsRequested, this, [this] {
+        if (m_bottomPanels && m_problemsPanel) {
+            m_bottomPanels->setCurrentWidget(m_problemsPanel);
+        }
+        if (m_logDock) {
+            m_logDock->setVisible(true);
+            if (m_actToggleOutputDock) m_actToggleOutputDock->setChecked(true);
+        }
+    });
     createDslEditorSubWindow();
 
-    // 2. 监控工作区
-    m_workspaceMonitorPage = new QWidget(m_workspaceTabs);
-    m_workspaceMonitorPage->setMinimumWidth(0);
+    m_workspaceMonitorPage = new QWidget;
     auto* monitorLayout = new QVBoxLayout(m_workspaceMonitorPage);
     monitorLayout->setContentsMargins(6, 4, 6, 4);
     monitorLayout->setSpacing(4);
     m_monitorWidget = new MonitorWidget(m_workspaceMonitorPage);
     monitorLayout->addWidget(m_monitorWidget);
-    m_workspaceTabs->addTab(m_workspaceMonitorPage, "监控");
+    m_monitorSubWindow = addDocumentSubWindow(m_workspaceMonitorPage);
+    m_monitorSubWindow->setWindowTitle(QStringLiteral("监控"));
+    m_monitorSubWindow->setProperty("systemView", true);
+    m_monitorSubWindow->setAttribute(Qt::WA_DeleteOnClose, false);
+    m_monitorSubWindow->installEventFilter(this);
+    m_monitorSubWindow->hide();
 
-    // 3. 设备工作区
-    m_deviceWorkspaceWidget = new DeviceWorkspaceWidget(m_workspaceTabs);
+    m_deviceWorkspaceWidget = new DeviceWorkspaceWidget;
     m_deviceWorkspaceWidget->setMinimumWidth(0);
     m_downloadWidget = m_deviceWorkspaceWidget->downloadWidget();
+    if (m_downloadWidget) {
+        m_downloadWidget->setDownloadConfirmHandler(
+            [this](const DownloadConfirmationSnapshot& snapshot) {
+                return m_sessionController
+                        ? m_sessionController->confirmExternalDownload(snapshot) : false;
+            });
+    }
     m_workspaceBuildPage = m_deviceWorkspaceWidget;
-    m_workspaceTabs->addTab(m_workspaceBuildPage, "设备");
+    m_deviceSubWindow = addDocumentSubWindow(m_deviceWorkspaceWidget);
+    m_deviceSubWindow->setWindowTitle(QStringLiteral("设备"));
+    m_deviceSubWindow->setProperty("systemView", true);
+    m_deviceSubWindow->setAttribute(Qt::WA_DeleteOnClose, false);
+    m_deviceSubWindow->installEventFilter(this);
+    m_deviceSubWindow->hide();
+    connect(m_mdiArea, &QMdiArea::subWindowActivated, this, [this](QMdiSubWindow* sub) {
+        if (m_actSave) m_actSave->setEnabled(sub && !sub->property("systemView").toBool()
+                                             && !sub->property("filePath").toString().isEmpty());
+        if (!sub || !m_initialWorkbenchShown || m_switchingWorkspace) return;
+        const QString workspace = sub == m_monitorSubWindow ? WorkspaceId::Monitor
+                : sub == m_deviceSubWindow ? WorkspaceId::Device : WorkspaceId::Programming;
+        m_currentWorkspaceId = workspace;
+        const auto setChecked = [](QAction* action, bool checked) {
+            if (!action) return;
+            QSignalBlocker blocker(action);
+            action->setChecked(checked);
+        };
+        setChecked(m_actToggleDslEditor, workspace == WorkspaceId::Programming);
+        setChecked(m_actToggleMonitorDock, workspace == WorkspaceId::Monitor);
+        setChecked(m_actToggleDownloadDock, workspace == WorkspaceId::Device);
+    });
+    if (m_actSave) m_actSave->setEnabled(false);
 
     m_deviceWorkspaceWidget->bindActions(
         m_actTestControllerConnection,
@@ -569,15 +625,17 @@ void MainWindow::createDockWidgets()
                 this, &MainWindow::updateDeviceWorkspaceInfo);
     }
 
-    m_explorerDock = new QDockWidget("项目与函数库", this);
+    m_explorerDock = new CompactExplorerDock("项目与函数库", this);
     m_explorerDock->setObjectName("ExplorerDock");
-    m_explorerDock->setMinimumWidth(0);
+    m_explorerDock->setMinimumWidth(130);
+    m_explorerDock->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Expanding);
     m_explorerDock->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
     m_explorerDock->setFeatures(QDockWidget::DockWidgetMovable |
                                 QDockWidget::DockWidgetClosable);
 
     m_leftTabs = new QTabWidget(m_explorerDock);
     m_leftTabs->setMinimumWidth(0);
+    m_leftTabs->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Expanding);
     m_leftTabs->setObjectName(QStringLiteral("LeftTabsWidget"));
     m_leftTabs->setDocumentMode(true);
 
@@ -602,7 +660,7 @@ void MainWindow::createDockWidgets()
             this, &MainWindow::onExplorerFileOpenRequested);
     connect(m_projectExplorerWidget, &ProjectExplorerWidget::mainScriptRequested,
             this, [this](const QString& path) {
-        if (m_projectController) m_projectController->setMainScriptFile(path);
+        setMainScriptFromExplorer(path);
     });
     connect(m_projectExplorerWidget, &ProjectExplorerWidget::deleteRequested,
             this, &MainWindow::deleteProjectDocumentPath);
@@ -613,9 +671,9 @@ void MainWindow::createDockWidgets()
 
     connect(m_programBlocksWidget, &ProgramBlocksWidget::snippetDoubleClicked,
             this, [this](const FunctionSnippet& snippet) {
-        if (m_dslEditor) {
-            if (snippet.canInsert()) m_dslEditor->insertSnippet(snippet.templateCode);
-        }
+        if (!m_mdiArea || !m_mdiArea->activeSubWindow()) return;
+        auto* editor = qobject_cast<DslScriptEditor*>(m_mdiArea->activeSubWindow()->widget());
+        if (editor) editor->insertFunctionSnippet(snippet);
     });
     connect(m_programBlocksWidget, &ProgramBlocksWidget::snippetSelected,
             this, &MainWindow::onSnippetSelectedInBlocks);
@@ -637,6 +695,7 @@ void MainWindow::createDockWidgets()
 
     m_bottomPanels = new QTabWidget(m_logDock);
     m_bottomPanels->setObjectName("BottomPanels");
+    m_bottomPanels->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Ignored);
 
     m_problemsPanel = new ProblemsPanel(m_bottomPanels);
     m_bottomPanels->addTab(m_problemsPanel, "问题");
@@ -675,6 +734,7 @@ void MainWindow::createDockWidgets()
     m_logDock->setWidget(m_bottomPanels);
     addDockWidget(Qt::BottomDockWidgetArea, m_logDock);
     m_logDock->setMinimumHeight(0);
+    m_logDock->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Ignored);
     if (m_workspaceTabs) {
         resizeDocks({m_logDock}, {220}, Qt::Vertical);
     }
@@ -694,18 +754,7 @@ void MainWindow::createDockWidgets()
     m_monitorDock = nullptr;
     m_downloadDock = nullptr;
 
-    connect(m_workspaceTabs, &QTabWidget::currentChanged, this, [this](int index) {
-        if (m_switchingWorkspace) {
-            return;
-        }
-        const QString targetId = workspaceIdForTabIndex(index);
-        if (!targetId.isEmpty() && targetId != m_currentWorkspaceId) {
-            switchToWorkspace(targetId);
-        }
-        if (m_workspaceTabs && m_inspectorPanel) {
-            m_inspectorPanel->setWorkspaceName(m_workspaceTabs->tabText(index));
-        }
-    });
+
 }
 
 void MainWindow::createWorkspaceTabs()
@@ -729,10 +778,11 @@ QDockWidget#InspectorDock::title {
     m_inspectorDock->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
     m_inspectorDock->setFeatures(QDockWidget::DockWidgetMovable |
                                  QDockWidget::DockWidgetClosable);
-    m_inspectorDock->setMinimumWidth(200);
+    m_inspectorDock->setMinimumWidth(130);
+    m_inspectorDock->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Expanding);
 
     m_inspectorPanel = new InspectorPanel(m_inspectorDock);
-    m_inspectorPanel->setMinimumWidth(200);
+    m_inspectorPanel->setMinimumWidth(0);
     m_inspectorPanel->setPanelMode(InspectorPanel::PanelMode::Inspection);
     m_inspectorDock->setWidget(m_inspectorPanel);
     addDockWidget(Qt::RightDockWidgetArea, m_inspectorDock);
@@ -765,7 +815,26 @@ void MainWindow::createTuningDock()
     }
 
     m_parameterTuningPanel = new ParameterTuningPanel(this);
+    connect(m_parameterTuningPanel->inspectorPanel(), &InspectorPanel::parameterValueCommitted,
+            this, &MainWindow::onParameterValueCommitted);
+    connect(m_parameterTuningPanel->inspectorPanel(), &InspectorPanel::parameterEditStarted, this, [this] {
+        m_parameterEditBackendGeneration = m_sessionController ? m_sessionController->deviceBackendGeneration() : 0;
+        auto* backend = Monitor::MonitorManager::instance().deviceBackend();
+        m_parameterEditBackendOnline = backend && backend->isOnline();
+        disconnect(m_parameterEditConnectionWatch);
+        m_parameterEditConnectionChanged = false;
+        if (backend) {
+            m_parameterEditConnectionWatch = connect(backend, &IDeviceBackend::connectionStateChanged,
+                                                     this, [this](bool) { m_parameterEditConnectionChanged = true; });
+        }
+        m_parameterEditConfigSnapshot = QJsonDocument(m_projectController->runtimeConfig().toJson()).toJson(QJsonDocument::Compact);
+    });
+    connect(m_projectController, &ProjectController::projectOpened, m_parameterTuningPanel->inspectorPanel(),
+            [panel = m_parameterTuningPanel->inspectorPanel()](const ProjectRuntimeConfig&) { panel->invalidateParameterEdits(); });
+    connect(m_projectController, &ProjectController::projectClosed, m_parameterTuningPanel->inspectorPanel(),
+            &InspectorPanel::invalidateParameterEdits);
     m_parameterTuningPanel->setMinimumSize(0, 0);
+    m_parameterTuningPanel->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Ignored);
 
     m_tuningDock = new QDockWidget(QStringLiteral("PID 调参"), this);
     m_tuningDock->setObjectName(QStringLiteral("ParameterTuningDock"));
@@ -781,6 +850,7 @@ QDockWidget#ParameterTuningDock::title {
     m_tuningDock->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea | Qt::BottomDockWidgetArea);
     m_tuningDock->setFeatures(QDockWidget::DockWidgetMovable | QDockWidget::DockWidgetClosable);
     m_tuningDock->setMinimumSize(0, 0);
+    m_tuningDock->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Ignored);
     m_tuningDock->setWidget(m_parameterTuningPanel);
     // Start at the bottom so a hidden tuning dock never contributes a large
     // horizontal minimum size. Wide windows are moved beside the workspace
@@ -795,8 +865,6 @@ QDockWidget#ParameterTuningDock::title {
             this, &MainWindow::onRunProject);
     connect(m_parameterTuningPanel, &ParameterTuningPanel::requestOpenMonitor,
             this, &MainWindow::onOpenMonitor);
-    connect(m_parameterTuningPanel, &ParameterTuningPanel::requestEditParameter,
-            this, &MainWindow::onEditParameterRequested);
     connect(m_parameterTuningPanel, &ParameterTuningPanel::requestApplyParameters,
             this, &MainWindow::onApplyParametersRequested);
     connect(m_parameterTuningPanel, &ParameterTuningPanel::requestPopOutWindow,
@@ -821,8 +889,6 @@ void MainWindow::createParameterTuningWindow()
             this, &MainWindow::onRunProject);
     connect(m_parameterTuningWindow, &ParameterTuningWindow::requestOpenMonitor,
             this, &MainWindow::onOpenMonitor);
-    connect(m_parameterTuningWindow, &ParameterTuningWindow::requestEditParameter,
-            this, &MainWindow::onEditParameterRequested);
     connect(m_parameterTuningWindow, &ParameterTuningWindow::requestApplyParameters,
             this, &MainWindow::onApplyParametersRequested);
     connect(m_parameterTuningWindow, &ParameterTuningWindow::requestDockBack,

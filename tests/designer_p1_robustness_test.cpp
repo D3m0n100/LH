@@ -15,28 +15,932 @@
 #include <QListWidget>
 #include <QMessageBox>
 #include <QPushButton>
+#include <QToolButton>
+#include <QToolBar>
 #include <QSignalSpy>
 #include <QTimer>
 #include <QTextCursor>
 #include <QTextBlock>
 #include <QTableWidget>
 #include <QSettings>
+#include <QPointer>
+#include <QComboBox>
+#include <QInputMethodEvent>
 #include <QJsonDocument>
 #include "designer/BuildController.h"
 
 #include "designer/MainWindow.h"
 #include "designer/ProjectController.h"
+#include "designer/ProjectExplorerWidget.h"
+#include "designer/ProgramBlocksWidget.h"
+#include "designer/RuntimeSessionController.h"
+#include "designer/SettingsController.h"
+#include "designer/ParameterController.h"
+#include "designer/ParameterTuningPanel.h"
+#include "communication/VirtualDeviceBackend.h"
+#include "communication/IOpcServer.h"
+#include "monitor/MonitorManager.h"
+#include "monitor/MonitorDataProcessor.h"
+#include "monitor/MonitorWidget.h"
+#include "monitor/SampleDataProvider.h"
 #include "designer/DslScriptEditor.h"
 #include "designer/ui/DiagnosticItem.h"
 #include "designer/ui/DiagnosticParser.h"
 #include "designer/ui/ProblemsPanel.h"
+#include "designer/ui/InspectorPanel.h"
 #include "designer/ui/CommandPaletteDialog.h"
+#include "designer/ui/ThemeManager.h"
+#include "designer/ui/NotificationBanner.h"
+#include <QDockWidget>
+
+class CountingParameterBackend : public VirtualDeviceBackend
+{
+public:
+    int writes = 0;
+    void writePointsAsync(const QHash<QString, QVariant>& values, int timeout,
+                          std::shared_ptr<std::atomic_bool> cancelled, QObject* context,
+                          WriteCompletion complete) override
+    {
+        ++writes;
+        VirtualDeviceBackend::writePointsAsync(values, timeout, cancelled, context, std::move(complete));
+    }
+};
 
 class DesignerP1RobustnessTest : public QObject
 {
     Q_OBJECT
 
 private slots:
+    void parameterInlineWritesOnlyOnEnter()
+    {
+        QTemporaryDir dir; QVERIFY(dir.isValid());
+        MainWindow window; window.show();
+        auto* project = window.findChild<ProjectController*>(); QVERIFY(project);
+        auto* controller = window.findChild<ParameterController*>(); QVERIFY(controller);
+        auto* session = window.findChild<RuntimeSessionController*>(); QVERIFY(session);
+        auto* tuning = window.findChild<ParameterTuningPanel*>(); QVERIFY(tuning);
+        auto* dock = window.findChild<QDockWidget*>(QStringLiteral("ParameterTuningDock")); QVERIFY(dock);
+        ParameterDefinition p; p.id = QStringLiteral("pid.kp"); p.name = QStringLiteral("Kp");
+        p.dataType = QStringLiteral("REAL"); p.currentValue = QStringLiteral("1");
+        p.defaultValue = QStringLiteral("1"); p.onlineEditable = true;
+        project->setCurrentProjectPath(dir.path()); project->runtimeConfig().parameters = {p};
+        controller->loadDefinitions({p}); window.refreshInspectorPanel();
+        CountingParameterBackend backend;
+        RuntimePointDefinition point; point.id = p.id; point.name = p.name;
+        point.kind = RuntimePointKind::Parameter; point.dataType = p.dataType; point.access = RuntimePointAccess::ReadWrite;
+        backend.loadPointDefinitions({point}); QVERIFY(backend.connectBackend()); session->setDeviceBackend(&backend);
+        dock->show(); QTest::qWait(40);
+        auto* table = tuning->inspectorPanel()->parameterTable(); QVERIFY(table && table->rowCount());
+        table->editItem(table->item(0, 2));
+        auto* editor = table->findChild<QLineEdit*>(); QVERIFY(editor);
+        editor->setText(QStringLiteral("2")); QTest::keyClick(editor, Qt::Key_Escape);
+        QTest::qWait(20); QCOMPARE(backend.writes, 0);
+        table->editItem(table->item(0, 2)); editor = table->findChild<QLineEdit*>(); QVERIFY(editor);
+        editor->setText(QStringLiteral("3")); QTest::keyClick(editor, Qt::Key_Tab);
+        QTRY_COMPARE(controller->parameterStateByPointId(p.id).editedValue, QStringLiteral("3"));
+        QCOMPARE(backend.writes, 0);
+        QTest::qWait(30);
+        table->editItem(table->item(0, 2)); editor = table->findChild<QLineEdit*>(); QVERIFY(editor);
+        editor->setText(QStringLiteral("4")); QTest::keyClick(editor, Qt::Key_Return);
+        QTRY_COMPARE(backend.writes, 1);
+        QTRY_COMPARE(controller->parameterStateByPointId(p.id).state, ParameterState::Confirmed);
+        QTest::qWait(30);
+        table->editItem(table->item(0, 2)); editor = table->findChild<QLineEdit*>(); QVERIFY(editor);
+        editor->setText(QStringLiteral("5"));
+        backend.disconnectBackend(); QVERIFY(backend.connectBackend());
+        QTest::keyClick(editor, Qt::Key_Return);
+        QTest::qWait(100);
+        QCOMPARE(backend.writes, 1);
+        session->requestStop();
+        session->setDeviceBackend(&backend);
+        CountingParameterBackend replacement;
+        replacement.loadPointDefinitions({point}); QVERIFY(replacement.connectBackend());
+        QTest::qWait(30);
+        table->editItem(table->item(0, 2)); editor = table->findChild<QLineEdit*>(); QVERIFY(editor);
+        editor->setText(QStringLiteral("6"));
+        const auto reentrantSwitch = connect(controller, &ParameterController::stateChanged, &window,
+            [session, &replacement](const QString&, ParameterState, ParameterState next) {
+                if (next == ParameterState::Modified) session->setDeviceBackend(&replacement);
+            });
+        QTest::keyClick(editor, Qt::Key_Return);
+        QTest::qWait(100);
+        QCOMPARE(backend.writes, 1);
+        QCOMPARE(replacement.writes, 0);
+        disconnect(reentrantSwitch);
+        session->setDeviceBackend(nullptr);
+    }
+
+    void parameterInlineEditIntent()
+    {
+        InspectorPanel panel;
+        panel.setPanelMode(InspectorPanel::PanelMode::Tuning);
+        ParameterDefinition p; p.id = QStringLiteral("p1"); p.name = QStringLiteral("参数");
+        p.dataType = QStringLiteral("INT32"); p.currentValue = QStringLiteral("1");
+        p.onlineEditable = true; p.minValue = QStringLiteral("0"); p.maxValue = QStringLiteral("100");
+        panel.setParameterDetails({p});
+        panel.show();
+        auto* table = panel.parameterTable(); QVERIFY(table);
+        QSignalSpy committed(&panel, &InspectorPanel::parameterValueCommitted);
+        table->editItem(table->item(0, 2));
+        auto* editor = table->findChild<QLineEdit*>(); QVERIFY(editor);
+        editor->setText(QStringLiteral("101"));
+        QTest::keyClick(editor, Qt::Key_Return);
+        QCOMPARE(committed.count(), 0);
+        QVERIFY(editor->isVisible());
+        editor->setText(QStringLiteral("12"));
+        QTest::keyClick(editor, Qt::Key_Return);
+        QTRY_COMPARE(committed.count(), 1);
+        QCOMPARE(committed.first().at(0).toString(), QStringLiteral("p1"));
+        QCOMPARE(committed.first().at(1).toString(), QStringLiteral("12"));
+        QVERIFY(committed.first().at(2).toBool());
+        QTest::qWait(20);
+        table->editItem(table->item(0, 2));
+        editor = table->findChild<QLineEdit*>(); QVERIFY(editor);
+        editor->setText(QStringLiteral("13"));
+        QTest::keyClick(editor, Qt::Key_Escape);
+        QTest::qWait(20);
+        QCOMPARE(committed.count(), 1);
+        table->editItem(table->item(0, 2));
+        editor = table->findChild<QLineEdit*>(); QVERIFY(editor);
+        editor->setText(QStringLiteral("14"));
+        QTest::keyClick(editor, Qt::Key_Tab);
+        QTRY_COMPARE(committed.count(), 2);
+        QCOMPARE(committed.last().at(1).toString(), QStringLiteral("14"));
+        QVERIFY(!committed.last().at(2).toBool());
+        QTest::qWait(20);
+        table->editItem(table->item(0, 2));
+        editor = table->findChild<QLineEdit*>(); QVERIFY(editor);
+        editor->setText(QStringLiteral("15"));
+        panel.invalidateParameterEdits();
+        QTest::keyClick(editor, Qt::Key_Return);
+        QTest::qWait(20);
+        QCOMPARE(committed.count(), 2);
+        QTest::keyClick(editor, Qt::Key_Escape);
+    }
+
+    void parameterInlineTypedEditors()
+    {
+        InspectorPanel panel;
+        panel.setPanelMode(InspectorPanel::PanelMode::Tuning);
+        auto make = [](const QString& id, const QString& type, const QString& minValue,
+                       const QString& maxValue, bool editable = true) {
+            ParameterDefinition def;
+            def.id = id; def.name = id; def.dataType = type;
+            def.currentValue = QStringLiteral("1");
+            def.minValue = minValue; def.maxValue = maxValue;
+            def.onlineEditable = editable;
+            return def;
+        };
+        panel.setParameterDetails({
+            make(QStringLiteral("u32"), QStringLiteral("UINT32"), QStringLiteral("0"), QStringLiteral("4294967295")),
+            make(QStringLiteral("i32"), QStringLiteral("INT32"), QStringLiteral("-2147483648"), QStringLiteral("2147483647")),
+            make(QStringLiteral("real"), QStringLiteral("REAL"), QStringLiteral("0"), QStringLiteral("100")),
+            make(QStringLiteral("text"), QStringLiteral("STRING"), QString(), QString()),
+            make(QStringLiteral("flag"), QStringLiteral("BOOL"), QString(), QString()),
+            make(QStringLiteral("ro"), QStringLiteral("UINT32"), QString(), QString(), false)
+        });
+        panel.show();
+        auto* table = panel.parameterTable();
+        QVERIFY(table);
+
+        auto editRow = [table](int row) {
+            table->editItem(table->item(row, 2));
+            return table->findChild<QLineEdit*>();
+        };
+        auto closeEditor = [table] {
+            if (auto* editor = table->findChild<QLineEdit*>())
+                QTest::keyClick(editor, Qt::Key_Escape);
+            QTest::qWait(10);
+        };
+        auto validateWith = [](const QValidator* validator, const QString& text) {
+            QString input = text;
+            int pos = 0;
+            return validator->validate(input, pos);
+        };
+
+        auto* u32 = editRow(0);
+        QVERIFY(u32 && u32->validator());
+        QCOMPARE(validateWith(u32->validator(), QStringLiteral("4294967295")), QValidator::Acceptable);
+        QVERIFY(validateWith(u32->validator(), QStringLiteral("4294967296")) != QValidator::Acceptable);
+        QCOMPARE(validateWith(u32->validator(), QStringLiteral("1.5")), QValidator::Invalid);
+        closeEditor();
+
+        auto* i32 = editRow(1);
+        QVERIFY(i32 && i32->validator());
+        QVERIFY(validateWith(i32->validator(), QStringLiteral("2147483648")) != QValidator::Acceptable);
+        QCOMPARE(validateWith(i32->validator(), QStringLiteral("-2147483648")), QValidator::Acceptable);
+        closeEditor();
+
+        auto* real = editRow(2);
+        QVERIFY(real && real->validator());
+        QCOMPARE(validateWith(real->validator(), QStringLiteral("99.5")), QValidator::Acceptable);
+        QCOMPARE(validateWith(real->validator(), QStringLiteral("0.0000000001")), QValidator::Acceptable);
+        QCOMPARE(validateWith(real->validator(), QStringLiteral("0.123456789012")), QValidator::Acceptable);
+        QCOMPARE(validateWith(real->validator(), QStringLiteral("1.25e-5")), QValidator::Acceptable);
+        QVERIFY(validateWith(real->validator(), QStringLiteral("101")) != QValidator::Acceptable);
+        real->clear();
+        QTest::keyClicks(real, QStringLiteral("0.0000000001"));
+        QCOMPARE(real->text(), QStringLiteral("0.0000000001"));
+        closeEditor();
+
+        auto* text = editRow(3);
+        QVERIFY(text);
+        QVERIFY(!text->validator());
+        closeEditor();
+
+        table->editItem(table->item(4, 2));
+        QVERIFY(table->findChild<QComboBox*>());
+        QVERIFY(table->findChild<QLineEdit*>() == nullptr);
+        if (auto* combo = table->findChild<QComboBox*>())
+            QTest::keyClick(combo, Qt::Key_Escape);
+        QTest::qWait(10);
+
+        table->editItem(table->item(5, 2));
+        QVERIFY(table->findChild<QLineEdit*>() == nullptr);
+        QVERIFY(table->findChild<QComboBox*>() == nullptr);
+    }
+
+    void parameterOfflineAndDuplicateNamesUsePointId()
+    {
+        InspectorPanel panel;
+        panel.setPanelMode(InspectorPanel::PanelMode::Tuning);
+        ParameterDefinition first;
+        first.id = QStringLiteral("point.a"); first.name = QStringLiteral("Kp");
+        first.dataType = QStringLiteral("INT32"); first.currentValue = QStringLiteral("1");
+        first.defaultValue = QStringLiteral("1"); first.onlineEditable = true;
+        ParameterDefinition second = first;
+        second.id = QStringLiteral("point.b"); second.currentValue = QStringLiteral("2");
+        second.defaultValue = QStringLiteral("2");
+        panel.setParameterRuntimeOnline(false);
+        panel.setParameterDetails({first, second});
+        panel.resize(900, 420);
+        panel.show();
+        QVERIFY(QTest::qWaitForWindowExposed(&panel));
+        QTest::qWait(30);
+
+        auto* table = panel.parameterTable();
+        QVERIFY(table && table->rowCount() == 2);
+        QCOMPARE(table->item(0, 0)->text(), table->item(1, 0)->text());
+
+        QSignalSpy committed(&panel, &InspectorPanel::parameterValueCommitted);
+        table->setCurrentCell(0, 2);
+        table->editItem(table->item(0, 2));
+        auto* editor = table->findChild<QLineEdit*>();
+        QVERIFY(editor);
+        QVERIFY(qApp->activeModalWidget() == nullptr);
+        editor->setText(QStringLiteral("7"));
+        QTest::keyClick(editor, Qt::Key_Tab);
+        QTRY_COMPARE(committed.count(), 1);
+        QCOMPARE(committed.first().at(0).toString(), QStringLiteral("point.a"));
+        QCOMPARE(committed.first().at(1).toString(), QStringLiteral("7"));
+
+        ParameterStateInfo firstState;
+        firstState.pointId = QStringLiteral("point.a");
+        firstState.name = QStringLiteral("Kp");
+        firstState.state = ParameterState::Modified;
+        firstState.editedValue = QStringLiteral("7");
+        firstState.onlineEditable = true;
+        ParameterStateInfo secondState = firstState;
+        secondState.pointId = QStringLiteral("point.b");
+        secondState.state = ParameterState::Clean;
+        secondState.editedValue.clear();
+        panel.setParameterStateMap({{QStringLiteral("point.a"), firstState},
+                                    {QStringLiteral("point.b"), secondState}});
+        QVERIFY(table->item(0, 3)->text().contains(QStringLiteral("未下发")));
+    }
+
+    void systemViewPopOutKeepsSharedFrontend()
+    {
+        MainWindow window; window.show(); QTest::qWait(30);
+        auto* monitor = window.findChild<MonitorWidget*>(); QVERIFY(monitor);
+        auto* processor = Monitor::MonitorManager::instance().dataProcessor();
+        auto* action = window.findChild<QAction*>(QStringLiteral("actFloatMonitor")); QVERIFY(action);
+
+        action->setChecked(true);
+        QTest::qWait(40);
+        auto* dock = window.findChild<QDockWidget*>(QStringLiteral("MonitorFloatingDock"));
+        QVERIFY(dock && dock->isVisible());
+        QVERIFY(dock->widget());
+        QVERIFY(dock->widget() == monitor || dock->widget()->isAncestorOf(monitor));
+        QCOMPARE(window.findChild<MonitorWidget*>(), monitor);
+        QCOMPARE(Monitor::MonitorManager::instance().dataProcessor(), processor);
+
+        action->setChecked(false);
+        QTest::qWait(40);
+        QVERIFY(!window.findChild<QDockWidget*>(QStringLiteral("MonitorFloatingDock")));
+        QCOMPARE(window.findChild<MonitorWidget*>(), monitor);
+        QCOMPARE(Monitor::MonitorManager::instance().dataProcessor(), processor);
+
+        action->setChecked(true);
+        QTest::qWait(40);
+        dock = window.findChild<QDockWidget*>(QStringLiteral("MonitorFloatingDock"));
+        QVERIFY(dock);
+        dock->close();
+        QTest::qWait(60);
+        QVERIFY(!window.findChild<QDockWidget*>(QStringLiteral("MonitorFloatingDock")));
+        QCOMPARE(window.findChild<MonitorWidget*>(), monitor);
+        QCOMPARE(Monitor::MonitorManager::instance().dataProcessor(), processor);
+    }
+
+    void toolbarOrderStableAcrossWorkspaces()
+    {
+        MainWindow window; window.show(); QTest::qWait(20);
+        auto* toolbar = window.findChild<QToolBar*>(QStringLiteral("MainToolBar")); QVERIFY(toolbar);
+        const auto initialActions = toolbar->actions();
+        QVERIFY(!initialActions.isEmpty());
+        window.switchToWorkspace(WorkspaceId::Monitor);
+        QCOMPARE(toolbar->actions(), initialActions);
+        window.switchToWorkspace(WorkspaceId::Device);
+        QCOMPARE(toolbar->actions(), initialActions);
+        window.switchToWorkspace(WorkspaceId::Programming);
+        QCOMPARE(toolbar->actions(), initialActions);
+    }
+
+    void themeDensityWorkspaceGeometry()
+    {
+        MainWindow window;
+        auto* monitor = window.findChild<MonitorWidget*>(); QVERIFY(monitor);
+        auto* mdi = window.findChild<QMdiArea*>(); QVERIFY(mdi);
+        window.show();
+        for (const QSize size : {QSize(1366, 768), QSize(1920, 1080)}) {
+            window.resize(size);
+            QTest::qWait(40);
+            for (auto density : {ThemeManager::Density::Compact, ThemeManager::Density::Comfortable}) {
+                for (auto theme : {ThemeManager::ThemeMode::Light, ThemeManager::ThemeMode::Dark}) {
+                    ThemeManager::applyTheme(qApp, theme);
+                    ThemeManager::applyDensity(qApp, density);
+                    QTest::qWait(20);
+                    window.switchToWorkspace(WorkspaceId::Programming);
+                    QVERIFY(mdi->width() > 0);
+                    QVERIFY(mdi->height() > 0);
+                    window.switchToWorkspace(WorkspaceId::Monitor);
+                    QVERIFY(monitor->isVisible());
+                    QVERIFY(monitor->width() > 0);
+                    QVERIFY(monitor->height() > 0);
+                }
+            }
+        }
+        ThemeManager::applyTheme(qApp, ThemeManager::ThemeMode::Light);
+        ThemeManager::applyDensity(qApp, ThemeManager::Density::Compact);
+    }
+
+    void longNotificationDoesNotGrowWindow()
+    {
+        MainWindow window; window.show();
+        auto* banner = window.findChild<NotificationBanner*>(QStringLiteral("NotificationBanner"));
+        QVERIFY(banner);
+        const QString longText(160, QChar(0x8bbe));
+        for (const QSize size : {QSize(911, 512), QSize(1366, 768)}) {
+            for (auto theme : {ThemeManager::ThemeMode::Light, ThemeManager::ThemeMode::Dark}) {
+                for (auto density : {ThemeManager::Density::Compact, ThemeManager::Density::Comfortable}) {
+                    ThemeManager::applyTheme(qApp, theme);
+                    ThemeManager::applyDensity(qApp, density);
+                    window.resize(size);
+                    QTest::qWait(30);
+                    const int before = window.width();
+                    banner->showNotification(QStringLiteral("error"), QStringLiteral("下载失败"), longText);
+                    QTest::qWait(40);
+                    QCOMPARE(window.width(), before);
+                    QVERIFY(window.minimumSizeHint().width() <= before);
+                    QVERIFY(banner->width() <= before);
+                    auto* close = banner->findChild<QToolButton*>(QStringLiteral("NotificationCloseButton"));
+                    QVERIFY(close && close->isVisible());
+                    QVERIFY(window.rect().contains(
+                        QRect(close->mapTo(&window, QPoint()), close->size())));
+                    window.resize(size);
+                    QTest::qWait(20);
+                    QCOMPARE(window.width(), size.width());
+                    banner->clear();
+                }
+            }
+        }
+        ThemeManager::applyTheme(qApp, ThemeManager::ThemeMode::Light);
+        ThemeManager::applyDensity(qApp, ThemeManager::Density::Compact);
+    }
+
+    void floatingSystemViewsRestoreAfterRestart()
+    {
+        const QString org = QStringLiteral("LHPhase4Test");
+        const QString app = QStringLiteral("FloatingRestart-%1").arg(QCoreApplication::applicationPid());
+        QPointer<MonitorDataProcessor> processor;
+        QSize savedMonitorSize, savedDeviceSize;
+        {
+            MainWindow window;
+            window.setSettingsStorage(org, app);
+            window.show();
+            QTest::qWait(40);
+            processor = Monitor::MonitorManager::instance().dataProcessor();
+
+            window.switchToWorkspace(WorkspaceId::Monitor);
+            auto* monitorAction = window.findChild<QAction*>(QStringLiteral("actFloatMonitor"));
+            QVERIFY(monitorAction);
+            monitorAction->setChecked(true);
+            QTest::qWait(40);
+            auto* monitorDock = window.findChild<QDockWidget*>(QStringLiteral("MonitorFloatingDock"));
+            QVERIFY(monitorDock && monitorDock->isFloating());
+            monitorDock->setGeometry(80, 80, 620, 460);
+            QTest::qWait(40);
+            savedMonitorSize = monitorDock->size();
+
+            window.switchToWorkspace(WorkspaceId::Device);
+            auto* deviceAction = window.findChild<QAction*>(QStringLiteral("actFloatDevice"));
+            QVERIFY(deviceAction);
+            deviceAction->setChecked(true);
+            QTest::qWait(40);
+            auto* deviceDock = window.findChild<QDockWidget*>(QStringLiteral("DeviceFloatingDock"));
+            QVERIFY(deviceDock && deviceDock->isFloating());
+            deviceDock->setGeometry(120, 120, 600, 440);
+            QTest::qWait(40);
+            savedDeviceSize = deviceDock->size();
+            qInfo() << "Saved actual floating sizes" << savedMonitorSize << savedDeviceSize;
+
+            window.saveWindowGeometryAndWorkspaces();
+            auto* settings = window.findChild<SettingsController*>();
+            QVERIFY(settings);
+            settings->saveSettings();
+        }
+        QTest::qWait(40);
+        {
+            MainWindow restored;
+            restored.setSettingsStorage(org, app);
+            restored.show();
+            QTest::qWait(80);
+            auto* monitorDock = restored.findChild<QDockWidget*>(QStringLiteral("MonitorFloatingDock"));
+            auto* deviceDock = restored.findChild<QDockWidget*>(QStringLiteral("DeviceFloatingDock"));
+            QVERIFY(monitorDock && monitorDock->isFloating() && monitorDock->isVisible());
+            QVERIFY(deviceDock && deviceDock->isFloating() && deviceDock->isVisible());
+            qInfo() << "Restored floating sizes" << monitorDock->size() << deviceDock->size();
+            // Qt may enlarge a requested dock size to its content minimum. The
+            // persisted contract is the actual settled size the user saw.
+            QVERIFY(qAbs(monitorDock->width() - savedMonitorSize.width()) <= 24);
+            QVERIFY(qAbs(monitorDock->height() - savedMonitorSize.height()) <= 24);
+            QVERIFY(qAbs(deviceDock->width() - savedDeviceSize.width()) <= 24);
+            QVERIFY(qAbs(deviceDock->height() - savedDeviceSize.height()) <= 24);
+            auto* monitorAction = restored.findChild<QAction*>(QStringLiteral("actFloatMonitor"));
+            auto* deviceAction = restored.findChild<QAction*>(QStringLiteral("actFloatDevice"));
+            QVERIFY(monitorAction && monitorAction->isChecked());
+            QVERIFY(deviceAction && deviceAction->isChecked());
+            QCOMPARE(Monitor::MonitorManager::instance().dataProcessor(), processor.data());
+            QVERIFY(restored.findChild<MonitorWidget*>());
+        }
+        QSettings settings(QSettings::defaultFormat(), QSettings::UserScope, org, app);
+        settings.clear();
+        QFile::remove(settings.fileName());
+    }
+
+    void resetAllLayoutsClearsFloatingViewsAcrossRestart()
+    {
+        const QString org = QStringLiteral("LHPhase4Test");
+        const QString app = QStringLiteral("ResetFloating-%1").arg(QCoreApplication::applicationPid());
+        QPointer<MonitorDataProcessor> processor;
+        {
+            MainWindow window;
+            window.setSettingsStorage(org, app);
+            window.show();
+            auto* settings = window.findChild<SettingsController*>();
+            QVERIFY(settings);
+            settings->setThemeMode(1);
+            settings->setDensity(1);
+            settings->setFontSizeIndex(2);
+            settings->setDefaultProjectDir(QStringLiteral("D:/preferred"));
+            processor = Monitor::MonitorManager::instance().dataProcessor();
+            for (const QString& name : {QStringLiteral("actFloatMonitor"), QStringLiteral("actFloatDevice")}) {
+                auto* action = window.findChild<QAction*>(name);
+                QVERIFY(action);
+                action->setChecked(true);
+            }
+            window.saveWindowGeometryAndWorkspaces();
+            settings->saveSettings();
+            QVERIFY(settings->systemViewFloating(WorkspaceId::Monitor));
+            QVERIFY(settings->systemViewFloating(WorkspaceId::Device));
+            QVERIFY(QMetaObject::invokeMethod(&window, "onResetAllWorkspaceLayouts", Qt::DirectConnection));
+            QTest::qWait(40);
+            QVERIFY(!window.findChild<QDockWidget*>(QStringLiteral("MonitorFloatingDock")));
+            QVERIFY(!window.findChild<QDockWidget*>(QStringLiteral("DeviceFloatingDock")));
+            for (const QString& id : {WorkspaceId::Monitor, WorkspaceId::Device}) {
+                QVERIFY(!settings->systemViewFloating(id));
+                QVERIFY(settings->systemViewFloatGeometry(id).isEmpty());
+            }
+            QCOMPARE(Monitor::MonitorManager::instance().dataProcessor(), processor.data());
+            window.saveWindowGeometryAndWorkspaces();
+            settings->saveSettings();
+        }
+        {
+            MainWindow restored;
+            restored.setSettingsStorage(org, app);
+            restored.show();
+            QTest::qWait(40);
+            QVERIFY(!restored.findChild<QDockWidget*>(QStringLiteral("MonitorFloatingDock")));
+            QVERIFY(!restored.findChild<QDockWidget*>(QStringLiteral("DeviceFloatingDock")));
+            auto* settings = restored.findChild<SettingsController*>();
+            QVERIFY(settings);
+            QCOMPARE(settings->themeMode(), 1);
+            QCOMPARE(settings->density(), 1);
+            QCOMPARE(settings->fontSizeIndex(), 2);
+            QCOMPARE(settings->defaultProjectDir(), QStringLiteral("D:/preferred"));
+            QCOMPARE(Monitor::MonitorManager::instance().dataProcessor(), processor.data());
+        }
+        QSettings saved(QSettings::defaultFormat(), QSettings::UserScope, org, app);
+        saved.clear();
+        ThemeManager::applyTheme(qApp, ThemeManager::ThemeMode::Light);
+        ThemeManager::applyDensity(qApp, ThemeManager::Density::Compact);
+    }
+
+    void editorAcceptsImeAndKeepsFocus()
+    {
+        MainWindow window; window.show();
+        auto* editor = window.findChild<DslScriptEditor*>(); QVERIFY(editor);
+        auto* inner = editor->editor(); QVERIFY(inner);
+        editor->setScript(QString());
+        inner->setFocus();
+        QTest::qWait(30);
+        QVERIFY((inner->focusPolicy() & Qt::StrongFocus) == Qt::StrongFocus);
+
+        QInputMethodEvent ime;
+        ime.setCommitString(QStringLiteral("中文输入"));
+        QApplication::sendEvent(inner, &ime);
+        QVERIFY(editor->currentScript().contains(QStringLiteral("中文输入")));
+
+        QTest::keyClick(inner, Qt::Key_A, Qt::ControlModifier);
+        QVERIFY(inner->textCursor().hasSelection());
+    }
+
+    void parameterInlineBooleanAndFocusOut()
+    {
+        InspectorPanel panel;
+        panel.setPanelMode(InspectorPanel::PanelMode::Tuning);
+        ParameterDefinition p; p.id = QStringLiteral("flag"); p.name = QStringLiteral("使能");
+        p.dataType = QStringLiteral("BOOL"); p.currentValue = QStringLiteral("0"); p.onlineEditable = true;
+        panel.setParameterDetails({p});
+        panel.show();
+        auto* table = panel.parameterTable();
+        QSignalSpy committed(&panel, &InspectorPanel::parameterValueCommitted);
+        table->editItem(table->item(0, 2));
+        auto* combo = table->findChild<QComboBox*>(); QVERIFY(combo);
+        combo->setCurrentIndex(1);
+        QTest::keyClick(combo, Qt::Key_Return);
+        QTRY_COMPARE(committed.count(), 1);
+        QCOMPARE(committed.first().at(1).toString(), QStringLiteral("1"));
+        QVERIFY(committed.first().at(2).toBool());
+        QTest::qWait(20);
+        table->editItem(table->item(0, 2));
+        combo = table->findChild<QComboBox*>(); QVERIFY(combo);
+        combo->setCurrentIndex(1);
+        combo->setFocus();
+        QTest::qWait(20);
+        table->setFocus(Qt::OtherFocusReason);
+        QTRY_COMPARE(committed.count(), 2);
+        QVERIFY(!committed.last().at(2).toBool());
+    }
+
+    void saveAllAfterRebindingCleanEntryClearsDirtyState()
+    {
+        QTemporaryDir dir; QVERIFY(dir.isValid());
+        const QString main = dir.filePath("main.lh"), helper = dir.filePath("helper.lh");
+        for (const QString& path : {main, helper}) {
+            QFile file(path); QVERIFY(file.open(QIODevice::WriteOnly));
+            file.write("PROGRAM P\nEND_PROGRAM\n");
+        }
+        ProjectRuntimeConfig config; config.projectName = "dirty-rebind";
+        config.mainScriptPath = "main.lh"; config.dslScriptPath = "main.lh";
+        config.scriptFiles = QStringList{"main.lh", "helper.lh"};
+        QFile cfg(dir.filePath("project_config.json")); QVERIFY(cfg.open(QIODevice::WriteOnly));
+        cfg.write(QJsonDocument(config.toJson()).toJson()); cfg.close();
+        MainWindow window; window.show();
+        auto* controller = window.findChild<ProjectController*>(); QVERIFY(controller);
+        QVERIFY(controller->openProjectFromPath(dir.path()));
+        auto* first = qobject_cast<DslScriptEditor*>(window.openAndActivateFile(main)); QVERIFY(first);
+        first->editor()->insertPlainText("preserved ");
+        auto* second = qobject_cast<DslScriptEditor*>(window.openAndActivateFile(helper)); QVERIFY(second);
+        QVERIFY(!second->isModified());
+        auto* explorer = window.findChild<ProjectExplorerWidget*>(); QVERIFY(explorer);
+        QVERIFY(QMetaObject::invokeMethod(explorer, "mainScriptRequested", Qt::DirectConnection, Q_ARG(QString, helper)));
+        QVERIFY(QMetaObject::invokeMethod(&window, "onSaveAll", Qt::DirectConnection));
+        QVERIFY(!first->isModified()); QVERIFY(!second->isModified()); QVERIFY(!controller->isModified());
+        QFile saved(main); QVERIFY(saved.open(QIODevice::ReadOnly)); QVERIFY(saved.readAll().contains("preserved "));
+        int decisions = 0;
+        window.setMessageBoxHook([&](const QString&, const QString&, QMessageBox::StandardButtons,
+                                     QMessageBox::StandardButton) { ++decisions; return QMessageBox::Cancel; });
+        QVERIFY(QMetaObject::invokeMethod(&window, "onCloseProject", Qt::DirectConnection));
+        QVERIFY(!controller->hasOpenProject()); QCOMPARE(decisions, 0);
+    }
+
+    void legacyAbsoluteEntryUsesRelativeMappingKey()
+    {
+        QTemporaryDir dir;
+        QVERIFY(dir.isValid());
+        const QString main = dir.filePath("main.lh"), helper = dir.filePath("helper.lh");
+        for (const QString& path : {main, helper}) {
+            QFile file(path); QVERIFY(file.open(QIODevice::WriteOnly));
+            file.write("PROGRAM P\nEND_PROGRAM\n");
+        }
+        ProjectRuntimeConfig config;
+        config.projectName = "legacy"; config.mainScriptPath = main;
+        config.dslScriptPath = main; config.scriptFiles = QStringList{main, helper};
+        DslMappingEntry mapping; mapping.id = "legacy-map"; mapping.lineNumber = 2;
+        config.dslMappings.append(mapping);
+        QFile cfg(dir.filePath("project_config.json")); QVERIFY(cfg.open(QIODevice::WriteOnly));
+        cfg.write(QJsonDocument(config.toJson()).toJson()); cfg.close();
+        ProjectController controller;
+        DslScriptEditor editor;
+        controller.setDslEditor(&editor);
+        connect(&controller, &ProjectController::scriptLoadRequired, &editor,
+                [&editor](const QString& path, const QString& text) {
+            editor.setCurrentFilePath(path); editor.setScript(text); editor.setModified(false);
+        });
+        QVERIFY(controller.openProjectFromPath(dir.path()));
+        // Simulate a legacy configuration that retains an absolute entry path.
+        controller.runtimeConfig().mainScriptPath = main;
+        QVERIFY(controller.setMainScriptFile(helper));
+        QCOMPARE(controller.runtimeConfig().documentDslMappings.value("main.lh").size(), 1);
+        QVERIFY(!controller.runtimeConfig().documentDslMappings.contains(QDir::cleanPath(main).toCaseFolded()));
+        QVERIFY(controller.setMainScriptFile(main));
+        QCOMPARE(controller.runtimeConfig().dslMappings.first().id, QString("legacy-map"));
+    }
+
+    void entrySwitchPreservesIndependentBuffersAndMappings()
+    {
+        QTemporaryDir dir;
+        const QString a = dir.filePath("main.lh"), b = dir.filePath("helper.lh");
+        for (const QString& path : {a, b}) {
+            QFile file(path); QVERIFY(file.open(QIODevice::WriteOnly));
+            file.write("PROGRAM P\nEND_PROGRAM\n");
+        }
+        ProjectRuntimeConfig config;
+        config.projectName = "documents"; config.mainScriptPath = "main.lh";
+        config.dslScriptPath = "main.lh"; config.scriptFiles = QStringList{"main.lh", "helper.lh"};
+        DslMappingEntry mapping; mapping.id = "main-map"; mapping.lineNumber = 2;
+        config.dslMappings.append(mapping);
+        QFile cfg(dir.filePath("project_config.json")); QVERIFY(cfg.open(QIODevice::WriteOnly));
+        cfg.write(QJsonDocument(config.toJson()).toJson()); cfg.close();
+        MainWindow window; window.show();
+        auto* controller = window.findChild<ProjectController*>(); QVERIFY(controller);
+        QVERIFY(controller->openProjectFromPath(dir.path()));
+        auto* first = qobject_cast<DslScriptEditor*>(window.openAndActivateFile(a)); QVERIFY(first);
+        first->editor()->insertPlainText("first ");
+        auto* second = qobject_cast<DslScriptEditor*>(window.openAndActivateFile(b)); QVERIFY(second && second != first);
+        second->editor()->insertPlainText("second ");
+        QCOMPARE(window.openAndActivateFile(QDir(dir.path()).filePath("./helper.lh")), static_cast<QWidget*>(second));
+        controller->runtimeConfig().projectName = "unsaved metadata";
+        controller->setModified(true);
+        QVERIFY(QMetaObject::invokeMethod(&window, "onSaveProject", Qt::DirectConnection));
+        QVERIFY(first->isModified()); QVERIFY(!second->isModified());
+        QFile beforeSaveAll(cfg.fileName()); QVERIFY(beforeSaveAll.open(QIODevice::ReadOnly));
+        QCOMPARE(QJsonDocument::fromJson(beforeSaveAll.readAll()).object().value("projectName").toString(), QString("documents"));
+        beforeSaveAll.close();
+        auto* blocks = window.findChild<ProgramBlocksWidget*>(); QVERIFY(blocks);
+        FunctionSnippet snippet; snippet.id = "test_block"; snippet.name = "Test Block";
+        snippet.templateCode = "x = test_block()";
+        blocks->snippetDoubleClicked(snippet);
+        QVERIFY(second->currentScript().contains(snippet.templateCode));
+        QVERIFY(!first->currentScript().contains(snippet.templateCode));
+        auto* explorer = window.findChild<ProjectExplorerWidget*>(); QVERIFY(explorer);
+        QVERIFY(QMetaObject::invokeMethod(explorer, "mainScriptRequested", Qt::DirectConnection, Q_ARG(QString, b)));
+        QCOMPARE(MainWindow::normalizeDocumentIdentity(controller->currentScriptFile()), MainWindow::normalizeDocumentIdentity(b));
+        QCOMPARE(MainWindow::normalizeDocumentIdentity(controller->currentMainScriptFile()), MainWindow::normalizeDocumentIdentity(b));
+        QCOMPARE(controller->runtimeConfig().dslMappings.size(), 1);
+        QCOMPARE(controller->runtimeConfig().dslMappings.first().snippetId, QString("test_block"));
+        QCOMPARE(controller->runtimeConfig().documentDslMappings.value("main.lh").size(), 1);
+        QVERIFY(first->isModified()); QVERIFY(second->isModified());
+        QVERIFY(QMetaObject::invokeMethod(&window, "onSaveAll", Qt::DirectConnection));
+        QVERIFY(!first->isModified()); QVERIFY(!second->isModified());
+        QFile savedA(a), savedB(b); QVERIFY(savedA.open(QIODevice::ReadOnly)); QVERIFY(savedB.open(QIODevice::ReadOnly));
+        QVERIFY(savedA.readAll().contains("first ")); QVERIFY(savedB.readAll().contains("second "));
+        savedA.close(); savedB.close();
+        QFile savedConfig(cfg.fileName()); QVERIFY(savedConfig.open(QIODevice::ReadOnly));
+        const auto reloaded = ProjectRuntimeConfig::fromJson(QJsonDocument::fromJson(savedConfig.readAll()).object());
+        savedConfig.close();
+        QCOMPARE(reloaded.documentDslMappings.value("main.lh").size(), 1);
+        QCOMPARE(reloaded.mainScriptPath, QString("helper.lh"));
+        QVERIFY(QMetaObject::invokeMethod(explorer, "mainScriptRequested", Qt::DirectConnection, Q_ARG(QString, a)));
+        QCOMPARE(controller->runtimeConfig().dslMappings.size(), 1);
+        QCOMPARE(controller->runtimeConfig().dslMappings.first().id, QString("main-map"));
+        QCOMPARE(controller->runtimeConfig().documentDslMappings.value("helper.lh").size(), 1);
+        QCOMPARE(controller->runtimeConfig().documentDslMappings.value("helper.lh").first().snippetId, QString("test_block"));
+        QVERIFY(QMetaObject::invokeMethod(&window, "onSaveAll", Qt::DirectConnection));
+        QTemporaryDir moved; QVERIFY(QFile::copy(a, moved.filePath("main.lh")));
+        QVERIFY(QFile::copy(b, moved.filePath("helper.lh")));
+        QVERIFY(QFile::copy(cfg.fileName(), moved.filePath("project_config.json")));
+        ProjectController reopened;
+        DslScriptEditor movedEditor;
+        reopened.setDslEditor(&movedEditor);
+        connect(&reopened, &ProjectController::scriptLoadRequired, &movedEditor,
+                [&movedEditor](const QString& path, const QString& text) {
+            movedEditor.setCurrentFilePath(path); movedEditor.setScript(text); movedEditor.setModified(false);
+        });
+        QVERIFY(reopened.openProjectFromPath(moved.path()));
+        QCOMPARE(reopened.runtimeConfig().dslMappings.size(), 1);
+        QCOMPARE(reopened.runtimeConfig().dslMappings.first().id, QString("main-map"));
+        QCOMPARE(reopened.runtimeConfig().documentDslMappings.value("helper.lh").size(), 1);
+        QCOMPARE(reopened.runtimeConfig().documentDslMappings.value("helper.lh").first().snippetId, QString("test_block"));
+    }
+
+    void missingEntryLeavesProjectAndBufferUnchanged()
+    {
+        QTemporaryDir dir;
+        QFile main(dir.filePath("main.lh")); QVERIFY(main.open(QIODevice::WriteOnly));
+        main.write("PROGRAM P\nEND_PROGRAM\n"); main.close();
+        ProjectRuntimeConfig config; config.projectName = "entry";
+        config.mainScriptPath = "main.lh"; config.dslScriptPath = "main.lh";
+        config.scriptFiles = QStringList{"main.lh"};
+        DslMappingEntry mapping; mapping.id = "old"; mapping.lineNumber = 2;
+        config.dslMappings.append(mapping);
+        QFile cfg(dir.filePath("project_config.json")); QVERIFY(cfg.open(QIODevice::WriteOnly));
+        cfg.write(QJsonDocument(config.toJson()).toJson()); cfg.close();
+        MainWindow window; window.show();
+        auto* controller = window.findChild<ProjectController*>(); QVERIFY(controller->openProjectFromPath(dir.path()));
+        auto* editor = qobject_cast<DslScriptEditor*>(window.openAndActivateFile(main.fileName())); QVERIFY(editor);
+        editor->editor()->insertPlainText("unsaved "); const QString contents = editor->currentScript();
+        const QString entry = controller->currentMainScriptFile();
+        auto* explorer = window.findChild<ProjectExplorerWidget*>(); QVERIFY(explorer);
+        QVERIFY(QMetaObject::invokeMethod(explorer, "mainScriptRequested", Qt::DirectConnection,
+                                          Q_ARG(QString, dir.filePath("missing.lh"))));
+        QCOMPARE(controller->currentMainScriptFile(), entry);
+        QCOMPARE(controller->currentScriptFile(), entry);
+        QCOMPARE(editor->currentScript(), contents); QVERIFY(editor->isModified());
+        QCOMPARE(controller->runtimeConfig().dslMappings.size(), 1);
+        QCOMPARE(controller->runtimeConfig().dslMappings.first().id, QString("old"));
+    }
+
+    void systemViewChangesDoNotStartOrStopMonitoring()
+    {
+        MainWindow window; window.show();
+        auto* session = window.findChild<RuntimeSessionController*>(); QVERIFY(session);
+        auto* monitor = window.findChild<MonitorWidget*>(); QVERIFY(monitor);
+        auto* samples = window.findChild<SampleDataProvider*>(); QVERIFY(samples);
+        const auto initialState = session->state();
+        const bool monitoring = session->isMonitoring();
+        const bool samplesRunning = samples->isRunning();
+        QVERIFY(QMetaObject::invokeMethod(&window, "onOpenMonitor", Qt::DirectConnection));
+        auto* mdi = window.findChild<QMdiArea*>(); QVERIFY(mdi && mdi->activeSubWindow());
+        mdi->activeSubWindow()->close();
+        window.switchToWorkspace(WorkspaceId::Device);
+        QVERIFY(mdi->activeSubWindow()); mdi->activeSubWindow()->close();
+        window.switchToWorkspace(WorkspaceId::Monitor);
+        QCOMPARE(session->state(), initialState);
+        QCOMPARE(session->isMonitoring(), monitoring);
+        QCOMPARE(monitor->isMonitoring(), false);
+        QCOMPARE(samples->isRunning(), samplesRunning);
+    }
+
+    void repeatedViewCyclesDoNotChangeMonitoringOrOpc()
+    {
+        MainWindow window; window.show();
+        auto* session = window.findChild<RuntimeSessionController*>(); QVERIFY(session);
+        auto* monitor = window.findChild<MonitorWidget*>(); QVERIFY(monitor);
+        auto* samples = window.findChild<SampleDataProvider*>(); QVERIFY(samples);
+        auto* mdi = window.findChild<QMdiArea*>(); QVERIFY(mdi);
+
+        const auto initialState = session->state();
+        const bool sessionMonitoring = session->isMonitoring();
+        const bool widgetMonitoring = monitor->isMonitoring();
+        const bool samplesRunning = samples->isRunning();
+        const bool managerMonitoring = Monitor::MonitorManager::instance().isMonitoring();
+        IOpcServer* opc = session->opcServer();
+        const bool opcRunning = opc && opc->isRunning();
+
+        QSignalSpy stateSpy(session, &RuntimeSessionController::stateChanged);
+        QSignalSpy monitoringSpy(session, &RuntimeSessionController::monitoringChanged);
+        QSignalSpy opcSpy(session, &RuntimeSessionController::opcRunningChanged);
+
+        for (int i = 0; i < 3; ++i) {
+            QVERIFY(QMetaObject::invokeMethod(&window, "onOpenMonitor", Qt::DirectConnection));
+            QVERIFY(mdi->activeSubWindow());
+            mdi->activeSubWindow()->close();
+            window.switchToWorkspace(WorkspaceId::Device);
+            QVERIFY(mdi->activeSubWindow());
+            mdi->activeSubWindow()->close();
+            window.switchToWorkspace(WorkspaceId::Programming);
+            QTest::qWait(10);
+            window.switchToWorkspace(WorkspaceId::Monitor);
+            QTest::qWait(10);
+        }
+
+        QCOMPARE(session->state(), initialState);
+        QCOMPARE(session->isMonitoring(), sessionMonitoring);
+        QCOMPARE(monitor->isMonitoring(), widgetMonitoring);
+        QCOMPARE(samples->isRunning(), samplesRunning);
+        QCOMPARE(Monitor::MonitorManager::instance().isMonitoring(), managerMonitoring);
+        if (opc) QCOMPARE(opc->isRunning(), opcRunning);
+        QCOMPARE(stateSpy.count(), 0);
+        QCOMPARE(monitoringSpy.count(), 0);
+        QCOMPARE(opcSpy.count(), 0);
+    }
+
+    void demoMonitoringRequiresExplicitAction()
+    {
+        MainWindow window;
+        auto* samples = window.findChild<SampleDataProvider*>(); QVERIFY(samples);
+        auto* session = window.findChild<RuntimeSessionController*>(); QVERIFY(session);
+        auto* action = window.findChild<QAction*>(QStringLiteral("actStartDemoMonitoring")); QVERIFY(action);
+        QVERIFY(!samples->isRunning());
+        QVERIFY(QMetaObject::invokeMethod(&window, "onStartMonitoring", Qt::DirectConnection));
+        QVERIFY(!samples->isRunning());
+        action->trigger();
+        QVERIFY(samples->isRunning());
+        QVERIFY(session->isDemoMode());
+        QVERIFY(QMetaObject::invokeMethod(&window, "onStopMonitoring", Qt::DirectConnection));
+        QVERIFY(!samples->isRunning());
+        QVERIFY(!session->isDemoMode());
+    }
+
+    void demoStartRequiresOfflineIdleSession()
+    {
+        MainWindow window; window.show();
+        auto* action = window.findChild<QAction*>(QStringLiteral("actStartDemoMonitoring"));
+        QVERIFY(action);
+        auto* session = window.findChild<RuntimeSessionController*>(); QVERIFY(session);
+        auto* samples = window.findChild<SampleDataProvider*>(); QVERIFY(samples);
+        auto& manager = Monitor::MonitorManager::instance();
+        manager.stopMonitoring();
+
+        VirtualDeviceBackend backend;
+        QVERIFY(backend.connectBackend());
+        manager.setDeviceBackend(&backend);
+        action->trigger();
+        QVERIFY(!session->isDemoMode());
+        manager.setDeviceBackend(nullptr);
+
+        session->setDeviceBackend(&backend);
+        session->executeRun();
+        QCOMPARE(session->state(), RuntimeSessionState::Connected);
+        action->trigger();
+        QVERIFY(!session->isDemoMode());
+        session->requestStop();
+        QCOMPARE(session->state(), RuntimeSessionState::Idle);
+        session->setDeviceBackend(nullptr);
+        backend.disconnectBackend();
+
+        action->trigger();
+        QVERIFY(session->isDemoMode());
+        QVERIFY(samples->isRunning());
+        QVERIFY(manager.hasChannel(QStringLiteral("__lh_demo__/pressure")));
+
+        QVERIFY(QMetaObject::invokeMethod(&window, "onProjectClosed", Qt::DirectConnection));
+        QVERIFY(!session->isDemoMode());
+        QVERIFY(!samples->isRunning());
+        QVERIFY(!manager.hasChannel(QStringLiteral("__lh_demo__/pressure")));
+    }
+
+    void discardAuxiliaryOnProjectClosePromptsOnce()
+    {
+        QTemporaryDir dir;
+        QFile main(dir.filePath("main.lh")); QVERIFY(main.open(QIODevice::WriteOnly));
+        main.write("PROGRAM P\nEND_PROGRAM\n"); main.close();
+        QFile helper(dir.filePath("helper.lh")); QVERIFY(helper.open(QIODevice::WriteOnly));
+        helper.write("PROGRAM H\nEND_PROGRAM\n"); helper.close();
+        ProjectRuntimeConfig config; config.projectName = "close";
+        config.mainScriptPath = "main.lh"; config.dslScriptPath = "main.lh";
+        config.scriptFiles = QStringList{"main.lh", "helper.lh"};
+        QFile cfg(dir.filePath("project_config.json")); QVERIFY(cfg.open(QIODevice::WriteOnly));
+        cfg.write(QJsonDocument(config.toJson()).toJson()); cfg.close();
+        MainWindow window; window.show();
+        auto* controller = window.findChild<ProjectController*>(); QVERIFY(controller->openProjectFromPath(dir.path()));
+        auto* editor = qobject_cast<DslScriptEditor*>(window.openAndActivateFile(helper.fileName())); QVERIFY(editor);
+        editor->editor()->insertPlainText("discarded");
+        QPointer<DslScriptEditor> alive(editor); int decisions = 0;
+        window.setMessageBoxHook([&](const QString&, const QString&, QMessageBox::StandardButtons,
+                                     QMessageBox::StandardButton) { ++decisions; return QMessageBox::Discard; });
+        QVERIFY(QMetaObject::invokeMethod(&window, "onCloseProject", Qt::DirectConnection));
+        QTRY_VERIFY(alive.isNull());
+        QCOMPARE(decisions, 1); QVERIFY(!controller->hasOpenProject());
+        QVERIFY(helper.open(QIODevice::ReadOnly)); QCOMPARE(helper.readAll(), QByteArray("PROGRAM H\nEND_PROGRAM\n"));
+    }
+
+    void f7UsesEntryWhileAnotherDocumentIsActive()
+    {
+        QTemporaryDir dir;
+        const QString entry = dir.filePath("main.lh"), helper = dir.filePath("helper.lh");
+        QFile main(entry); QVERIFY(main.open(QIODevice::WriteOnly));
+        main.write("PROGRAM Broken\nVAR\n x : REAL;\nEND_VAR\nx := ;\nEND_PROGRAM\n"); main.close();
+        QFile other(helper); QVERIFY(other.open(QIODevice::WriteOnly));
+        other.write("PROGRAM Helper\nEND_PROGRAM\n"); other.close();
+        ProjectRuntimeConfig config; config.projectName = "F7";
+        config.mainScriptPath = "main.lh"; config.dslScriptPath = "main.lh";
+        // The active helper is intentionally outside the build inputs. The
+        // assertion below protects unrelated dirty documents from being saved
+        // merely because another entry is compiled.
+        config.scriptFiles = QStringList{"main.lh"};
+        QFile cfg(dir.filePath("project_config.json")); QVERIFY(cfg.open(QIODevice::WriteOnly));
+        cfg.write(QJsonDocument(config.toJson()).toJson()); cfg.close();
+        MainWindow window; window.show();
+        auto* project = window.findChild<ProjectController*>(); QVERIFY(project->openProjectFromPath(dir.path()));
+        auto* active = qobject_cast<DslScriptEditor*>(window.openAndActivateFile(helper)); QVERIFY(active);
+        active->editor()->insertPlainText("unsaved helper ");
+        auto* build = window.findChild<BuildController*>(); QVERIFY(build);
+        QSignalSpy produced(build, &BuildController::diagnosticsProduced);
+        auto* compile = window.findChild<QAction*>("actCompile"); QVERIFY(compile); compile->trigger();
+        QTRY_VERIFY_WITH_TIMEOUT(produced.count() > 0, 30000);
+        QCOMPARE(MainWindow::normalizeDocumentIdentity(project->currentMainScriptFile()), MainWindow::normalizeDocumentIdentity(entry));
+        QVERIFY(active->isModified());
+        QVERIFY(other.open(QIODevice::ReadOnly)); QCOMPARE(other.readAll(), QByteArray("PROGRAM Helper\nEND_PROGRAM\n"));
+        auto* problems = window.findChild<ProblemsPanel*>(); QVERIFY(problems);
+        bool entryDiagnostic = false;
+        for (int row = 0; row < problems->problemCount(); ++row)
+            entryDiagnostic |= MainWindow::isSameDocument(problems->itemAtRow(row).filePath, entry);
+        QVERIFY(entryDiagnostic);
+    }
+
     void problemRetentionAndDetailsAreBounded()
     {
         ProblemsPanel panel;
@@ -287,8 +1191,8 @@ private slots:
         QVERIFY(res == nullptr);
     }
 
-    // 4. 打开不同文件取消保存返回 nullptr，编辑器内容与光标不变
-    void testOpenDifferentFileCancelAborts()
+    // 4. 第二个脚本独立打开；取消关闭不得丢失任一缓冲区
+    void testOpenDifferentFileAndCancelClosePreservesBoth()
     {
         QTemporaryDir tempDir;
         QVERIFY(tempDir.isValid());
@@ -315,15 +1219,24 @@ private slots:
         dsl->setCurrentFilePath(fileA);
         dsl->setModified(true);
 
-        // 打开 fileB 时会弹窗提示未保存修改。注入 Hook 模拟用户选择 Cancel
-        window.setMessageBoxHook([](const QString&, const QString&, QMessageBox::StandardButtons, QMessageBox::StandardButton) {
+        int decisions = 0;
+        window.setMessageBoxHook([&](const QString&, const QString&, QMessageBox::StandardButtons, QMessageBox::StandardButton) {
+            ++decisions;
             return QMessageBox::Cancel;
         });
-
-        QWidget* res = window.openAndActivateFile(fileB);
-        // 取消后中止打开，返回 nullptr
-        QVERIFY(res == nullptr);
-        // 且主编辑器仍然保留修改内容
+        auto* second = qobject_cast<DslScriptEditor*>(window.openAndActivateFile(fileB));
+        QVERIFY(second);
+        QVERIFY(second != dsl);
+        QCOMPARE(decisions, 0);
+        QCOMPARE(dsl->currentScript(), QStringLiteral("PROGRAM FileA_Dirty\nEND_PROGRAM\n"));
+        QVERIFY(dsl->isModified());
+        second->editor()->insertPlainText(QStringLiteral("changed"));
+        QVERIFY(second->isModified());
+        const QString secondBuffer = second->currentScript();
+        window.closeCurrentActiveTab();
+        QCOMPARE(decisions, 1);
+        QCOMPARE(second->currentScript(), secondBuffer);
+        QVERIFY(second->isModified());
         QCOMPARE(dsl->currentScript(), QStringLiteral("PROGRAM FileA_Dirty\nEND_PROGRAM\n"));
         QVERIFY(dsl->isModified());
     }
@@ -534,9 +1447,16 @@ private slots:
         window.show();
         window.switchToWorkspace(WorkspaceId::Monitor);
         QCoreApplication::processEvents();
+        auto* explorerDock = window.findChild<QDockWidget*>(QStringLiteral("ExplorerDock"));
+        QVERIFY(explorerDock);
+        const bool explorerVisible = explorerDock->isVisible();
+        const QSize explorerSize = explorerDock->size();
         auto* editor = qobject_cast<QPlainTextEdit*>(window.openAndActivateFile(file.fileName()));
         QVERIFY(editor);
+        // The active content changes while the user's dock layout stays intact.
         QCOMPARE(window.currentWorkspaceId(), WorkspaceId::Programming);
+        QCOMPARE(explorerDock->isVisible(), explorerVisible);
+        QCOMPARE(explorerDock->size(), explorerSize);
         editor->insertPlainText("changed");
         window.activateWindow();
         editor->setFocus();
@@ -642,7 +1562,7 @@ private slots:
         auto* mdi = window.findChild<QMdiArea*>();
         auto* dsl = window.findChild<DslScriptEditor*>();
         auto* actToggleDsl = window.findChild<QAction*>("actToggleDslEditor");
-        auto* editorSubWindow = window.findChild<QMdiSubWindow*>();
+        auto* editorSubWindow = qobject_cast<QMdiSubWindow*>(dsl->parentWidget());
         QVERIFY(mdi != nullptr);
         QVERIFY(dsl != nullptr);
         QVERIFY(actToggleDsl != nullptr);

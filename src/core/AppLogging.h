@@ -26,6 +26,7 @@ struct BusinessEvent {
 };
 
 // Installs the process-wide Qt message handler and opens the bounded log file.
+// LH_LOG_DIRECTORY, when non-empty, overrides the default AppDataLocation/logs path.
 bool install();
 
 // Restores the handler that was active before install() and closes the file.

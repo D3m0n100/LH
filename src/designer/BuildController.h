@@ -68,6 +68,7 @@ public:
     /// 获取当前编译类型
     BuildType currentBuildType() const { return m_currentBuildType; }
     CompileResult lastCompileResult() const { return m_lastCompileResult; }
+    quint64 activeOperationGeneration() const { return m_activeOperationGeneration; }
 
     using ValidationCallback = std::function<bool(BuildType type, QStringList& errors)>;
     void setValidationCallback(ValidationCallback callback) { m_validationCallback = callback; }

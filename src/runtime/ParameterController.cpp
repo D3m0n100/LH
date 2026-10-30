@@ -245,9 +245,15 @@ ParameterController::ParameterController(QObject* parent)
 void ParameterController::loadDefinitions(const QList<ParameterDefinition>& definitions)
 {
     const QPointer<ParameterController> alive(this);
-    bool changed = definitions.size() != m_states.size();
+    QSet<QString> seenIds;
+    QSet<QString> invalidIds;
     for (const auto& def : definitions) {
-        const auto it = m_states.constFind(def.name);
+        if (def.id.trimmed().isEmpty() || seenIds.contains(def.id)) invalidIds.insert(def.id);
+        seenIds.insert(def.id);
+    }
+    bool changed = !invalidIds.isEmpty() || definitions.size() != m_states.size();
+    for (const auto& def : definitions) {
+        const auto it = m_states.constFind(def.id);
         if (it == m_states.constEnd() || it->pointId != def.id
                 || it->dataType != canonicalParameterDataType(def.dataType)
                 || it->minValue != def.minValue || it->maxValue != def.maxValue
@@ -268,6 +274,7 @@ void ParameterController::loadDefinitions(const QList<ParameterDefinition>& defi
     QMap<QString, ParameterStateInfo> newStates;
 
     for (const auto& def : definitions) {
+        if (invalidIds.contains(def.id)) continue;
         ParameterStateInfo info;
         info.pointId = def.id;
         info.name = def.name;
@@ -278,8 +285,10 @@ void ParameterController::loadDefinitions(const QList<ParameterDefinition>& defi
         info.onlineEditable = def.onlineEditable;
         info.definitionValue = def.currentValue.isEmpty() ? def.defaultValue : def.currentValue;
 
-        auto it = m_states.find(def.name);
-        if (it != m_states.end()) {
+        auto it = m_states.find(def.id);
+        if (it != m_states.end() && it->dataType == info.dataType
+                && it->minValue == info.minValue && it->maxValue == info.maxValue
+                && it->onlineEditable == info.onlineEditable) {
             info.state = it->state;
             info.editedValue = it->editedValue;
             info.appliedValue = it->appliedValue;
@@ -288,9 +297,14 @@ void ParameterController::loadDefinitions(const QList<ParameterDefinition>& defi
             info.lastWriteTime = it->lastWriteTime;
             info.lastReadbackTime = it->lastReadbackTime;
             info.readbackAttempts = it->readbackAttempts;
+        } else if (it != m_states.end() && it->state == ParameterState::Modified) {
+            // Retain the user's unapplied input, but never carry old device evidence
+            // across a changed definition. Validation is repeated before a write.
+            info.state = ParameterState::Modified;
+            info.editedValue = it->editedValue;
         }
 
-        newStates.insert(def.name, info);
+        newStates.insert(def.id, info);
     }
 
     m_states = newStates;
@@ -371,8 +385,28 @@ bool ParameterController::validateValue(const ParameterDefinition& def, const QS
 
 bool ParameterController::editParameter(const QString& name, const QString& value)
 {
-    auto it = m_states.find(name);
+    const QString key = uniqueKeyForName(name);
+    return !key.isEmpty() && editParameterByKey(key, value);
+}
+
+QString ParameterController::uniqueKeyForName(const QString& name) const
+{
+    QString key;
+    for (auto it = m_states.cbegin(); it != m_states.cend(); ++it) {
+        if (it->name != name) continue;
+        if (!key.isEmpty()) return {};
+        key = it.key();
+    }
+    return key;
+}
+
+bool ParameterController::editParameterByKey(const QString& key, const QString& value)
+{
+    auto it = m_states.find(key);
     if (it == m_states.end() || !it->onlineEditable)
+        return false;
+    if (it->state == ParameterState::PendingApply || it->state == ParameterState::Applying
+            || it->state == ParameterState::PendingReadback)
         return false;
 
     ParameterDefinition def;
@@ -388,7 +422,7 @@ bool ParameterController::editParameter(const QString& name, const QString& valu
     it->state = ParameterState::Modified;
     it->lastError.clear();
 
-    notifyStateChanges({{name, oldState, ParameterState::Modified}});
+    notifyStateChanges({{it->name, oldState, ParameterState::Modified}});
     return true;
 }
 
@@ -398,13 +432,7 @@ bool ParameterController::editParameterByPointId(const QString& pointId, const Q
         return false;
     }
 
-    for (auto it = m_states.begin(); it != m_states.end(); ++it) {
-        if (it->pointId == pointId) {
-            return editParameter(it->name, value);
-        }
-    }
-
-    return false;
+    return editParameterByKey(pointId, value);
 }
 
 bool ParameterController::validateModifiedParametersForTargets(const QStringList& targets, QString* error) const
@@ -468,7 +496,7 @@ bool ParameterController::applyModifiedParametersForTargets(
         }
 
         writes.insert(it->pointId, it->editedValue);
-        modifiedNames.append(it->name);
+        modifiedNames.append(it.key());
         if (batchTargetPointIds && !batchTargetPointIds->contains(it->pointId))
             batchTargetPointIds->append(it->pointId);
     }
@@ -492,7 +520,7 @@ bool ParameterController::applyModifiedParametersForTargets(
         auto& info = m_states[name];
         const ParameterState oldState = info.state;
         info.state = ParameterState::PendingApply;
-        changes.append({name, oldState, ParameterState::PendingApply});
+        changes.append({info.name, oldState, ParameterState::PendingApply});
     }
     if (!notifyStateChanges(changes)) return false;
 
@@ -501,7 +529,7 @@ bool ParameterController::applyModifiedParametersForTargets(
         auto& info = m_states[name];
         const ParameterState oldState = info.state;
         info.state = ParameterState::Applying;
-        changes.append({name, oldState, ParameterState::Applying});
+        changes.append({info.name, oldState, ParameterState::Applying});
     }
     if (!notifyStateChanges(changes) || !safeBackend) return false;
 
@@ -532,7 +560,7 @@ bool ParameterController::applyModifiedParametersForTargets(
                 firstPointError = pointError;
             info.state = ParameterState::ApplyFailed;
             info.lastError = pointError;
-            changes.append({name, oldState, ParameterState::ApplyFailed});
+            changes.append({info.name, oldState, ParameterState::ApplyFailed});
             continue;
         }
 
@@ -542,7 +570,7 @@ bool ParameterController::applyModifiedParametersForTargets(
         info.lastWriteTime = writeTime;
         info.lastReadbackTime = QDateTime();
         info.readbackAttempts = 0;
-        changes.append({name, oldState, ParameterState::PendingReadback});
+        changes.append({info.name, oldState, ParameterState::PendingReadback});
     }
     if (!notifyStateChanges(changes)) return false;
 
@@ -796,7 +824,7 @@ bool ParameterController::applyModifiedParametersWithReadbackAsyncForTargets(
     QList<StateChange> applyingStates;
     for (auto it = m_states.begin(); it != m_states.end(); ++it) {
         if (writes.contains(it->pointId)) {
-            applyingStates.append({it.key(), it->state, ParameterState::Applying});
+            applyingStates.append({it->name, it->state, ParameterState::Applying});
             it->state = ParameterState::Applying;
         }
     }
@@ -839,7 +867,7 @@ bool ParameterController::applyModifiedParametersWithReadbackAsyncForTargets(
                 it->lastReadbackTime = QDateTime();
                 it->readbackAttempts = 0;
             }
-            changed.append({it.key(), previous, it->state});
+            changed.append({it->name, previous, it->state});
         }
         if (!notifyStateChanges(changed)) return;
         if (m_pendingDeadline.hasExpired()) { finishReadback(false, QStringLiteral("参数写入/回读总时限已到")); return; }
@@ -867,8 +895,17 @@ bool ParameterController::applyReadbackValues(const QHash<QString, QVariant>& re
             continue;
 
         auto rvIt = readbackValues.constFind(it->pointId);
-        if (rvIt == readbackValues.constEnd())
-            rvIt = readbackValues.constFind(it->name);
+        if (rvIt == readbackValues.constEnd() && !it->name.isEmpty() && uniqueKeyForName(it->name) == it.key()) {
+            bool nameCollidesWithOtherPointId = false;
+            for (auto sIt = m_states.constBegin(); sIt != m_states.constEnd(); ++sIt) {
+                if (sIt->pointId == it->name && sIt.key() != it.key()) {
+                    nameCollidesWithOtherPointId = true;
+                    break;
+                }
+            }
+            if (!nameCollidesWithOtherPointId)
+                rvIt = readbackValues.constFind(it->name);
+        }
         if (rvIt == readbackValues.constEnd())
             continue;
 
@@ -885,7 +922,7 @@ bool ParameterController::applyReadbackValues(const QHash<QString, QVariant>& re
 
 ParameterStateInfo ParameterController::parameterState(const QString& name) const
 {
-    return m_states.value(name);
+    return m_states.value(uniqueKeyForName(name));
 }
 
 ParameterStateInfo ParameterController::parameterStateByPointId(const QString& pointId) const
@@ -908,7 +945,7 @@ QStringList ParameterController::parameterNamesByState(ParameterState state) con
     QStringList names;
     for (auto it = m_states.constBegin(); it != m_states.constEnd(); ++it) {
         if (it->state == state)
-            names.append(it.key());
+            names.append(it->name);
     }
     return names;
 }
@@ -1014,7 +1051,7 @@ ParameterController::ReadbackDecision ParameterController::evaluateReadback(
 void ParameterController::setPendingReadbackError(const QString& errorMessage,
                                                   const QStringList& targetPointIds)
 {
-    QHash<QString, ParameterState> timedOutNames;
+    QList<StateChange> changes;
     for (auto it = m_states.begin(); it != m_states.end(); ++it) {
         if (it->state != ParameterState::PendingReadback && it->state != ParameterState::Applying
                 && it->state != ParameterState::PendingApply)
@@ -1022,12 +1059,9 @@ void ParameterController::setPendingReadbackError(const QString& errorMessage,
         if (!targetPointIds.isEmpty() && !targetPointIds.contains(it->pointId))
             continue;
         it->lastError = errorMessage;
-        timedOutNames.insert(it.key(), it->state);
+        changes.append({it->name, it->state, ParameterState::Timeout});
         it->state = ParameterState::Timeout;
     }
-    QList<StateChange> changes;
-    for (auto it = timedOutNames.cbegin(); it != timedOutNames.cend(); ++it)
-        changes.append({it.key(), it.value(), ParameterState::Timeout});
     if (!changes.isEmpty())
         notifyStateChanges(changes);
 }

@@ -128,6 +128,7 @@ void RuntimeSessionController::syncOpcRuntimePoints()
 
 void RuntimeSessionController::startOpcServerIfEnabled()
 {
+    if (m_demoModeActive) return;
     if (!m_opcServer || !m_projectController) {
         return;
     }
@@ -268,6 +269,13 @@ void RuntimeSessionController::handleOpcRunningStateChanged(bool running)
 void RuntimeSessionController::handleOpcWriteRequest(const QString& pointId, const QVariant& value)
 {
     if (!m_opcServer) {
+        return;
+    }
+
+    if (m_demoModeActive) {
+        const QString message = QStringLiteral("演示模式不允许写入真实设备参数。");
+        m_opcServer->recordWriteResult(pointId, false, message);
+        emit runtimeError(message);
         return;
     }
 

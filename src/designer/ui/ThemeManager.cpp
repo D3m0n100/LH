@@ -9,6 +9,17 @@
 #include <QPointer>
 #include <QTimer>
 #include <QWidget>
+#include <QTableView>
+#include <QHeaderView>
+#include <QToolBar>
+#include <QColor>
+#include <cmath>
+#include <algorithm>
+
+namespace {
+ThemeManager::ThemeMode g_themeMode = ThemeManager::ThemeMode::Light;
+ThemeManager::Density g_density = ThemeManager::Density::Compact;
+}
 
 namespace {
 QString darkStyle(QString css)
@@ -102,17 +113,92 @@ void ThemeManager::applyTheme(QApplication* app, ThemeMode mode)
     auto* styles = app->findChild<InlineThemeStyles*>(QStringLiteral("LHInlineThemeStyles"), Qt::FindDirectChildrenOnly);
     if (!styles) { styles = new InlineThemeStyles(app); styles->setObjectName(QStringLiteral("LHInlineThemeStyles")); }
 
+    g_themeMode = mode;
+    QString styleSheet;
     switch (mode) {
     case ThemeMode::Light:
         applyLightPalette(app);
-        app->setStyleSheet(buildLightStyleSheet());
+        styleSheet = buildLightStyleSheet();
         break;
     case ThemeMode::Dark:
         applyDarkPalette(app);
-        app->setStyleSheet(buildDarkStyleSheet());
+        styleSheet = buildDarkStyleSheet();
         break;
     }
+    styleSheet += densityStyleSheet(g_density);
+    app->setStyleSheet(styleSheet);
     styles->refresh();
+}
+
+void ThemeManager::applyDensity(QApplication* app, Density density)
+{
+    if (!app) return;
+    g_density = density;
+    applyTheme(app, g_themeMode);
+    const int rowHeight = density == Density::Comfortable ? 28 : 22;
+    const int iconSize = density == Density::Comfortable ? 18 : 16;
+    for (auto* widget : app->allWidgets()) {
+        if (auto* view = qobject_cast<QTableView*>(widget)) {
+            if (auto* header = view->verticalHeader()) {
+                header->setDefaultSectionSize(rowHeight);
+                header->setMinimumSectionSize(density == Density::Comfortable ? 24 : 18);
+            }
+        }
+        if (auto* toolbar = qobject_cast<QToolBar*>(widget)) {
+            toolbar->setIconSize(QSize(iconSize, iconSize));
+        }
+    }
+}
+
+ThemeManager::ThemeMode ThemeManager::themeMode()
+{
+    return g_themeMode;
+}
+
+ThemeManager::Density ThemeManager::density()
+{
+    return g_density;
+}
+
+QString ThemeManager::densityStyleSheet(Density density)
+{
+    if (density == Density::Comfortable) {
+        return QString::fromUtf8(R"(
+QToolBar { spacing: 4px; padding: 4px 8px; }
+QToolButton { padding: 4px 8px; }
+QPushButton { padding: 6px 12px; }
+QLineEdit, QComboBox, QSpinBox, QDoubleSpinBox { padding: 4px 6px; min-height: 24px; }
+QAbstractItemView::item { min-height: 24px; padding: 5px 6px; }
+QTreeView::item { min-height: 24px; padding: 5px 6px; }
+QTabBar::tab { padding: 7px 14px; }
+QMenu::item { padding: 6px 22px; }
+)");
+    }
+    return QString::fromUtf8(R"(
+QToolBar { spacing: 2px; padding: 2px 4px; }
+QToolButton { padding: 2px 4px; }
+QPushButton { padding: 3px 8px; }
+QLineEdit, QComboBox, QSpinBox, QDoubleSpinBox { padding: 2px 4px; min-height: 18px; }
+QAbstractItemView::item { min-height: 18px; padding: 2px 4px; }
+QTreeView::item { min-height: 18px; padding: 2px 4px; }
+QTabBar::tab { padding: 4px 10px; }
+QMenu::item { padding: 3px 18px; }
+)");
+}
+
+double ThemeManager::contrastRatio(const QColor& foreground, const QColor& background)
+{
+    const auto channel = [](double value) {
+        value /= 255.0;
+        return value <= 0.03928 ? value / 12.92 : std::pow((value + 0.055) / 1.055, 2.4);
+    };
+    const auto luminance = [&channel](const QColor& color) {
+        return 0.2126 * channel(color.red()) + 0.7152 * channel(color.green())
+                + 0.0722 * channel(color.blue());
+    };
+    const double a = luminance(foreground);
+    const double b = luminance(background);
+    return (std::max(a, b) + 0.05) / (std::min(a, b) + 0.05);
 }
 
 void ThemeManager::applyLightPalette(QApplication* app)
@@ -189,6 +275,19 @@ QString ThemeManager::buildLightStyleSheet()
 }
 QMainWindow {
     background: #f3f3f3;
+}
+QWidget#NotificationBanner {
+    border-bottom: 1px solid #d0d7de;
+    background: #eaeef2;
+}
+QWidget#NotificationBanner[severity="warning"] { background: #fff8c5; }
+QWidget#NotificationBanner[severity="error"] { background: #ffebe9; }
+QWidget#NotificationBanner[severity="success"] { background: #dafbe1; }
+QWidget#NotificationBanner[severity="info"] { background: #ddf4ff; }
+QLabel#NotificationText { color: #1f1f1f; }
+QLineEdit:focus, QComboBox:focus, QSpinBox:focus, QDoubleSpinBox:focus,
+QPlainTextEdit:focus, QTextEdit:focus, QPushButton:focus, QToolButton:focus {
+    border: 1px solid #0969da;
 }
 QToolBar {
     spacing: 4px;
@@ -383,6 +482,17 @@ QSplitter::handle {
 }
 QSplitter::handle:hover {
     background: #99c9ef;
+}
+QMenuBar {
+    background: #f3f3f3;
+    color: #1f1f1f;
+}
+QMenuBar::item {
+    background: transparent;
+    color: #1f1f1f;
+}
+QMenuBar::item:selected, QMenuBar::item:pressed {
+    background: #e8f3ff;
 }
 QMenu {
     background: #ffffff;

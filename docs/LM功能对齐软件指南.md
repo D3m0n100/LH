@@ -34,4 +34,4 @@
 
 运行 tools/prepare_qt_test_runtime.ps1，只在工作区构建输出复制同一 Qt 安装的 DLL、插件和 qt.conf。GUI 验收使用 QT_QPA_PLATFORM=windows。Qt 5.15.2 的 Windows offscreen/minimal 在独立 QMessageBox 可于 qt_getWindowsSystemMenu 崩溃；保留探针堆栈，不跳过 GUI 测试、不改全局 Qt。原生插件通过不证明 offscreen 已修复。
 
-验证包含 Python 全套、全量构建、软件专项、完整 CTest、安装布局及隔离安装 smoke。物理控制器、磁盘故障和长期稳定性需独立证据。详细结果见 review_execution/lm-parity-repair-2026-10-24。
+验证包含 Python 全套、全量构建、软件专项、完整 CTest、安装布局及隔离安装 smoke。物理控制器、磁盘故障和长期稳定性需独立证据。详细结果见 build_dev_artifacts/review_execution/lm-parity-repair-2026-10-24。

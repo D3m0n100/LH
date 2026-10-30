@@ -63,15 +63,18 @@ public:
 
     explicit DownloadManager(QObject* parent = nullptr);
     ~DownloadManager() override;
+    bool isBusy() const { return m_busy; }
 
     void setConfig(const QVariantMap& cfg);
 
 public slots:
     void startConnectProbe();
-    void startDownload(const QString& profileJsonPath, const QString& payloadFilePath);
+    void startDownload(const QString& profileJsonPath, const QString& payloadFilePath,
+                       const QString& expectedProfileSha256, const QString& expectedPayloadSha256);
     void cancel();
 
 signals:
+    void busyChanged(bool busy);
     void statusChanged(State st, const QString& msg);
     void progressChanged(int percent, int sentBytes, int totalBytes, int pktIndex, int pktCount);
     void errorOccurred(DownloadManager::ErrorCode code, const QString& msg, const QString& details);
@@ -82,6 +85,7 @@ private:
     QThread m_thread;
     QPointer<QObject> m_activeWorker;
     std::shared_ptr<DownloadCancellationHandle> m_activeCancelState;
+    bool m_busy = false;
 };
 
 Q_DECLARE_METATYPE(DownloadManager::ErrorCode)

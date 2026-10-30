@@ -7,6 +7,7 @@
 
 #include <QObject>
 #include <QFile>
+#include <QCryptographicHash>
 #include <QPointer>
 #include <QSignalSpy>
 #include <QTemporaryDir>
@@ -21,6 +22,16 @@
 #undef private
 #include "communication/Communication.h"
 #include "communication/ModbusInterface.h"
+
+namespace {
+QString fileSha256(const QString& path)
+{
+    QFile file(path);
+    if (!file.open(QIODevice::ReadOnly)) return QString();
+    return QString::fromLatin1(QCryptographicHash::hash(file.readAll(),
+                                                        QCryptographicHash::Sha256).toHex());
+}
+}
 
 class DownloadManagerLifecycleTest : public QObject
 {
@@ -43,7 +54,8 @@ private slots:
         const QString profilePath = tempDir.filePath(QStringLiteral("missing-profile.json"));
         const QString payloadPath = tempDir.filePath(QStringLiteral("missing-payload.bin"));
 
-        manager.startDownload(profilePath, payloadPath);
+        manager.startDownload(profilePath, payloadPath, QStringLiteral("approved-profile"),
+                              QStringLiteral("approved-payload"));
         QTRY_COMPARE(errorSpy.count(), 1);
         QCOMPARE(errorSpy.at(0).at(0).value<DownloadManager::ErrorCode>(),
                  DownloadManager::ErrorCode::INVALID_CONFIG);
@@ -51,7 +63,8 @@ private slots:
         QTRY_VERIFY(manager.m_activeWorker.isNull());
 
         // 首次 worker 的线程退出后再次启动；第二次同样不触碰真实设备。
-        manager.startDownload(profilePath, payloadPath);
+        manager.startDownload(profilePath, payloadPath, QStringLiteral("approved-profile"),
+                              QStringLiteral("approved-payload"));
         QTRY_COMPARE(errorSpy.count(), 2);
         QCOMPARE(errorSpy.at(1).at(0).value<DownloadManager::ErrorCode>(),
                  DownloadManager::ErrorCode::INVALID_CONFIG);
@@ -76,7 +89,7 @@ private slots:
         codeFile.close();
         DownloadManager manager;
         QSignalSpy errors(&manager, &DownloadManager::errorOccurred);
-        manager.startDownload(profile, code);
+        manager.startDownload(profile, code, fileSha256(profile), fileSha256(code));
         QTRY_COMPARE(errors.count(), 1);
         QCOMPARE(errors.at(0).at(0).value<DownloadManager::ErrorCode>(),
                  DownloadManager::ErrorCode::INVALID_CONFIG);
@@ -101,13 +114,104 @@ private slots:
                          Qt::DirectConnection);
         manager->startDownload(
                 tempDir.filePath(QStringLiteral("missing-profile.json")),
-                tempDir.filePath(QStringLiteral("missing-payload.bin")));
+                tempDir.filePath(QStringLiteral("missing-payload.bin")),
+                QStringLiteral("approved-profile"), QStringLiteral("approved-payload"));
         QTRY_COMPARE(startedSpy.count(), 1);
 
         delete manager;
 
         QVERIFY(managerGuard.isNull());
         QCOMPARE(finishedCount, 1);
+    }
+
+    void changedPayloadAfterApprovalFailsBeforeDeviceOpen()
+    {
+        QTemporaryDir temp;
+        QVERIFY(temp.isValid());
+        const QString profile = temp.filePath(QStringLiteral("profile.json"));
+        const QString payload = temp.filePath(QStringLiteral("main.code"));
+        QFile profileFile(profile);
+        QVERIFY(profileFile.open(QIODevice::WriteOnly));
+        QVERIFY(profileFile.write("{\"slaveId\":1,\"steps\":[{\"type\":\"sendChunk\","
+                                  "\"params\":{\"dataAddress\":210,\"chunkWords\":1}}]}") > 0);
+        profileFile.close();
+        const QByteArray approvedPayload = QByteArrayLiteral("approved bytes");
+        QFile payloadFile(payload);
+        QVERIFY(payloadFile.open(QIODevice::WriteOnly));
+        QCOMPARE(payloadFile.write(approvedPayload), approvedPayload.size());
+        payloadFile.close();
+
+        const QString approvedPayloadSha256 = fileSha256(payload);
+        QVERIFY(!approvedPayloadSha256.isEmpty());
+        QVERIFY(QFile::remove(payload));
+        QVERIFY(payloadFile.open(QIODevice::WriteOnly));
+        const QByteArray changedPayload = QByteArrayLiteral("modified bytes");
+        QCOMPARE(changedPayload.size(), approvedPayload.size());
+        QCOMPARE(payloadFile.write(changedPayload), changedPayload.size());
+        payloadFile.close();
+
+        DownloadManager manager;
+        QSignalSpy errors(&manager, &DownloadManager::errorOccurred);
+        manager.startDownload(profile, payload, fileSha256(profile),
+                              approvedPayloadSha256);
+        QTRY_COMPARE(errors.count(), 1);
+        QCOMPARE(errors.first().at(0).value<DownloadManager::ErrorCode>(),
+                 DownloadManager::ErrorCode::INVALID_CONFIG);
+        QVERIFY(errors.first().at(1).toString().contains(QStringLiteral("confirmation expired"),
+                                                         Qt::CaseInsensitive));
+        QTRY_VERIFY(!manager.m_thread.isRunning());
+        QTRY_VERIFY(manager.m_activeWorker.isNull());
+    }
+
+    void changedProfileAfterApprovalFailsBeforeDeviceOpen()
+    {
+        QTemporaryDir temp;
+        QVERIFY(temp.isValid());
+        const QString profile = temp.filePath(QStringLiteral("profile.json"));
+        const QString payload = temp.filePath(QStringLiteral("main.code"));
+        QFile profileFile(profile);
+        QVERIFY(profileFile.open(QIODevice::WriteOnly));
+        const QByteArray approvedProfile = QByteArrayLiteral(
+                    "{\"slaveId\":1,\"steps\":[{\"type\":\"sendChunk\","
+                    "\"params\":{\"dataAddress\":210,\"chunkWords\":1}}]}");
+        QCOMPARE(profileFile.write(approvedProfile), approvedProfile.size());
+        profileFile.close();
+        const QString approvedProfileSha256 = fileSha256(profile);
+        QFile payloadFile(payload);
+        QVERIFY(payloadFile.open(QIODevice::WriteOnly));
+        QCOMPARE(payloadFile.write("payload"), qint64(7));
+        payloadFile.close();
+
+        QVERIFY(QFile::remove(profile));
+        QVERIFY(profileFile.open(QIODevice::WriteOnly));
+        const QByteArray changedProfile = QByteArrayLiteral(
+                    "{\"slaveId\":2,\"steps\":[{\"type\":\"sendChunk\","
+                    "\"params\":{\"dataAddress\":210,\"chunkWords\":1}}]}");
+        QCOMPARE(changedProfile.size(), approvedProfile.size());
+        QCOMPARE(profileFile.write(changedProfile), changedProfile.size());
+        profileFile.close();
+
+        DownloadManager manager;
+        QSignalSpy errors(&manager, &DownloadManager::errorOccurred);
+        manager.startDownload(profile, payload, approvedProfileSha256, fileSha256(payload));
+        QTRY_COMPARE(errors.count(), 1);
+        QVERIFY(errors.first().at(1).toString().contains(QStringLiteral("confirmation expired"),
+                                                         Qt::CaseInsensitive));
+        QTRY_VERIFY(!manager.m_thread.isRunning());
+        QTRY_VERIFY(manager.m_activeWorker.isNull());
+    }
+
+    void missingApprovedHashesRejectBeforeWorkerStart()
+    {
+        DownloadManager manager;
+        QSignalSpy errors(&manager, &DownloadManager::errorOccurred);
+        manager.startDownload(QStringLiteral("profile.json"), QStringLiteral("payload.bin"),
+                              QString(), QStringLiteral("approved-payload"));
+        QCOMPARE(errors.count(), 1);
+        QCOMPARE(errors.first().at(0).value<DownloadManager::ErrorCode>(),
+                 DownloadManager::ErrorCode::INVALID_CONFIG);
+        QVERIFY(!manager.m_thread.isRunning());
+        QVERIFY(manager.m_activeWorker.isNull());
     }
 
     void diagnosticPortBusyFailsBeforeWorkerOpen()

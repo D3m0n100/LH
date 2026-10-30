@@ -5,9 +5,11 @@
 
 #include "../ParameterController.h"
 
-inline QString runtimeStateText(bool running)
+inline QString runtimeStateText(bool running, bool demoSession = false)
 {
-    return running ? QStringLiteral("运行中") : QStringLiteral("已停止");
+    if (demoSession && running) return QStringLiteral("演示会话（非设备运行）");
+    return running ? QStringLiteral("本地会话活动（设备运行状态未知）")
+                   : QStringLiteral("设备运行状态未知");
 }
 
 inline QString buildStateText(bool busy, bool success)

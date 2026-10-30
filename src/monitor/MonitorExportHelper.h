@@ -85,12 +85,20 @@ struct ExportChannelInfo
     QString unit;               ///< 数据单位
     int samplePeriodMs = 100;   ///< 采样周期（毫秒）
     int sampleCount = 0;        ///< 样本数量
+    QString source;             ///< 数据来源：real / demo（由通道记录元数据决定，不依赖当前会话模式）
     
     ExportChannelInfo() = default;
     ExportChannelInfo(const QString& id, const QString& name, 
                       const QString& u, int period = 100)
         : channelId(id), displayName(name), unit(u), samplePeriodMs(period) {}
 };
+
+/// 从通道配置元数据得到导出来源；演示通道使用独立命名空间和 __demoMode 标记。
+inline QString exportSourceFromChannelMetadata(const QVariantMap& metadata)
+{
+    return metadata.value(QStringLiteral("__demoMode")).toBool()
+            ? QStringLiteral("demo") : QStringLiteral("real");
+}
 
 /**
  * @brief 导出元数据

@@ -3,6 +3,7 @@
 #define MONITOR_MANAGER_H
 
 #include <QObject>
+#include <QByteArray>
 #include <QDateTime>
 #include <QElapsedTimer>
 #include <QHash>
@@ -132,6 +133,9 @@ public:
     bool unregisterProvider(const QString& providerId);
     bool hasProvider(const QString& providerId) const;
     QStringList providerIds() const;
+    QStringList availableProviderIds() const;
+    int expectedPeriodMs(const QString& channelName) const;
+    void setRuntimeSessionIdentity(const QString& identity) { m_runtimeSessionIdentity = identity; }
 
     void startMonitoring();
     void stopMonitoring();
@@ -194,6 +198,11 @@ private:
     QMetaObject::Connection m_dataProcessorDestroyedConnection;
 
     std::unique_ptr<BackendSampler> m_backendSampler;
+    QString m_runtimeSessionIdentity;
+    QString m_appliedRuntimeSessionIdentity;
+    QByteArray m_appliedRuntimeConfig;
+    quint64 m_runtimeBackendGeneration = 0;
+    quint64 m_appliedBackendGeneration = 0;
 
     std::unique_ptr<Core::AsyncDatabaseWorker> m_databaseWorker;
     quint64 m_databaseServiceGeneration = 0;

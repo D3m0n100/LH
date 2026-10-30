@@ -121,6 +121,18 @@ QPushButton:default:hover {
     m_comboFontSize->setCurrentIndex(1);
     appearanceLayout->addRow("界面字体大小", m_comboFontSize);
 
+    m_comboTheme = new QComboBox(this);
+    m_comboTheme->addItem("浅色");
+    m_comboTheme->addItem("深色");
+    m_comboTheme->setCurrentIndex(0);
+    appearanceLayout->addRow("主题", m_comboTheme);
+
+    m_comboDensity = new QComboBox(this);
+    m_comboDensity->addItem("紧凑");
+    m_comboDensity->addItem("舒适");
+    m_comboDensity->setCurrentIndex(0);
+    appearanceLayout->addRow("界面密度", m_comboDensity);
+
     mainLayout->addWidget(appearanceGroup);
     mainLayout->addStretch();
 
@@ -183,6 +195,16 @@ int SettingsDialog::fontSizeIndex() const
     return m_comboFontSize ? m_comboFontSize->currentIndex() : 1;
 }
 
+int SettingsDialog::themeMode() const
+{
+    return m_comboTheme ? m_comboTheme->currentIndex() : 0;
+}
+
+int SettingsDialog::density() const
+{
+    return m_comboDensity ? m_comboDensity->currentIndex() : 0;
+}
+
 void SettingsDialog::setDefaultProjectDir(const QString& dir)
 {
     if (m_editDefaultDir) {
@@ -201,6 +223,20 @@ void SettingsDialog::setFontSizeIndex(int index)
 {
     if (m_comboFontSize && index >= 0 && index < m_comboFontSize->count()) {
         m_comboFontSize->setCurrentIndex(index);
+    }
+}
+
+void SettingsDialog::setThemeMode(int mode)
+{
+    if (m_comboTheme && mode >= 0 && mode < m_comboTheme->count()) {
+        m_comboTheme->setCurrentIndex(mode);
+    }
+}
+
+void SettingsDialog::setDensity(int density)
+{
+    if (m_comboDensity && density >= 0 && density < m_comboDensity->count()) {
+        m_comboDensity->setCurrentIndex(density);
     }
 }
 

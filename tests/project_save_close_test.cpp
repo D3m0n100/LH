@@ -229,7 +229,7 @@ private slots:
         QSettings::setPath(QSettings::IniFormat, QSettings::UserScope, m_settingsDir.path());
     }
 
-    void saveProjectPersistsDslWhenAuxiliaryWindowIsActive()
+    void saveCurrentDocumentThenSaveAllPreservesDsl()
     {
         QTemporaryDir tempDir;
         QVERIFY(tempDir.isValid());
@@ -266,8 +266,12 @@ private slots:
 
         QVERIFY(QMetaObject::invokeMethod(window.data(), "onSaveProject", Qt::DirectConnection));
 
-        QCOMPARE(readFile(QDir(projectPath).absoluteFilePath(QStringLiteral("main.lh"))), changedScript);
+        QCOMPARE(readFile(QDir(projectPath).absoluteFilePath(QStringLiteral("main.lh"))), QStringLiteral("PROGRAM Initial\nEND_PROGRAM\n"));
         QCOMPARE(readFile(auxiliaryPath), QStringLiteral("updated note"));
+        QVERIFY(editor->isModified());
+        QVERIFY(controller->isModified());
+        QVERIFY(QMetaObject::invokeMethod(window.data(), "onSaveAll", Qt::DirectConnection));
+        QCOMPARE(readFile(QDir(projectPath).absoluteFilePath(QStringLiteral("main.lh"))), changedScript);
         QVERIFY(!editor->isModified());
         QVERIFY(!controller->isModified());
     }
@@ -296,6 +300,31 @@ private slots:
         QVERIFY(editor.isModified());
         QVERIFY(controller.isModified());
         QCOMPARE(readFile(QDir(projectPath).absoluteFilePath(QStringLiteral("main.lh"))), initialScript);
+    }
+
+    void manualSaveConfigFailureRollsBackScriptBytes()
+    {
+        QTemporaryDir tempDir;
+        QVERIFY(tempDir.isValid());
+        const QString initialScript = QStringLiteral("PROGRAM Initial\nEND_PROGRAM\n");
+        const QString projectPath = createProject(tempDir.path(), QStringLiteral("project_a"), initialScript);
+        QVERIFY(!projectPath.isEmpty());
+
+        DslScriptEditor editor;
+        ProjectController controller;
+        bindEditor(controller, editor);
+        QVERIFY(controller.openProjectFromPath(projectPath));
+        const QString changedScript = QStringLiteral("PROGRAM ManualSave\nEND_PROGRAM\n");
+        setDirtyScript(controller, editor, changedScript);
+
+        const QString configPath = QDir(projectPath).absoluteFilePath(QStringLiteral("project_config.json"));
+        QVERIFY(QFile::remove(configPath));
+        QVERIFY(QDir().mkpath(configPath));
+        QVERIFY(!controller.saveProject());
+        QCOMPARE(readFile(QDir(projectPath).absoluteFilePath(QStringLiteral("main.lh"))), initialScript);
+        QCOMPARE(editor.currentScript(), changedScript);
+        QVERIFY(editor.isModified());
+        QVERIFY(controller.isModified());
     }
 
     void closeCancelKeepsProjectAndEditor()

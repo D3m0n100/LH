@@ -53,6 +53,17 @@ public:
     ~SettingsController() override;
 
     // ===== 设置项访问 =====
+
+    enum class ThemePreference { Light = 0, Dark = 1 };
+    enum class DensityPreference { Compact = 0, Comfortable = 1 };
+
+    /// 主题：0=浅色，1=深色
+    int themeMode() const { return m_themeMode; }
+    void setThemeMode(int mode);
+
+    /// 密度：0=紧凑，1=舒适
+    int density() const { return m_density; }
+    void setDensity(int density);
     
     /// 获取默认项目目录
     QString defaultProjectDir() const { return m_defaultProjectDir; }
@@ -98,7 +109,7 @@ public:
     void applyAllSettings(QPlainTextEdit* editor, QTextEdit* outputViewer);
 
     // ===== 布局与窗口状态持久化 =====
-    static const int CURRENT_LAYOUT_VERSION = 1;
+    static const int CURRENT_LAYOUT_VERSION = 2;
 
     int layoutVersion() const { return m_layoutVersion; }
     void setLayoutVersion(int version) { m_layoutVersion = version; }
@@ -111,6 +122,11 @@ public:
 
     QByteArray workspaceLayoutState(const QString& workspaceId) const;
     void setWorkspaceLayoutState(const QString& workspaceId, const QByteArray& state);
+
+    bool systemViewFloating(const QString& workspaceId) const;
+    void setSystemViewFloating(const QString& workspaceId, bool floating);
+    QByteArray systemViewFloatGeometry(const QString& workspaceId) const;
+    void setSystemViewFloatGeometry(const QString& workspaceId, const QByteArray& geometry);
 
     void clearWorkspaceLayouts();
 
@@ -134,6 +150,12 @@ signals:
     
     /// 字体大小已变化
     void fontSizeChanged(int pointSize);
+
+    /// 主题已变化（0=浅色，1=深色）
+    void themeModeChanged(int mode);
+
+    /// 密度已变化（0=紧凑，1=舒适）
+    void densityChanged(int density);
     
     /// 所有设置已应用
     void settingsApplied();
@@ -148,12 +170,16 @@ private:
     QString m_defaultProjectDir;    ///< 默认项目目录
     bool m_autoScrollLog = true;    ///< 日志自动滚动
     int m_fontSizeIndex = 1;        ///< 字体大小索引 (0=小, 1=中, 2=大)
+    int m_themeMode = 0;            ///< 0=浅色, 1=深色
+    int m_density = 0;              ///< 0=紧凑, 1=舒适
     
     // ===== 布局状态项 =====
     int m_layoutVersion = CURRENT_LAYOUT_VERSION;
     QByteArray m_windowGeometry;
     QString m_activeWorkspaceId;
     QMap<QString, QByteArray> m_workspaceStates;
+    QMap<QString, bool> m_systemViewFloating;
+    QMap<QString, QByteArray> m_systemViewFloatGeometry;
 
     // ===== 常量 =====
     static const int FONT_SIZE_SMALL = 9;

@@ -501,6 +501,22 @@ configure_lh_test(designer_p1_robustness_test
 )
 register_lh_test(DesignerP1RobustnessTest designer_p1_robustness_test)
 
+add_executable(theme_density_test theme_density_test.cpp ${CMAKE_SOURCE_DIR}/resources/resources.qrc)
+target_link_libraries(theme_density_test PRIVATE designer_module Qt5::Test Qt5::Widgets)
+configure_lh_test(theme_density_test)
+register_lh_test(ThemeDensityTest theme_density_test)
+
+add_executable(phase2_workflow_safety_test phase2_workflow_safety_test.cpp
+    ${CMAKE_SOURCE_DIR}/resources/resources.qrc)
+target_link_libraries(phase2_workflow_safety_test PRIVATE designer_module monitor Qt5::Widgets Qt5::Charts Qt5::Test)
+configure_lh_test(phase2_workflow_safety_test ${CMAKE_SOURCE_DIR}/src/designer)
+register_lh_test(Phase2WorkflowSafetyTest phase2_workflow_safety_test)
+
+add_executable(phase2_run_preparation_test phase2_run_preparation_test.cpp ${CMAKE_SOURCE_DIR}/resources/resources.qrc)
+target_link_libraries(phase2_run_preparation_test PRIVATE designer_module monitor Qt5::Core Qt5::Test)
+configure_lh_test(phase2_run_preparation_test)
+register_lh_test(Phase2RunPreparationTest phase2_run_preparation_test)
+
 # Manual visual acceptance: render the actual widgets in both application themes.
 add_executable(full_review_regression_test full_review_regression_test.cpp)
 add_executable(database_startup_migration_test database_startup_migration_test.cpp)
@@ -518,13 +534,22 @@ if(WIN32)
 endif()
 register_lh_test(FullReviewRegressionTest full_review_regression_test)
 
-add_executable(ui_style_preview ui_style_preview.cpp ${CMAKE_SOURCE_DIR}/resources/resources.qrc)
 add_executable(review_20261023_test review_20261023_test.cpp)
 target_link_libraries(review_20261023_test PRIVATE designer_module monitor core_module Qt5::Test Qt5::Widgets Qt5::Network)
 configure_lh_test(review_20261023_test)
 register_lh_test(Review20261023Test review_20261023_test)
-target_link_libraries(ui_style_preview PRIVATE designer_module Qt5::Widgets Qt5::Charts)
-configure_lh_test(ui_style_preview)
+# Development-only visual capture utility, archived outside the product/test sources.
+# Default builds do not recreate its executable in build/bin.
+option(LH_BUILD_UI_STYLE_PREVIEW "Enable the archived development UI capture utility" OFF)
+if(LH_BUILD_UI_STYLE_PREVIEW)
+    set(LH_UI_STYLE_PREVIEW_SOURCE_DIR
+        "${CMAKE_SOURCE_DIR}/build_dev_artifacts/source/ui_style_preview")
+    if(NOT EXISTS "${LH_UI_STYLE_PREVIEW_SOURCE_DIR}/CMakeLists.txt")
+        message(FATAL_ERROR "The optional UI preview source is not present in build_dev_artifacts/source/ui_style_preview")
+    endif()
+    add_subdirectory("${LH_UI_STYLE_PREVIEW_SOURCE_DIR}"
+        "${CMAKE_SOURCE_DIR}/build_dev_artifacts/cache/ui-style-preview-target")
+endif()
 
 add_executable(lm_parity_software_test lm_parity_software_test.cpp)
 target_link_libraries(lm_parity_software_test PRIVATE designer_module Qt5::Test)

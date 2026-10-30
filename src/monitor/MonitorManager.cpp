@@ -23,10 +23,11 @@
 #include <QCoreApplication>
 #include <QHash>
 #include <QSet>
+#include <QJsonDocument>
+#include <QJsonObject>
 
 #include <algorithm>
 #include <cmath>
-#include <random>
 #include <utility>
 
 namespace Monitor {
@@ -35,170 +36,6 @@ namespace {
 
 // 用于标记 applyConfiguration() 生成/管理的资源，便于幂等清理
 constexpr const char* kRuntimeManagedKey = "__runtimeManaged";
-struct DemoSamplerState
-{
-    std::mt19937 rng;
-    std::normal_distribution<double> noise;
-    double minValue = 0.0;
-    double maxValue = 100.0;
-    double value = 0.0;
-    double phase = 0.0;
-    bool isDigital = false;
-    int digitalValue = 0;
-    int tick = 0;
-
-    DemoSamplerState(uint32_t seed, double minV, double maxV, bool digital)
-        : rng(seed)
-        , noise(0.0, 1.0)
-        , minValue(minV)
-        , maxValue(maxV)
-        , isDigital(digital)
-    {
-        constexpr double kPi = 3.14159265358979323846;
-        const double mid = (minValue + maxValue) * 0.5;
-        value = mid;
-        phase = (static_cast<double>(seed % 360) / 180.0) * kPi;
-        digitalValue = (seed % 2) ? 1 : 0;
-    }
-};
-
-static QString normalizeUnit(QString unit)
-{
-    unit = unit.trimmed();
-    unit.replace(QStringLiteral("℃"), QStringLiteral("°C"));
-    return unit;
-}
-
-static bool isDigitalSnippetOrUnit(const QString& snippetId, const QString& unit, const QVariantMap& metadata)
-{
-    const QString sid = snippetId.trimmed().toLower();
-    const QString u = normalizeUnit(unit).trimmed().toLower();
-
-    if (sid.contains("digital")) {
-        return true;
-    }
-    if (metadata.value("type").toString().toLower().contains("digital")) {
-        return true;
-    }
-    if (metadata.value("digital").toBool()) {
-        return true;
-    }
-    if (u.isEmpty() && (sid.contains("input") || sid.contains("output"))) {
-        // 仍然需要避免把 analog_* 误判为数字点
-        if (!sid.contains("analog")) {
-            return true;
-        }
-    }
-    if (u == "bool" || u == "boolean" || u == "on/off" || u == "onoff") {
-        return true;
-    }
-    return false;
-}
-
-static void inferRangeFromUnitAndMetadata(const QString& unit,
-                                         const QVariantMap& metadata,
-                                         double& outMin,
-                                         double& outMax)
-{
-    const bool hasMin = metadata.contains("min_value") || metadata.contains("min");
-    const bool hasMax = metadata.contains("max_value") || metadata.contains("max");
-    if (hasMin && hasMax) {
-        outMin = metadata.value("min_value", metadata.value("min")).toDouble();
-        outMax = metadata.value("max_value", metadata.value("max")).toDouble();
-        if (outMax < outMin) {
-            std::swap(outMin, outMax);
-        }
-        return;
-    }
-
-    const QString u = normalizeUnit(unit).toLower();
-
-    if (u.contains("%")) {
-        outMin = 0.0;
-        outMax = 100.0;
-    } else if (u.contains("bar")) {
-        outMin = 0.0;
-        outMax = 100.0;
-    } else if (u.contains("mpa")) {
-        outMin = 0.0;
-        outMax = 10.0;
-    } else if (u.contains("掳c") || u.contains("c")) {
-        outMin = 0.0;
-        outMax = 150.0;
-    } else if (u.contains("ma")) {
-        outMin = 0.0;
-        outMax = 20.0;
-    } else if (u == "v" || u.endsWith(" v") || u.contains("volt")) {
-        outMin = 0.0;
-        outMax = 10.0;
-    } else if (u.contains("rpm")) {
-        outMin = 0.0;
-        outMax = 3000.0;
-    } else if (u.contains("l/min") || u.contains("lpm")) {
-        outMin = 0.0;
-        outMax = 200.0;
-    } else if (u.contains("ms")) {
-        outMin = 0.0;
-        outMax = 5000.0;
-    } else {
-        outMin = 0.0;
-        outMax = 100.0;
-    }
-}
-
-static std::function<double()> makeDemoSampler(const QString& providerId,
-                                               const QString& channelName,
-                                               const QString& unit,
-                                               const QString& snippetId,
-                                               const QVariantMap& metadata)
-{
-    const uint32_t seed = static_cast<uint32_t>(qHash(providerId + "|" + channelName + "|" + unit + "|" + snippetId));
-    const bool digital = isDigitalSnippetOrUnit(snippetId, unit, metadata);
-
-    double minV = 0.0;
-    double maxV = 100.0;
-    inferRangeFromUnitAndMetadata(unit, metadata, minV, maxV);
-
-    if (digital) {
-        minV = 0.0;
-        maxV = 1.0;
-    }
-
-
-    auto state = std::make_shared<DemoSamplerState>(seed, minV, maxV, digital);
-
-    return [state]() -> double {
-        state->tick++;
-
-        if (state->isDigital) {
-            if (state->tick % 25 == 0) {
-                const int r = static_cast<int>(state->rng() % 4); // 25% 机会翻转
-                if (r == 0) {
-                    state->digitalValue = 1 - state->digitalValue;
-                }
-            }
-            return static_cast<double>(state->digitalValue);
-        }
-
-        const double range = std::max(1e-9, state->maxValue - state->minValue);
-        const double mid = (state->minValue + state->maxValue) * 0.5;
-        const double amplitude = range * 0.25;
-
-        state->phase += 0.08; // 控制变化速度
-        const double target = mid + amplitude * std::sin(state->phase);
-
-        const double noiseStd = range * 0.01;
-        const double n = state->noise(state->rng) * noiseStd;
-
-        state->value = state->value * 0.92 + target * 0.08 + n;
-
-        // 限幅
-        if (state->value < state->minValue) state->value = state->minValue;
-        if (state->value > state->maxValue) state->value = state->maxValue;
-        return state->value;
-    };
-}
-
 } // namespace
 
 // ============================================================================
@@ -817,6 +654,17 @@ void MonitorManager::dispatchToProcessor(const QString& channelName,
 
 bool MonitorManager::applyConfiguration(const ProjectRuntimeConfig& config)
 {
+    const QJsonObject fullConfig = config.toJson();
+    QJsonObject identityConfig;
+    for (const auto& key : {QStringLiteral("target"), QStringLiteral("controller"),
+                            QStringLiteral("transport"), QStringLiteral("bridge"),
+                            QStringLiteral("protocol"), QStringLiteral("commParameters")})
+        identityConfig.insert(key, fullConfig.value(key));
+    const QByteArray configIdentity = QJsonDocument(identityConfig).toJson(QJsonDocument::Compact);
+    const bool preserveMatchingHistory = !m_runtimeSessionIdentity.isEmpty()
+            && m_runtimeSessionIdentity == m_appliedRuntimeSessionIdentity
+            && m_runtimeBackendGeneration == m_appliedBackendGeneration
+            && configIdentity == m_appliedRuntimeConfig;
     qDebug() << "[MonitorManager] applyConfiguration 开始"
              << "project=" << config.projectName
              << "providers=" << config.providers.size()
@@ -1006,6 +854,7 @@ bool MonitorManager::applyConfiguration(const ProjectRuntimeConfig& config)
                 return false;
             }
         }
+        candidate.channelConfigs[channelName].metadata.insert(QStringLiteral("__providerId"), providerId);
 
         ProviderConfig provider;
         provider.id = providerId;
@@ -1032,14 +881,6 @@ bool MonitorManager::applyConfiguration(const ProjectRuntimeConfig& config)
             provider.metadata["lineNumber"] = mapping.lineNumber;
         }
 
-        if (!deviceBackend()) {
-            const QString snippetId = provider.metadata.value("snippetId").toString();
-            provider.sampler = makeDemoSampler(provider.id, provider.channelName,
-                                               provider.unit, snippetId, provider.metadata);
-            provider.errorHandler = [pid = provider.id](const QString& error) {
-                qWarning() << "[MonitorManager] provider error:" << pid << error;
-            };
-        }
         candidate.providers.insert(provider.id, provider);
 
         if (deviceBackend()) {
@@ -1212,8 +1053,28 @@ bool MonitorManager::applyConfiguration(const ProjectRuntimeConfig& config)
     }
 
     QMap<QString, std::shared_ptr<MonitorChannel>> candidateChannels;
+    QSet<QString> retainedRuntimeChannels;
     for (auto it = candidate.channelConfigs.constBegin();
          it != candidate.channelConfigs.constEnd(); ++it) {
+        if (preserveMatchingHistory) {
+            QReadLocker locker(&m_channelLock);
+            const auto existing = m_channels.value(it.key());
+            const auto oldConfig = existing ? existing->config() : ChannelConfig();
+            const auto& newConfig = it.value();
+            QVariantMap oldSource = oldConfig.metadata;
+            QVariantMap newSource = newConfig.metadata;
+            oldSource.remove(QStringLiteral("periodMs"));
+            newSource.remove(QStringLiteral("periodMs"));
+            if (existing && oldConfig.metadata.value(kRuntimeManagedKey).toBool()
+                    && oldConfig.name == newConfig.name && oldConfig.unit == newConfig.unit
+                    && oldConfig.objectKind == newConfig.objectKind
+                    && oldConfig.sourceName == newConfig.sourceName
+                    && oldSource == newSource) {
+                candidateChannels.insert(it.key(), existing);
+                retainedRuntimeChannels.insert(it.key());
+                continue;
+            }
+        }
         auto channel = std::make_shared<MonitorChannel>(it.value());
         connectChannelSignals(channel);
         candidateChannels.insert(it.key(), channel);
@@ -1291,6 +1152,9 @@ bool MonitorManager::applyConfiguration(const ProjectRuntimeConfig& config)
     previousProviders.swap(nextProviders);
     previousTimers.swap(nextTimers);
 
+    for (const auto& channelName : retainedRuntimeChannels)
+        candidateChannels.value(channelName)->updateConfig(candidate.channelConfigs.value(channelName));
+
     for (const QString& providerId : oldRuntimeProviderIds) {
         if (QTimer* timer = previousTimers.take(providerId)) {
             timer->stop();
@@ -1304,12 +1168,16 @@ bool MonitorManager::applyConfiguration(const ProjectRuntimeConfig& config)
     QPointer<MonitorDataProcessor> proc = m_dataProcessor;
     if (proc) {
         for (const QString& channelName : oldRuntimeChannelNames) {
-            proc->clearChannelCache(channelName);
+            if (!retainedRuntimeChannels.contains(channelName)) proc->clearChannelCache(channelName);
         }
         for (auto it = candidateChannels.constBegin(); it != candidateChannels.constEnd(); ++it) {
             proc->ensureChannel(it.key());
         }
     }
+
+    m_appliedRuntimeSessionIdentity = m_runtimeSessionIdentity;
+    m_appliedRuntimeConfig = configIdentity;
+    m_appliedBackendGeneration = m_runtimeBackendGeneration;
 
     if (!oldRuntimeChannelNames.isEmpty() || !candidateChannels.isEmpty()) {
         emit channelsChanged();

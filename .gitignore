@@ -7,7 +7,6 @@ cmake-build-*/
 out/
 bin/
 lib/
-build_current_mingw/
 build_codex_verify_mingw/
 
 # Local OCR and assistant-generated workspace data

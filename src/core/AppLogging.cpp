@@ -322,10 +322,16 @@ void messageHandler(QtMsgType type, const QMessageLogContext& context, const QSt
 QString configuredDirectory(LogState& logState)
 {
     if (logState.directory.isEmpty()) {
-        const QString appData = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
-        if (!appData.isEmpty()) {
-            logState.directory = QDir(appData).filePath(QStringLiteral("logs"));
+        const QString overrideDirectory = qEnvironmentVariable("LH_LOG_DIRECTORY").trimmed();
+        if (!overrideDirectory.isEmpty()) {
+            logState.directory = QDir::cleanPath(overrideDirectory);
             logState.activePath = QDir(logState.directory).filePath(QStringLiteral("lh.log"));
+        } else {
+            const QString appData = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
+            if (!appData.isEmpty()) {
+                logState.directory = QDir(appData).filePath(QStringLiteral("logs"));
+                logState.activePath = QDir(logState.directory).filePath(QStringLiteral("lh.log"));
+            }
         }
     }
     return logState.directory;

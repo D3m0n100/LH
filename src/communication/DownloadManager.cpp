@@ -9,6 +9,7 @@
 #include "ICommInterface.h"
 
 #include <QFile>
+#include <QCryptographicHash>
 #include <QMutexLocker>
 #include <QPointer>
 
@@ -160,7 +161,8 @@ public slots:
         finish();
     }
 
-    void doDownload(const QString& profileJsonPath, const QString& payloadFilePath)
+    void doDownload(const QString& profileJsonPath, const QString& payloadFilePath,
+                    const QString& expectedProfileSha256, const QString& expectedPayloadSha256)
     {
         if (!claimRtuPort()) {
             emit errorOccurred(DownloadManager::ErrorCode::DEVICE_BUSY,
@@ -170,9 +172,26 @@ public slots:
             return;
         }
 
+        QFile profileFile(profileJsonPath);
+        if (!profileFile.open(QIODevice::ReadOnly)) {
+            emit errorOccurred(DownloadManager::ErrorCode::INVALID_CONFIG,
+                               "Failed to load profile", profileFile.errorString());
+            finish();
+            return;
+        }
+        const QByteArray profileBytes = profileFile.readAll();
+        const QString profileSha256 = QString::fromLatin1(
+                    QCryptographicHash::hash(profileBytes, QCryptographicHash::Sha256).toHex());
+        if (profileFile.error() != QFileDevice::NoError || profileSha256 != expectedProfileSha256) {
+            emit errorOccurred(DownloadManager::ErrorCode::INVALID_CONFIG,
+                               "Download confirmation expired", "Profile bytes changed after confirmation");
+            finish();
+            return;
+        }
+
         DownloadProfile profile;
         QString perr;
-        if (!DownloadProfile::fromJsonFile(profileJsonPath, profile, &perr)) {
+        if (!DownloadProfile::fromJson(profileBytes, profile, &perr)) {
             emit errorOccurred(DownloadManager::ErrorCode::INVALID_CONFIG, "Failed to load profile", perr);
             finish();
             return;
@@ -185,6 +204,14 @@ public slots:
             return;
         }
         const QByteArray payload = pf.readAll();
+        const QString payloadSha256 = QString::fromLatin1(
+                    QCryptographicHash::hash(payload, QCryptographicHash::Sha256).toHex());
+        if (pf.error() != QFileDevice::NoError || payloadSha256 != expectedPayloadSha256) {
+            emit errorOccurred(DownloadManager::ErrorCode::INVALID_CONFIG,
+                               "Download confirmation expired", "Payload bytes changed after confirmation");
+            finish();
+            return;
+        }
         if (CompileArtifactPolicy::containsMarker(payload)) {
             emit errorOccurred(DownloadManager::ErrorCode::INVALID_CONFIG,
                                CompileArtifactPolicy::operationUnavailableMessage(),
@@ -381,6 +408,11 @@ DownloadManager::DownloadManager(QObject* parent)
     : QObject(parent)
 {
     qRegisterMetaType<DownloadManager::ErrorCode>("DownloadManager::ErrorCode");
+    connect(&m_thread, &QThread::finished, this, [this]() {
+        if (!m_busy) return;
+        m_busy = false;
+        emit busyChanged(false);
+    });
 }
 
 DownloadManager::~DownloadManager()
@@ -435,11 +467,21 @@ void DownloadManager::startConnectProbe()
             m_activeCancelState.reset();
     });
 
+    m_busy = true;
+    emit busyChanged(true);
     m_thread.start();
 }
 
-void DownloadManager::startDownload(const QString& profileJsonPath, const QString& payloadFilePath)
+void DownloadManager::startDownload(const QString& profileJsonPath, const QString& payloadFilePath,
+                                    const QString& expectedProfileSha256,
+                                    const QString& expectedPayloadSha256)
 {
+    if (expectedProfileSha256.trimmed().isEmpty() || expectedPayloadSha256.trimmed().isEmpty()) {
+        emit errorOccurred(ErrorCode::INVALID_CONFIG,
+                           QStringLiteral("Download confirmation is required"),
+                           QStringLiteral("Missing approved profile or payload SHA-256"));
+        return;
+    }
     if (m_thread.isRunning()) {
         return;
     }
@@ -452,8 +494,10 @@ void DownloadManager::startDownload(const QString& profileJsonPath, const QStrin
     worker->setCancellationState(cancelState);
     worker->moveToThread(&m_thread);
 
-    connect(&m_thread, &QThread::started, worker, [worker, profileJsonPath, payloadFilePath]() {
-        worker->doDownload(profileJsonPath, payloadFilePath);
+    connect(&m_thread, &QThread::started, worker, [worker, profileJsonPath, payloadFilePath,
+            expectedProfileSha256, expectedPayloadSha256]() {
+        worker->doDownload(profileJsonPath, payloadFilePath,
+                           expectedProfileSha256, expectedPayloadSha256);
     }, Qt::QueuedConnection);
 
     connect(worker, &DownloadWorker::statusChanged, this, &DownloadManager::statusChanged);
@@ -478,6 +522,8 @@ void DownloadManager::startDownload(const QString& profileJsonPath, const QStrin
             m_activeCancelState.reset();
     });
 
+    m_busy = true;
+    emit busyChanged(true);
     m_thread.start();
 }
 

@@ -3,6 +3,7 @@
 
 #include <QWidget>
 #include <QMap>
+#include <QPointer>
 
 #include "../../common/ConfigTypes.h"
 
@@ -43,6 +44,9 @@ public:
     void setParameterReadbackReady(const QStringList& readyParameterNames);
     void setParameterDeviationMap(const QMap<QString, double>& deviationMap);
     void setParameterStateMap(const QMap<QString, ParameterStateInfo>& stateMap);
+    void setParameterRuntimeOnline(bool online);
+    void invalidateParameterEdits();
+    quint64 parameterEditGeneration() const { return m_parameterEditGeneration; }
 
     void clearSelection();
     void setSelectedObject(const QString& type, const QString& name, const QMap<QString, QString>& properties);
@@ -59,7 +63,8 @@ signals:
     void requestCompile();
     void requestRun();
     void requestOpenMonitor();
-    void requestEditParameter(const QString& parameterName);
+    void parameterValueCommitted(const QString& pointId, const QString& value, bool applyNow);
+    void parameterEditStarted();
     void requestApplyParameters();
 
 private:
@@ -100,6 +105,9 @@ private:
     QStringList m_readbackReadyParameters;
     QMap<QString, double> m_parameterDeviationMap;
     QMap<QString, ParameterStateInfo> m_parameterStateMap;
+    bool m_parameterRuntimeOnline = true;
+    QPointer<QWidget> m_parameterEditor;
+    quint64 m_parameterEditGeneration = 0;
     PanelMode m_panelMode = PanelMode::Tuning;
     QGroupBox* m_stateGroup = nullptr;
     QGroupBox* m_contextGroup = nullptr;

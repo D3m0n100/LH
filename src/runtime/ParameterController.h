@@ -70,6 +70,8 @@ private:
         ParameterState current;
     };
     bool notifyStateChanges(const QList<StateChange>& changes);
+    QString uniqueKeyForName(const QString& name) const;
+    bool editParameterByKey(const QString& key, const QString& value);
     bool validateModifiedParametersForTargets(const QStringList& targetPointIds, QString* errorMessage) const;
     enum class ReadbackDecision {
         Success,

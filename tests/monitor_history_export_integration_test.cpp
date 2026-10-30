@@ -222,7 +222,8 @@ private:
         QVERIFY(headerIndex >= 0);
         const QString expectedHeader = QStringLiteral("timestamp") + separator
             + QStringLiteral("timestamp_ms") + separator + QStringLiteral("channel_id")
-            + separator + QStringLiteral("channel_name") + separator + QStringLiteral("value")
+            + separator + QStringLiteral("channel_name") + separator + QStringLiteral("source")
+            + separator + QStringLiteral("value")
             + separator + QStringLiteral("unit") + separator + QStringLiteral("quality")
             + separator + QStringLiteral("value_valid");
         QCOMPARE(lines.at(headerIndex), expectedHeader);
@@ -235,21 +236,22 @@ private:
                 QVERIFY(lineIndex < lines.size());
                 const QStringList fields = lines.at(lineIndex++).split(
                     separator, Qt::KeepEmptyParts);
-                QCOMPARE(fields.size(), 8);
+                QCOMPARE(fields.size(), 9);
                 QCOMPARE(fields.at(0),
                          record.timestamp.toUTC().toString(QStringLiteral("yyyy-MM-dd hh:mm:ss.zzz")));
                 QCOMPARE(fields.at(1), QString::number(record.timestamp.toMSecsSinceEpoch()));
                 QCOMPARE(fields.at(2), channel);
                 QCOMPARE(fields.at(3), displayNameFor(channel));
+                QCOMPARE(fields.at(4), QStringLiteral("real"));
                 if (record.valueValid) {
-                    QCOMPARE(fields.at(4), QString::number(record.value, 'g', 6));
+                    QCOMPARE(fields.at(5), QString::number(record.value, 'g', 6));
                 } else {
-                    QVERIFY(fields.at(4).isEmpty());
-                    QCOMPARE(fields.at(7), QStringLiteral("0"));
+                    QVERIFY(fields.at(5).isEmpty());
+                    QCOMPARE(fields.at(8), QStringLiteral("0"));
                 }
-                QCOMPARE(fields.at(5), unitFor(channel));
-                QCOMPARE(fields.at(6), runtimePointQualityToString(record.quality));
-                QCOMPARE(fields.at(7), record.valueValid ? QStringLiteral("1")
+                QCOMPARE(fields.at(6), unitFor(channel));
+                QCOMPARE(fields.at(7), runtimePointQualityToString(record.quality));
+                QCOMPARE(fields.at(8), record.valueValid ? QStringLiteral("1")
                                                            : QStringLiteral("0"));
                 ++exportedCount;
             }
@@ -518,6 +520,7 @@ private slots:
         QList<ExportChannelInfo> channelInfos;
         for (const QString& channel : channels) {
             ExportChannelInfo info(channel, displayNameFor(channel), unitFor(channel), 100);
+            info.source = QStringLiteral("real");
             info.sampleCount = recordsPerChannel;
             channelInfos.append(info);
         }
@@ -583,6 +586,7 @@ private slots:
         QList<ExportChannelInfo> alignedInfos;
         for (const QString& channel : alignedChannels) {
             ExportChannelInfo info(channel, displayNameFor(channel), unitFor(channel), 100);
+            info.source = QStringLiteral("real");
             info.sampleCount = recordsPerChannel;
             alignedInfos.append(info);
         }

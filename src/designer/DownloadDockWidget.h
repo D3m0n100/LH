@@ -4,6 +4,10 @@
 #pragma once
 #include <QWidget>
 #include <QVariantMap>
+#include <functional>
+#include <utility>
+
+#include "DownloadConfirmation.h"
 
 class QComboBox;
 class QSpinBox;
@@ -25,9 +29,18 @@ public:
     int baudRate() const;
     int targetStationId() const;
     void setTargetStationId(int id);
+    bool isBusy() const { return m_busy; }
+
+    using DownloadConfirmHandler =
+            std::function<bool(const DownloadConfirmationSnapshot&)>;
+    void setDownloadConfirmHandler(DownloadConfirmHandler handler)
+    {
+        m_confirmHandler = std::move(handler);
+    }
 
 signals:
     void targetConfigChanged();
+    void busyChanged(bool busy);
 
 private slots:
     void onConnectProbe();
@@ -50,4 +63,6 @@ private:
     QTextEdit* m_log = nullptr;
 
     DownloadManager* m_mgr = nullptr;
+    bool m_busy = false;
+    DownloadConfirmHandler m_confirmHandler;
 };

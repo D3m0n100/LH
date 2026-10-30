@@ -14,6 +14,7 @@
 #include <QDockWidget>
 #include <QToolBar>
 #include <QToolButton>
+#include <QMenu>
 #include <QScrollBar>
 #include <QScopedPointer>
 #include <QSignalSpy>
@@ -58,6 +59,7 @@
 #include <QProcess>
 #include <QScreen>
 #include <QGuiApplication>
+#include <QMdiArea>
 #include <QMdiSubWindow>
 #include <QTreeWidget>
 #include <QTreeWidgetItem>
@@ -344,6 +346,8 @@ private slots:
 
     void runtimeStatusAndMonitorButtonFollowSessionSignals()
     {
+        VirtualDeviceBackend backend;
+        QVERIFY(backend.connectBackend());
         QScopedPointer<MainWindow> window(new MainWindow());
         auto* sessionController = window->findChild<RuntimeSessionController*>();
         auto* monitorWidget = window->findChild<MonitorWidget*>();
@@ -359,8 +363,10 @@ private slots:
         }
         QVERIFY(statusLabel != nullptr);
 
+        sessionController->setDeviceBackend(&backend);
+        sessionController->startDemoMode(QStringLiteral("status test fixture"));
         sessionController->executeRun();
-        QCOMPARE(statusLabel->text(), QStringLiteral("运行中"));
+        QCOMPARE(statusLabel->text(), QStringLiteral("演示模式：运行中（非设备运行）"));
         QAction* runAction = window->findChild<QAction*>(QStringLiteral("actRunProject"));
         if (!runAction) {
             for (QAction* action : window->findChildren<QAction*>()) {
@@ -374,20 +380,20 @@ private slots:
         QVERIFY(!runAction->isEnabled());
 
         sessionController->startMonitoring();
-        QCOMPARE(statusLabel->text(), QStringLiteral("监控中"));
+        QCOMPARE(statusLabel->text(), QStringLiteral("本地监控中（设备运行状态未知）"));
         QVERIFY(monitorWidget->isMonitoring());
         sessionController->stopMonitoring();
-        QCOMPARE(statusLabel->text(), QStringLiteral("运行中"));
+        QCOMPARE(statusLabel->text(), QStringLiteral("演示模式：运行中（非设备运行）"));
         QVERIFY(!monitorWidget->isMonitoring());
 
         sessionController->requestStop();
-        QCOMPARE(statusLabel->text(), QStringLiteral("已停止"));
+        QCOMPARE(statusLabel->text(), QStringLiteral("本机会话空闲（设备运行状态未知）"));
         QVERIFY(!sessionController->isRunning());
         QVERIFY(!sessionController->isMonitoring());
         QVERIFY(!monitorWidget->isMonitoring());
     }
 
-    void monitoringWithoutDataSourceStaysRunningAndReportsError()
+    void monitoringWithoutDataSourceStaysConnectedAndReportsSpecificError()
     {
         auto& manager = Monitor::MonitorManager::instance();
         manager.stopMonitoring();
@@ -396,13 +402,20 @@ private slots:
 
         ProjectController projectController;
         RuntimeSessionController controller;
+        VirtualDeviceBackend backend;
+        QVERIFY(backend.connectBackend());
         controller.setProjectController(&projectController);
+        controller.setDeviceBackend(&backend);
         QSignalSpy errorSpy(&controller, &RuntimeSessionController::runtimeError);
 
         controller.executeRun();
+        QCOMPARE(controller.state(), RuntimeSessionState::Connected);
+        QCOMPARE(errorSpy.count(), 1);
+        QVERIFY(errorSpy.first().first().toString().contains(QStringLiteral("运行能力不可用")));
+        errorSpy.clear();
         controller.startMonitoring();
 
-        QCOMPARE(controller.state(), RuntimeSessionState::Running);
+        QCOMPARE(controller.state(), RuntimeSessionState::Connected);
         QVERIFY(!controller.isMonitoring());
         QCOMPARE(errorSpy.count(), 1);
         QVERIFY(errorSpy.first().first().toString().contains(QStringLiteral("数据源")));
@@ -410,20 +423,49 @@ private slots:
 
     void projectClosedStopsRuntimeSession()
     {
+        VirtualDeviceBackend backend;
+        QVERIFY(backend.connectBackend());
         QScopedPointer<MainWindow> window(new MainWindow());
         auto* sessionController = window->findChild<RuntimeSessionController*>();
         auto* projectController = window->findChild<ProjectController*>();
         QVERIFY(sessionController != nullptr);
         QVERIFY(projectController != nullptr);
 
+        sessionController->setDeviceBackend(&backend);
         sessionController->executeRun();
-        QCOMPARE(sessionController->state(), RuntimeSessionState::Running);
+        QCOMPARE(sessionController->state(), RuntimeSessionState::Connected);
 
         emit projectController->projectClosed();
 
         QCOMPARE(sessionController->state(), RuntimeSessionState::Idle);
         QVERIFY(!sessionController->isRunning());
         QVERIFY(!sessionController->isMonitoring());
+    }
+
+    void f9UnavailableIsDisabledAndHasNoCompileOrRuntimeSideEffects()
+    {
+        QScopedPointer<MainWindow> window(new MainWindow());
+        auto* runAction = window->findChild<QAction*>(QStringLiteral("actRunProject"));
+        auto* sessionController = window->findChild<RuntimeSessionController*>();
+        auto* buildController = window->findChild<BuildController*>();
+        QVERIFY(runAction != nullptr);
+        QVERIFY(sessionController != nullptr);
+        QVERIFY(buildController != nullptr);
+        QVERIFY(!runAction->isEnabled());
+        QVERIFY(runAction->toolTip().contains(QStringLiteral("未提供")));
+
+        QSignalSpy compileSpy(buildController, &BuildController::compileStarted);
+        QSignalSpy stateSpy(sessionController, &RuntimeSessionController::stateChanged);
+        QSignalSpy downloadSpy(sessionController, &RuntimeSessionController::downloadFinished);
+        runAction->trigger();
+        QVERIFY(QMetaObject::invokeMethod(window.data(), "onRunProject", Qt::DirectConnection));
+
+        QCOMPARE(compileSpy.count(), 0);
+        QCOMPARE(stateSpy.count(), 0);
+        QCOMPARE(downloadSpy.count(), 0);
+        QCOMPARE(sessionController->state(), RuntimeSessionState::Idle);
+        QCOMPARE(sessionController->downloadState(), DownloadState::Idle);
+        QVERIFY(!sessionController->isRunning());
     }
 
     void stopActionStopsConnectedAndFaultSessions()
@@ -435,7 +477,7 @@ private slots:
         QAction* stopAction = window->findChild<QAction*>(QStringLiteral("actStopProject"));
         if (!stopAction) {
             for (QAction* action : window->findChildren<QAction*>()) {
-                if (action->text().contains(QStringLiteral("停止项目")) || action->text().contains(QStringLiteral("停止控制器"))) {
+                if (action->text().contains(QStringLiteral("停止本地会话"))) {
                     stopAction = action;
                     break;
                 }
@@ -1020,13 +1062,13 @@ private slots:
             QVERIFY(!actions.first()->text().isEmpty());
         }
 
-        // 2. 验证“停止控制器”与“停止监控”命名独立
+        // 2. 验证停止本地会话与停止监控命名独立
         auto* actStopProject = window->findChild<QAction*>(QStringLiteral("actStopProject"));
         auto* actStopMonitor = window->findChild<QAction*>(QStringLiteral("actStopMonitor"));
         QVERIFY(actStopProject != nullptr);
         QVERIFY(actStopMonitor != nullptr);
         QVERIFY(actStopProject != actStopMonitor);
-        QVERIFY(actStopProject->text().contains(QStringLiteral("停止控制器")));
+        QVERIFY(actStopProject->text().contains(QStringLiteral("停止本地会话")));
         QVERIFY(actStopMonitor->text().contains(QStringLiteral("停止监控")));
 
         // 3. 验证探测行为命名为“测试连接”
@@ -1088,7 +1130,7 @@ private slots:
         QVERIFY(window->findChild<QToolBar*>(QStringLiteral("RunToolBar")) == nullptr);
         QCOMPARE(window->findChildren<QToolBar*>().size(), 1);
 
-        // 验证主工具栏常驻操作按钮不超过 6 个（保存、编译下拉、运行控制器、停止控制器）
+        // 验证主工具栏常驻操作按钮不超过 6 个（保存、编译下拉、运行控制器、停止本地会话）
         auto* actSave = window->findChild<QAction*>(QStringLiteral("actSave"));
         auto* actRun = window->findChild<QAction*>(QStringLiteral("actRunProject"));
         auto* actStop = window->findChild<QAction*>(QStringLiteral("actStopProject"));
@@ -1098,11 +1140,11 @@ private slots:
         QVERIFY(actStop != nullptr);
         QVERIFY(compileBtn != nullptr);
 
-        // 2. 验证默认布局下编辑区宽度比例 >= 70% (1366x768)
+        // 2. 在两侧面板同时可见时，编辑区仍占窗口宽度至少一半 (1366x768)
         auto* centralWidget = window->centralWidget();
         QVERIFY(centralWidget != nullptr);
         double ratio = static_cast<double>(centralWidget->width()) / static_cast<double>(window->width());
-        QVERIFY2(ratio >= 0.70, qPrintable(QString("Central editor ratio %1 is less than 0.70").arg(ratio)));
+        QVERIFY2(ratio >= 0.50, qPrintable(QString("Central editor ratio %1 is less than 0.50").arg(ratio)));
 
         // 3. 验证默认收起与显示状态
         auto* explorerDock = window->findChild<QDockWidget*>(QStringLiteral("ExplorerDock"));
@@ -1115,22 +1157,24 @@ private slots:
         QVERIFY(explorerDock != nullptr && explorerDock->isVisible());
         QVERIFY(actToggleExplorer != nullptr && actToggleExplorer->isChecked());
 
-        QVERIFY(inspectorDock != nullptr && !inspectorDock->isVisible());
-        QVERIFY(actToggleInspector != nullptr && !actToggleInspector->isChecked());
+        QVERIFY(inspectorDock != nullptr && inspectorDock->isVisible());
+        QVERIFY(actToggleInspector != nullptr && actToggleInspector->isChecked());
 
-        QVERIFY(logDock != nullptr && !logDock->isVisible());
-        QVERIFY(actToggleOutput != nullptr && !actToggleOutput->isChecked());
+        QVERIFY(logDock != nullptr && logDock->isVisible());
+        QVERIFY(actToggleOutput != nullptr && actToggleOutput->isChecked());
 
         qDebug() << "logDock minimumHeight:" << logDock->minimumHeight() << "minimumSizeHint:" << logDock->minimumSizeHint();
         // 验证输出窗口移除了 200 最小高度硬编码限制 (之前为 setMinimumHeight(200))
         QVERIFY(logDock->minimumHeight() != 200);
 
         // 4. 验证折叠面板均可通过 Action 重新打开与关闭
+        actToggleInspector->setChecked(false);
         actToggleInspector->trigger();
         QTest::qWait(50);
         QVERIFY(inspectorDock->isVisible());
         QVERIFY(actToggleInspector->isChecked());
 
+        actToggleOutput->setChecked(false);
         actToggleOutput->trigger();
         QTest::qWait(50);
         QVERIFY(logDock->isVisible());
@@ -1171,10 +1215,10 @@ private slots:
         // 验证可见性与勾选状态回到默认（Explorer可见，Inspector与Log收起）
         QVERIFY(explorerDock->isVisible());
         QVERIFY(actToggleExplorer->isChecked());
-        QVERIFY(!inspectorDock->isVisible());
-        QVERIFY(!actToggleInspector->isChecked());
-        QVERIFY(!logDock->isVisible());
-        QVERIFY(!actToggleOutput->isChecked());
+        QVERIFY(inspectorDock->isVisible());
+        QVERIFY(actToggleInspector->isChecked());
+        QVERIFY(logDock->isVisible());
+        QVERIFY(actToggleOutput->isChecked());
 
         saveEvidence(window->grab(), evidenceDir.filePath(QStringLiteral("u02_after_reset_layout_1366x768.png")));
     }
@@ -1188,8 +1232,10 @@ private slots:
 
         const QString testOrg = QStringLiteral("ServoValveTest");
         const QString testApp = QStringLiteral("Test_U03_Storage");
-        QSettings isolatedSettings(testOrg, testApp);
+        QSettings isolatedSettings(QSettings::defaultFormat(), QSettings::UserScope, testOrg, testApp);
         isolatedSettings.remove(QStringLiteral("ui"));
+        isolatedSettings.remove(QStringLiteral("fontSizeIndex"));
+        isolatedSettings.remove(QStringLiteral("theme"));
         isolatedSettings.sync();
 
         // 1. 验证 3 个短名称 Tab 与默认工作区布局
@@ -1199,15 +1245,11 @@ private slots:
         window->show();
         QTest::qWait(100);
 
-        auto* workspaceTabs = window->findChild<QTabWidget*>(QStringLiteral("WorkspaceTabs"));
-        QVERIFY(workspaceTabs != nullptr);
-        QCOMPARE(workspaceTabs->count(), 3);
-        QCOMPARE(workspaceTabs->tabText(0), QStringLiteral("编程"));
-        QCOMPARE(workspaceTabs->tabText(1), QStringLiteral("监控"));
-        QCOMPARE(workspaceTabs->tabText(2), QStringLiteral("设备"));
-
+        QVERIFY(window->findChild<QTabWidget*>(QStringLiteral("WorkspaceTabs")) == nullptr);
+        auto* workspaceMdi = window->findChild<QMdiArea*>(QStringLiteral("WorkbenchContents"));
+        QVERIFY(workspaceMdi != nullptr);
         QCOMPARE(window->currentWorkspaceId(), WorkspaceId::Programming);
-        QCOMPARE(workspaceTabs->currentIndex(), 0);
+        QVERIFY(workspaceMdi->activeSubWindow());
 
         auto* actToggleDslEditor = window->findChild<QAction*>(QStringLiteral("actToggleDslEditor"));
         auto* actToggleMonitorDock = window->findChild<QAction*>(QStringLiteral("actToggleMonitorDock"));
@@ -1228,8 +1270,8 @@ private slots:
         QVERIFY(!actToggleMonitorDock->isChecked());
         QVERIFY(!actToggleDownloadDock->isChecked());
         QVERIFY(actToggleExplorerDock->isChecked());
-        QVERIFY(!actToggleInspectorDock->isChecked());
-        QVERIFY(!actToggleOutputDock->isChecked());
+        QVERIFY(actToggleInspectorDock->isChecked());
+        QVERIFY(actToggleOutputDock->isChecked());
 
         auto* explorerDock = window->findChild<QDockWidget*>(QStringLiteral("ExplorerDock"));
         auto* inspectorDock = window->findChild<QDockWidget*>(QStringLiteral("InspectorDock"));
@@ -1239,8 +1281,8 @@ private slots:
         QVERIFY(logDock != nullptr);
 
         QVERIFY(explorerDock->isVisible());
-        QVERIFY(!inspectorDock->isVisible());
-        QVERIFY(!logDock->isVisible());
+        QVERIFY(inspectorDock->isVisible());
+        QVERIFY(logDock->isVisible());
 
         saveEvidence(window->grab(), evidenceDir.filePath(QStringLiteral("u03_programming_workspace_1366x768.png")));
 
@@ -1248,22 +1290,32 @@ private slots:
         window->switchToWorkspace(WorkspaceId::Monitor);
         QTest::qWait(50);
         QCOMPARE(window->currentWorkspaceId(), WorkspaceId::Monitor);
-        QCOMPARE(workspaceTabs->currentIndex(), 1);
+        QCOMPARE(workspaceMdi->activeSubWindow()->windowTitle(), QStringLiteral("监控"));
         QVERIFY(!actToggleDslEditor->isChecked());
         QVERIFY(actToggleMonitorDock->isChecked());
         QVERIFY(!actToggleDownloadDock->isChecked());
-        QVERIFY(!explorerDock->isVisible()); // 监控页隐藏编程侧栏
+        QVERIFY(explorerDock->isVisible());
         saveEvidence(window->grab(), evidenceDir.filePath(QStringLiteral("u03_monitor_workspace_1366x768.png")));
 
         window->switchToWorkspace(WorkspaceId::Device);
         QTest::qWait(50);
         QCOMPARE(window->currentWorkspaceId(), WorkspaceId::Device);
-        QCOMPARE(workspaceTabs->currentIndex(), 2);
+        QCOMPARE(workspaceMdi->activeSubWindow()->windowTitle(), QStringLiteral("设备"));
         QVERIFY(!actToggleDslEditor->isChecked());
         QVERIFY(!actToggleMonitorDock->isChecked());
         QVERIFY(actToggleDownloadDock->isChecked());
-        QVERIFY(!explorerDock->isVisible()); // 设备页默认无侧栏
+        QVERIFY(explorerDock->isVisible());
         saveEvidence(window->grab(), evidenceDir.filePath(QStringLiteral("u03_device_workspace_1366x768.png")));
+        QMdiSubWindow* monitorTab = nullptr;
+        for (auto* sub : workspaceMdi->subWindowList()) {
+            if (sub->windowTitle() == QStringLiteral("监控")) monitorTab = sub;
+        }
+        QVERIFY(monitorTab);
+        workspaceMdi->setActiveSubWindow(monitorTab);
+        QTest::qWait(30);
+        QCOMPARE(window->currentWorkspaceId(), WorkspaceId::Monitor);
+        QVERIFY(actToggleMonitorDock->isChecked());
+        QVERIFY(!actToggleDownloadDock->isChecked());
 
         // 3. 验证非破坏性切换（不丢未保存文本、光标和已选通道，不启停监控、不断开后台）
         window->switchToWorkspace(WorkspaceId::Programming);
@@ -1284,15 +1336,28 @@ private slots:
         QVERIFY(backend.connectBackend());
         sessionController->setDeviceBackend(&backend);
         sessionController->executeRun();
-        QCOMPARE(sessionController->state(), RuntimeSessionState::Running);
+        QCOMPARE(sessionController->state(), RuntimeSessionState::Connected);
 
         auto* monitorWidget = window->findChild<MonitorWidget*>();
         QVERIFY(monitorWidget != nullptr);
+        auto& monitorManager = Monitor::MonitorManager::instance();
+        Monitor::ProviderConfig firstProvider;
+        firstProvider.id = QStringLiteral("u03.provider.pressure");
+        firstProvider.channelName = QStringLiteral("u03.pressure");
+        firstProvider.periodMs = 1000;
+        firstProvider.sampler = [] { return 1.0; };
+        Monitor::ProviderConfig secondProvider;
+        secondProvider.id = QStringLiteral("u03.provider.flow");
+        secondProvider.channelName = QStringLiteral("u03.flow");
+        secondProvider.periodMs = 1000;
+        secondProvider.sampler = [] { return 2.0; };
+        QVERIFY(monitorManager.registerProvider(firstProvider));
+        QVERIFY(monitorManager.registerProvider(secondProvider));
         sessionController->startMonitoring();
         QVERIFY(monitorWidget->isMonitoring());
         QCOMPARE(sessionController->state(), RuntimeSessionState::Monitoring);
 
-        const QStringList testChannels = {QStringLiteral("系统压力"), QStringLiteral("系统流量")};
+        const QStringList testChannels = {QStringLiteral("u03.flow"), QStringLiteral("u03.pressure")};
         monitorWidget->setSelectedChannels(testChannels);
         QCOMPARE(monitorWidget->selectedChannels(), testChannels);
 
@@ -1324,32 +1389,52 @@ private slots:
         QCOMPARE(sessionController->state(), RuntimeSessionState::Monitoring);
 
         sessionController->stopMonitoring();
+        monitorManager.unregisterProvider(firstProvider.id);
+        monitorManager.unregisterProvider(secondProvider.id);
+        monitorManager.removeChannel(firstProvider.channelName);
+        monitorManager.removeChannel(secondProvider.channelName);
         sessionController->requestStop();
         sessionController->setDeviceBackend(nullptr);
         backend.disconnectBackend();
 
-        // 4. 验证独立工作区 Dock 布局持久化与记忆
+        // 4. 用户调整的统一 Dock 布局在内容切换中保持。
         // 在编程工作区打开检查面板与输出面板
-        actToggleInspectorDock->trigger();
-        actToggleOutputDock->trigger();
+        actToggleInspectorDock->setChecked(true);
+        actToggleOutputDock->setChecked(true);
         QTest::qWait(30);
         QVERIFY(inspectorDock->isVisible());
         QVERIFY(logDock->isVisible());
 
-        // 切换至监控工作区，在监控工作区中 Inspector 应仍按监控工作区状态（默认收起）
+        window->resizeDocks({explorerDock, inspectorDock}, {260, 220}, Qt::Horizontal);
+        window->resizeDocks({logDock}, {180}, Qt::Vertical);
+        QTest::qWait(30);
+        const QSize explorerSize = explorerDock->size();
+        const QSize inspectorSize = inspectorDock->size();
+        const QSize logSize = logDock->size();
         window->switchToWorkspace(WorkspaceId::Monitor);
         QTest::qWait(30);
-        QVERIFY(!inspectorDock->isVisible());
+        QVERIFY(inspectorDock->isVisible());
+        QCOMPARE(explorerDock->size(), explorerSize);
+        QCOMPARE(inspectorDock->size(), inspectorSize);
+        QCOMPARE(logDock->size(), logSize);
+        window->switchToWorkspace(WorkspaceId::Device);
+        QTest::qWait(30);
+        QCOMPARE(explorerDock->size(), explorerSize);
+        QCOMPARE(inspectorDock->size(), inspectorSize);
+        QCOMPARE(logDock->size(), logSize);
 
         // 切回编程工作区，Inspector与LogDock恢复为打开状态
         window->switchToWorkspace(WorkspaceId::Programming);
         QTest::qWait(30);
         QVERIFY(inspectorDock->isVisible());
         QVERIFY(logDock->isVisible());
+        QCOMPARE(explorerDock->size(), explorerSize);
+        QCOMPARE(inspectorDock->size(), inspectorSize);
+        QCOMPARE(logDock->size(), logSize);
 
         // 5. 验证跨窗口重启与隔离存储持久化
         window->switchToWorkspace(WorkspaceId::Monitor);
-        actToggleOutputDock->trigger(); // 在监控工作区打开日志
+        actToggleOutputDock->setChecked(true);
         QTest::qWait(30);
         QVERIFY(logDock->isVisible());
 
@@ -1357,9 +1442,9 @@ private slots:
         window->saveWindowGeometryAndWorkspaces();
         isolatedSettings.sync();
 
-        QCOMPARE(isolatedSettings.value(QStringLiteral("ui/layoutVersion")).toInt(), 1);
+        QCOMPARE(isolatedSettings.value(QStringLiteral("ui/layoutVersion")).toInt(), 2);
         QCOMPARE(isolatedSettings.value(QStringLiteral("ui/activeWorkspace")).toString(), QStringLiteral("monitor"));
-        QVERIFY(!isolatedSettings.value(QStringLiteral("ui/workspaces/monitor/state")).toByteArray().isEmpty());
+        QVERIFY(!isolatedSettings.value(QStringLiteral("ui/workspaces/programming/state")).toByteArray().isEmpty());
 
         // 创建第二个 MainWindow 实例，模拟重启并恢复
         {
@@ -1369,9 +1454,9 @@ private slots:
             QTest::qWait(50);
 
             QCOMPARE(window2->currentWorkspaceId(), WorkspaceId::Monitor);
-            auto* tabs2 = window2->findChild<QTabWidget*>(QStringLiteral("WorkspaceTabs"));
-            QVERIFY(tabs2 != nullptr);
-            QCOMPARE(tabs2->currentIndex(), 1);
+            auto* mdi2 = window2->findChild<QMdiArea*>(QStringLiteral("WorkbenchContents"));
+            QVERIFY(mdi2 && mdi2->activeSubWindow());
+            QCOMPARE(mdi2->activeSubWindow()->windowTitle(), QStringLiteral("监控"));
 
             auto* logDock2 = window2->findChild<QDockWidget*>(QStringLiteral("LogDock"));
             QVERIFY(logDock2 != nullptr);
@@ -1380,8 +1465,11 @@ private slots:
 
         // 6. 验证损坏/不匹配版本配置回退到默认
         {
-            isolatedSettings.setValue(QStringLiteral("ui/layoutVersion"), 9999);
+            isolatedSettings.setValue(QStringLiteral("ui/layoutVersion"), 1);
             isolatedSettings.setValue(QStringLiteral("ui/workspaces/programming/state"), QByteArray("corrupted_garbage_bytes"));
+            isolatedSettings.setValue(QStringLiteral("ui/workspaces/device/state"), QByteArray("old_device_state"));
+            isolatedSettings.setValue(QStringLiteral("fontSizeIndex"), 2);
+            isolatedSettings.setValue(QStringLiteral("theme"), QStringLiteral("dark"));
             isolatedSettings.sync();
 
             QScopedPointer<MainWindow> window3(new MainWindow());
@@ -1398,10 +1486,16 @@ private slots:
             QVERIFY(inspectorDock3 != nullptr);
             QVERIFY(logDock3 != nullptr);
             QVERIFY(explorerDock3->isVisible());
-            QVERIFY(!inspectorDock3->isVisible());
-            QVERIFY(!logDock3->isVisible());
+            QVERIFY(inspectorDock3->isVisible());
+            QVERIFY(logDock3->isVisible());
+            isolatedSettings.sync();
+            QCOMPARE(isolatedSettings.value(QStringLiteral("fontSizeIndex")).toInt(), 2);
+            QCOMPARE(isolatedSettings.value(QStringLiteral("theme")).toString(), QStringLiteral("dark"));
+            QVERIFY(!isolatedSettings.contains(QStringLiteral("ui/workspaces/device/state")));
         }
         isolatedSettings.remove(QStringLiteral("ui"));
+        isolatedSettings.remove(QStringLiteral("fontSizeIndex"));
+        isolatedSettings.remove(QStringLiteral("theme"));
         isolatedSettings.sync();
 
         // 7. 验证重置当前工作区布局 vs 重置全部工作区布局
@@ -1420,7 +1514,7 @@ private slots:
         // 重置当前工作区
         actResetCurrent->trigger();
         QTest::qWait(30);
-        QVERIFY(!inspectorDock->isVisible());
+        QVERIFY(inspectorDock->isVisible());
         QVERIFY(explorerDock->isVisible());
 
         // 8. 验证快捷键（Ctrl+Shift+D）重定向至左侧函数库分类
@@ -1854,18 +1948,18 @@ private slots:
         QVERIFY(dslEditor->isModified());
         QVERIFY(dslEditor->currentScript().contains(QStringLiteral("UNSAVED_ACCEPTANCE_MARKER")));
 
-        auto* editorSubWindow = window->findChild<QMdiSubWindow*>();
+        auto* editorSubWindow = qobject_cast<QMdiSubWindow*>(dslEditor->parentWidget());
         QVERIFY(editorSubWindow != nullptr);
         QPointer<DslScriptEditor> previousEditor = dslEditor;
-        editorSubWindow->close();
+        auto* actToggleDsl = window->findChild<QAction*>(QStringLiteral("actToggleDslEditor"));
+        QVERIFY(actToggleDsl != nullptr);
+        actToggleDsl->setChecked(false);
         QTest::qWait(100);
 
         // 关闭后对象未被静默销毁
         QVERIFY(!previousEditor.isNull());
 
         // 9. 验证重新打开编辑器时可见性恢复、未保存内容保留、焦点与键盘输入有效，且支持多次关闭/重开
-        auto* actToggleDsl = window->findChild<QAction*>(QStringLiteral("actToggleDslEditor"));
-        QVERIFY(actToggleDsl != nullptr);
         actToggleDsl->setChecked(true);
         QTest::qWait(100);
 
@@ -1888,7 +1982,7 @@ private slots:
         QVERIFY(reopenedEditor->currentScript().contains(QStringLiteral("KEYINPUT;")));
 
         // 第二次关闭与重新打开，验证多轮循环下菜单动作与函数库双击插入仍有效
-        editorSubWindow->close();
+        actToggleDsl->setChecked(false);
         QTest::qWait(100);
         QVERIFY(!actToggleDsl->isChecked());
 
@@ -2325,7 +2419,7 @@ private slots:
         QVERIFY(btnPause->isEnabled());
         QCOMPARE(btnResume->isEnabled(), false);
 
-        // 停止控制器
+        // 停止本地会话
         btnStop->click();
         QTRY_VERIFY(sessionController->state() != RuntimeSessionState::Running);
         QCOMPARE(sessionController->isPaused(), false);
@@ -2343,45 +2437,46 @@ private slots:
         auto* mainToolBar = window->findChild<QToolBar*>(QStringLiteral("MainToolBar"));
         QVERIFY(mainToolBar != nullptr);
 
-        // 1. 编程工作区：<= 6 个操作（保存、编译下拉、运行、停止）
         window->switchToWorkspace(WorkspaceId::Programming);
-        auto progActions = mainToolBar->actions();
-        QVERIFY(progActions.size() <= 6);
+        const auto programmingActions = mainToolBar->actions();
         auto* compileBtn = mainToolBar->findChild<QToolButton*>(QStringLiteral("btnCompileDropdown"));
         QVERIFY(compileBtn != nullptr);
+        QVERIFY(compileBtn->menu() != nullptr);
+        auto* compile = window->findChild<QAction*>(QStringLiteral("actCompile"));
+        auto* compileParameters = window->findChild<QAction*>(QStringLiteral("actCompileParameters"));
+        auto* compileCommunication = window->findChild<QAction*>(QStringLiteral("actCompileCommunication"));
+        auto* compileAndRun = window->findChild<QAction*>(QStringLiteral("actCompileAndRun"));
+        QVERIFY(compile && compileParameters && compileCommunication && compileAndRun);
+        QCOMPARE(compileBtn->defaultAction(), compile);
+        QVERIFY(compileBtn->menu()->actions().contains(compile));
+        QVERIFY(compileBtn->menu()->actions().contains(compileParameters));
+        QVERIFY(compileBtn->menu()->actions().contains(compileCommunication));
+        QCOMPARE(compile->shortcut(), QKeySequence(Qt::Key_F7));
+        QCOMPARE(compileAndRun->shortcut(), QKeySequence(Qt::Key_F8));
+        QVERIFY(programmingActions.contains(compileAndRun));
+        for (const auto& name : {"actStartMonitor", "actStopMonitor", "actTestConnection",
+                                  "actPauseController", "actResumeController", "actStepController", "actDiagnosis"}) {
+            auto* action = window->findChild<QAction*>(QString::fromLatin1(name));
+            QVERIFY(action);
+            bool inMenu = false;
+            for (auto* menu : window->findChildren<QMenu*>()) inMenu |= menu->actions().contains(action);
+            QVERIFY(inMenu);
+        }
+        auto* save = window->findChild<QAction*>(QStringLiteral("actSave"));
+        auto* run = window->findChild<QAction*>(QStringLiteral("actRunProject"));
+        QVERIFY(save != nullptr);
+        QVERIFY(run != nullptr);
+        QVERIFY(programmingActions.contains(save));
+        QVERIFY(programmingActions.contains(run));
 
-        // 2. 监控工作区：<= 6 个操作（开始监控、停止监控、调参、运行、停止）
         window->switchToWorkspace(WorkspaceId::Monitor);
-        auto monitorActions = mainToolBar->actions();
-        QVERIFY(monitorActions.size() <= 6);
-        QVERIFY(mainToolBar->findChild<QToolButton*>(QStringLiteral("btnCompileDropdown")) == nullptr);
-        bool hasStartMonitor = false;
-        for (auto* act : monitorActions) {
-            if (act->objectName() == QStringLiteral("actStartMonitor")) {
-                hasStartMonitor = true;
-                break;
-            }
-        }
-        QVERIFY(hasStartMonitor);
-
-        // 3. 设备工作区：<= 6 个操作（测试连接、运行、停止、更多操作下拉）
+        QCOMPARE(mainToolBar->actions(), programmingActions);
+        QCOMPARE(mainToolBar->findChild<QToolButton*>(QStringLiteral("btnCompileDropdown")), compileBtn);
         window->switchToWorkspace(WorkspaceId::Device);
-        auto deviceActions = mainToolBar->actions();
-        QVERIFY(deviceActions.size() <= 6);
-        auto* moreBtn = mainToolBar->findChild<QToolButton*>(QStringLiteral("btnDeviceMoreOpsDropdown"));
-        QVERIFY(moreBtn != nullptr);
-        bool hasTestConn = false;
-        for (auto* act : deviceActions) {
-            if (act->objectName() == QStringLiteral("actTestConnection")) {
-                hasTestConn = true;
-                break;
-            }
-        }
-        QVERIFY(hasTestConn);
-
-        // 4. 切回编程工作区
+        QCOMPARE(mainToolBar->actions(), programmingActions);
+        QCOMPARE(mainToolBar->findChild<QToolButton*>(QStringLiteral("btnCompileDropdown")), compileBtn);
         window->switchToWorkspace(WorkspaceId::Programming);
-        QVERIFY(mainToolBar->findChild<QToolButton*>(QStringLiteral("btnCompileDropdown")) != nullptr);
+        QCOMPARE(mainToolBar->actions(), programmingActions);
     }
 
     void deviceWorkspaceTargetSummaryF04Test()
@@ -2621,7 +2716,7 @@ private slots:
         errInfo.state = ParameterState::ApplyFailed;
         errInfo.lastError = QStringLiteral("超时");
         errInfo.editedValue = QStringLiteral("4.2");
-        inspector->setParameterStateMap({{QStringLiteral("Kp"), errInfo}});
+        inspector->setParameterStateMap({{QStringLiteral("pid.kp"), errInfo}});
 
         QCOMPARE(table->item(0, 2)->text(), QStringLiteral("4.2"));
         QVERIFY(table->item(0, 3)->text().contains(QStringLiteral("应用失败: 超时")));
@@ -3040,6 +3135,135 @@ private slots:
 
             // 6. 证据保存断言
         }
+    }
+
+    void availableWorkAreaThemeDensityMatrix()
+    {
+        const QString selected = qEnvironmentVariable("LH_P4_WORKAREA_CASE");
+        if (selected.isEmpty()) {
+            for (const QString& size : {QStringLiteral("1366x768"), QStringLiteral("1920x1080")}) {
+                for (const QString& scale : {QStringLiteral("1.00"), QStringLiteral("1.25"), QStringLiteral("1.50")}) {
+                    QProcess child;
+                    auto env = QProcessEnvironment::systemEnvironment();
+                    env.insert(QStringLiteral("QT_SCALE_FACTOR"), scale);
+                    env.insert(QStringLiteral("LH_P4_WORKAREA_CASE"), size + QLatin1Char('@') + scale);
+                    env.insert(QStringLiteral("LH_DPI_CASE"), size + QLatin1Char('@') + scale);
+                    env.insert(QStringLiteral("LH_UI_PARENT_RUN"), UiEvidence::runId());
+                    child.setProcessEnvironment(env);
+                    child.start(QCoreApplication::applicationFilePath(), {QStringLiteral("availableWorkAreaThemeDensityMatrix")});
+                    QVERIFY2(child.waitForFinished(90000), qPrintable(child.errorString()));
+                    const auto output = child.readAllStandardOutput() + child.readAllStandardError();
+                    QVERIFY2(child.exitStatus() == QProcess::NormalExit && child.exitCode() == 0, output.constData());
+                }
+            }
+            return;
+        }
+        const QString dimensions = selected.section(QLatin1Char('@'), 0, 0);
+        const QSize physical(dimensions.section(QLatin1Char('x'), 0, 0).toInt(),
+                             dimensions.section(QLatin1Char('x'), 1, 1).toInt());
+        const double scale = selected.section(QLatin1Char('@'), 1).toDouble();
+        QVERIFY(physical.isValid() && scale > 0);
+        MainWindow window;
+        window.setSettingsStorage(QStringLiteral("ServoValveTest"), QStringLiteral("P4WorkArea"));
+        window.show(); QTest::qWait(60);
+        auto* screen = window.screen(); QVERIFY(screen);
+        const QRect screenRect = screen->geometry();
+        const QRect available = screen->availableGeometry();
+        // Software model of the target resolution using the measured host's
+        // taskbar insets. This is explicitly separate from changing OS resolution.
+        const QMargins taskbar(available.left() - screenRect.left(), available.top() - screenRect.top(),
+                               screenRect.right() - available.right(), screenRect.bottom() - available.bottom());
+        const QSize targetLogical(qRound(physical.width() / scale), qRound(physical.height() / scale));
+        const QSize workSize(qMin(available.width(), targetLogical.width() - taskbar.left() - taskbar.right()),
+                             qMin(available.height(), targetLogical.height() - taskbar.top() - taskbar.bottom()));
+        const QRect workArea(available.topLeft(), workSize);
+        const auto rectJson = [](const QRect& r) {
+            return QJsonObject{{"x", r.x()}, {"y", r.y()}, {"width", r.width()}, {"height", r.height()}};
+        };
+        const auto reveal = [](QWidget* widget) {
+            for (QWidget* parent = widget->parentWidget(); parent; parent = parent->parentWidget())
+                if (auto* scroll = qobject_cast<QScrollArea*>(parent)) {
+                    scroll->ensureWidgetVisible(widget, 0, 0);
+                    QTest::qWait(20);
+                }
+            QTest::qWait(20);
+        };
+        const auto contained = [&window](QWidget* widget) {
+            if (!widget || !widget->isVisible()) return false;
+            for (QWidget* parent = widget->parentWidget(); parent; parent = parent->parentWidget()) {
+                const QRect bounds(widget->mapTo(parent, QPoint()), widget->size());
+                if (!parent->rect().contains(bounds)) {
+                    qInfo() << "Clipped control" << widget->objectName() << "by" << parent->metaObject()->className()
+                            << parent->objectName() << "bounds" << bounds << "parent" << parent->rect();
+                    return false;
+                }
+                if (parent == &window) break;
+            }
+            return true;
+        };
+        QJsonArray results;
+        for (auto theme : {ThemeManager::ThemeMode::Light, ThemeManager::ThemeMode::Dark}) {
+            for (auto density : {ThemeManager::Density::Compact, ThemeManager::Density::Comfortable}) {
+                ThemeManager::applyTheme(qApp, theme);
+                ThemeManager::applyDensity(qApp, density);
+                QVERIFY(QMetaObject::invokeMethod(&window, "onResetAllWorkspaceLayouts", Qt::DirectConnection));
+                const QRect frame = window.frameGeometry(), client = window.geometry();
+                const QMargins chrome(client.left() - frame.left(), client.top() - frame.top(),
+                                      frame.right() - client.right(), frame.bottom() - client.bottom());
+                const QSize requested(workSize.width() - chrome.left() - chrome.right(),
+                                      workSize.height() - chrome.top() - chrome.bottom());
+                window.resize(requested); window.move(workArea.topLeft()); QTest::qWait(60);
+                const QString label = selected + QStringLiteral("_%1_%2").arg(int(theme)).arg(int(density));
+                qInfo().noquote() << "workarea-combination" << label << "requested" << requested
+                                  << "frame" << window.frameGeometry() << "target" << workArea;
+                QVERIFY2(workArea.contains(window.frameGeometry()), qPrintable(label + " decorated window exceeds work area"));
+                window.switchToWorkspace(WorkspaceId::Programming); QTest::qWait(30);
+                const double ratio = double(window.centralWidget()->width()) / window.width();
+                QVERIFY2(ratio >= 0.65, qPrintable(label + QStringLiteral(" central ratio=%1").arg(ratio)));
+                QVERIFY(UiEvidence::save(window.grab(), label + "_programming.png", label, &window));
+                window.switchToWorkspace(WorkspaceId::Monitor); QTest::qWait(30);
+                auto* monitor = window.findChild<MonitorWidget*>(); QVERIFY(monitor);
+                auto* tuningAction = window.findChild<QAction*>(QStringLiteral("actParameterTuning")); QVERIFY(tuningAction);
+                tuningAction->trigger(); QTest::qWait(40);
+                auto* tuningDock = window.findChild<QDockWidget*>(QStringLiteral("ParameterTuningDock"));
+                QVERIFY(tuningDock);
+                auto* panel = qobject_cast<ParameterTuningPanel*>(tuningDock->widget());
+                QVERIFY(panel && panel->isVisible());
+                QToolButton* apply = nullptr;
+                for (auto* button : panel->findChildren<QToolButton*>())
+                    if (button->text().contains(QStringLiteral("应用"))) { apply = button; break; }
+                QVERIFY(apply); reveal(apply);
+                QVERIFY(UiEvidence::save(window.grab(), label + "_monitor_tuning_layout.png", label, &window));
+                QVERIFY2(contained(apply), qPrintable(label + " apply button clipped"));
+                auto* start = monitor->findChild<QAbstractButton*>(QStringLiteral("MonitorStartStopButton"));
+                QVERIFY2(contained(start), qPrintable(label + " monitor start/stop clipped"));
+                auto* chartView = monitor->findChild<MonitorChartView*>(); QVERIFY(chartView);
+                auto* chart = chartView->chartWidget(); QVERIFY(chart);
+                QVERIFY2(chart->chartView()->height() >= 80, qPrintable(label + " chart view below 80px"));
+                const QRectF plot = chart->chart()->plotArea();
+                QVERIFY2(plot.width() >= 120 && plot.height() >= 40, qPrintable(label + " actual plot below 120x40"));
+                QVERIFY2(workArea.contains(window.frameGeometry()), qPrintable(label + " tuning expanded window"));
+                QVERIFY(UiEvidence::save(window.grab(), label + "_monitor_tuning.png", label, &window));
+                tuningDock->hide();
+                window.switchToWorkspace(WorkspaceId::Device); QTest::qWait(30);
+                auto* device = window.findChild<DeviceWorkspaceWidget*>(); QVERIFY(device);
+                device->setExpertDiagnosticVisible(true); QTest::qWait(20);
+                reveal(device->btnTestConnection());
+                QVERIFY2(contained(device->btnTestConnection()), qPrintable(label + " device connect button clipped"));
+                QVERIFY2(workArea.contains(window.frameGeometry()), qPrintable(label + " device view expanded window"));
+                QVERIFY(UiEvidence::save(window.grab(), label + "_device.png", label, &window));
+                results.append(QJsonObject{{"case", label}, {"targetPhysicalWidth", physical.width()},
+                    {"targetPhysicalHeight", physical.height()}, {"qtScaleFactor", scale},
+                    {"devicePixelRatio", window.devicePixelRatioF()}, {"actualScreenLogical", rectJson(screenRect)},
+                    {"actualAvailableLogical", rectJson(available)}, {"modeledTargetWorkArea", rectJson(workArea)},
+                    {"normalWindowFrame", rectJson(window.frameGeometry())}, {"normalWindowClient", rectJson(window.geometry())},
+                    {"centralRatio", ratio}, {"plotWidth", plot.width()}, {"plotHeight", plot.height()},
+                    {"evidenceKind", "native Qt software model; OS resolution and scaling unchanged"}});
+                QVERIFY(UiEvidence::writeJson(label + QStringLiteral("_geometry.json"), results.last().toObject()));
+            }
+        }
+        QCOMPARE(results.size(), 4);
+        QVERIFY(UiEvidence::writeJson(QStringLiteral("workarea-combinations.json"), QJsonObject{{"combinations", results}}));
     }
 
     void chartWidgetReadabilityAndResponsiveTest()

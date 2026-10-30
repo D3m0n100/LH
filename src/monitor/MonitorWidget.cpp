@@ -96,7 +96,7 @@ MonitorWidget::MonitorWidget(QWidget* parent)
     , m_timeWindowCombo(nullptr)
     , m_fpsSpinBox(nullptr)
     , m_statsLabel(nullptr)
-    , m_dataProcessor(new MonitorDataProcessor(this))
+    , m_dataProcessor(nullptr)
     , m_exportHelper(new MonitorExportHelper(this))
     , m_sampleDataProvider(nullptr)
     , m_isMonitoring(false)
@@ -104,34 +104,56 @@ MonitorWidget::MonitorWidget(QWidget* parent)
     , m_updatingChannelList(false)
     , m_statsTimer(new QTimer(this))
 {
+    m_sampleArrivalClock.start();
+    auto& manager = Monitor::MonitorManager::instance();
+    m_dataProcessor = manager.dataProcessor();
+    if (!m_dataProcessor) {
+        m_dataProcessor = new MonitorDataProcessor(&manager);
+        manager.setDataProcessor(m_dataProcessor);
+    }
     setupUI();
     setupStatsTimer();
+    if (manager.isMonitoring()) {
+        m_isMonitoring = true;
+        m_startStopButton->setText(tr("停止监控"));
+        m_statsTimer->start();
+    }
 
     // 设置导出助手的父窗口
     m_exportHelper->setParentWidget(this);
 
     // 连接 MonitorManager 信号
-    auto& manager = Monitor::MonitorManager::instance();
     connect(&manager, &Monitor::MonitorManager::sampleRecorded,
             this, &MonitorWidget::onSampleRecorded);
     connect(&manager, &Monitor::MonitorManager::thresholdExceeded,
             this, &MonitorWidget::onThresholdExceeded);
     connect(&manager, &Monitor::MonitorManager::channelsChanged,
             this, &MonitorWidget::onRefreshChannelList);
-
-    manager.setDataProcessor(m_dataProcessor);
+    connect(m_dataProcessor, &MonitorDataProcessor::channelQualityUpdated, this,
+            [this](const QString& channel, RuntimePointQuality quality, bool valid) {
+        if (valid && (quality == RuntimePointQuality::Good || quality == RuntimePointQuality::Simulated)) return;
+        for (int row = 0; row < m_dataTable->rowCount(); ++row) {
+            auto* name = m_dataTable->item(row, 0);
+            auto* status = m_dataTable->item(row, 4);
+            if (name && status && name->text() == channel)
+                status->setText(tr("质量异常；最后值陈旧"));
+        }
+    });
 
     // 初始化刷新通道列表
     onRefreshChannelList();
+    for (const auto& channel : manager.channelNames()) {
+        const auto samples = manager.history(channel, 1);
+        if (!samples.isEmpty()) {
+            const auto& sample = samples.last();
+            updateDataTableRow(channel, sample.value, sample.unit, sample.timestamp, false);
+        }
+    }
+    if (!manager.isMonitoring()) markDataRowsStale();
 }
 
 MonitorWidget::~MonitorWidget()
 {
-    stopMonitoring();
-    auto& manager = Monitor::MonitorManager::instance();
-    if (manager.dataProcessor() == m_dataProcessor) {
-        manager.setDataProcessor(nullptr);
-    }
 }
 
 void MonitorWidget::setSampleDataProvider(SampleDataProvider* provider)
@@ -257,8 +279,9 @@ void MonitorWidget::setupMainContent()
     dataLayout->setSpacing(4);
 
     m_dataTable = new QTableWidget();
-    m_dataTable->setColumnCount(3);
-    m_dataTable->setHorizontalHeaderLabels({tr("通道"), tr("当前值"), tr("单位")});
+    m_dataTable->setObjectName(QStringLiteral("MonitorDataTable"));
+    m_dataTable->setColumnCount(5);
+    m_dataTable->setHorizontalHeaderLabels({tr("通道"), tr("最后值"), tr("单位"), tr("样本时间"), tr("状态")});
     m_dataTable->horizontalHeader()->setStretchLastSection(true);
     m_dataTable->setEditTriggers(QAbstractItemView::NoEditTriggers);
     m_dataTable->setSelectionBehavior(QAbstractItemView::SelectRows);
@@ -615,7 +638,7 @@ void MonitorWidget::startMonitoring()
 
     auto& manager = Monitor::MonitorManager::instance();
 
-    QStringList providers = manager.providerIds();
+    QStringList providers = manager.availableProviderIds();
     if (!providers.isEmpty()) {
         if (m_demoModeActive || (m_sampleDataProvider && m_sampleDataProvider->isRunning())) {
             qInfo() << "[MonitorWidget] Real providers detected, stopping demo data.";
@@ -624,34 +647,9 @@ void MonitorWidget::startMonitoring()
             }
             m_demoModeActive = false;
 
-            const QStringList channels = manager.channelNames();
-            for (const QString& ch : channels) {
-                const auto cfg = manager.channelConfig(ch);
-                if (cfg.metadata.value("__demoMode").toBool()) {
-                    manager.removeChannel(ch);
-                }
-            }
         }
     } else {
-        bool hasDemoChannels = false;
-        const QStringList channels = manager.channelNames();
-        for (const QString& ch : channels) {
-            const auto cfg = manager.channelConfig(ch);
-            if (cfg.metadata.value("__demoMode").toBool()) {
-                hasDemoChannels = true;
-                break;
-            }
-        }
-
-        if (hasDemoChannels) {
-            qInfo() << "[MonitorWidget] Demo channels detected.";
-            m_demoModeActive = true;
-            onRefreshChannelList();
-        } else if (m_sampleDataProvider) {
-            if (!m_sampleDataProvider->isRunning()) {
-                qInfo() << "[MonitorWidget] Starting sample data provider.";
-                m_sampleDataProvider->start();
-            }
+        if (m_sampleDataProvider && m_sampleDataProvider->isRunning()) {
             m_demoModeActive = true;
             onRefreshChannelList();
         } else {
@@ -660,8 +658,8 @@ void MonitorWidget::startMonitoring()
                 this,
                 tr("无法开始监控"),
                 tr("当前没有可用采集器。\n\n"
-                   "请先应用运行时配置以注册监控采集器，"
-                   "或启用演示数据模式。"));
+                   "请先应用运行时配置以注册监控采集器；"
+                   "如需示例数据，请从“监控”菜单显式选择“启动演示数据监控”。"));
             return;
         }
     }
@@ -709,6 +707,7 @@ void MonitorWidget::syncMonitoringState(bool monitoring)
         emit monitoringStarted();
     } else {
         m_statsTimer->stop();
+        markDataRowsStale();
         emit monitoringStopped();
     }
 }
@@ -802,6 +801,7 @@ void MonitorWidget::onExportData()
             info.channelId = channelId;
             info.displayName = config.displayName.isEmpty() ? channelId : config.displayName;
             info.unit = config.unit;
+            info.source = exportSourceFromChannelMetadata(config.metadata);
             bool periodOk = false;
             const int period = config.metadata.value("periodMs").toInt(&periodOk);
             info.samplePeriodMs = periodOk && period > 0 ? period : 100;
@@ -1130,6 +1130,7 @@ ExportDataPackage MonitorWidget::buildExportDataPackage(const QStringList& chann
         info.channelId = channelId;
         info.displayName = config.displayName.isEmpty() ? channelId : config.displayName;
         info.unit = config.unit;
+        info.source = exportSourceFromChannelMetadata(config.metadata);
         bool ok = false;
         int periodMs = config.metadata.value("periodMs").toInt(&ok);
         if (!ok || periodMs <= 0) {
@@ -1224,10 +1225,8 @@ void MonitorWidget::onDeselectAllClicked()
 void MonitorWidget::onSampleRecorded(const QString& channelName, double value,
                                       const QString& unit, const QDateTime& timestamp)
 {
-    Q_UNUSED(timestamp);
-
     // 更新数据表格
-    updateDataTableRow(channelName, value, unit);
+    updateDataTableRow(channelName, value, unit, timestamp);
 }
 
 void MonitorWidget::onRefreshChannelList()
@@ -1238,6 +1237,7 @@ void MonitorWidget::onRefreshChannelList()
 void MonitorWidget::onUpdateStats()
 {
     updateStatsDisplay();
+    updateDataFreshness();
 }
 
 void MonitorWidget::onTimeWindowChanged(int index)
@@ -1344,22 +1344,57 @@ void MonitorWidget::syncChannelSelectionToChart()
 }
 
 void MonitorWidget::updateDataTableRow(const QString& channelName,
-                                        double value, const QString& unit)
+                                        double value, const QString& unit, const QDateTime& timestamp, bool liveArrival)
 {
+    int targetRow = -1;
     for (int row = 0; row < m_dataTable->rowCount(); ++row) {
         QTableWidgetItem* nameItem = m_dataTable->item(row, 0);
         if (nameItem && nameItem->text() == channelName) {
-            m_dataTable->item(row, 1)->setText(QString::number(value, 'f', 2));
-            return;
+            const QDateTime previous = m_dataTable->item(row, 3)->data(Qt::UserRole).toDateTime();
+            if (previous.isValid() && (!timestamp.isValid() || timestamp < previous)) return;
+            targetRow = row;
+            break;
         }
     }
+    if (targetRow < 0) {
+        targetRow = m_dataTable->rowCount();
+        m_dataTable->insertRow(targetRow);
+        for (int column = 0; column < 5; ++column)
+            m_dataTable->setItem(targetRow, column, new QTableWidgetItem);
+    }
+    const auto cfg = Monitor::MonitorManager::instance().channelConfig(channelName);
+    const bool demo = cfg.metadata.value(QStringLiteral("__demoMode")).toBool();
+    m_dataTable->item(targetRow, 0)->setText(channelName);
+    m_dataTable->item(targetRow, 1)->setText(QString::number(value, 'g', 15));
+    m_dataTable->item(targetRow, 2)->setText(unit);
+    m_dataTable->item(targetRow, 3)->setText(timestamp.isValid() ? timestamp.toLocalTime().toString(Qt::ISODateWithMs) : tr("未知"));
+    m_dataTable->item(targetRow, 3)->setData(Qt::UserRole, timestamp);
+    m_dataTable->item(targetRow, 4)->setText(demo ? tr("演示数据（新鲜度未知）") : tr("最后样本（新鲜度未知）"));
+    m_dataTable->item(targetRow, 4)->setData(Qt::UserRole, liveArrival ? QVariant(m_sampleArrivalClock.elapsed()) : QVariant());
+}
 
-    // 添加新行
-    int row = m_dataTable->rowCount();
-    m_dataTable->insertRow(row);
-    m_dataTable->setItem(row, 0, new QTableWidgetItem(channelName));
-    m_dataTable->setItem(row, 1, new QTableWidgetItem(QString::number(value, 'f', 2)));
-    m_dataTable->setItem(row, 2, new QTableWidgetItem(unit));
+void MonitorWidget::updateDataFreshness()
+{
+    auto& manager = Monitor::MonitorManager::instance();
+    for (int row = 0; row < m_dataTable->rowCount(); ++row) {
+        auto* name = m_dataTable->item(row, 0);
+        auto* status = m_dataTable->item(row, 4);
+        if (!name || !status || !status->data(Qt::UserRole).isValid()) continue;
+        int period = manager.expectedPeriodMs(name->text());
+        if (period <= 0) period = manager.channelConfig(name->text()).metadata.value(QStringLiteral("periodMs")).toInt();
+        if (period > 0 && m_sampleArrivalClock.elapsed() - status->data(Qt::UserRole).toLongLong() > 3LL * period
+                && !status->text().contains(tr("陈旧"))) {
+            status->setText(status->text() + tr("；超过三个采样周期，陈旧"));
+        }
+    }
+}
+
+void MonitorWidget::markDataRowsStale()
+{
+    for (int row = 0; row < m_dataTable->rowCount(); ++row) {
+        auto* status = m_dataTable->item(row, 4);
+        if (status && !status->text().contains(tr("陈旧"))) status->setText(status->text() + tr("；已停止，陈旧"));
+    }
 }
 
 int MonitorWidget::minimumReadableHeight() const

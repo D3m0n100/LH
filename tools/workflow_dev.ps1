@@ -11,7 +11,7 @@ $ErrorActionPreference = "Stop"
 $env:PATH = (Join-Path $QtPrefix "bin") + ";C:\Qt\Tools\mingw810_64\bin;" + $env:PATH
 
 $Root = Split-Path -Parent $PSScriptRoot
-$BuildPath = Join-Path $Root "build_current_mingw"
+$BuildPath = Join-Path $Root "build"
 $ReportDir = Join-Path $Root "workflow_reports"
 $Stamp = Get-Date -Format "yyyyMMdd_HHmmss"
 $ReportPath = Join-Path $ReportDir "dev_health_$Stamp.txt"

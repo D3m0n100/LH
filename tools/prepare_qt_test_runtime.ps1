@@ -1,6 +1,6 @@
 param(
     [string]$QtRoot = 'C:\Qt\5.15.2\mingw81_64',
-    [string]$RuntimeDirectory = (Join-Path $PSScriptRoot '..\build_current_mingw\bin')
+    [string]$RuntimeDirectory = (Join-Path $PSScriptRoot '..\build\bin')
 )
 $ErrorActionPreference = 'Stop'
 $workspace = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))

@@ -15,7 +15,9 @@
 #include "ProjectController.h"
 #include "RuntimeSessionController.h"
 #include "../communication/IOpcServer.h"
+#include "../communication/IDeviceBackend.h"
 #include "ui/InspectorPanel.h"
+#include "ui/NotificationBanner.h"
 #include "ui/ProblemsPanel.h"
 #include "ui/StatusTextHelper.h"
 #include "DslCompletionEngine.h"
@@ -147,7 +149,7 @@ QString downloadStateText(DownloadState state)
     case DownloadState::Retrying:
         return QStringLiteral("重试中");
     case DownloadState::Verifying:
-        return QStringLiteral("校验中");
+        return QStringLiteral("核对传输状态");
     case DownloadState::Succeeded:
         return QStringLiteral("成功");
     case DownloadState::TransportFailed:
@@ -155,7 +157,7 @@ QString downloadStateText(DownloadState state)
     case DownloadState::DeviceRejected:
         return QStringLiteral("设备拒绝");
     case DownloadState::VerifyFailed:
-        return QStringLiteral("校验失败");
+        return QStringLiteral("传输状态核对失败");
     case DownloadState::Failed:
     default:
         return QStringLiteral("失败");
@@ -189,7 +191,10 @@ void MainWindow::refreshInspectorPanel(InspectorPanel* panel)
 
     panel->setProjectPath(m_projectController->currentProjectPath());
     panel->setCurrentFile(m_projectController->currentScriptFile());
-    panel->setRuntimeState(runtimeStateText(m_sessionController && m_sessionController->isRunning()));
+    panel->setRuntimeState(runtimeStateText(m_sessionController && m_sessionController->isRunning(),
+            m_sessionController && m_sessionController->isDemoMode()));
+    auto* deviceBackend = Monitor::MonitorManager::instance().deviceBackend();
+    panel->setParameterRuntimeOnline(deviceBackend && deviceBackend->isOnline());
     panel->setBuildState(m_buildController && m_buildController->isBusy()
                                  ? QStringLiteral("忙碌")
                                  : QStringLiteral("空闲"));
@@ -229,7 +234,7 @@ void MainWindow::refreshInspectorPanel(InspectorPanel* panel)
 
     QMap<QString, ParameterStateInfo> stateMap;
     for (const auto& si : m_parameterController->parameterStates())
-        stateMap.insert(si.name, si);
+        stateMap.insert(si.pointId, si);
     panel->setParameterStateMap(stateMap);
 
     QStringList readbackReady;
@@ -263,6 +268,10 @@ void MainWindow::refreshInspectorPanel(ParameterTuningPanel* panel)
     }
 
     const auto& cfg = m_projectController->runtimeConfig();
+    if (auto* inspector = panel->inspectorPanel()) {
+        auto* deviceBackend = Monitor::MonitorManager::instance().deviceBackend();
+        inspector->setParameterRuntimeOnline(deviceBackend && deviceBackend->isOnline());
+    }
     const QList<ParameterDefinition> pidParameters = filterPidParameters(cfg.parameters);
     panel->setPidParameterDetails(pidParameters);
     QStringList readbackReady;
@@ -287,7 +296,7 @@ void MainWindow::refreshInspectorPanel(ParameterTuningPanel* panel)
 
     QMap<QString, ParameterStateInfo> stateMap;
     for (const auto& si : m_parameterController->parameterStates())
-        stateMap.insert(si.name, si);
+        stateMap.insert(si.pointId, si);
     panel->setParameterStateMap(stateMap);
 }
 
@@ -298,6 +307,12 @@ void MainWindow::refreshInspectorPanel(ParameterTuningWindow* window)
     }
 
     const auto& cfg = m_projectController->runtimeConfig();
+    if (auto* tuning = window->tuningPanel()) {
+        if (auto* inspector = tuning->inspectorPanel()) {
+            auto* deviceBackend = Monitor::MonitorManager::instance().deviceBackend();
+            inspector->setParameterRuntimeOnline(deviceBackend && deviceBackend->isOnline());
+        }
+    }
     const QList<ParameterDefinition> pidParameters = filterPidParameters(cfg.parameters);
     window->setPidParameterDetails(pidParameters);
     QStringList readbackReady;
@@ -322,7 +337,7 @@ void MainWindow::refreshInspectorPanel(ParameterTuningWindow* window)
 
     QMap<QString, ParameterStateInfo> stateMap;
     for (const auto& si : m_parameterController->parameterStates())
-        stateMap.insert(si.name, si);
+        stateMap.insert(si.pointId, si);
     window->setParameterStateMap(stateMap);
 }
 
@@ -330,6 +345,9 @@ void MainWindow::addProblem(const QString& severity, const QString& source, cons
 {
     if (m_problemsPanel) {
         m_problemsPanel->addProblem(severity, source, message);
+    }
+    if (m_notificationBanner) {
+        m_notificationBanner->showNotification(severity, source, message);
     }
 }
 

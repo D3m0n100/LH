@@ -29,6 +29,7 @@
 #include "designer/ProjectController.h"
 #include "designer/RunController.h"
 #include "monitor/MonitorManager.h"
+#include "monitor/SampleDataProvider.h"
 #include "core/AppLogging.h"
 #include <QScopeGuard>
 #include <QRegularExpression>
@@ -121,6 +122,24 @@ public:
     QList<RuntimePointValue> m_updatedValues;
 };
 
+class FlakyOpcServer : public TestOpcServer
+{
+public:
+    int startCalls = 0;
+    bool failFirstStart = true;
+
+    bool start(QString* errorMessage = nullptr) override
+    {
+        ++startCalls;
+        if (failFirstStart) {
+            failFirstStart = false;
+            if (errorMessage) *errorMessage = QStringLiteral("injected start failure");
+            return false;
+        }
+        return TestOpcServer::start(errorMessage);
+    }
+};
+
 class FakeRuntimeControllerTransport : public IControllerDebugTransport
 {
 public:
@@ -194,6 +213,16 @@ class BorrowedTrackingBackend : public VirtualDeviceBackend
 public:
     using VirtualDeviceBackend::VirtualDeviceBackend;
 
+    bool downloadArtifact(const QString& artifactPath, const QVariantMap& options,
+                          QString* errorMessage, CommError* operationError) override
+    {
+        ++downloadCallCount;
+        const bool result = VirtualDeviceBackend::downloadArtifact(artifactPath, options,
+                                                                    errorMessage, operationError);
+        if (afterDownloadCall) afterDownloadCall(downloadCallCount, result);
+        return result;
+    }
+
     void disconnectBackend() override
     {
         ++disconnectCount;
@@ -201,6 +230,8 @@ public:
     }
 
     int disconnectCount = 0;
+    int downloadCallCount = 0;
+    std::function<void(int, bool)> afterDownloadCall;
 };
 
 class TrackingControllerDeviceBackend : public ControllerDeviceBackend
@@ -335,6 +366,14 @@ bool writePublishedBundle(const QString& projectPath,
 
 } // namespace
 
+namespace {
+void approveDownloadsForTest(RuntimeSessionController& controller)
+{
+    controller.setDownloadConfirmationHook(
+                [](const DownloadConfirmationSnapshot&) { return true; });
+}
+}
+
 class RuntimeSessionControllerTest : public QObject
 {
     Q_OBJECT
@@ -349,6 +388,7 @@ private slots:
     void initialStateIsIdle()
     {
         RuntimeSessionController ctrl;
+        approveDownloadsForTest(ctrl);
         QCOMPARE(ctrl.state(), RuntimeSessionState::Idle);
         QVERIFY(!ctrl.isRunning());
         QVERIFY(!ctrl.isMonitoring());
@@ -358,27 +398,31 @@ private slots:
     void stateChangedSignalOnRun()
     {
         RuntimeSessionController ctrl;
+        approveDownloadsForTest(ctrl);
         QSignalSpy spy(&ctrl, &RuntimeSessionController::stateChanged);
 
         ctrl.executeRun();
 
-        QCOMPARE(spy.count(), 1);
-        QCOMPARE(static_cast<RuntimeSessionState>(spy.first().at(0).toInt()), RuntimeSessionState::Idle);
-        QCOMPARE(static_cast<RuntimeSessionState>(spy.first().at(1).toInt()), RuntimeSessionState::Running);
+        QCOMPARE(spy.count(), 0);
     }
 
-    void executeRunTransitionsToRunning()
+    void executeRunWithoutStartCommandKeepsDeviceStateUnknown()
     {
         RuntimeSessionController ctrl;
+        approveDownloadsForTest(ctrl);
+        QSignalSpy errorSpy(&ctrl, &RuntimeSessionController::runtimeError);
         ctrl.executeRun();
 
-        QCOMPARE(ctrl.state(), RuntimeSessionState::Running);
-        QVERIFY(ctrl.isRunning());
+        QCOMPARE(ctrl.state(), RuntimeSessionState::Idle);
+        QVERIFY(!ctrl.isRunning());
+        QCOMPARE(errorSpy.count(), 1);
+        QVERIFY(errorSpy.first().first().toString().contains(QStringLiteral("设备运行状态未知")));
     }
 
     void executeRunAutoDownloadWhenBackendOnline()
     {
         RuntimeSessionController ctrl;
+        approveDownloadsForTest(ctrl);
         VirtualDeviceBackend backend;
         backend.connectBackend();
         ctrl.setDeviceBackend(&backend);
@@ -392,12 +436,13 @@ private slots:
 
         QCOMPARE(spy.count(), 1);
         QCOMPARE(spy.first().first().toBool(), true);
-        QCOMPARE(ctrl.state(), RuntimeSessionState::Running);
+        QCOMPARE(ctrl.state(), RuntimeSessionState::Connected);
     }
 
     void executeRunAutoDownloadFailureDoesNotEnterRunning()
     {
         RuntimeSessionController ctrl;
+        approveDownloadsForTest(ctrl);
         VirtualDeviceBackend backend;
         backend.connectBackend();
         backend.setFaultInjection(false, false, true);
@@ -425,6 +470,7 @@ private slots:
     void executeRunAutoDownloadPrecheckFailureRestoresConnected()
     {
         RuntimeSessionController ctrl;
+        approveDownloadsForTest(ctrl);
         VirtualDeviceBackend backend;
         backend.connectBackend();
         ctrl.setDeviceBackend(&backend);
@@ -442,6 +488,7 @@ private slots:
     void executeRunSkipsAutoDownloadWhenBackendOffline()
     {
         RuntimeSessionController ctrl;
+        approveDownloadsForTest(ctrl);
         VirtualDeviceBackend backend;
         ctrl.setDeviceBackend(&backend);
 
@@ -453,12 +500,13 @@ private slots:
         ctrl.executeRun();
 
         QCOMPARE(spy.count(), 0);
-        QCOMPARE(ctrl.state(), RuntimeSessionState::Running);
+        QCOMPARE(ctrl.state(), RuntimeSessionState::Idle);
     }
 
     void requestStopFromRunningGoesToIdle()
     {
         RuntimeSessionController ctrl;
+        approveDownloadsForTest(ctrl);
         ctrl.executeRun();
         ctrl.requestStop();
 
@@ -469,6 +517,7 @@ private slots:
     void requestStopDoesNotDisconnectBorrowedBackend()
     {
         RuntimeSessionController ctrl;
+        approveDownloadsForTest(ctrl);
         BorrowedTrackingBackend backend;
         QVERIFY(backend.connectBackend());
         ctrl.setDeviceBackend(&backend);
@@ -484,6 +533,7 @@ private slots:
     void internalReconnectGateSuppressesMarkedDisconnect()
     {
         RuntimeSessionController ctrl;
+        approveDownloadsForTest(ctrl);
         BorrowedTrackingBackend backend;
         QVERIFY(backend.connectBackend());
         ctrl.setDeviceBackend(&backend);
@@ -493,7 +543,7 @@ private slots:
         backend.disconnectBackend();
         ctrl.m_internalReconnect = false;
 
-        QCOMPARE(ctrl.state(), RuntimeSessionState::Running);
+        QCOMPARE(ctrl.state(), RuntimeSessionState::Connected);
         QVERIFY(!backend.isOnline());
         QVERIFY(backend.connectBackend());
     }
@@ -501,6 +551,10 @@ private slots:
     void startMonitoringFromRunningGoesToMonitoring()
     {
         RuntimeSessionController ctrl;
+        approveDownloadsForTest(ctrl);
+        VirtualDeviceBackend backend;
+        QVERIFY(backend.connectBackend());
+        ctrl.setDeviceBackend(&backend);
         ctrl.executeRun();
         ctrl.startMonitoring();
 
@@ -511,6 +565,7 @@ private slots:
     void startMonitoringFromIdleIsRejected()
     {
         RuntimeSessionController ctrl;
+        approveDownloadsForTest(ctrl);
         QSignalSpy errorSpy(&ctrl, &RuntimeSessionController::runtimeError);
 
         ctrl.startMonitoring();
@@ -523,17 +578,22 @@ private slots:
     void stopMonitoringFromMonitoringGoesToRunning()
     {
         RuntimeSessionController ctrl;
+        approveDownloadsForTest(ctrl);
+        VirtualDeviceBackend backend;
+        QVERIFY(backend.connectBackend());
+        ctrl.setDeviceBackend(&backend);
         ctrl.executeRun();
         ctrl.startMonitoring();
         ctrl.stopMonitoring();
 
-        QCOMPARE(ctrl.state(), RuntimeSessionState::Running);
+        QCOMPARE(ctrl.state(), RuntimeSessionState::Connected);
         QVERIFY(!ctrl.isMonitoring());
     }
 
-    void downloadWithoutBackendFails()
+    void downloadWithoutBackendAndSessionHasNoSideEffects()
     {
         RuntimeSessionController ctrl;
+        approveDownloadsForTest(ctrl);
         ctrl.executeRun();
 
         QTemporaryFile artifactFile;
@@ -544,14 +604,15 @@ private slots:
         const bool ok = ctrl.requestDownload(ctrl.m_artifactPath);
 
         QVERIFY(!ok);
-        QCOMPARE(spy.count(), 1);
-        QCOMPARE(ctrl.state(), RuntimeSessionState::Fault);
-        QCOMPARE(ctrl.downloadState(), DownloadState::PrecheckFailed);
+        QCOMPARE(spy.count(), 0);
+        QCOMPARE(ctrl.state(), RuntimeSessionState::Idle);
+        QCOMPARE(ctrl.downloadState(), DownloadState::Idle);
     }
 
     void downloadOfflineBackendFails()
     {
         RuntimeSessionController ctrl;
+        approveDownloadsForTest(ctrl);
         VirtualDeviceBackend backend;
         ctrl.setDeviceBackend(&backend);
         ctrl.executeRun();
@@ -564,14 +625,177 @@ private slots:
         const bool ok = ctrl.requestDownload(ctrl.m_artifactPath);
 
         QVERIFY(!ok);
-        QCOMPARE(spy.count(), 1);
-        QCOMPARE(ctrl.state(), RuntimeSessionState::Fault);
-        QCOMPARE(ctrl.downloadState(), DownloadState::PrecheckFailed);
+        QCOMPARE(spy.count(), 0);
+        QCOMPARE(ctrl.state(), RuntimeSessionState::Idle);
+        QCOMPARE(ctrl.downloadState(), DownloadState::Idle);
+    }
+
+    void downloadWithoutConfirmationHookFailsBeforeWrite()
+    {
+        RuntimeSessionController ctrl;
+        BorrowedTrackingBackend backend;
+        QVERIFY(backend.connectBackend());
+        ctrl.setDeviceBackend(&backend);
+        ctrl.executeRun();
+        ctrl.setDownloadConfirmationHook({});
+
+        QTemporaryFile artifactFile;
+        QVERIFY(artifactFile.open());
+        ctrl.m_artifactPath = artifactFile.fileName();
+        QSignalSpy finishedSpy(&ctrl, &RuntimeSessionController::downloadFinished);
+        QSignalSpy stateSpy(&ctrl, &RuntimeSessionController::downloadStateChanged);
+
+        QVERIFY(!ctrl.requestDownload(ctrl.m_artifactPath));
+        QCOMPARE(finishedSpy.count(), 1);
+        QVERIFY(!finishedSpy.first().first().toBool());
+        QCOMPARE(ctrl.state(), RuntimeSessionState::Connected);
+        QCOMPARE(backend.downloadCallCount, 0);
+        for (const auto& args : stateSpy) {
+            QVERIFY(static_cast<DownloadState>(args.at(1).toInt()) != DownloadState::Downloading);
+        }
+    }
+
+    void externalDownloadUsesSharedConfirmation()
+    {
+        RuntimeSessionController ctrl;
+        DownloadConfirmationSnapshot snapshot;
+        snapshot.operationId = QStringLiteral("op-expert");
+        snapshot.artifactPath = QStringLiteral("payload.bin");
+        snapshot.artifactBytes = 4;
+        snapshot.artifactChecksum = QStringLiteral("abcd");
+        snapshot.action = QStringLiteral("专家诊断直接下载");
+        QVERIFY(snapshot.toDisplayText().contains(QStringLiteral("绕过正式编译检查")));
+
+        QCOMPARE(ctrl.confirmExternalDownload(snapshot), false);
+
+        int calls = 0;
+        ctrl.setDownloadConfirmationHook([&](const DownloadConfirmationSnapshot& received) {
+            ++calls;
+            return received.operationId == snapshot.operationId;
+        });
+        QCOMPARE(ctrl.confirmExternalDownload(snapshot), true);
+        QCOMPARE(calls, 1);
+
+        DownloadConfirmationSnapshot incomplete;
+        incomplete.operationId = QStringLiteral("op-incomplete");
+        incomplete.artifactPath = QStringLiteral("payload.bin");
+        QCOMPARE(ctrl.confirmExternalDownload(incomplete), false);
+        QCOMPARE(calls, 1);
+
+        ctrl.setDownloadConfirmationHook([](const DownloadConfirmationSnapshot&) {
+            return false;
+        });
+        QCOMPARE(ctrl.confirmExternalDownload(snapshot), false);
+
+        ctrl.setDownloadConfirmationHook([](const DownloadConfirmationSnapshot&) {
+            return true;
+        });
+        QCOMPARE(ctrl.confirmExternalDownload(snapshot), true);
+    }
+
+    void artifactMutationDuringConfirmationInvalidatesApproval()
+    {
+        RuntimeSessionController ctrl;
+        BorrowedTrackingBackend backend;
+        QVERIFY(backend.connectBackend());
+        ctrl.setDeviceBackend(&backend);
+        ctrl.executeRun();
+
+        QTemporaryFile artifactFile;
+        QVERIFY(artifactFile.open());
+        const QByteArray original = QByteArrayLiteral("approved");
+        QCOMPARE(artifactFile.write(original), original.size());
+        artifactFile.close();
+        ctrl.m_artifactPath = artifactFile.fileName();
+
+        bool hookCalled = false;
+        bool changedSameSizeBytes = false;
+        ctrl.setDownloadConfirmationHook([&](const DownloadConfirmationSnapshot& snapshot) {
+            hookCalled = true;
+            changedSameSizeBytes = snapshot.artifactBytes == original.size();
+            QFile changed(snapshot.artifactPath);
+            if (!changed.open(QIODevice::WriteOnly | QIODevice::Truncate)) return true;
+            changedSameSizeBytes = changed.write(QByteArrayLiteral("replaced")) == original.size()
+                    && changedSameSizeBytes;
+            return true;
+        });
+        QSignalSpy finishedSpy(&ctrl, &RuntimeSessionController::downloadFinished);
+        QSignalSpy stateSpy(&ctrl, &RuntimeSessionController::downloadStateChanged);
+
+        QVERIFY(!ctrl.requestDownload(ctrl.m_artifactPath));
+        QVERIFY(hookCalled);
+        QVERIFY(changedSameSizeBytes);
+        QCOMPARE(finishedSpy.count(), 1);
+        QVERIFY(!finishedSpy.first().first().toBool());
+        QCOMPARE(backend.downloadCallCount, 0);
+        for (const auto& args : stateSpy) {
+            QVERIFY(static_cast<DownloadState>(args.at(1).toInt()) != DownloadState::Downloading);
+        }
+    }
+
+    void targetConfigurationMutationDuringConfirmationInvalidatesApproval()
+    {
+        RuntimeSessionController ctrl;
+        BorrowedTrackingBackend backend;
+        QVERIFY(backend.connectBackend());
+        ctrl.setDeviceBackend(&backend);
+        ctrl.executeRun();
+        ProjectController projectController;
+        ctrl.setProjectController(&projectController);
+
+        QTemporaryFile artifactFile;
+        QVERIFY(artifactFile.open());
+        QCOMPARE(artifactFile.write(QByteArrayLiteral("approved")), qint64(8));
+        artifactFile.flush();
+        ctrl.m_artifactPath = artifactFile.fileName();
+
+        int confirmations = 0;
+        ctrl.setDownloadConfirmationHook([&](const DownloadConfirmationSnapshot&) {
+            ++confirmations;
+            projectController.runtimeConfig().target.nodeId = QStringLiteral("changed-after-approval");
+            projectController.runtimeConfig().transport.parameters.insert(
+                        QStringLiteral("portName"), QStringLiteral("COM91"));
+            return true;
+        });
+
+        QVERIFY(!ctrl.requestDownload(ctrl.m_artifactPath));
+        QCOMPARE(confirmations, 1);
+        QCOMPARE(backend.downloadCallCount, 0);
+    }
+
+    void backendReplacementDuringConfirmationInvalidatesApproval()
+    {
+        RuntimeSessionController ctrl;
+        BorrowedTrackingBackend originalBackend;
+        BorrowedTrackingBackend replacementBackend;
+        QVERIFY(originalBackend.connectBackend());
+        QVERIFY(replacementBackend.connectBackend());
+        ctrl.setDeviceBackend(&originalBackend);
+        ctrl.executeRun();
+
+        QTemporaryFile artifactFile;
+        QVERIFY(artifactFile.open());
+        QCOMPARE(artifactFile.write(QByteArrayLiteral("approved")), qint64(8));
+        artifactFile.flush();
+        ctrl.m_artifactPath = artifactFile.fileName();
+
+        int confirmations = 0;
+        ctrl.setDownloadConfirmationHook([&](const DownloadConfirmationSnapshot&) {
+            ++confirmations;
+            ctrl.setDeviceBackend(&replacementBackend);
+            return true;
+        });
+
+        QVERIFY(!ctrl.requestDownload(ctrl.m_artifactPath));
+        QCOMPARE(confirmations, 1);
+        QCOMPARE(originalBackend.downloadCallCount, 0);
+        QCOMPARE(replacementBackend.downloadCallCount, 0);
     }
 
     void downloadSuccessRestoresState()
     {
         RuntimeSessionController ctrl;
+        approveDownloadsForTest(ctrl);
         VirtualDeviceBackend backend;
         backend.connectBackend();
         ctrl.setDeviceBackend(&backend);
@@ -599,12 +823,72 @@ private slots:
         QCOMPARE(static_cast<DownloadState>(stateSpy.at(1).at(1).toInt()), DownloadState::Downloading);
         QCOMPARE(static_cast<DownloadState>(stateSpy.at(2).at(1).toInt()), DownloadState::Verifying);
         QCOMPARE(ctrl.downloadState(), DownloadState::Succeeded);
-        QCOMPARE(ctrl.state(), RuntimeSessionState::Running);
+        QCOMPARE(ctrl.state(), RuntimeSessionState::Connected);
+    }
+
+    void priorDownloadEvidenceBecomesUnknownForDifferentTargetIdentity()
+    {
+        RuntimeSessionController ctrl;
+        approveDownloadsForTest(ctrl);
+        BorrowedTrackingBackend backend;
+        QVERIFY(backend.connectBackend());
+        ctrl.setDeviceBackend(&backend);
+        ctrl.executeRun();
+        ProjectController projectController;
+        projectController.runtimeConfig().target.nodeId = QStringLiteral("target-A");
+        ctrl.setProjectController(&projectController);
+
+        QTemporaryFile artifactFile;
+        QVERIFY(artifactFile.open());
+        QCOMPARE(artifactFile.write(QByteArrayLiteral("approved")), qint64(8));
+        artifactFile.flush();
+        ctrl.m_artifactPath = artifactFile.fileName();
+        QVERIFY(ctrl.requestDownload(ctrl.m_artifactPath));
+        QVERIFY(ctrl.recentDownloadRecord().valid);
+
+        projectController.runtimeConfig().target.nodeId = QStringLiteral("target-B");
+        const auto changedTargetSnapshot = ctrl.buildDownloadSnapshot(ctrl.m_artifactPath, {});
+        QVERIFY(changedTargetSnapshot.versionEvidence.contains(QStringLiteral("未知")));
+        QVERIFY(!changedTargetSnapshot.versionEvidence.contains(QStringLiteral("摘要一致")));
+    }
+
+    void interruptedDownloadInvalidatesPriorProgramEvidence()
+    {
+        RuntimeSessionController ctrl;
+        approveDownloadsForTest(ctrl);
+        BorrowedTrackingBackend backend;
+        QVERIFY(backend.connectBackend());
+        ctrl.setDeviceBackend(&backend);
+        ctrl.executeRun();
+
+        QTemporaryFile artifactFile;
+        QVERIFY(artifactFile.open());
+        QCOMPARE(artifactFile.write(QByteArrayLiteral("approved")), qint64(8));
+        artifactFile.flush();
+        ctrl.m_artifactPath = artifactFile.fileName();
+        QVERIFY(ctrl.requestDownload(ctrl.m_artifactPath));
+        QVERIFY(ctrl.recentDownloadRecord().valid);
+
+        bool stopped = false;
+        connect(&ctrl, &RuntimeSessionController::stateChanged,
+                &ctrl, [&ctrl, &stopped](RuntimeSessionState, RuntimeSessionState next) {
+            if (!stopped && next == RuntimeSessionState::Downloading) {
+                stopped = true;
+                ctrl.requestStop();
+            }
+        });
+        QVERIFY(!ctrl.requestDownload(ctrl.m_artifactPath));
+        QVERIFY(stopped);
+        QCOMPARE(backend.downloadCallCount, 1);
+        QVERIFY(!ctrl.recentDownloadRecord().valid);
+        const auto snapshot = ctrl.buildDownloadSnapshot(ctrl.m_artifactPath, {});
+        QVERIFY(snapshot.versionEvidence.contains(QStringLiteral("未知")));
     }
 
     void realBackendDisconnectDuringDownloadFailsTransport()
     {
         RuntimeSessionController ctrl;
+        approveDownloadsForTest(ctrl);
         BorrowedTrackingBackend backend;
         QVERIFY(backend.connectBackend());
         ctrl.setDeviceBackend(&backend);
@@ -627,6 +911,7 @@ private slots:
     void downloadFaultInjectionRestoresRunning()
     {
         RuntimeSessionController ctrl;
+        approveDownloadsForTest(ctrl);
         VirtualDeviceBackend backend;
         backend.connectBackend();
         backend.setFaultInjection(false, false, true);
@@ -645,13 +930,14 @@ private slots:
         QCOMPARE(spy.count(), 1);
         QCOMPARE(spy.first().first().toBool(), false);
         QVERIFY(stateSpy.count() >= 1);
-        QCOMPARE(ctrl.state(), RuntimeSessionState::Running);
+        QCOMPARE(ctrl.state(), RuntimeSessionState::Connected);
         QCOMPARE(ctrl.downloadState(), DownloadState::Failed);
     }
 
     void manualDownloadFailureRestoresRunningState()
     {
         RuntimeSessionController ctrl;
+        approveDownloadsForTest(ctrl);
         VirtualDeviceBackend backend;
         backend.connectBackend();
         ctrl.setDeviceBackend(&backend);
@@ -665,13 +951,14 @@ private slots:
 
         QVERIFY(!ok);
         QCOMPARE(ctrl.downloadState(), DownloadState::VerifyFailed);
-        QCOMPARE(ctrl.state(), RuntimeSessionState::Running);
-        QVERIFY(ctrl.isRunning());
+        QCOMPARE(ctrl.state(), RuntimeSessionState::Connected);
+        QVERIFY(!ctrl.isRunning());
     }
 
     void stoppingDuringDownloadDoesNotRestoreRunning()
     {
         RuntimeSessionController ctrl;
+        approveDownloadsForTest(ctrl);
         VirtualDeviceBackend backend;
         backend.connectBackend();
         ctrl.setDeviceBackend(&backend);
@@ -701,6 +988,7 @@ private slots:
     void backendDisconnectLeavesNoRunningOrMonitoringState()
     {
         RuntimeSessionController ctrl;
+        approveDownloadsForTest(ctrl);
         VirtualDeviceBackend backend;
         backend.connectBackend();
         ctrl.setDeviceBackend(&backend);
@@ -716,9 +1004,99 @@ private slots:
         QVERIFY(!Monitor::MonitorManager::instance().isMonitoring());
     }
 
+    void reconnectDoesNotResumeMonitoring()
+    {
+        auto& manager = Monitor::MonitorManager::instance();
+        manager.stopMonitoring();
+        for (const QString& id : manager.providerIds()) manager.unregisterProvider(id);
+        for (const QString& name : manager.channelNames()) manager.removeChannel(name);
+        Monitor::ProviderConfig provider;
+        provider.id = QStringLiteral("reconnect.provider");
+        provider.channelName = QStringLiteral("reconnect.channel");
+        provider.periodMs = 20;
+        provider.sampler = [] { return 1.0; };
+        QVERIFY(manager.registerProvider(provider));
+
+        RuntimeSessionController ctrl;
+        VirtualDeviceBackend backend;
+        QVERIFY(backend.connectBackend());
+        ctrl.setDeviceBackend(&backend);
+        ctrl.executeRun();
+        QVERIFY(ctrl.isMonitoring());
+
+        backend.disconnectBackend();
+        QVERIFY(!ctrl.isMonitoring());
+        QCOMPARE(ctrl.state(), RuntimeSessionState::Fault);
+
+        QVERIFY(backend.connectBackend());
+        QCOMPARE(ctrl.state(), RuntimeSessionState::Connected);
+        QVERIFY(!ctrl.isMonitoring());
+
+        ctrl.requestStop();
+        QVERIFY(manager.unregisterProvider(provider.id));
+        manager.removeChannel(provider.channelName);
+        manager.stopMonitoring();
+    }
+
+    void demoChannelsClearedOnRealContext()
+    {
+        auto& manager = Monitor::MonitorManager::instance();
+        manager.stopMonitoring();
+        for (const QString& id : manager.providerIds()) manager.unregisterProvider(id);
+        for (const QString& name : manager.channelNames()) manager.removeChannel(name);
+
+        SampleDataProvider demoSource;
+        RuntimeSessionController ctrl;
+        ctrl.setSampleDataProvider(&demoSource);
+        ctrl.startDemoMode(QStringLiteral("test"));
+        QVERIFY(ctrl.isDemoMode());
+        QVERIFY(manager.hasChannel(QStringLiteral("__lh_demo__/pressure")));
+
+        VirtualDeviceBackend liveBackend;
+        QVERIFY(liveBackend.connectBackend());
+        ctrl.setDeviceBackend(&liveBackend);
+        QVERIFY(!ctrl.isDemoMode());
+        QVERIFY(!demoSource.isRunning());
+        QVERIFY(!manager.hasChannel(QStringLiteral("__lh_demo__/pressure")));
+        QVERIFY(!manager.hasChannel(QStringLiteral("__lh_demo__/position")));
+        ctrl.setDeviceBackend(nullptr);
+        liveBackend.disconnectBackend();
+
+        ctrl.startDemoMode(QStringLiteral("test2"));
+        QVERIFY(ctrl.isDemoMode());
+        QVERIFY(manager.hasChannel(QStringLiteral("__lh_demo__/pressure")));
+
+        ProjectController project;
+        project.runtimeConfig().projectName = QStringLiteral("isolation");
+        project.runtimeConfig().protocol = QStringLiteral("test");
+        project.runtimeConfig().transport.protocol = QStringLiteral("test");
+        MonitorProviderRuntimeConfig provider;
+        provider.id = QStringLiteral("real.provider");
+        provider.channelName = QStringLiteral("real.channel");
+        provider.periodMs = 100;
+        project.runtimeConfig().providers.append(provider);
+        ctrl.setProjectController(&project);
+        QSignalSpy errorSpy(&ctrl, &RuntimeSessionController::runtimeError);
+        QVERIFY2(ctrl.applyRuntimeConfig(),
+                 errorSpy.isEmpty()
+                     ? "applyRuntimeConfig failed"
+                     : qPrintable(errorSpy.last().first().toString()));
+        QVERIFY(!ctrl.isDemoMode());
+        QVERIFY(manager.hasProvider(provider.id));
+        for (const QString& name : manager.channelNames()) {
+            QVERIFY(!manager.channelConfig(name).metadata
+                             .value(QStringLiteral("__demoMode")).toBool());
+        }
+
+        for (const QString& id : manager.providerIds()) manager.unregisterProvider(id);
+        for (const QString& name : manager.channelNames()) manager.removeChannel(name);
+        manager.stopMonitoring();
+    }
+
     void downloadTransportFailureClassifiesState()
     {
         RuntimeSessionController ctrl;
+        approveDownloadsForTest(ctrl);
         VirtualDeviceBackend backend;
         backend.connectBackend();
         ctrl.setDeviceBackend(&backend);
@@ -740,6 +1118,7 @@ private slots:
     void downloadRejectedFailureClassifiesState()
     {
         RuntimeSessionController ctrl;
+        approveDownloadsForTest(ctrl);
         VirtualDeviceBackend backend;
         backend.connectBackend();
         ctrl.setDeviceBackend(&backend);
@@ -761,6 +1140,7 @@ private slots:
     void downloadVerifyFailureClassifiesState()
     {
         RuntimeSessionController ctrl;
+        approveDownloadsForTest(ctrl);
         VirtualDeviceBackend backend;
         backend.connectBackend();
         ctrl.setDeviceBackend(&backend);
@@ -782,6 +1162,11 @@ private slots:
     void downloadRetrySucceedsOnSecondAttempt()
     {
         RuntimeSessionController ctrl;
+        int confirmationCount = 0;
+        ctrl.setDownloadConfirmationHook([&](const DownloadConfirmationSnapshot&) {
+            ++confirmationCount;
+            return true;
+        });
         VirtualDeviceBackend backend;
         backend.connectBackend();
         backend.setDownloadFaultInjection(1, CommErrorCode::ConnectionLost, QStringLiteral("one-shot transport fault"));
@@ -798,6 +1183,7 @@ private slots:
         const bool ok = ctrl.requestDownload(ctrl.m_artifactPath, {{"retryCount", 2}});
 
         QVERIFY(ok);
+        QCOMPARE(confirmationCount, 1);
         QCOMPARE(finishedSpy.count(), 1);
         QCOMPARE(finishedSpy.first().first().toBool(), true);
         QVERIFY(progressSpy.count() >= 5);
@@ -813,12 +1199,52 @@ private slots:
         }
         QVERIFY(sawRetrying);
         QCOMPARE(ctrl.downloadState(), DownloadState::Succeeded);
-        QCOMPARE(ctrl.state(), RuntimeSessionState::Running);
+        QCOMPARE(ctrl.state(), RuntimeSessionState::Connected);
+    }
+
+    void retryMutationAfterFirstAttemptStopsBeforeSecondWrite()
+    {
+        RuntimeSessionController ctrl;
+        BorrowedTrackingBackend backend;
+        QVERIFY(backend.connectBackend());
+        backend.setDownloadFaultInjection(1, CommErrorCode::ConnectionLost,
+                                          QStringLiteral("retry mutation fixture"));
+        ctrl.setDeviceBackend(&backend);
+        ctrl.executeRun();
+
+        QTemporaryFile artifactFile;
+        QVERIFY(artifactFile.open());
+        const QByteArray approvedBytes = QByteArrayLiteral("approved");
+        QCOMPARE(artifactFile.write(approvedBytes), qint64(8));
+        artifactFile.flush();
+        ctrl.m_artifactPath = artifactFile.fileName();
+
+        int confirmationCount = 0;
+        ctrl.setDownloadConfirmationHook([&](const DownloadConfirmationSnapshot&) {
+            ++confirmationCount;
+            return true;
+        });
+        bool mutationSucceeded = true;
+        backend.afterDownloadCall = [&](int call, bool) {
+            if (call == 1)
+                mutationSucceeded = writeFixtureFile(artifactFile.fileName(),
+                                                     QByteArrayLiteral("replaced"));
+        };
+
+        QSignalSpy finishedSpy(&ctrl, &RuntimeSessionController::downloadFinished);
+        QVERIFY(!ctrl.requestDownload(ctrl.m_artifactPath, {{QStringLiteral("retryCount"), 2}}));
+        QCOMPARE(confirmationCount, 1);
+        QCOMPARE(backend.downloadCallCount, 1);
+        QVERIFY(mutationSucceeded);
+        QCOMPARE(finishedSpy.count(), 1);
+        QVERIFY(!finishedSpy.first().first().toBool());
+        QCOMPARE(ctrl.downloadState(), DownloadState::PrecheckFailed);
     }
 
     void downloadRetryExhaustedFails()
     {
         RuntimeSessionController ctrl;
+        approveDownloadsForTest(ctrl);
         VirtualDeviceBackend backend;
         backend.connectBackend();
         ctrl.setDeviceBackend(&backend);
@@ -845,12 +1271,13 @@ private slots:
         }
         QVERIFY(sawRetrying);
         QCOMPARE(ctrl.downloadState(), DownloadState::VerifyFailed);
-        QCOMPARE(ctrl.state(), RuntimeSessionState::Running);
+        QCOMPARE(ctrl.state(), RuntimeSessionState::Connected);
     }
 
     void downloadMissingArtifactFailsPrecheck()
     {
         RuntimeSessionController ctrl;
+        approveDownloadsForTest(ctrl);
         VirtualDeviceBackend backend;
         backend.connectBackend();
         ctrl.setDeviceBackend(&backend);
@@ -864,12 +1291,13 @@ private slots:
         QVERIFY(!ok);
         QCOMPARE(spy.count(), 1);
         QCOMPARE(ctrl.downloadState(), DownloadState::PrecheckFailed);
-        QCOMPARE(ctrl.state(), RuntimeSessionState::Running);
+        QCOMPARE(ctrl.state(), RuntimeSessionState::Connected);
     }
 
     void downloadChecksumMismatchFailsPrecheck()
     {
         RuntimeSessionController ctrl;
+        approveDownloadsForTest(ctrl);
         VirtualDeviceBackend backend;
         backend.connectBackend();
         ctrl.setDeviceBackend(&backend);
@@ -902,12 +1330,13 @@ private slots:
         }
         QVERIFY(sawChecksumDiagnostic);
         QCOMPARE(ctrl.downloadState(), DownloadState::PrecheckFailed);
-        QCOMPARE(ctrl.state(), RuntimeSessionState::Running);
+        QCOMPARE(ctrl.state(), RuntimeSessionState::Connected);
     }
 
     void downloadManifestMismatchFailsPrecheck()
     {
         RuntimeSessionController ctrl;
+        approveDownloadsForTest(ctrl);
         VirtualDeviceBackend backend;
         backend.connectBackend();
         ctrl.setDeviceBackend(&backend);
@@ -933,7 +1362,7 @@ private slots:
         QCOMPARE(spy.count(), 1);
         QVERIFY(spy.first().first().toString().contains(QStringLiteral("runtime_manifest.json")));
         QCOMPARE(ctrl.downloadState(), DownloadState::PrecheckFailed);
-        QCOMPARE(ctrl.state(), RuntimeSessionState::Running);
+        QCOMPARE(ctrl.state(), RuntimeSessionState::Connected);
     }
 
     void formalAsyncDownloadDeadlineAndUiCancellation_data()
@@ -975,7 +1404,8 @@ private slots:
         QVERIFY(constructedThread != QThread::currentThread());
         ControllerDeviceBackend backend;backend.setDebugClientForTest(&client);
         QVERIFY(backend.configure(config));QVERIFY(backend.connectBackend());
-        RuntimeSessionController ctrl;ctrl.setProjectController(&project);ctrl.setDeviceBackend(&backend);ctrl.executeRun();
+        RuntimeSessionController ctrl;
+        approveDownloadsForTest(ctrl);ctrl.setProjectController(&project);ctrl.setDeviceBackend(&backend);ctrl.executeRun();
         QSignalSpy finished(&ctrl,&RuntimeSessionController::downloadFinished);
         QElapsedTimer elapsed;elapsed.start();int ticks=0;
         QTimer heartbeat;connect(&heartbeat,&QTimer::timeout,[&](){++ticks;});heartbeat.start(10);
@@ -989,7 +1419,7 @@ private slots:
         QCOMPARE(finished[0][0].toBool(),autoStart);QTRY_VERIFY(!ctrl.m_backendDownloadInProgress);
         QVERIFY(elapsed.elapsed()<(lateMatch ? 800 : 250));if(!autoStart)QVERIFY(ticks>=2);
         if (lateMatch) QCOMPARE(ctrl.downloadState(),DownloadState::TransportFailed);
-        else QCOMPARE(ctrl.state(),autoStart ? RuntimeSessionState::Running : RuntimeSessionState::Idle);
+        else QCOMPARE(ctrl.state(),autoStart ? RuntimeSessionState::Connected : RuntimeSessionState::Idle);
         QTest::qWait(30);QCOMPARE(finished.count(),1);
     }
 
@@ -1036,6 +1466,7 @@ private slots:
                                          QStringLiteral("runtime_manifest.json"))));
 
         RuntimeSessionController ctrl;
+        approveDownloadsForTest(ctrl);
         ctrl.setProjectController(&projectController);
         ctrl.setDeviceBackend(&backend);
         ctrl.executeRun();
@@ -1059,7 +1490,7 @@ private slots:
         }
         QVERIFY(sawProfileDiagnostic);
         QCOMPARE(ctrl.downloadState(), DownloadState::PrecheckFailed);
-        QCOMPARE(ctrl.state(), RuntimeSessionState::Running);
+        QCOMPARE(ctrl.state(), RuntimeSessionState::Connected);
         QCOMPARE(transport.lastWriteAddress, -1);
     }
 
@@ -1106,6 +1537,7 @@ private slots:
                                          QStringLiteral("runtime_manifest.json"))));
 
         RuntimeSessionController ctrl;
+        approveDownloadsForTest(ctrl);
         ctrl.setProjectController(&projectController);
         ctrl.setDeviceBackend(&backend);
         ctrl.executeRun();
@@ -1117,7 +1549,7 @@ private slots:
         QCOMPARE(errorSpy.count(), 1);
         QVERIFY(errorSpy.first().first().toString().contains(QStringLiteral("profile"), Qt::CaseInsensitive));
         QCOMPARE(ctrl.downloadState(), DownloadState::PrecheckFailed);
-        QCOMPARE(ctrl.state(), RuntimeSessionState::Running);
+        QCOMPARE(ctrl.state(), RuntimeSessionState::Connected);
         QCOMPARE(transport.lastWriteAddress, -1);
     }
 
@@ -1169,6 +1601,7 @@ private slots:
         QVERIFY(backend.connectBackend());
 
         RuntimeSessionController ctrl;
+        approveDownloadsForTest(ctrl);
         ctrl.setProjectController(&projectController);
         ctrl.setDeviceBackend(&backend);
         ctrl.executeRun();
@@ -1190,6 +1623,7 @@ private slots:
     void downloadVirtualLegacyArtifactRemainsCompatible()
     {
         RuntimeSessionController ctrl;
+        approveDownloadsForTest(ctrl);
         VirtualDeviceBackend backend;
         QVERIFY(backend.connectBackend());
         ctrl.setDeviceBackend(&backend);
@@ -1244,6 +1678,7 @@ private slots:
         QVERIFY(backend.connectBackend());
 
         RuntimeSessionController ctrl;
+        approveDownloadsForTest(ctrl);
         ctrl.setProjectController(&projectController);
         ctrl.setDeviceBackend(&backend);
         ctrl.executeRun();
@@ -1430,6 +1865,7 @@ private slots:
     void publishedGenerationRejectsProfileOverride()
     {
         RuntimeSessionController ctrl;
+        approveDownloadsForTest(ctrl);
         VirtualDeviceBackend backend;
         QVERIFY(backend.connectBackend());
         ctrl.setDeviceBackend(&backend);
@@ -1461,6 +1897,7 @@ private slots:
     void pendingRunFlag()
     {
         RuntimeSessionController ctrl;
+        approveDownloadsForTest(ctrl);
         QVERIFY(!ctrl.hasPendingRunAfterCompile());
 
         ctrl.setPendingRunAfterCompile(true);
@@ -1473,6 +1910,7 @@ private slots:
     void skipNextBuildSaveFlag()
     {
         RuntimeSessionController ctrl;
+        approveDownloadsForTest(ctrl);
         QVERIFY(!ctrl.skipNextBuildSave());
 
         ctrl.setSkipNextBuildSave(true);
@@ -1482,12 +1920,14 @@ private slots:
     void artifactPathInitiallyEmpty()
     {
         RuntimeSessionController ctrl;
+        approveDownloadsForTest(ctrl);
         QVERIFY(ctrl.artifactPath().isEmpty());
     }
 
     void defaultOpcServerIsCreated()
     {
         RuntimeSessionController ctrl;
+        approveDownloadsForTest(ctrl);
         QVERIFY(ctrl.opcServer() != nullptr);
         const auto snapshot = ctrl.opcServer()->statusSnapshot();
         QVERIFY(!snapshot.backendType.isEmpty());
@@ -1498,6 +1938,7 @@ private slots:
     void syncOpcRuntimePointsAddsControllerStatusRegisters()
     {
         RuntimeSessionController ctrl;
+        approveDownloadsForTest(ctrl);
         ProjectController projectController;
         projectController.runtimeConfig().controller.modbusSlaveId = 7;
         ctrl.setProjectController(&projectController);
@@ -1548,6 +1989,7 @@ private slots:
     void setAndClearDeviceBackend()
     {
         RuntimeSessionController ctrl;
+        approveDownloadsForTest(ctrl);
         VirtualDeviceBackend backend;
 
         ctrl.setDeviceBackend(&backend);
@@ -1560,6 +2002,7 @@ private slots:
     void destroyingReplacedBackendDoesNotClearCurrentBackend()
     {
         RuntimeSessionController ctrl;
+        approveDownloadsForTest(ctrl);
         auto* backendA = new VirtualDeviceBackend;
         auto* backendB = new VirtualDeviceBackend;
 
@@ -1578,6 +2021,7 @@ private slots:
     void destroyingBackendDuringOpcWriteFailsOnceWithoutGoodUpdate()
     {
         RuntimeSessionController ctrl;
+        approveDownloadsForTest(ctrl);
         ParameterController parameterController;
         ParameterDefinition def;
         def.id = QStringLiteral("param.kp");
@@ -1620,6 +2064,7 @@ private slots:
     void executeRunSkipsOpcWhenDisabled()
     {
         RuntimeSessionController ctrl;
+        approveDownloadsForTest(ctrl);
         ProjectController projectController;
         projectController.runtimeConfig().opcServer.enabled = false;
         ctrl.setProjectController(&projectController);
@@ -1634,6 +2079,7 @@ private slots:
     void executeRunInvalidOpcConfigEmitsRuntimeError()
     {
         RuntimeSessionController ctrl;
+        approveDownloadsForTest(ctrl);
         ProjectController projectController;
         projectController.runtimeConfig().opcServer.enabled = true;
         projectController.runtimeConfig().opcServer.opcProgId.clear();
@@ -1646,9 +2092,44 @@ private slots:
         QVERIFY(errorSpy.last().first().toString().contains(QStringLiteral("OPC 服务配置失败")));
     }
 
+    void opcStartFailureCanRetryAndRecover()
+    {
+        ProjectController project;
+        project.runtimeConfig().projectName = QStringLiteral("opc-retry");
+        project.runtimeConfig().protocol = QStringLiteral("test");
+        project.runtimeConfig().opcServer.enabled = true;
+        project.runtimeConfig().opcServer.opcProgId = QStringLiteral("Test.Opc");
+        FlakyOpcServer opc;
+        RuntimeSessionController ctrl;
+        ctrl.setOpcServer(&opc);
+        ctrl.setProjectController(&project);
+        VirtualDeviceBackend backend;
+        QVERIFY(backend.connectBackend());
+        ctrl.setDeviceBackend(&backend);
+
+        QSignalSpy errorSpy(&ctrl, &RuntimeSessionController::runtimeError);
+        QSignalSpy runningSpy(&ctrl, &RuntimeSessionController::opcRunningChanged);
+        ctrl.executeRun();
+        QCOMPARE(opc.startCalls, 1);
+        QVERIFY(!opc.isRunning());
+        QVERIFY(runningSpy.isEmpty());
+        QVERIFY(!errorSpy.isEmpty());
+        QVERIFY(errorSpy.last().first().toString().contains(QStringLiteral("启动失败")));
+
+        ctrl.executeRun();
+        QCOMPARE(opc.startCalls, 2);
+        QVERIFY(opc.isRunning());
+        QCOMPARE(runningSpy.count(), 1);
+        QVERIFY(runningSpy.first().first().toBool());
+
+        ctrl.requestStop();
+        QVERIFY(!opc.isRunning());
+    }
+
     void requestStopStopsOpcServer()
     {
         RuntimeSessionController ctrl;
+        approveDownloadsForTest(ctrl);
         ProjectController projectController;
         projectController.runtimeConfig().opcServer.enabled = true;
         ctrl.setProjectController(&projectController);
@@ -1667,6 +2148,7 @@ private slots:
     void opcWriteUnknownPointRejected()
     {
         RuntimeSessionController ctrl;
+        approveDownloadsForTest(ctrl);
         ParameterController parameterController;
         auto* opc = new TestOpcServer;
         ctrl.setParameterController(&parameterController);
@@ -1679,9 +2161,30 @@ private slots:
         QVERIFY(opc->m_lastWriteMessage.contains(QStringLiteral("未找到点位")));
     }
 
+    void demoModeRejectsDeviceWritesAndOpcStart()
+    {
+        RuntimeSessionController ctrl;
+        ProjectController project;
+        project.runtimeConfig().opcServer.enabled = true;
+        ctrl.setProjectController(&project);
+        auto* opc = new TestOpcServer;
+        ctrl.setOpcServer(opc);
+        ctrl.m_demoModeActive = true;
+        ctrl.setState(RuntimeSessionState::Running);
+        QVERIFY(!ctrl.requestDownload(QStringLiteral("demo-artifact")));
+        ctrl.startOpcServerIfEnabled();
+        QVERIFY(!opc->isRunning());
+        ctrl.handleOpcWriteRequest(QStringLiteral("param.kp"), QVariant(2.0));
+        QCOMPARE(opc->m_recordCount, 1);
+        QVERIFY(!opc->m_lastWriteSuccess);
+        QVERIFY(opc->m_lastWriteMessage.contains(QStringLiteral("演示模式")));
+        ctrl.m_demoModeActive = false;
+    }
+
     void opcWriteReadOnlyRejected()
     {
         RuntimeSessionController ctrl;
+        approveDownloadsForTest(ctrl);
         ParameterController parameterController;
         parameterController.loadDefinitions({[] {
             ParameterDefinition def;
@@ -1708,6 +2211,7 @@ private slots:
     void opcWriteEditableSuccess()
     {
         RuntimeSessionController ctrl;
+        approveDownloadsForTest(ctrl);
         ParameterController parameterController;
 
         ParameterDefinition def;
@@ -1746,6 +2250,7 @@ private slots:
     void opcWriteOnlyAppliesRequestedPoint()
     {
         RuntimeSessionController ctrl;
+        approveDownloadsForTest(ctrl);
         ParameterController parameterController;
         ParameterDefinition first;
         first.id = QStringLiteral("param.a");
@@ -1787,6 +2292,7 @@ private slots:
     void opcWriteFailureDoesNotPublishGood()
     {
         RuntimeSessionController ctrl;
+        approveDownloadsForTest(ctrl);
         ParameterController parameterController;
         ParameterDefinition def;
         def.id = QStringLiteral("param.kp");
@@ -1822,6 +2328,7 @@ private slots:
     void opcWriteReadbackTimeoutDoesNotPublishGood()
     {
         RuntimeSessionController ctrl;
+        approveDownloadsForTest(ctrl);
         ParameterController parameterController;
         ParameterDefinition def;
         def.id = QStringLiteral("param.kp");
@@ -1858,6 +2365,7 @@ private slots:
     void opcWriteReadbackMismatchDoesNotPublishGood()
     {
         RuntimeSessionController ctrl;
+        approveDownloadsForTest(ctrl);
         ParameterController parameterController;
         ParameterDefinition def;
         def.id = QStringLiteral("param.kp");
@@ -1901,6 +2409,7 @@ private slots:
     void opcWriteReentryIsRejected()
     {
         RuntimeSessionController ctrl;
+        approveDownloadsForTest(ctrl);
         ParameterController parameterController;
         ParameterDefinition first;
         first.id = QStringLiteral("param.a");
@@ -1941,6 +2450,7 @@ private slots:
     {
         for (const bool switchServer : {false, true}) {
             RuntimeSessionController ctrl;
+            approveDownloadsForTest(ctrl);
             ParameterController parameterController;
             ParameterDefinition def;
             def.id = QStringLiteral("param.kp");
@@ -1979,6 +2489,7 @@ private slots:
     void opcPendingWriteClearsOnSessionStop()
     {
         RuntimeSessionController ctrl;
+        approveDownloadsForTest(ctrl);
         ParameterController parameterController;
         ParameterDefinition def;
         def.id = QStringLiteral("param.kp");
@@ -2011,6 +2522,7 @@ private slots:
     void opcPendingWriteClearsOnControllerSwitch()
     {
         RuntimeSessionController ctrl;
+        approveDownloadsForTest(ctrl);
         ParameterController firstController;
         ParameterController secondController;
         ParameterDefinition def;
@@ -2045,6 +2557,7 @@ private slots:
     void opcPendingWriteClearsOnBackendSwitch()
     {
         RuntimeSessionController ctrl;
+        approveDownloadsForTest(ctrl);
         ParameterController parameterController;
         ParameterDefinition def;
         def.id = QStringLiteral("param.kp");
@@ -2077,6 +2590,7 @@ private slots:
     void opcPendingWriteClearsOnOpcServerSwitch()
     {
         RuntimeSessionController ctrl;
+        approveDownloadsForTest(ctrl);
         ParameterController parameterController;
         ParameterDefinition def;
         def.id = QStringLiteral("param.kp");
@@ -2110,6 +2624,7 @@ private slots:
     void controllerDebugCommandsUseConfiguredBackend()
     {
         RuntimeSessionController ctrl;
+        approveDownloadsForTest(ctrl);
         FakeRuntimeControllerTransport transport;
         ControllerDebugClient client(&transport);
         ControllerDeviceBackend backend;
@@ -2121,20 +2636,26 @@ private slots:
         QVERIFY(backend.connectBackend());
         ctrl.setDeviceBackend(&backend);
 
+        // The transport write precedes the queued session-completion callback.
+        // Wait for completion before inspecting its payload and admitting another command.
         QVERIFY(ctrl.pauseController());
-        QTRY_COMPARE(transport.lastWriteAddress, 32);
+        QTRY_VERIFY(!ctrl.isDebugCommandPending());
+        QCOMPARE(transport.lastWriteAddress, 32);
         QCOMPARE(transport.lastWriteValues, QVector<quint16>({1}));
 
         QVERIFY(ctrl.resumeController());
-        QTRY_COMPARE(transport.lastWriteValues, QVector<quint16>({0}));
+        QTRY_VERIFY(!ctrl.isDebugCommandPending());
+        QCOMPARE(transport.lastWriteValues, QVector<quint16>({0}));
         QCOMPARE(transport.lastWriteAddress, 32);
 
         QVERIFY(ctrl.stepController());
-        QTRY_COMPARE(transport.lastWriteAddress, 31);
+        QTRY_VERIFY(!ctrl.isDebugCommandPending());
+        QCOMPARE(transport.lastWriteAddress, 31);
         QCOMPARE(transport.lastWriteValues, QVector<quint16>({1}));
 
         QVERIFY(ctrl.runControllerToCursor(77));
-        QTRY_COMPARE(transport.lastWriteAddress, 28);
+        QTRY_VERIFY(!ctrl.isDebugCommandPending());
+        QCOMPARE(transport.lastWriteAddress, 28);
         QCOMPARE(transport.lastWriteValues, QVector<quint16>({77}));
     }
 
@@ -2168,6 +2689,7 @@ private slots:
         ControllerDebugClient client;
         client.enableWorkerThread([barrier] { return new LateConnectionTransport(barrier); });
         RuntimeSessionController ctrl;
+        approveDownloadsForTest(ctrl);
         auto* backend = new ControllerDeviceBackend(&ctrl);
         backend->setDebugClientForTest(&client);
         ctrl.m_ownedControllerBackend = backend;
@@ -2200,6 +2722,7 @@ private slots:
         const auto path = AppLogging::activeLogPath();
         QFile log(path); QVERIFY(log.open(QIODevice::ReadOnly)); const auto offset = log.size(); log.close();
         RuntimeSessionController ctrl;
+        approveDownloadsForTest(ctrl);
         FakeRuntimeControllerTransport transport;
         ControllerDebugClient client(&transport);
         ControllerDeviceBackend backend; backend.setDebugClientForTest(&client);
@@ -2258,6 +2781,7 @@ private slots:
     void controllerConnectionTestUsesConfiguredBackend()
     {
         RuntimeSessionController ctrl;
+        approveDownloadsForTest(ctrl);
         FakeRuntimeControllerTransport transport;
         ControllerDebugClient client(&transport);
         ControllerDeviceBackend backend;

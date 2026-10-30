@@ -228,6 +228,7 @@ public:
      * @brief 获取通道的完整数据（从环形缓冲区）
      */
     QVector<QPointF> getChannelData(const QString& channelId) const;
+    QVector<QPointF> processedSnapshot(const QString& channelId) const;
     
     /**
      * @brief 获取通道最近 N 个点

@@ -49,7 +49,9 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
+#include <QByteArray>
 #include <QMessageBox>
+#include <QPair>
 #include <QString>
 #include <QStringList>
 #include <functional>
@@ -97,11 +99,13 @@ class OutputPaneController;
 class ProgramBlocksWidget;
 class ProjectExplorerWidget;
 class GlobalStatusBar;
+class NotificationBanner;
 class DeviceWorkspaceWidget;
 class InspectorPanel;
 class ParameterTuningPanel;
 class ParameterTuningWindow;
 class ProblemsPanel;
+struct DownloadConfirmationSnapshot;
 
 /**
  * @brief 主窗口类
@@ -142,6 +146,7 @@ public:
     void applyDefaultWorkspaceLayout(const QString& workspaceId);
     void restoreWindowGeometryAndWorkspaces();
     void saveWindowGeometryAndWorkspaces();
+    void setSystemViewFloating(const QString& workspaceId, bool floating);
     void setSettingsStorage(const QString& organization, const QString& application);
     QString workspaceIdForTabIndex(int index) const;
     int tabIndexForWorkspaceId(const QString& workspaceId) const;
@@ -167,6 +172,23 @@ public:
                        QMessageBox::StandardButtons buttons = QMessageBox::Ok,
                        QMessageBox::StandardButton defaultButton = QMessageBox::NoButton);
 
+    /// F7/F8/F9 运行编排阶段（P2-05）
+    enum class RunFlowStage {
+        Idle,
+        Saving,
+        Compiling,
+        Connecting,
+        AwaitingConfirmation,
+        Downloading,
+        RequestingRun,
+        Completed,
+        Failed,
+        Cancelled
+    };
+    Q_ENUM(RunFlowStage)
+    RunFlowStage runFlowStage() const { return m_runFlowStage; }
+    QString runFlowStageName() const;
+
     quint64 nextScanTaskId() { return ++m_nextScanTaskId; }
     QString projectSessionId() const { return m_projectSessionId; }
     QString resolveExplorerRootPath() const;
@@ -179,6 +201,7 @@ public slots:
 
 protected:
     void closeEvent(QCloseEvent* event) override;
+    void showEvent(QShowEvent* event) override;
     bool eventFilter(QObject* watched, QEvent* event) override;
 
 private slots:
@@ -252,7 +275,7 @@ private slots:
     // ===== 其他 =====
     void onOpenLogDirectory();
     void onOpenDiagnosisWizard();
-    void onEditParameterRequested(const QString& parameterName);
+    void onParameterValueCommitted(const QString& pointId, const QString& value, bool applyNow);
     void onApplyParametersRequested();
     void onParameterReadbackFinished(bool success, const QString& message);
     void onAbout();
@@ -338,6 +361,7 @@ private:
     void updateEditActions();
     
     void setCompileActionsEnabled(bool enabled);
+    bool canStartCompileAction() const;
     void updateRecentProjectsMenu();
     void updateWindowTitle();
     void updateEditorSubWindowTitle();
@@ -349,6 +373,8 @@ private:
     void createDslEditorSubWindow();
     QMdiSubWindow* addDocumentSubWindow(QWidget* widget);
     void connectDslEditorSignals();
+    void connectAuxiliaryDslEditor(DslScriptEditor* editor, QMdiSubWindow* sub);
+    void setMainScriptFromExplorer(const QString& path);
     void bindFunctionLibraryDataSource();
     
     void applyFontSize(int pointSize);
@@ -362,6 +388,31 @@ private:
     bool saveAuxiliaryFiles(bool all);
     bool confirmAuxiliaryChanges();
 
+    // ===== 构建输入、快照与运行编排（第二阶段） =====
+    struct BuildSnapshot {
+        bool valid = false;
+        QString operationId;
+        QString sessionId;
+        QString projectPath;
+        QString entryPath;
+        QString configurationFingerprint;
+        quint64 buildGeneration = 0;
+        QHash<QString, quint64> documentVersions;
+        QHash<QString, QString> inputChecksums; ///< path -> SHA-256 of on-disk bytes
+    };
+
+    QStringList buildInputFiles() const;
+    QString resolveProjectFilePath(const QString& path) const;
+    bool saveDirtyBuildInputs(QStringList* errors);
+    void captureBuildSnapshot();
+    bool isBuildSnapshotCurrent() const;
+    bool refreshBuildSnapshotPublicationIdentity();
+    void invalidateBuildSnapshot(const QString& reason);
+    void invalidateActiveBuildForEntryChange();
+    void beginCompileAndRunFlow();
+    bool isRunFlowActive() const;
+    void setRunFlowStage(RunFlowStage stage, const QString& detail = QString());
+    bool confirmDownloadSnapshot(const DownloadConfirmationSnapshot& snapshot);
 
     // ===== Demo Mode（演示数据模式） =====
     void startDemoModeIfNeeded(const QString& reason);
@@ -373,12 +424,19 @@ private:
     BuildController*    m_buildController;      ///< 编译控制器
     SettingsController* m_settingsController;   ///< 设置控制器
     ParameterController* m_parameterController = nullptr; ///< 参数状态机控制器
+    quint64 m_parameterEditBackendGeneration = 0;
+    QByteArray m_parameterEditConfigSnapshot;
+    bool m_parameterEditBackendOnline = false;
+    bool m_parameterEditConnectionChanged = false;
+    QMetaObject::Connection m_parameterEditConnectionWatch;
     RuntimeSessionController* m_sessionController = nullptr; ///< 运行会话控制器
 
     // ================= 中心工作区 =================
     QMdiArea*     m_mdiArea;
     DslScriptEditor* m_dslEditor;
     QMdiSubWindow* m_editorSubWindow;
+    QMdiSubWindow* m_monitorSubWindow = nullptr;
+    QMdiSubWindow* m_deviceSubWindow = nullptr;
 
     // ================= Dock 窗口 =================
     QDockWidget*  m_explorerDock = nullptr;
@@ -406,6 +464,7 @@ private:
     ParameterTuningWindow* m_parameterTuningWindow = nullptr;
     ProblemsPanel* m_problemsPanel = nullptr;
     GlobalStatusBar* m_globalStatusBar = nullptr;
+    NotificationBanner* m_notificationBanner = nullptr;
 
     ProjectExplorerWidget* m_projectExplorerWidget = nullptr;
 
@@ -437,6 +496,10 @@ private:
     QAction*      m_actToggleOutputDock;
     QAction*      m_actToggleMonitorDock;
     QAction*      m_actToggleDownloadDock;
+    QAction*      m_actFloatMonitor = nullptr;
+    QAction*      m_actFloatDevice = nullptr;
+    QDockWidget*  m_monitorFloatingDock = nullptr;
+    QDockWidget*  m_deviceFloatingDock = nullptr;
     QAction*      m_actToggleExplorerDock = nullptr;
     QAction*      m_actToggleInspectorDock = nullptr;
     QAction*      m_actToggleFunctionList;
@@ -501,6 +564,7 @@ private:
     QVariantMap m_lastDownloadDiagnostic;
     QString m_currentWorkspaceId = QStringLiteral("programming");
     bool m_switchingWorkspace = false;
+    bool m_initialWorkbenchShown = false;
 
     // ================= 快速打开与会话生命周期 =================
     quint64 m_nextScanTaskId = 0;
@@ -509,6 +573,14 @@ private:
     QString m_projectSessionId;
     QHash<QString, quint64> m_documentVersions;
     quint64 m_latestDiagnosticGeneration = 0;
+
+    // ================= 构建快照与运行编排 =================
+    RunFlowStage m_runFlowStage = RunFlowStage::Idle;
+    QString m_runFlowOperationId;
+    BuildSnapshot m_activeBuildSnapshot;
+    bool m_buildSnapshotStale = false;
+    QString m_lastRuntimeProblem;
+    qint64 m_lastRuntimeProblemAtMs = 0;
 
     // ================= 快捷动作 =================
     QAction* m_actCommandPalette = nullptr;

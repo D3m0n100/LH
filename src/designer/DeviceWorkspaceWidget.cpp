@@ -94,7 +94,7 @@ DeviceWorkspaceWidget::DeviceWorkspaceWidget(QWidget* parent)
     overviewLayout->addWidget(m_downloadProfileValue, 2, 1);
 
     overviewLayout->addWidget(makeCaptionLabel(tr("控制器运行:"), overviewGroup), 2, 2);
-    m_controllerBadge = makeBadge(tr("空闲"), overviewGroup);
+    m_controllerBadge = makeBadge(tr("未知"), overviewGroup);
     applyBadgeStyle(m_controllerBadge, QStringLiteral("neutral"));
     overviewLayout->addWidget(m_controllerBadge, 2, 3);
 
@@ -292,7 +292,7 @@ void DeviceWorkspaceWidget::setConnectionStatus(bool connected, const QString& s
     applyBadgeStyle(m_connectionBadge, connected ? QStringLiteral("success") : QStringLiteral("neutral"));
 }
 
-void DeviceWorkspaceWidget::setControllerRunning(bool running, bool paused)
+void DeviceWorkspaceWidget::setControllerRunning(bool running, bool paused, bool demoSession)
 {
     if (!m_controllerBadge) {
         return;
@@ -301,11 +301,11 @@ void DeviceWorkspaceWidget::setControllerRunning(bool running, bool paused)
         m_controllerBadge->setText(tr("暂停"));
         applyBadgeStyle(m_controllerBadge, QStringLiteral("warning"));
     } else if (running) {
-        m_controllerBadge->setText(tr("运行中"));
-        applyBadgeStyle(m_controllerBadge, QStringLiteral("success"));
+        m_controllerBadge->setText(demoSession ? tr("演示会话") : tr("未知"));
+        applyBadgeStyle(m_controllerBadge, demoSession ? QStringLiteral("neutral") : QStringLiteral("warning"));
     } else {
-        m_controllerBadge->setText(tr("停止"));
-        applyBadgeStyle(m_controllerBadge, QStringLiteral("neutral"));
+        m_controllerBadge->setText(tr("未知"));
+        applyBadgeStyle(m_controllerBadge, QStringLiteral("warning"));
     }
 
     if (m_btnRunController && !m_btnRunController->defaultAction()) {

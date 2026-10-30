@@ -8,6 +8,19 @@
 #include <QDateTime>
 #include <cmath>
 
+namespace {
+const QString pressureId = QStringLiteral("__lh_demo__/pressure");
+const QString flowId = QStringLiteral("__lh_demo__/flow");
+const QString temperatureId = QStringLiteral("__lh_demo__/temperature");
+const QString positionId = QStringLiteral("__lh_demo__/position");
+
+QVariantMap demoSampleMetadata()
+{
+    return {{QStringLiteral("__demoMode"), true},
+            {QStringLiteral("source"), QStringLiteral("demo")}};
+}
+}
+
 SampleDataProvider::SampleDataProvider(QObject* parent)
     : QObject(parent)
     , m_monitorManager(Monitor::MonitorManager::instance())
@@ -49,6 +62,14 @@ void SampleDataProvider::start()
     if (m_running) {
         return;
     }
+
+    for (const auto& id : {pressureId, flowId, temperatureId, positionId}) {
+        if (m_monitorManager.hasChannel(id)
+                && !m_monitorManager.channelConfig(id).metadata.value(QStringLiteral("__demoMode")).toBool()) {
+            qWarning("Cannot start demo: reserved demo channel is already used by a real source");
+            return;
+        }
+    }
     
     registerChannels();
     
@@ -78,32 +99,40 @@ void SampleDataProvider::registerChannels()
 {
     // 压力通道
     Monitor::ChannelConfig pressureConfig;
-    pressureConfig.name = "系统压力";
-    pressureConfig.displayName = "系统压力";
+    pressureConfig.name = pressureId;
+    pressureConfig.displayName = QStringLiteral("系统压力（演示数据）");
+    pressureConfig.metadata.insert(QStringLiteral("__demoMode"), true);
+    pressureConfig.metadata.insert(QStringLiteral("periodMs"), 500);
     pressureConfig.unit = "bar";
     pressureConfig.maxSamples = 2000;
     m_monitorManager.registerChannel(pressureConfig);
     
     // 流量通道
     Monitor::ChannelConfig flowConfig;
-    flowConfig.name = "系统流量";
-    flowConfig.displayName = "系统流量";
+    flowConfig.name = flowId;
+    flowConfig.displayName = QStringLiteral("系统流量（演示数据）");
+    flowConfig.metadata.insert(QStringLiteral("__demoMode"), true);
+    flowConfig.metadata.insert(QStringLiteral("periodMs"), 1000);
     flowConfig.unit = "L/min";
     flowConfig.maxSamples = 1000;
     m_monitorManager.registerChannel(flowConfig);
     
     // 温度通道
     Monitor::ChannelConfig tempConfig;
-    tempConfig.name = "系统温度";
-    tempConfig.displayName = "系统温度";
+    tempConfig.name = temperatureId;
+    tempConfig.displayName = QStringLiteral("系统温度（演示数据）");
+    tempConfig.metadata.insert(QStringLiteral("__demoMode"), true);
+    tempConfig.metadata.insert(QStringLiteral("periodMs"), 2000);
     tempConfig.unit = "°C";
     tempConfig.maxSamples = 500;
     m_monitorManager.registerChannel(tempConfig);
     
     // 位置通道
     Monitor::ChannelConfig posConfig;
-    posConfig.name = "阀芯位置";
-    posConfig.displayName = "阀芯位置";
+    posConfig.name = positionId;
+    posConfig.displayName = QStringLiteral("阀芯位置（演示数据）");
+    posConfig.metadata.insert(QStringLiteral("__demoMode"), true);
+    posConfig.metadata.insert(QStringLiteral("periodMs"), 100);
     posConfig.unit = "%";
     posConfig.maxSamples = 5000;
     m_monitorManager.registerChannel(posConfig);
@@ -112,19 +141,19 @@ void SampleDataProvider::registerChannels()
 void SampleDataProvider::generatePressureData()
 {
     double value = generateRandomValue(m_basePressure, 10.0);
-    m_monitorManager.recordSample("系统压力", value, "bar");
+    m_monitorManager.recordSample(pressureId, value, "bar", demoSampleMetadata());
 }
 
 void SampleDataProvider::generateFlowData()
 {
     double value = generateRandomValue(m_baseFlow, 5.0);
-    m_monitorManager.recordSample("系统流量", value, "L/min");
+    m_monitorManager.recordSample(flowId, value, "L/min", demoSampleMetadata());
 }
 
 void SampleDataProvider::generateTemperatureData()
 {
     double value = generateRandomValue(m_baseTemperature, 2.0);
-    m_monitorManager.recordSample("系统温度", value, "°C");
+    m_monitorManager.recordSample(temperatureId, value, "°C", demoSampleMetadata());
 }
 
 void SampleDataProvider::generatePositionData()
@@ -139,7 +168,7 @@ void SampleDataProvider::generatePositionData()
     // 限制在 0-100%
     value = std::max(0.0, std::min(100.0, value));
     
-    m_monitorManager.recordSample("阀芯位置", value, "%");
+    m_monitorManager.recordSample(positionId, value, "%", demoSampleMetadata());
 }
 
 double SampleDataProvider::generateRandomValue(double base, double variation)

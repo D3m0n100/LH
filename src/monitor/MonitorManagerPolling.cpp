@@ -15,7 +15,10 @@
 
 namespace Monitor {
 
-void MonitorManager::setDeviceBackend(IDeviceBackend* backend) { m_backendSampler->setDeviceBackend(backend); }
+void MonitorManager::setDeviceBackend(IDeviceBackend* backend) {
+    if (m_backendSampler->backend() != backend) ++m_runtimeBackendGeneration;
+    m_backendSampler->setDeviceBackend(backend);
+}
 bool MonitorManager::registerProvider(const ProviderConfig& config)
 {
     if (config.id.isEmpty() || config.channelName.isEmpty()) {
@@ -94,6 +97,30 @@ QStringList MonitorManager::providerIds() const
 {
     QReadLocker locker(&m_providerLock);
     return m_providers.keys();
+}
+
+QStringList MonitorManager::availableProviderIds() const
+{
+    const auto* backend = deviceBackend();
+    const bool online = backend && backend->isOnline();
+    QReadLocker locker(&m_providerLock);
+    QStringList result;
+    for (auto it = m_providers.cbegin(); it != m_providers.cend(); ++it) {
+        if ((it->sampler && it->periodMs > 0) || (online && m_backendSampler->hasPoint(it.key())))
+            result.append(it.key());
+    }
+    return result;
+}
+
+int MonitorManager::expectedPeriodMs(const QString& channelName) const
+{
+    QReadLocker locker(&m_providerLock);
+    int period = 0;
+    for (auto it = m_providers.cbegin(); it != m_providers.cend(); ++it) {
+        if (it->channelName == channelName && it->periodMs > 0)
+            period = qMax(period, it->periodMs);
+    }
+    return period;
 }
 void MonitorManager::startMonitoring()
 {

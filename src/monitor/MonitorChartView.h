@@ -19,6 +19,7 @@
 
 QT_BEGIN_NAMESPACE
 class QVBoxLayout;
+class QShowEvent;
 QT_END_NAMESPACE
 
 class ChartWidget;
@@ -247,6 +248,9 @@ public:
     
     ChartWidget* chartWidget() const { return m_chartWidget; }
 
+protected:
+    void showEvent(QShowEvent* event) override;
+
 signals:
     void channelAdded(const QString& channelId);
     void channelRemoved(const QString& channelId);
@@ -298,9 +302,11 @@ private:
     QTimer* m_renderTimer;              ///< 渲染定时器
     QElapsedTimer m_lastRenderTime;     ///< 上次渲染时间
     bool m_pendingRender;               ///< 是否有待渲染的数据
+    bool m_hasBeenShown = false;        ///< 曾经显示过；仅在显式隐藏时暂停绘制
     
     // 待渲染的增量数据（channelId -> delta points）
     QMap<QString, QVector<QPointF>> m_pendingDeltas;
+    QSet<QString> m_dirtyProcessorChannels;
     
     // 渲染统计
     RenderStats m_renderStats;

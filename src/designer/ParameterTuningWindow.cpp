@@ -67,7 +67,6 @@ void ParameterTuningWindow::setTuningPanel(ParameterTuningPanel* panel)
     connect(m_panel, &ParameterTuningPanel::requestCompile, this, &ParameterTuningWindow::requestCompile, Qt::UniqueConnection);
     connect(m_panel, &ParameterTuningPanel::requestRun, this, &ParameterTuningWindow::requestRun, Qt::UniqueConnection);
     connect(m_panel, &ParameterTuningPanel::requestOpenMonitor, this, &ParameterTuningWindow::requestOpenMonitor, Qt::UniqueConnection);
-    connect(m_panel, &ParameterTuningPanel::requestEditParameter, this, &ParameterTuningWindow::requestEditParameter, Qt::UniqueConnection);
     connect(m_panel, &ParameterTuningPanel::requestApplyParameters, this, &ParameterTuningWindow::requestApplyParameters, Qt::UniqueConnection);
     connect(m_panel, &ParameterTuningPanel::requestDockBack, this, [this]() {
         hide();

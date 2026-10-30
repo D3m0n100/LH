@@ -356,13 +356,17 @@ void RuntimeSessionController::ensureControllerBackendAsync(std::function<void(b
     if (!m_projectController) { completed(false); return; }
     if (m_connectionCancelled) m_connectionCancelled->store(true);
     m_connectionCancelled.reset();
-    if (!m_ownedControllerBackend) m_ownedControllerBackend = new ControllerDeviceBackend(this);
+    if (!m_ownedControllerBackend) {
+        m_ownedControllerBackend = new ControllerDeviceBackend(this);
+    }
     auto* backend = m_ownedControllerBackend;
     const auto config = m_projectController->runtimeConfig();
     QString error;
     if (!backend->configure(config, &error)) { emit runtimeError(error); completed(false); return; }
     if (m_backend != backend) setDeviceBackend(backend);
     if (backend->isOnline()) { completed(true); return; }
+    if (state() != RuntimeSessionState::Connecting)
+        setState(RuntimeSessionState::Connecting);
     const auto token = std::make_shared<std::atomic_bool>(false);
     m_connectionCancelled = token;
     const auto generation = m_backendGeneration;
@@ -372,12 +376,17 @@ void RuntimeSessionController::ensureControllerBackendAsync(std::function<void(b
             if (token != m_connectionCancelled || generation != m_backendGeneration || backend != m_backend
                     || !project || project != m_projectController || config.toJson() != project->runtimeConfig().toJson()) {
                 token->store(true);
+                if (state() == RuntimeSessionState::Connecting)
+                    setState(RuntimeSessionState::Idle);
                 if (token == m_connectionCancelled && backend == m_backend) backend->disconnectBackend();
                 completed(false); return;
             }
             if (!ok) emit runtimeError(message);
+            if (!ok && state() == RuntimeSessionState::Connecting)
+                setState(RuntimeSessionState::Idle);
+            if (ok) emit backend->connectionStateChanged(true);
             completed(ok);
-        });
+        }, false);
 }
 
 ControllerDeviceBackend* RuntimeSessionController::controllerBackend() const

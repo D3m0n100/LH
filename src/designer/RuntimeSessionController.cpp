@@ -13,11 +13,14 @@
 #include "../communication/OpcServerFactory.h"
 #include "../monitor/MonitorManager.h"
 #include "../monitor/SampleDataProvider.h"
+#include <QUuid>
 #include "../common/RuntimePointTypes.h"
 #include "../core/AppLogging.h"
 
+#include <QCryptographicHash>
 #include <QDateTime>
 #include <QDir>
+#include <QFile>
 #include <QFileInfo>
 #include <QSet>
 
@@ -44,6 +47,18 @@ IDeviceBackend* RuntimeSessionController::deviceBackend() const
     return m_backend.data();
 }
 
+bool RuntimeSessionController::hasWorkerOperationInFlight() const
+{
+    return m_backendDownloadInProgress || (m_ownedControllerBackend
+            && m_ownedControllerBackend->hasAsyncOperationInFlight());
+}
+
+void RuntimeSessionController::onControllerBackendBusyChanged(bool busy)
+{
+    Q_UNUSED(busy)
+    emit workerOperationBusyChanged(hasWorkerOperationInFlight());
+}
+
 RuntimeSessionController::~RuntimeSessionController()
 {
     if (m_connectionCancelled) m_connectionCancelled->store(true);
@@ -61,6 +76,9 @@ void RuntimeSessionController::setDeviceBackend(IDeviceBackend* backend)
         }
         return;
     }
+
+    if (!m_backendDownloadInProgress && state() != RuntimeSessionState::Downloading)
+        m_lastDownloadRecord.valid = false;
 
     const QString message = QStringLiteral("设备后端已切换，OPC 写入已取消");
     if (m_connectionCancelled) m_connectionCancelled->store(true);
@@ -86,6 +104,11 @@ void RuntimeSessionController::setDeviceBackend(IDeviceBackend* backend)
     m_backend = backend;
     if (m_backend) {
         auto* currentBackend = m_backend.data();
+        if (auto* controllerBackend = qobject_cast<ControllerDeviceBackend*>(currentBackend)) {
+            connect(controllerBackend, &ControllerDeviceBackend::asyncOperationBusyChanged,
+                    this, &RuntimeSessionController::onControllerBackendBusyChanged,
+                    Qt::UniqueConnection);
+        }
         connect(currentBackend, &IDeviceBackend::connectionStateChanged,
                 this, &RuntimeSessionController::handleBackendConnectionStateChanged,
                 Qt::UniqueConnection);
@@ -120,6 +143,10 @@ void RuntimeSessionController::setDeviceBackend(IDeviceBackend* backend)
     }
     m_runtimeService->setBackend(backend);
     if (m_backend && m_backend->isOnline()) {
+        if (m_demoModeActive) {
+            stopDemoMode(QStringLiteral("设备已连接"));
+            clearDemoChannels();
+        }
         if (state() == RuntimeSessionState::Idle
                 || state() == RuntimeSessionState::Compiled) {
             setState(RuntimeSessionState::Connected);
@@ -153,6 +180,8 @@ void RuntimeSessionController::setSampleDataProvider(SampleDataProvider* provide
 
 void RuntimeSessionController::setProjectController(ProjectController* controller)
 {
+    if (m_projectController != controller)
+        ++m_runPreparationGeneration;
     if (m_connectionCancelled) m_connectionCancelled->store(true);
     m_connectionCancelled.reset();
     stopContinuousStep();
@@ -160,9 +189,17 @@ void RuntimeSessionController::setProjectController(ProjectController* controlle
     setDebugCommandPending(false);
     if (m_projectController) disconnect(m_projectController, nullptr, this, nullptr);
     m_projectController = controller;
+    m_runtimeService->monitor().setSessionIdentity(controller && controller->hasOpenProject()
+            ? QUuid::createUuid().toString(QUuid::WithoutBraces) : QString());
     if (controller) {
-        connect(controller, &ProjectController::projectClosed, this, &RuntimeSessionController::requestStop);
-        connect(controller, &ProjectController::projectOpened, this, [this](const ProjectRuntimeConfig&) { requestStop(); });
+        connect(controller, &ProjectController::projectClosed, this, [this] {
+            requestStop();
+            m_runtimeService->monitor().setSessionIdentity(QString());
+        });
+        connect(controller, &ProjectController::projectOpened, this, [this](const ProjectRuntimeConfig&) {
+            requestStop();
+            m_runtimeService->monitor().setSessionIdentity(QUuid::createUuid().toString(QUuid::WithoutBraces));
+        });
     }
 }
 
@@ -261,9 +298,11 @@ bool RuntimeSessionController::applyRuntimeConfig()
     }
 
     const QStringList providers = m_runtimeService->monitor().providerIds();
-    if (!providers.isEmpty()) {
-        stopDemoMode(QStringLiteral("已应用运行时配置，并检测到 %1 个 provider").arg(providers.size()));
-    }
+    stopDemoMode(QStringLiteral("已应用运行时配置%1")
+                     .arg(providers.isEmpty()
+                              ? QString()
+                              : QStringLiteral("，并检测到 %1 个 provider").arg(providers.size())));
+    clearDemoChannels();
 
     emit logMessage(QStringLiteral("[%1] 运行时配置已应用到监控系统")
                     .arg(QDateTime::currentDateTime().toString(QStringLiteral("HH:mm:ss"))));
@@ -290,18 +329,31 @@ void RuntimeSessionController::applyRuntimeConfigAsync(std::function<void(bool)>
 
 void RuntimeSessionController::executeRun()
 {
+    executeRunInternal(true);
+}
+
+void RuntimeSessionController::executeExistingRun()
+{
+    // F9 semantics: start the session without compiling, downloading, or replacing
+    // the program that already exists on the device.
+    executeRunInternal(false);
+}
+
+void RuntimeSessionController::executeRunInternal(bool allowDownload)
+{
     if (state() == RuntimeSessionState::Running || state() == RuntimeSessionState::Monitoring
-            || m_backendDownloadInProgress || state() == RuntimeSessionState::Downloading)
+            || m_backendDownloadInProgress || m_downloadConfirmationPending
+            || state() == RuntimeSessionState::Downloading)
         return;
 
-    if (shouldAutoDownload()) {
+    if (allowDownload && shouldAutoDownload()) {
         setState(RuntimeSessionState::Connected);
         m_pendingRunAfterDownload = true;
         if (!requestDownload(m_artifactPath)) {
             m_pendingRunAfterDownload = false;
             return;
         }
-        if (m_backendDownloadInProgress) return;
+        if (m_backendDownloadInProgress || m_downloadConfirmationPending) return;
         m_pendingRunAfterDownload = false;
     }
     finishRunStart();
@@ -310,13 +362,29 @@ void RuntimeSessionController::executeRun()
 void RuntimeSessionController::finishRunStart()
 {
     setPaused(false);
-    setState(RuntimeSessionState::Running);
-
-    emit logMessage(QStringLiteral("[%1] 项目已启动，下载产物：%2")
-                    .arg(QDateTime::currentDateTime().toString(QStringLiteral("HH:mm:ss")),
-                         QDir::toNativeSeparators(m_artifactPath)));
-
+    if (m_demoModeActive) {
+        setState(RuntimeSessionState::Running);
+        emit logMessage(QStringLiteral("[%1] 演示模式运行会话已启动（未对真实设备发送运行命令）。")
+                        .arg(QDateTime::currentDateTime().toString(QStringLiteral("HH:mm:ss"))));
+        startOpcServerIfEnabled();
+        return;
+    }
+    if (m_backend && m_backend->isOnline()) setState(RuntimeSessionState::Connected);
+    const QString message = QStringLiteral(
+                "运行能力不可用：设备协议没有启动已下载程序的命令；下载产物已保留，设备运行状态未知且未确认。%1")
+            .arg(m_artifactPath.isEmpty() ? QString() : QStringLiteral(" 产物：%1")
+                 .arg(QDir::toNativeSeparators(m_artifactPath)));
+    emit logMessage(QStringLiteral("[%1] %2")
+                    .arg(QDateTime::currentDateTime().toString(QStringLiteral("HH:mm:ss")), message));
+    emit runtimeError(message);
+    // The protocol cannot start the downloaded program, but a configured OPC
+    // server and an available local data collector remain independent services.
     startOpcServerIfEnabled();
+    auto& monitor = m_runtimeService->monitor();
+    if (!monitor.providerIds().isEmpty()) {
+        monitor.startMonitoring();
+        if (monitor.isMonitoring()) setState(RuntimeSessionState::Monitoring);
+    }
 }
 
 void RuntimeSessionController::setPaused(bool paused)
@@ -330,6 +398,8 @@ void RuntimeSessionController::setPaused(bool paused)
 
 void RuntimeSessionController::requestStop()
 {
+    ++m_runPreparationGeneration;
+    m_runFlowOperationIdContext.clear();
     if (m_connectionCancelled) m_connectionCancelled->store(true);
     m_connectionCancelled.reset();
     stopContinuousStep();
@@ -339,14 +409,16 @@ void RuntimeSessionController::requestStop()
     setPaused(false);
     m_pendingRunAfterDownload = false;
     if (state() == RuntimeSessionState::Idle && downloadState() == DownloadState::Idle) {
-        const QString message = QStringLiteral("运行会话已停止，OPC 写入已取消");
+        const QString message = QStringLiteral("本地会话已停止，OPC 写入已取消；设备运行状态未知");
         cancelPendingOpcWrite(message);
         if (m_parameterController)
             m_parameterController->cancelPendingReadback(message);
+        stopOpcServer();
+        m_runtimeService->monitor().stopMonitoring();
         return;
     }
 
-    const QString message = QStringLiteral("运行会话已停止，OPC 写入已取消");
+    const QString message = QStringLiteral("本地会话已停止，OPC 写入已取消；设备运行状态未知");
     cancelPendingOpcWrite(message);
     if (m_parameterController)
         m_parameterController->cancelPendingReadback(message);
@@ -360,6 +432,8 @@ void RuntimeSessionController::requestStop()
             || downloadState() == DownloadState::Downloading
             || downloadState() == DownloadState::Retrying
             || downloadState() == DownloadState::Verifying;
+    if (wasDownloading)
+        m_lastDownloadRecord.valid = false;
     setDownloadState(DownloadState::Idle);
     stopOpcServer();
     m_runtimeService->monitor().stopMonitoring();
@@ -372,16 +446,16 @@ void RuntimeSessionController::requestStop()
     if (wasDownloading) {
         AppLogging::writeBusinessEvent(QStringLiteral("download_canceled"), QtWarningMsg, m_currentDownloadOperationId,
             QStringLiteral("transfer"), QStringLiteral("canceled"), static_cast<int>(CommErrorCode::OperationCancelled), m_artifactPath);
-        emit downloadFinished(false, QStringLiteral("下载已停止。"));
+        emit downloadFinished(false, QStringLiteral("下载已停止。设备程序可能不完整，当前状态未知。"));
     }
     if (wasMonitoring) {
-        emit logMessage(QStringLiteral("[%1] 监控已停止")
+        emit logMessage(QStringLiteral("[%1] 本地监控已停止；未向设备发送停止程序命令")
                         .arg(QDateTime::currentDateTime().toString(QStringLiteral("HH:mm:ss"))));
     }
 
-    stopDemoMode(QStringLiteral("项目已停止"));
+    stopDemoMode(QStringLiteral("本地会话已停止"));
 
-    emit logMessage(QStringLiteral("[%1] 项目已停止")
+    emit logMessage(QStringLiteral("[%1] 本地会话已停止；设备运行状态未知")
                     .arg(QDateTime::currentDateTime().toString(QStringLiteral("HH:mm:ss"))));
 }
 
@@ -392,9 +466,13 @@ void RuntimeSessionController::invalidateCompiledArtifact()
     if (state() == RuntimeSessionState::Compiled) setState(RuntimeSessionState::Idle);
 }
 
-bool RuntimeSessionController::onCompileSucceeded(const CompileResult& result)
+bool RuntimeSessionController::onCompileSucceeded(const CompileResult& result,
+        const QString& operationId,
+        RunContinuationValidator continuationValid,
+        RunPreparationCompletion completed)
 {
-    if (!m_pendingRunAfterCompile)
+    if (!m_pendingRunAfterCompile || operationId.trimmed().isEmpty()
+            || !continuationValid || !completed)
         return false;
 
     m_pendingRunAfterCompile = false;
@@ -410,13 +488,32 @@ bool RuntimeSessionController::onCompileSucceeded(const CompileResult& result)
         return false;
     }
 
-    const auto resultState = std::make_shared<int>(0);
-    applyRuntimeConfigAsync([this, resultState](bool ok) {
-        *resultState = ok ? 1 : -1;
-        if (ok) executeRun();
+    m_runFlowOperationIdContext = operationId;
+    const quint64 generation = ++m_runPreparationGeneration;
+    applyRuntimeConfigAsync([this, generation, operationId, continuationValid,
+                             completed](bool ok) {
+        if (generation != m_runPreparationGeneration) {
+            if (m_runFlowOperationIdContext == operationId)
+                m_runFlowOperationIdContext.clear();
+            completed(false, QStringLiteral("运行准备已被后续操作取代。"));
+            return;
+        }
+        if (!continuationValid()) {
+            if (m_runFlowOperationIdContext == operationId)
+                m_runFlowOperationIdContext.clear();
+            completed(false, QStringLiteral("构建输入或运行流程已失效，已阻止后续下载与运行。"));
+            return;
+        }
+        if (!ok) {
+            if (m_runFlowOperationIdContext == operationId)
+                m_runFlowOperationIdContext.clear();
+            completed(false, QStringLiteral("运行准备失败：连接设备或应用运行配置未完成。"));
+            return;
+        }
+        executeRun();
+        completed(true, QString());
     });
-    // Deferred connection means admitted; inline validation preserves its result.
-    return *resultState >= 0;
+    return true;
 }
 
 void RuntimeSessionController::startDemoMode(const QString& reason)
@@ -436,6 +533,11 @@ void RuntimeSessionController::startDemoMode(const QString& reason)
         if (!m_sampleDataProvider->isRunning())
             m_sampleDataProvider->start();
 
+        if (!m_sampleDataProvider->isRunning()) {
+            emit runtimeError(QStringLiteral("演示数据启动失败：演示通道名称已被占用。"));
+            return;
+        }
+
         m_demoModeActive = true;
         emit demoModeChanged(true);
         emit logMessage(QStringLiteral("[%1] 演示模式已启动（原因：%2）")
@@ -452,9 +554,6 @@ void RuntimeSessionController::stopDemoMode(const QString& reason)
     if (m_sampleDataProvider && m_sampleDataProvider->isRunning())
         m_sampleDataProvider->stop();
 
-    auto& manager = m_runtimeService->monitor();
-    manager.removeDemoChannels();
-
     m_demoModeActive = false;
     emit demoModeChanged(false);
     emit logMessage(QStringLiteral("[%1] 演示模式已停止（%2）")
@@ -462,31 +561,31 @@ void RuntimeSessionController::stopDemoMode(const QString& reason)
                          reason));
 }
 
+void RuntimeSessionController::clearDemoChannels()
+{
+    m_runtimeService->monitor().removeDemoChannels();
+}
+
 void RuntimeSessionController::startMonitoring()
 {
     if (state() == RuntimeSessionState::Monitoring)
         return;
 
-    if (state() != RuntimeSessionState::Running) {
+    if (state() != RuntimeSessionState::Running
+            && state() != RuntimeSessionState::Connected) {
         emit runtimeError(QStringLiteral("当前状态不允许启动监控。"));
         return;
     }
 
     auto& manager = m_runtimeService->monitor();
     if (m_projectController || m_sampleDataProvider) {
-        if (manager.providerIds().isEmpty()
-                && !m_demoModeActive
-                && (!m_projectController || !m_projectController->hasOpenProject())) {
-            startDemoMode(QStringLiteral("开始监控"));
-        }
-
         const bool hasDemoSource = (!m_projectController || !m_projectController->hasOpenProject())
                 && m_demoModeActive
                 && m_sampleDataProvider
                 && m_sampleDataProvider->isRunning();
         if (manager.providerIds().isEmpty() && !hasDemoSource) {
             emit runtimeError(QStringLiteral(
-                "当前没有可用监控数据源，请先应用运行时配置或启用演示数据模式。"));
+                "当前没有可用监控数据源。请先应用运行时配置，或从“监控”菜单显式启动演示数据监控。"));
             return;
         }
     }
@@ -505,7 +604,9 @@ void RuntimeSessionController::stopMonitoring()
         return;
 
     m_runtimeService->monitor().stopMonitoring();
-    setState(RuntimeSessionState::Running);
+    setState(m_demoModeActive ? RuntimeSessionState::Running
+             : (m_backend && m_backend->isOnline()
+                ? RuntimeSessionState::Connected : RuntimeSessionState::Idle));
 }
 
 void RuntimeSessionController::setState(RuntimeSessionState newState)
@@ -563,13 +664,21 @@ void RuntimeSessionController::handleBackendConnectionStateChanged(bool connecte
         QStringLiteral("DeviceBackend"));
 
     if (connected) {
+        if (m_demoModeActive) {
+            stopDemoMode(QStringLiteral("设备已连接"));
+            clearDemoChannels();
+        }
         if (state() == RuntimeSessionState::Idle
                 || state() == RuntimeSessionState::Compiled
+                || state() == RuntimeSessionState::Connecting
                 || state() == RuntimeSessionState::Fault) {
             setState(RuntimeSessionState::Connected);
         }
         return;
     }
+
+    if (!m_backendDownloadInProgress && state() != RuntimeSessionState::Downloading)
+        m_lastDownloadRecord.valid = false;
 
     if (state() == RuntimeSessionState::Idle || state() == RuntimeSessionState::Fault)
         return;

@@ -12,6 +12,7 @@
 #include "MainWindow.h"
 #include "ProjectController.h"
 #include "BuildController.h"
+#include "DownloadConfirmation.h"
 #include "RunController.h"
 #include "SettingsController.h"
 #include "OpcServerSettingsDialog.h"
@@ -61,7 +62,6 @@
 #include <QFileDialog>
 #include <QMessageBox>
 #include <QInputDialog>
-#include <QLineEdit>
 #include <QDateTime>
 #include <QDesktopServices>
 #include <QUrl>
@@ -80,6 +80,8 @@
 #include <QJsonDocument>
 #include <QJsonParseError>
 #include <QSignalBlocker>
+#include <QTimer>
+#include <QShowEvent>
 #include <QFileInfo>
 #include <QDir>
 #include <QSet>
@@ -167,7 +169,16 @@ MainWindow::MainWindow(QWidget* parent)
     initConnections();
     connectControllerSignals();
 
-    ThemeManager::applyModernTheme(qApp);
+    if (m_settingsController) {
+        ThemeManager::applyTheme(qApp, m_settingsController->themeMode() == 1
+                                          ? ThemeManager::ThemeMode::Dark
+                                          : ThemeManager::ThemeMode::Light);
+        ThemeManager::applyDensity(qApp, m_settingsController->density() == 1
+                                            ? ThemeManager::Density::Comfortable
+                                            : ThemeManager::Density::Compact);
+    } else {
+        ThemeManager::applyModernTheme(qApp);
+    }
 
     // 监控告警：把阈值超限信号写入输出日志，便于追踪
     {
@@ -264,11 +275,57 @@ void MainWindow::closeEvent(QCloseEvent* event)
     event->accept();
 }
 
+void MainWindow::showEvent(QShowEvent* event)
+{
+    QMainWindow::showEvent(event);
+    if (m_initialWorkbenchShown) return;
+    const QString initialWorkspace = m_currentWorkspaceId;
+    QTimer::singleShot(0, this, [this, initialWorkspace] {
+        m_initialWorkbenchShown = true;
+        if (isVisible() && m_currentWorkspaceId == initialWorkspace)
+            switchToWorkspace(initialWorkspace);
+    });
+}
+
 bool MainWindow::eventFilter(QObject* watched, QEvent* event)
 {
+    if (event->type() == QEvent::Close
+            && (watched == m_monitorFloatingDock || watched == m_deviceFloatingDock)) {
+        const QString workspace = watched == m_monitorFloatingDock
+                ? WorkspaceId::Monitor : WorkspaceId::Device;
+        QTimer::singleShot(0, this, [this, workspace] {
+            setSystemViewFloating(workspace, false);
+        });
+        return false;
+    }
     auto* sub = qobject_cast<QMdiSubWindow*>(watched);
+    if (sub && sub->property("systemView").toBool()
+            && event->type() == QEvent::Close) {
+        QAction* action = sub == m_monitorSubWindow ? m_actToggleMonitorDock : m_actToggleDownloadDock;
+        if (action) {
+            QSignalBlocker blocker(action);
+            action->setChecked(false);
+        }
+    }
     if (sub && sub == m_editorSubWindow) {
         if (event->type() == QEvent::Close) {
+            if (m_dslEditor && m_dslEditor->isModified()) {
+                const auto choice = showMessageBox(QStringLiteral("未保存修改"),
+                        QStringLiteral("主脚本尚未保存，是否保存？"),
+                        QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel,
+                        QMessageBox::Save);
+                if (choice == QMessageBox::Cancel) return true;
+                if (choice == QMessageBox::Save && !saveAuxiliarySubWindow(sub)) return true;
+                if (choice == QMessageBox::Discard) {
+                    QFile file(m_dslEditor->currentFilePath());
+                    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+                        showMessageBox(QStringLiteral("关闭失败"), QStringLiteral("无法重新读取主脚本，修改仍保留。"));
+                        return true;
+                    }
+                    m_dslEditor->setScript(TextEncoding::decodeUtf8WithLocalFallback(file.readAll()));
+                    m_dslEditor->setModified(false);
+                }
+            }
             if (m_actToggleDslEditor) {
                 m_actToggleDslEditor->blockSignals(true);
                 m_actToggleDslEditor->setChecked(false);
@@ -309,10 +366,13 @@ bool MainWindow::eventFilter(QObject* watched, QEvent* event)
 
 bool MainWindow::saveAuxiliarySubWindow(QMdiSubWindow* sub)
 {
-    if (!sub || sub == m_editorSubWindow) return true;
+    if (!sub) return false;
     const QString path = sub->property("filePath").toString();
-    auto* editor = qobject_cast<QPlainTextEdit*>(sub->widget());
-    if (path.isEmpty() || !editor) return true;
+    auto* dsl = qobject_cast<DslScriptEditor*>(sub->widget());
+    auto* editor = dsl ? static_cast<QPlainTextEdit*>(dsl->editor())
+                       : qobject_cast<QPlainTextEdit*>(sub->widget());
+    if (path.isEmpty() || !editor) return false;
+    if (dsl && !isSameDocument(path, dsl->currentFilePath())) return false;
     QSaveFile file(path);
     if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
         showMessageBox(QStringLiteral("保存失败"), QStringLiteral("无法保存文件: %1").arg(path));
@@ -320,7 +380,7 @@ bool MainWindow::saveAuxiliarySubWindow(QMdiSubWindow* sub)
     }
     QTextStream out(&file);
     TextEncoding::setUtf8(out);
-    out << editor->toPlainText();
+    out << (dsl ? dsl->scriptForSave() : editor->toPlainText());
     out.flush();
     if (out.status() != QTextStream::Ok || !file.commit()) {
         file.cancelWriting();
@@ -328,6 +388,7 @@ bool MainWindow::saveAuxiliarySubWindow(QMdiSubWindow* sub)
         return false;
     }
     sub->setProperty("modified", false);
+    if (dsl) dsl->setModified(false);
     if (editor) {
         editor->document()->setModified(false);
     }
@@ -363,6 +424,8 @@ bool MainWindow::saveAuxiliaryFiles(bool all)
 bool MainWindow::confirmAuxiliaryChanges()
 {
     if (!m_mdiArea) return true;
+    for (QMdiSubWindow* sub : m_mdiArea->subWindowList())
+        if (sub) sub->setProperty("discardOnProjectChange", false);
     bool dirty = false;
     for (QMdiSubWindow* sub : m_mdiArea->subWindowList()) {
         if (sub && sub != m_editorSubWindow) {
@@ -380,7 +443,14 @@ bool MainWindow::confirmAuxiliaryChanges()
                                        QMessageBox::SaveAll | QMessageBox::Discard | QMessageBox::Cancel,
                                        QMessageBox::SaveAll);
     if (choice == QMessageBox::Cancel) return false;
-    return choice == QMessageBox::Discard || saveAuxiliaryFiles(true);
+    if (choice == QMessageBox::Discard) {
+        for (QMdiSubWindow* sub : m_mdiArea->subWindowList()) {
+            if (sub && sub != m_editorSubWindow && sub->property("modified").toBool())
+                sub->setProperty("discardOnProjectChange", true);
+        }
+        return true;
+    }
+    return saveAuxiliaryFiles(true);
 }
 
 // ================= 控制器创建 =================
@@ -442,41 +512,26 @@ void MainWindow::connectControllerSignals()
             this, &MainWindow::onSaveConfirmationRequired);
 
     // ===== ParameterController 信号连接 =====
-    connect(m_parameterController, &ParameterController::stateChanged,
-            this, [this](const QString& name, ParameterState, ParameterState newState) {
-                if (!m_projectController) {
-                    return;
-                }
-
-                auto& parameters = m_projectController->runtimeConfig().parameters;
-                auto it = std::find_if(parameters.begin(), parameters.end(),
-                                       [&name](const ParameterDefinition& parameter) {
-                                           return parameter.name == name;
-                                       });
-                if (it == parameters.end()) {
-                    return;
-                }
-
-                const auto info = m_parameterController->parameterState(name);
-                if (newState == ParameterState::Confirmed && !info.readbackValue.isEmpty()) {
-                    it->currentValue = info.readbackValue;
-                    it->confirmed = true;
-                } else if (newState == ParameterState::Mismatch
-                           || newState == ParameterState::Timeout
-                           || newState == ParameterState::ApplyFailed) {
-                    it->currentValue = info.editedValue.isEmpty()
-                            ? info.definitionValue
-                            : info.editedValue;
-                    it->confirmed = false;
-                } else {
-                    it->currentValue = info.editedValue.isEmpty()
-                            ? info.definitionValue
-                            : info.editedValue;
-                    it->confirmed = false;
-                }
-            });
     connect(m_parameterController, &ParameterController::statesChanged,
-            this, [this]() { refreshInspectorPanel(); });
+            this, [this]() {
+                if (m_projectController) {
+                    auto& parameters = m_projectController->runtimeConfig().parameters;
+                    for (auto& parameter : parameters) {
+                        if (parameter.id.isEmpty()) continue;
+                        const auto info = m_parameterController->parameterStateByPointId(parameter.id);
+                        if (info.pointId.isEmpty() || info.state == ParameterState::Clean) continue;
+                        if (info.state == ParameterState::Confirmed && !info.readbackValue.isEmpty()) {
+                            parameter.currentValue = info.readbackValue;
+                            parameter.confirmed = true;
+                        } else {
+                            parameter.currentValue = info.editedValue.isEmpty()
+                                    ? info.definitionValue : info.editedValue;
+                            parameter.confirmed = false;
+                        }
+                    }
+                }
+                refreshInspectorPanel();
+            });
     connect(m_parameterController, &ParameterController::readbackFinished,
             this, &MainWindow::onParameterReadbackFinished);
 
@@ -502,10 +557,12 @@ void MainWindow::connectControllerSignals()
                 statusText = QStringLiteral("已连接");
                 break;
             case RuntimeSessionState::Running:
-                statusText = QStringLiteral("运行中");
+                statusText = m_sessionController->isDemoMode()
+                        ? QStringLiteral("演示模式：运行中（非设备运行）")
+                        : QStringLiteral("本地会话运行中（设备运行状态未知）");
                 break;
             case RuntimeSessionState::Monitoring:
-                statusText = QStringLiteral("监控中");
+                statusText = QStringLiteral("本地监控中（设备运行状态未知）");
                 break;
             case RuntimeSessionState::Fault:
                 statusText = QStringLiteral("故障");
@@ -519,8 +576,8 @@ void MainWindow::connectControllerSignals()
             case RuntimeSessionState::Idle:
             default:
                 statusText = m_sessionController->isDemoMode()
-                        ? QStringLiteral("演示模式：采集中")
-                        : QStringLiteral("已停止");
+                        ? QStringLiteral("演示模式：采集中（非设备运行）")
+                        : QStringLiteral("本机会话空闲（设备运行状态未知）");
                 break;
             }
         }
@@ -533,12 +590,15 @@ void MainWindow::connectControllerSignals()
                 || downloadActive;
         const bool paused = m_sessionController ? m_sessionController->isPaused() : false;
         if (m_actRunProject) {
-            m_actRunProject->setEnabled(!sessionBusy);
+            m_actRunProject->setEnabled(false);
         }
         if (m_actStopProject) {
             m_actStopProject->setEnabled(sessionBusy
                                          || paused
+                                         || state == RuntimeSessionState::Connecting
                                          || state == RuntimeSessionState::Connected
+                                         || isRunFlowActive()
+                                         || m_sessionController->hasWorkerOperationInFlight()
                                          || state == RuntimeSessionState::Fault);
         }
         if (m_actPauseController) {
@@ -570,7 +630,28 @@ void MainWindow::connectControllerSignals()
     };
 
     connect(m_sessionController, &RuntimeSessionController::stateChanged,
-            this, [refreshRuntimeStatus](RuntimeSessionState, RuntimeSessionState) {
+            this, [this, refreshRuntimeStatus](RuntimeSessionState, RuntimeSessionState newState) {
+                if (isRunFlowActive()) {
+                    switch (newState) {
+                    case RuntimeSessionState::Connecting:
+                        setRunFlowStage(RunFlowStage::Connecting, QStringLiteral("正在连接设备"));
+                        break;
+                    case RuntimeSessionState::Downloading:
+                        setRunFlowStage(RunFlowStage::Downloading, QStringLiteral("正在写入设备程序"));
+                        break;
+                    case RuntimeSessionState::Running:
+                        setRunFlowStage(RunFlowStage::RequestingRun, QStringLiteral("运行请求已发送"));
+                        break;
+                    case RuntimeSessionState::Monitoring:
+                        setRunFlowStage(RunFlowStage::Completed, QStringLiteral("运行会话已建立"));
+                        break;
+                    case RuntimeSessionState::Fault:
+                        setRunFlowStage(RunFlowStage::Failed, QStringLiteral("运行会话故障"));
+                        break;
+                    default:
+                        break;
+                    }
+                }
                 refreshRuntimeStatus();
             });
     connect(m_sessionController, &RuntimeSessionController::pausedChanged,
@@ -583,6 +664,9 @@ void MainWindow::connectControllerSignals()
             this, [refreshRuntimeStatus](bool) { refreshRuntimeStatus(); });
     connect(m_sessionController, &RuntimeSessionController::runtimeError,
             this, [this](const QString& msg) {
+                if (msg.startsWith(QStringLiteral("运行能力不可用：")) && isRunFlowActive()) {
+                    setRunFlowStage(RunFlowStage::Failed, QStringLiteral("设备不支持启动程序"));
+                }
                 if (msg == QStringLiteral("NO_ARTIFACT")) {
                     // 需要弹窗交互，由 MainWindow 处理
                     return;
@@ -593,11 +677,36 @@ void MainWindow::connectControllerSignals()
     connect(m_sessionController, &RuntimeSessionController::logMessage,
             this, &MainWindow::appendOutput);
     connect(m_sessionController, &RuntimeSessionController::downloadStateChanged,
-            this, [refreshRuntimeStatus](DownloadState, DownloadState) {
+            this, [this, refreshRuntimeStatus](DownloadState, DownloadState newState) {
+                if (isRunFlowActive()) {
+                    switch (newState) {
+                    case DownloadState::Precheck:
+                        setRunFlowStage(RunFlowStage::Connecting, QStringLiteral("下载前检查"));
+                        break;
+                    case DownloadState::Downloading:
+                        setRunFlowStage(RunFlowStage::Downloading, QStringLiteral("正在写入设备程序"));
+                        break;
+                    case DownloadState::Retrying:
+                        setRunFlowStage(RunFlowStage::Downloading, QStringLiteral("下载失败，正在重试"));
+                        break;
+                    case DownloadState::Verifying:
+                        setRunFlowStage(RunFlowStage::Downloading, QStringLiteral("核对下载后传输状态"));
+                        break;
+                    default:
+                        break;
+                    }
+                }
                 refreshRuntimeStatus();
             });
     connect(m_sessionController, &RuntimeSessionController::downloadFinished,
-            this, [refreshRuntimeStatus](bool, const QString&) {
+            this, [this, refreshRuntimeStatus](bool success, const QString& message) {
+                if (!success && isRunFlowActive()
+                        && m_runFlowStage != RunFlowStage::Cancelled) {
+                    const QString detail = message.size() > 80
+                            ? message.left(80) + QStringLiteral("…")
+                            : message;
+                    setRunFlowStage(RunFlowStage::Failed, detail);
+                }
                 refreshRuntimeStatus();
             });
     connect(m_sessionController, &RuntimeSessionController::monitoringChanged,
@@ -649,7 +758,35 @@ void MainWindow::connectControllerSignals()
 
     refreshRuntimeStatus();
 
+    // 下载确认必须覆盖一键流程与专家下载：产物、目标、端点或版本证据变化后需重新确认。
+    m_sessionController->setDownloadConfirmationHook(
+            [this](const DownloadConfirmationSnapshot& snapshot) {
+                const bool expertDownload =
+                        snapshot.action == QStringLiteral("专家诊断直接下载");
+                if (!expertDownload) {
+                    setRunFlowStage(RunFlowStage::AwaitingConfirmation,
+                                    QStringLiteral("等待确认下载快照"));
+                }
+                const bool approved = confirmDownloadSnapshot(snapshot);
+                if (!expertDownload) {
+                    if (approved) {
+                        setRunFlowStage(RunFlowStage::Downloading,
+                                        QStringLiteral("向设备写入程序"));
+                    } else {
+                        setRunFlowStage(RunFlowStage::Cancelled,
+                                        QStringLiteral("用户取消下载"));
+                    }
+                }
+                return approved;
+            });
+
     // ===== BuildController 信号连接 =====
+    if (m_downloadWidget) {
+        connect(m_downloadWidget, &DownloadDockWidget::busyChanged, this,
+                [this](bool) { setCompileActionsEnabled(true); });
+    }
+    connect(m_sessionController, &RuntimeSessionController::workerOperationBusyChanged,
+            this, [this](bool) { setCompileActionsEnabled(true); });
     connect(m_buildController, &BuildController::compileStarted,
             this, &MainWindow::onCompileStarted);
     connect(m_buildController, &BuildController::compileSucceeded,
@@ -676,6 +813,14 @@ void MainWindow::connectControllerSignals()
             this, &MainWindow::onLogMessage);
     connect(m_settingsController, &SettingsController::defaultProjectDirChanged,
             m_projectController, &ProjectController::setDefaultProjectDir);
+    connect(m_settingsController, &SettingsController::themeModeChanged, this, [](int mode) {
+        ThemeManager::applyTheme(qApp, mode == 1 ? ThemeManager::ThemeMode::Dark
+                                                 : ThemeManager::ThemeMode::Light);
+    });
+    connect(m_settingsController, &SettingsController::densityChanged, this, [](int density) {
+        ThemeManager::applyDensity(qApp, density == 1 ? ThemeManager::Density::Comfortable
+                                                       : ThemeManager::Density::Compact);
+    });
 
     LOG_DEBUG("控制器信号已连接");
 }
@@ -870,7 +1015,8 @@ void MainWindow::updateDeviceWorkspaceInfo()
     }
 
     m_deviceWorkspaceWidget->setConnectionStatus(connected, connectionText);
-    m_deviceWorkspaceWidget->setControllerRunning(running, paused);
+    m_deviceWorkspaceWidget->setControllerRunning(running, paused,
+                                                  m_sessionController && m_sessionController->isDemoMode());
 }
 
 void MainWindow::updateWindowTitle()
@@ -897,8 +1043,9 @@ void MainWindow::updateWindowTitle()
 void MainWindow::updateEditorSubWindowTitle()
 {
     if (m_editorSubWindow) {
-        QString title = "DSL脚本编辑器";
-        if (m_projectController->isModified()) {
+        QString title = m_dslEditor && !m_dslEditor->currentFilePath().isEmpty()
+                ? QFileInfo(m_dslEditor->currentFilePath()).fileName() : QStringLiteral("LH脚本编辑器");
+        if (m_dslEditor && m_dslEditor->isModified()) {
             title += " *";
         }
         m_editorSubWindow->setWindowTitle(title);
@@ -924,11 +1071,13 @@ void MainWindow::updateRecentProjectsMenu()
 
 void MainWindow::setCompileActionsEnabled(bool enabled)
 {
-    if (m_actCompileConfig) m_actCompileConfig->setEnabled(enabled);
-    if (m_actCompileParameters) m_actCompileParameters->setEnabled(enabled);
-    if (m_actCompileCommunication) m_actCompileCommunication->setEnabled(enabled);
-    if (m_actCompile) m_actCompile->setEnabled(enabled);
-    if (m_actRunProject) m_actRunProject->setEnabled(enabled);
+    const bool available = enabled && canStartCompileAction();
+    if (m_actCompileConfig) m_actCompileConfig->setEnabled(available);
+    if (m_actCompileParameters) m_actCompileParameters->setEnabled(available);
+    if (m_actCompileCommunication) m_actCompileCommunication->setEnabled(available);
+    if (m_actCompile) m_actCompile->setEnabled(available);
+    if (m_actCompileAndRunProject) m_actCompileAndRunProject->setEnabled(available);
+    if (m_actRunProject) m_actRunProject->setEnabled(false);
 }
 
 void MainWindow::applyFontSize(int pointSize)
@@ -937,8 +1086,8 @@ void MainWindow::applyFontSize(int pointSize)
     font.setPointSize(pointSize);
     font.setFamily("Consolas");
 
-    if (m_dslEditor && m_dslEditor->editor()) {
-        m_dslEditor->editor()->setFont(font);
+    if (m_mdiArea) for (QMdiSubWindow* sub : m_mdiArea->subWindowList()) {
+        if (auto* editor = qobject_cast<DslScriptEditor*>(sub->widget())) editor->editor()->setFont(font);
     }
 
     if (m_outputViewer) {
@@ -948,22 +1097,13 @@ void MainWindow::applyFontSize(int pointSize)
 
 void MainWindow::showValidationErrors(const QStringList& errors)
 {
-    QString message = "项目配置校验失败，发现以下问题：\n\n";
-
-    for (int i = 0; i < errors.size(); ++i) {
-        message += QString("%1. %2\n").arg(i + 1).arg(errors[i]);
-    }
-
-    message += "\n请修复以上问题后重试。";
-
-    QMessageBox::warning(this, "配置校验失败", message);
-
     appendOutput(QString("[%1] 配置校验失败:")
                  .arg(QDateTime::currentDateTime().toString("HH:mm:ss")));
     for (const auto& error : errors) {
         appendOutput(QString("  - %1").arg(error));
         addProblem("warning", "配置校验", error);
     }
+    updateStatusBar(QStringLiteral("配置校验失败；请在问题面板查看详情。"));
 }
 
 const ProjectRuntimeConfig& MainWindow::runtimeConfig() const
@@ -988,10 +1128,10 @@ void MainWindow::onOpenProject()
 
 void MainWindow::onSaveProject()
 {
-    m_projectCommands.save(false, {
-        [this](bool all) { return saveAuxiliaryFiles(all); },
-        [this] { return m_projectController->saveProject(); }
-    });
+    if (m_mdiArea && m_mdiArea->activeSubWindow()
+            && !m_mdiArea->activeSubWindow()->property("systemView").toBool()) {
+        saveAuxiliarySubWindow(m_mdiArea->activeSubWindow());
+    }
 }
 
 void MainWindow::onSaveAll()
@@ -1080,8 +1220,11 @@ void MainWindow::onSelectAll()
 
 void MainWindow::onFind()
 {
-    if (m_dslEditor) {
-        m_dslEditor->showFindBar();
+    if (m_mdiArea && m_mdiArea->activeSubWindow()) {
+        if (auto* dsl = qobject_cast<DslScriptEditor*>(m_mdiArea->activeSubWindow()->widget())) {
+            dsl->showFindBar();
+            return;
+        }
     }
 }
 
@@ -1093,10 +1236,11 @@ QWidget* MainWindow::getCurrentTextEditor() const
         return focused;
     }
 
-    if (m_dslEditor) {
-        return m_dslEditor->editor();
+    if (m_mdiArea && m_mdiArea->activeSubWindow()) {
+        QWidget* widget = m_mdiArea->activeSubWindow()->widget();
+        if (auto* dsl = qobject_cast<DslScriptEditor*>(widget)) return dsl->editor();
+        if (qobject_cast<QPlainTextEdit*>(widget)) return widget;
     }
-
     return nullptr;
 }
 
@@ -1257,6 +1401,7 @@ void MainWindow::onOpenOpcServerSettings()
 
 void MainWindow::onCompileConfiguration()
 {
+    if (!canStartCompileAction()) return;
     if (!m_projectController->hasOpenProject()) {
         QMessageBox::warning(this, "警告", "请先打开或创建项目。");
         return;
@@ -1269,37 +1414,47 @@ void MainWindow::onCompileConfiguration()
 
 void MainWindow::onCompileParameters()
 {
+    if (!canStartCompileAction()) return;
     m_buildController->compileParameters(m_projectController->currentProjectPath(),
                                          m_projectController->runtimeConfig());
 }
 
 void MainWindow::onCompileCommunication()
 {
+    if (!canStartCompileAction()) return;
     m_buildController->compileCommunication(m_projectController->currentProjectPath(),
                                             m_projectController->runtimeConfig());
 }
 
 void MainWindow::onCompileAndRunProject()
 {
+    if (!canStartCompileAction()) {
+        appendOutput(QStringLiteral("编译并运行请求被忽略：已有构建、连接准备或下载操作尚未结束。"));
+        return;
+    }
     if (!m_projectController->hasOpenProject()) {
         QMessageBox::warning(this, "警告", "请先打开或创建项目。");
         return;
     }
-
     if (m_sessionController->isRunning()) {
         QMessageBox::information(this, QStringLiteral("提示"), QStringLiteral("项目已在运行中。"));
         return;
     }
-
-    // 保存未保存的修改
-    const bool hasUnsavedChanges =
-            (m_projectController && m_projectController->isModified())
-            || (m_dslEditor && m_dslEditor->isModified());
-    if (hasUnsavedChanges) {
-        onBuildSaveRequired();
+    if (isRunFlowActive() || (m_buildController && m_buildController->isBusy())) {
+            appendOutput(QStringLiteral("[%1] 编译并运行请求被忽略：已有构建或运行操作正在进行（%2）。")
+                     .arg(QDateTime::currentDateTime().toString(QStringLiteral("HH:mm:ss")),
+                          runFlowStageName()));
+        return;
+    }
+    if (m_sessionController->state() == RuntimeSessionState::Downloading
+            || m_sessionController->downloadState() != DownloadState::Idle) {
+            appendOutput(QStringLiteral("[%1] 编译并运行请求被忽略：下载尚未结束。")
+                     .arg(QDateTime::currentDateTime().toString(QStringLiteral("HH:mm:ss"))));
+        return;
     }
 
-    // 设置在编译并发布成功后触发运行流程
+    // F8: 保存参与输入 -> 编译 -> 连接 -> 确认 -> 下载 -> 运行（单一 operation）
+    beginCompileAndRunFlow();
     m_sessionController->setPendingRunAfterCompile(true);
     m_buildController->compileConfiguration(m_projectController->currentProjectPath(),
                                            m_projectController->runtimeConfig());
@@ -1309,74 +1464,23 @@ void MainWindow::onCompileAndRunProject()
 
 void MainWindow::onRunProject()
 {
-    // 前置校验（含 UI 弹窗）
-    if (!m_projectController->hasOpenProject()) {
-        QMessageBox::warning(this, "警告", "请先打开或创建项目。");
-        return;
-    }
-
-    if (m_sessionController->isRunning()) {
-        QMessageBox::information(this, QStringLiteral("提示"), QStringLiteral("项目已在运行中。"));
-        return;
-    }
-
-    // 未保存修改处理
-    const bool hasUnsavedChanges =
-            (m_projectController && m_projectController->isModified())
-            || (m_dslEditor && m_dslEditor->isModified());
-    bool runWithDiskVersion = false;
-    if (hasUnsavedChanges) {
-        const QMessageBox::StandardButton choice =
-                QMessageBox::question(this,
-                                      "保存修改",
-                                      "当前工程或 DSL 脚本存在未保存修改。是否先保存后再运行？",
-                                      QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel,
-                                      QMessageBox::Save);
-        if (choice == QMessageBox::Cancel)
-            return;
-        if (choice == QMessageBox::Save) {
-            onBuildSaveRequired();
-        } else if (choice == QMessageBox::Discard) {
-            runWithDiskVersion = true;
-        }
-    }
-
-    // 委托控制器做业务校验
-    if (!m_sessionController->prepareRun()) {
-        // 检查是否需要编译后运行
-        if (m_sessionController->artifactPath().isEmpty()) {
-            const QMessageBox::StandardButton choice =
-                    QMessageBox::question(this,
-                                          "缺少编译产物",
-                                          "未找到 DSL 编译生成的 .code 文件。是否立即编译并在成功后继续运行？",
-                                          QMessageBox::Yes | QMessageBox::No,
-                                          QMessageBox::Yes);
-            if (choice == QMessageBox::Yes) {
-                m_sessionController->setPendingRunAfterCompile(true);
-                m_sessionController->setSkipNextBuildSave(runWithDiskVersion);
-                m_buildController->compileConfiguration(m_projectController->currentProjectPath(),
-                                                       m_projectController->runtimeConfig());
-                return;
-            }
-            appendOutput(QString("[%1] 运行已阻止：未找到 DSL 编译产物")
-                         .arg(QDateTime::currentDateTime().toString("HH:mm:ss")));
-        }
-        return;
-    }
-
-    // 应用运行时配置
-    m_sessionController->applyRuntimeConfigAsync([this](bool ok) {
-        if (!ok) return;
-        m_sessionController->executeRun();
-        if (m_sessionController->state() == RuntimeSessionState::Running)
-            m_sessionController->startMonitoring();
-    });
+    appendOutput(QStringLiteral("F9 不可用：当前设备协议未提供启动设备已有程序的命令。"));
+    addProblem(QStringLiteral("warning"), QStringLiteral("运行"),
+               QStringLiteral("F9 不可用：当前设备协议未提供启动设备已有程序的命令。"));
 }
 
 void MainWindow::onStopProject()
 {
     if (!m_sessionController) {
         return;
+    }
+
+    if (m_buildController && m_buildController->isBusy()) {
+        m_buildController->cancelCompile();
+        m_sessionController->setPendingRunAfterCompile(false);
+    }
+    if (isRunFlowActive()) {
+        setRunFlowStage(RunFlowStage::Cancelled, QStringLiteral("用户停止"));
     }
 
     const bool sessionIdle = m_sessionController->state() == RuntimeSessionState::Idle
@@ -1457,14 +1561,28 @@ void MainWindow::onOpenParameterTuningWindow()
         // reachable without clamping the main window width.
         if (width() < 1200 && dockWidgetArea(m_tuningDock) != Qt::BottomDockWidgetArea) {
             addDockWidget(Qt::BottomDockWidgetArea, m_tuningDock);
-        } else if (width() >= 1200 && dockWidgetArea(m_tuningDock) != Qt::RightDockWidgetArea) {
-            addDockWidget(Qt::RightDockWidgetArea, m_tuningDock);
-            resizeDocks({m_tuningDock}, {340}, Qt::Horizontal);
+        } else if (width() >= 1200) {
+            const bool moved = dockWidgetArea(m_tuningDock) != Qt::RightDockWidgetArea;
+            if (moved) addDockWidget(Qt::RightDockWidgetArea, m_tuningDock);
+            // A hidden tuning dock shares the inspector's right-hand column.
+            // Reopening it after a layout reset must restore a usable width,
+            // even when it was already assigned to that dock area.
+            resizeDocks({m_tuningDock}, {moved ? 340 : qMax(340, m_tuningDock->width())}, Qt::Horizontal);
+        }
+        if (dockWidgetArea(m_tuningDock) == Qt::BottomDockWidgetArea && m_logDock && m_logDock->isVisible()) {
+            tabifyDockWidget(m_logDock, m_tuningDock);
         }
         m_tuningDock->show();
         m_tuningDock->raise();
         if (dockWidgetArea(m_tuningDock) == Qt::BottomDockWidgetArea) {
             adjustBottomTuningDockHeight();
+        } else if (dockWidgetArea(m_tuningDock) == Qt::RightDockWidgetArea
+                   && m_tuningDock->height() < 200) {
+            // A previously hidden dock can reopen below the inspector with only
+            // its title bar allocated. Rebalance that collapsed split; otherwise
+            // even the outer scroll area has a zero-height viewport.
+            const int workspaceHeight = centralWidget() ? centralWidget()->height() : height();
+            resizeDocks({m_tuningDock}, {qMax(200, workspaceHeight / 2)}, Qt::Vertical);
         }
     }
 }
@@ -1495,7 +1613,7 @@ void MainWindow::adjustBottomTuningDockHeight()
         monitorMinHeight = m_monitorWidget->minimumReadableHeight() + tabHeaderHeight;
     }
 
-    const int targetDockHeight = qBound(80, availableHeight - monitorMinHeight, 280);
+    const int targetDockHeight = qBound(100, availableHeight - monitorMinHeight, 280);
     resizeDocks({m_tuningDock}, {targetDockHeight}, Qt::Vertical);
 }
 
@@ -1581,46 +1699,64 @@ void MainWindow::onOpenDiagnosisWizard()
     updateStatusBar("已打开诊断向导");
 }
 
-void MainWindow::onEditParameterRequested(const QString& parameterName)
+void MainWindow::onParameterValueCommitted(const QString& pointId, const QString& value, bool applyNow)
 {
-    if (parameterName.isEmpty() || !m_projectController || !m_parameterController) {
+    if (!m_parameterController || !m_projectController || pointId.isEmpty()) return;
+    QPointer<IDeviceBackend> currentBackend = Monitor::MonitorManager::instance().deviceBackend();
+    QPointer<InspectorPanel> editPanel = m_parameterTuningPanel ? m_parameterTuningPanel->inspectorPanel() : nullptr;
+    if (!editPanel) return;
+    const quint64 editGeneration = editPanel->parameterEditGeneration();
+    const bool online = currentBackend && currentBackend->isOnline();
+    if (!m_sessionController || m_sessionController->deviceBackendGeneration() != m_parameterEditBackendGeneration
+            || online != m_parameterEditBackendOnline || m_parameterEditConnectionChanged
+            || QJsonDocument(m_projectController->runtimeConfig().toJson()).toJson(QJsonDocument::Compact)
+                != m_parameterEditConfigSnapshot) {
+        appendOutput(tr("工程、连接或设备已变化；请重新编辑参数。"));
         return;
     }
-
-    const auto stateInfo = m_parameterController->parameterState(parameterName);
-    if (!stateInfo.onlineEditable) {
-        appendOutput(QString("参数 %1 不允许在线修改").arg(parameterName));
+    if (!m_parameterController->editParameterByPointId(pointId, value)) {
+        appendOutput(tr("参数编辑失败：%1").arg(m_parameterController->parameterStateByPointId(pointId).lastError));
         return;
     }
-
-    bool ok = false;
-    const QString current = stateInfo.editedValue.isEmpty()
-                                ? stateInfo.definitionValue
-                                : stateInfo.editedValue;
-    const QString value = QInputDialog::getText(
-        this,
-        "编辑参数",
-        QString("输入参数 %1 的新值").arg(parameterName),
-        QLineEdit::Normal,
-        current,
-        &ok);
-    if (!ok) {
+    auto* backend = Monitor::MonitorManager::instance().deviceBackend();
+    if (!editPanel || editPanel->parameterEditGeneration() != editGeneration || backend != currentBackend.data()
+            || m_sessionController->deviceBackendGeneration() != m_parameterEditBackendGeneration
+            || m_parameterEditConnectionChanged) {
+        appendOutput(tr("工程或设备在参数提交过程中发生变化；未下发。"));
         return;
     }
-
-    if (m_parameterController->editParameter(parameterName, value.trimmed())) {
-        m_projectController->setModified(true);
-        refreshInspectorPanel();
-        appendOutput(QString("参数 %1 已更新为 %2").arg(parameterName, value.trimmed()));
-        updateStatusBar(QString("参数 %1 已更新").arg(parameterName));
+    m_projectController->setModified(true);
+    if (!editPanel || editPanel->parameterEditGeneration() != editGeneration
+            || m_sessionController->deviceBackendGeneration() != m_parameterEditBackendGeneration
+            || m_parameterEditConnectionChanged
+            || Monitor::MonitorManager::instance().deviceBackend() != currentBackend.data()) {
+        appendOutput(tr("工程或设备在参数提交过程中发生变化；未下发。"));
+        return;
+    }
+    const auto sessionState = m_sessionController->state();
+    const bool sessionCanWrite = sessionState == RuntimeSessionState::Connected
+            || sessionState == RuntimeSessionState::Running || sessionState == RuntimeSessionState::Monitoring;
+    if (!applyNow || !backend || !backend->isOnline() || !sessionCanWrite
+            || (m_sessionController && m_sessionController->isDemoMode())) {
+        updateStatusBar(tr("参数已修改，未下发"));
+        return;
+    }
+    QString error;
+    if (!m_parameterController->applyParameterByPointIdWithReadbackAsync(backend, pointId, 2, 100, &error)) {
+        appendOutput(tr("参数未能下发：%1").arg(error));
+        updateStatusBar(tr("参数未下发"));
     } else {
-        appendOutput(QString("参数 %1 编辑失败：%2").arg(parameterName, m_parameterController->parameterState(parameterName).lastError));
+        updateStatusBar(tr("参数写入中，等待回读确认"));
     }
 }
 
 void MainWindow::onApplyParametersRequested()
 {
     if (!m_projectController || !m_parameterController) {
+        return;
+    }
+    if (m_sessionController && m_sessionController->isDemoMode()) {
+        appendOutput(QStringLiteral("演示模式不允许写入真实设备参数。"));
         return;
     }
 
@@ -1686,10 +1822,8 @@ void MainWindow::onEditorCursorPositionChanged(int line, int column, int totalLi
 
 void MainWindow::onEditorModified(bool modified)
 {
-    if (m_projectController) {
-        m_projectController->setModified(modified);
-    }
-
+    if (m_projectController) m_projectController->setScriptModified(modified);
+    updateEditorSubWindowTitle();
 }
 
 void MainWindow::onSnippetInserted(const DslInsertRecord& record)
@@ -1724,6 +1858,12 @@ void MainWindow::onProjectCreated(const QString& projectPath, const QString& pro
     m_latestDiagnosticGeneration = 0;
     m_activeScanTaskId = 0;
 
+    m_activeBuildSnapshot = BuildSnapshot();
+    m_buildSnapshotStale = false;
+    m_runFlowOperationId.clear();
+    if (m_sessionController) m_sessionController->setPendingRunAfterCompile(false);
+    setRunFlowStage(RunFlowStage::Idle, QStringLiteral("工程会话已切换"));
+
     updateWindowTitle();
     updateRecentProjectsMenu();
     refreshExplorerRoot();
@@ -1738,9 +1878,20 @@ void MainWindow::onProjectOpened(const ProjectRuntimeConfig& config)
     m_latestDiagnosticGeneration = 0;
     m_activeScanTaskId = 0;
 
+    m_activeBuildSnapshot = BuildSnapshot();
+    m_buildSnapshotStale = false;
+    m_runFlowOperationId.clear();
+    if (m_sessionController) m_sessionController->setPendingRunAfterCompile(false);
+    setRunFlowStage(RunFlowStage::Idle, QStringLiteral("工程会话已切换"));
+
     if (m_mdiArea) {
         for (QMdiSubWindow* sub : m_mdiArea->subWindowList()) {
-            if (sub && sub != m_editorSubWindow && !sub->property("modified").toBool()) sub->close();
+            if (!sub || sub == m_editorSubWindow || sub->property("systemView").toBool()) continue;
+            if (sub->property("discardOnProjectChange").toBool()) {
+                sub->setProperty("modified", false);
+                sub->setProperty("discardOnProjectChange", false);
+            }
+            if (!sub->property("modified").toBool()) sub->close();
         }
     }
     updateWindowTitle();
@@ -1773,19 +1924,33 @@ void MainWindow::onProjectClosed()
     m_latestDiagnosticGeneration = 0;
     m_activeScanTaskId = 0;
 
+    m_activeBuildSnapshot = BuildSnapshot();
+    m_buildSnapshotStale = false;
+    m_runFlowOperationId.clear();
+    if (m_sessionController) m_sessionController->setPendingRunAfterCompile(false);
+    setRunFlowStage(RunFlowStage::Cancelled, QStringLiteral("工程已关闭"));
+
     if (m_sessionController) {
         m_sessionController->requestStop();
     }
 
     if (m_mdiArea) {
         for (QMdiSubWindow* sub : m_mdiArea->subWindowList()) {
-            if (sub && sub != m_editorSubWindow && !sub->property("modified").toBool()) sub->close();
+            if (!sub || sub == m_editorSubWindow || sub->property("systemView").toBool()) continue;
+            if (sub->property("discardOnProjectChange").toBool()) {
+                sub->setProperty("modified", false);
+                sub->setProperty("discardOnProjectChange", false);
+            }
+            if (!sub->property("modified").toBool()) sub->close();
         }
     }
     updateWindowTitle();
     updateEditorSubWindowTitle();
 
     stopDemoMode(QStringLiteral("项目关闭"));
+    if (m_sessionController) {
+        m_sessionController->clearDemoChannels();
+    }
 
     if (m_dslEditor && m_dslEditor->completionEngine()) {
         m_dslEditor->completionEngine()->reloadSnippets();
@@ -1836,6 +2001,9 @@ void MainWindow::onSaveConfirmationRequired(bool& shouldSave, bool& cancelled)
 void MainWindow::onScriptLoadRequired(const QString& scriptPath, const QString& content)
 {
     if (m_dslEditor) {
+        if (m_editorSubWindow) m_editorSubWindow->setProperty("filePath", normalizeDocumentIdentity(scriptPath));
+        if (m_actSave && m_mdiArea && m_mdiArea->activeSubWindow() == m_editorSubWindow)
+            m_actSave->setEnabled(!scriptPath.isEmpty());
         m_dslEditor->setCurrentFilePath(scriptPath);
         m_dslEditor->setScript(content);
         m_dslEditor->editor()->setReadOnly(false);
@@ -1886,12 +2054,25 @@ void MainWindow::onCompileStarted(BuildType type)
     if (m_buildController) {
         m_buildController->setCompileSessionContext(m_projectSessionId, scriptPath, docVer, m_documentVersions);
     }
+    captureBuildSnapshot();
+    if (isRunFlowActive()) setRunFlowStage(RunFlowStage::Compiling, QString());
 
     refreshInspectorPanel();
 }
 
 void MainWindow::onCompileSucceeded(BuildType type)
 {
+    if (type == BuildType::Configuration && !isBuildSnapshotCurrent()) {
+        // 会话、工程、入口、参与文档或磁盘输入在编译期间变化：旧结果不得发布或自动运行。
+        m_sessionController->setPendingRunAfterCompile(false);
+        m_progressBar->setVisible(false);
+        setCompileActionsEnabled(true);
+        invalidateBuildSnapshot(QStringLiteral("编译期间构建输入或工程会话已变化"));
+        setRunFlowStage(RunFlowStage::Cancelled, QStringLiteral("构建结果已过期"));
+        refreshInspectorPanel();
+        return;
+    }
+
     m_progressBar->setVisible(false);
     setCompileActionsEnabled(true);
     updateStatusBar(QStringLiteral("编译成功"));
@@ -1917,6 +2098,12 @@ void MainWindow::onCompileSucceeded(BuildType type)
                     .arg(result.metadata.value(QStringLiteral("generationDirectory")).toString());
             appendOutput(message);
             addProblem("info", "构建", message);
+            if (isRunFlowActive()) {
+                setRunFlowStage(RunFlowStage::Failed,
+                                m_lastBuildSaveSucceeded
+                                ? QStringLiteral("仅完成离线编译，没有可运行的目标产物")
+                                : QStringLiteral("工程配置保存失败"));
+            }
             refreshInspectorPanel();
             return;
         }
@@ -1935,6 +2122,9 @@ void MainWindow::onCompileSucceeded(BuildType type)
             appendOutput(QStringLiteral("[%1] %2")
                          .arg(QDateTime::currentDateTime().toString("HH:mm:ss"), message));
             addProblem("error", "发布", message);
+            if (isRunFlowActive()) {
+                setRunFlowStage(RunFlowStage::Failed, QStringLiteral("构建产物发布失败"));
+            }
         } else if (!m_projectController->saveProject()) {
             cfg = previousConfig;
             publicationCommitted = false;
@@ -1945,6 +2135,9 @@ void MainWindow::onCompileSucceeded(BuildType type)
             appendOutput(QStringLiteral("[%1] %2")
                          .arg(QDateTime::currentDateTime().toString("HH:mm:ss"), message));
             addProblem("error", "发布", message);
+            if (isRunFlowActive()) {
+                setRunFlowStage(RunFlowStage::Failed, QStringLiteral("工程配置提交失败"));
+            }
         } else {
             m_lastBuildSaveSucceeded = true;
             appendOutput(QString("[%1] 已更新下载产物路径：%2")
@@ -1955,21 +2148,50 @@ void MainWindow::onCompileSucceeded(BuildType type)
     } else if (type == BuildType::Configuration) {
         publicationCommitted = false;
         m_sessionController->setPendingRunAfterCompile(false);
+        if (isRunFlowActive()) {
+            setRunFlowStage(RunFlowStage::Failed, QStringLiteral("工程或构建上下文已失效"));
+        }
     }
 
     if (publicationCommitted && m_sessionController->hasPendingRunAfterCompile()
             && type == BuildType::Configuration) {
-        const CompileResult compileResult = m_buildController
-                ? m_buildController->lastCompileResult()
-                : CompileResult();
-        if (m_sessionController->onCompileSucceeded(compileResult)) {
-            if (m_sessionController->state() == RuntimeSessionState::Running) {
-                m_sessionController->startMonitoring();
-            }
+        if (!refreshBuildSnapshotPublicationIdentity()) {
+            m_sessionController->setPendingRunAfterCompile(false);
+            m_sessionController->invalidateCompiledArtifact();
+            const QString message = QStringLiteral(
+                    "构建输入在发布后发生变化，已阻止连接、下载和运行；请重新构建。");
+            appendOutput(message);
+            addProblem(QStringLiteral("warning"), QStringLiteral("运行"), message);
+            setRunFlowStage(RunFlowStage::Failed, QStringLiteral("构建快照已失效"));
         } else {
-            QMessageBox::warning(this,
-                                 "运行条件不完整",
-                                 "编译成功，但没有生成可运行的 .code 文件。");
+            const CompileResult compileResult = m_buildController->lastCompileResult();
+            const QString operationId = m_runFlowOperationId;
+            setRunFlowStage(RunFlowStage::Connecting, QStringLiteral("连接准备"));
+            const bool accepted = m_sessionController->onCompileSucceeded(
+                        compileResult,
+                        operationId,
+                        [this, operationId]() {
+                return operationId == m_runFlowOperationId
+                        && isRunFlowActive()
+                        && isBuildSnapshotCurrent();
+            },
+                        [this, operationId](bool ok, const QString& reason) {
+                if (operationId != m_runFlowOperationId || !isRunFlowActive()) return;
+                if (ok) return;
+                const QString message = reason.isEmpty()
+                        ? QStringLiteral("运行准备失败；未启动后续下载或运行。")
+                        : reason;
+                appendOutput(QStringLiteral("[%1] %2")
+                             .arg(QDateTime::currentDateTime().toString(QStringLiteral("HH:mm:ss")),
+                                  message));
+                addProblem(QStringLiteral("error"), QStringLiteral("运行"), message);
+                setRunFlowStage(RunFlowStage::Failed, QStringLiteral("连接准备失败"));
+            });
+            if (accepted) return;
+            const QString message = QStringLiteral("编译成功，但运行条件不完整；未启动下载或运行。请查看问题与输出。");
+            appendOutput(message);
+            addProblem(QStringLiteral("error"), QStringLiteral("运行"), message);
+            setRunFlowStage(RunFlowStage::Failed, QStringLiteral("没有可运行的目标产物"));
         }
     }
 
@@ -1980,6 +2202,12 @@ void MainWindow::onCompileFailed(BuildType type, const QString& errorMessage)
 {
     Q_UNUSED(type);
     m_sessionController->setPendingRunAfterCompile(false);
+    if (isRunFlowActive()) {
+        setRunFlowStage(RunFlowStage::Failed, QStringLiteral("编译失败"));
+    }
+    if (m_activeBuildSnapshot.valid) {
+        m_buildSnapshotStale = true;
+    }
     m_progressBar->setVisible(false);
     setCompileActionsEnabled(true);
     updateStatusBar(QStringLiteral("编译失败"));
@@ -2014,15 +2242,36 @@ void MainWindow::onBuildBusyChanged(bool busy)
 
 void MainWindow::onBuildSaveRequired()
 {
-    if (m_sessionController && m_sessionController->skipNextBuildSave()) {
-        m_sessionController->setSkipNextBuildSave(false);
-        m_lastBuildSaveSucceeded = true;
-        appendOutput(QString("[%1] 已按用户选择跳过保存，编译将使用磁盘上的 DSL 文件")
-                     .arg(QDateTime::currentDateTime().toString("HH:mm:ss")));
-        return;
+    const BuildType type = m_buildController
+            ? m_buildController->currentBuildType()
+            : BuildType::Configuration;
+    QStringList errors;
+    bool saved = false;
+    if (type == BuildType::Configuration) {
+        // Only the entry script, configured project scripts and the project
+        // configuration participate in this build. Unrelated dirty documents
+        // are intentionally left untouched.
+        saved = saveDirtyBuildInputs(&errors);
+    } else {
+        saved = m_projectController->saveProject();
+        if (!saved) {
+            errors << QStringLiteral("无法保存工程配置。");
+        }
     }
 
-    m_lastBuildSaveSucceeded = m_projectController->saveProject();
+    m_lastBuildSaveSucceeded = saved;
+    if (!saved) {
+        const QString message = QStringLiteral("构建前保存失败，已停止编译：%1")
+                .arg(errors.isEmpty() ? QStringLiteral("未知原因") : errors.join(QStringLiteral("；")));
+        appendOutput(QStringLiteral("[%1] %2")
+                     .arg(QDateTime::currentDateTime().toString(QStringLiteral("HH:mm:ss")),
+                          message));
+        addProblem(QStringLiteral("error"), QStringLiteral("构建"), message);
+        m_sessionController->setPendingRunAfterCompile(false);
+        if (isRunFlowActive()) {
+            setRunFlowStage(RunFlowStage::Failed, QStringLiteral("保存构建输入失败"));
+        }
+    }
     refreshInspectorPanel();
 }
 
@@ -2100,6 +2349,13 @@ void MainWindow::onDocumentModified(const QString& filePath)
         if (m_problemsPanel) {
             m_problemsPanel->markDiagnosticsOutdatedForFile(norm);
         }
+        if (!m_buildSnapshotStale && m_activeBuildSnapshot.valid
+                && m_activeBuildSnapshot.inputChecksums.contains(norm)
+                && (isRunFlowActive() || (m_buildController && m_buildController->isBusy()))) {
+            m_buildSnapshotStale = true;
+            m_sessionController->setPendingRunAfterCompile(false);
+            setRunFlowStage(RunFlowStage::Cancelled, QStringLiteral("构建输入已修改"));
+        }
     }
 }
 
@@ -2175,16 +2431,6 @@ void MainWindow::closeCurrentActiveTab()
     }
     QMdiSubWindow* sub = m_mdiArea->activeSubWindow();
     if (!sub) {
-        return;
-    }
-
-    // 若为主 DSL 编辑器子窗口：执行“关闭仅隐藏”保护（对齐 FL15-01）
-    if (sub == m_editorSubWindow) {
-        if (m_actToggleDslEditor) {
-            m_actToggleDslEditor->setChecked(false);
-        } else {
-            sub->hide();
-        }
         return;
     }
 

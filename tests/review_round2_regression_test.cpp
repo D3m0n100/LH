@@ -307,7 +307,10 @@ private slots:
         QFETCH(bool,cancel); QFETCH(bool,shutdown);
         const auto path=database(QString("slow-export-%1-%2.db").arg(cancel).arg(shutdown));
         AsyncDatabaseWorker worker; QVERIFY(worker.startWorker(path)); QSignalSpy commits(&worker,&AsyncDatabaseWorker::batchCommitted);
-        const auto base=QDateTime::currentDateTimeUtc(); QList<QVariantMap> records;
+        // Include a legitimate timestamp_ms ending in 9999. Searching the whole
+        // CSV for the appended value's digits incorrectly rejected this timestamp.
+        const auto base=QDateTime::fromString(QStringLiteral("2026-10-29T11:17:59.700Z"),Qt::ISODateWithMs);
+        QList<QVariantMap> records;
         for(int i=0;i<600;++i) { auto r=record("stress",base.addMSecs(i)); r["value"]=i; records.append(r); }
         worker.enqueueBatch(records); QTRY_COMPARE(commits.count(),1); commits.clear();
         const auto destination=dir.filePath("stress.csv"); QFile original(destination);
@@ -344,7 +347,41 @@ private slots:
         QTRY_VERIFY_WITH_TIMEOUT(done.load(),3000); producer.stop(); exportThread->wait(); QVERIFY(ticks>=5);
         QFile output(destination); QVERIFY(output.open(QIODevice::ReadOnly)); const auto bytes=output.readAll();
         if(cancel) { QVERIFY(!result.success); QCOMPARE(bytes,QByteArray("preserved-destination")); }
-        else { QVERIFY2(result.success,qPrintable(result.errorMessage)); QCOMPARE(result.exportedCount,600); QVERIFY(!bytes.contains("9999")); }
+        else {
+            QVERIFY2(result.success,qPrintable(result.errorMessage));
+            QCOMPARE(result.exportedCount,600);
+            QList<QByteArray> header;
+            int valueColumn=-1, timestampColumn=-1, exportedRows=0;
+            bool hasTimestampContainingSentinel=false;
+            // This fixture contains only unquoted, comma-free fields.
+            for (const auto& rawLine : bytes.split('\n')) {
+                const auto line=rawLine.trimmed();
+                if (line.isEmpty() || line.startsWith('#')) continue;
+                const auto fields=line.split(',');
+                if (header.isEmpty()) {
+                    header=fields;
+                    valueColumn=header.indexOf("stress");
+                    timestampColumn=header.indexOf("timestamp_ms");
+                    QVERIFY(valueColumn>=0);
+                    QVERIFY(timestampColumn>=0);
+                    continue;
+                }
+                QCOMPARE(fields.size(),header.size());
+                bool valid=false;
+                const double value=fields.at(valueColumn).toDouble(&valid);
+                QVERIFY(valid);
+                QCOMPARE(value,double(exportedRows));
+                const auto& timestamp=fields.at(timestampColumn);
+                const qint64 timestampMs=timestamp.toLongLong(&valid);
+                QVERIFY(valid);
+                QCOMPARE(timestampMs,base.addMSecs(exportedRows).toMSecsSinceEpoch());
+                hasTimestampContainingSentinel |= timestamp.contains("9999");
+                ++exportedRows;
+            }
+            QCOMPARE(exportedRows,600);
+            QVERIFY(hasTimestampContainingSentinel);
+            qInfo() << "Verified 600 snapshot values 0..599; timestamp digits 9999 are valid";
+        }
     }
     void shutdownDeadlineIncludesInflightDelay() {
         auto path=database("shutdown.db");AsyncDatabaseWorker worker;QVERIFY(worker.startWorker(path));worker.setInjectedStorageDelayMs(5000);

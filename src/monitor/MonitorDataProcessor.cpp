@@ -147,6 +147,7 @@ void MonitorDataProcessor::appendSample(const QString& channelId,
     const bool emitDelta = deltaCount >= m_config.batchProcessThreshold;
     locker.unlock();
     emit channelQualityUpdated(channelId, sample.quality, sample.valueValid);
+    if (sample.valueValid) emit channelDataUpdated(channelId);
     if (emitDelta) emit deltaDataReady(channelId, deltaCount);
 }
 
@@ -188,6 +189,7 @@ void MonitorDataProcessor::appendSamples(const QString& channelId,
     const int deltaCount = points.size();
     locker.unlock();
     emit channelQualityUpdated(channelId, lastSample.quality, lastSample.valueValid);
+    if (!points.isEmpty()) emit channelDataUpdated(channelId);
     if (deltaCount > 0) emit deltaDataReady(channelId, deltaCount);
 }
 
@@ -219,11 +221,11 @@ void MonitorDataProcessor::appendPoint(const QString& channelId, const QPointF& 
     m_totalAppendCount++;
     
     // 检查是否需要发送信号（批量阈值）
-    if (buffer.deltaBuffer.size() >= m_config.batchProcessThreshold) {
-        const int deltaCount = buffer.deltaBuffer.size();
-        locker.unlock();
-        emit deltaDataReady(channelId, deltaCount);
-    }
+    const int deltaCount = buffer.deltaBuffer.size();
+    const bool emitDelta = deltaCount >= m_config.batchProcessThreshold;
+    locker.unlock();
+    emit channelDataUpdated(channelId);
+    if (emitDelta) emit deltaDataReady(channelId, deltaCount);
 }
 
 void MonitorDataProcessor::appendPoints(const QString& channelId, 
@@ -264,6 +266,7 @@ void MonitorDataProcessor::appendPoints(const QString& channelId,
     m_totalAppendCount += points.size();
     
     locker.unlock();
+    emit channelDataUpdated(channelId);
     emit deltaDataReady(channelId, points.size());
 }
 
@@ -453,6 +456,12 @@ QVector<QPointF> MonitorDataProcessor::getChannelData(const QString& channelId) 
     }
     
     return result;
+}
+
+QVector<QPointF> MonitorDataProcessor::processedSnapshot(const QString& channelId) const
+{
+    const auto config = snapshotConfig();
+    return applyProcessingPipeline(applyTimeWindow(getChannelData(channelId), config), config);
 }
 
 QVector<QPointF> MonitorDataProcessor::getRecentPoints(const QString& channelId, 

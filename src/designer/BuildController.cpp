@@ -581,6 +581,11 @@ void BuildController::compileCommon(BuildType type,
         return;
     }
 
+    // The save callback needs to know which build is being prepared so it can
+    // limit automatic saving to that build's inputs.
+    m_currentBuildType = type;
+    m_currentProjectPath = projectPath;
+
     emit saveRequired();
 
     // 使用回调进行编译前校验（替代旧的引用参数信号）
@@ -595,9 +600,6 @@ void BuildController::compileCommon(BuildType type,
             return;
         }
     }
-
-    m_currentBuildType = type;
-    m_currentProjectPath = projectPath;
 
     const QString sourceFile = currentDslScriptPath(config);
     if (sourceFile.isEmpty() || !QFileInfo::exists(sourceFile)) {
@@ -872,6 +874,9 @@ void BuildController::compileGeneratedArtifacts(BuildType type,
         emit compileFailed(type, QStringLiteral("项目路径为空。"));
         return;
     }
+
+    m_currentBuildType = type;
+    m_currentProjectPath = projectPath;
 
     emit saveRequired();
 

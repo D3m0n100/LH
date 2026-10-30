@@ -238,6 +238,7 @@ public:
 
     /// 向脚本中插入一段 DSL 模板
     void insertSnippet(const QString& text);
+    void insertFunctionSnippet(const FunctionSnippet& snippet);
 
 
     // ===== DSL 映射稳定（插入标记法） =====

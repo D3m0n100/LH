@@ -401,6 +401,20 @@ private:
     }
 
 private slots:
+    void configurationWithoutBackendDoesNotGenerateDemoSamples()
+    {
+        auto& manager = MonitorManager::instance();
+        manager.setDeviceBackend(nullptr);
+        QVERIFY(manager.applyConfiguration(makeConfig()));
+        QVERIFY(manager.providerIds().contains(QStringLiteral("pt1")));
+        QVERIFY(manager.availableProviderIds().isEmpty());
+        QSignalSpy recorded(&manager, &MonitorManager::sampleRecorded);
+        manager.startMonitoring();
+        QTest::qWait(250);
+        QCOMPARE(recorded.count(), 0);
+        QVERIFY(manager.history(QStringLiteral("channel.1"), 10).isEmpty());
+    }
+
     void nonFiniteSamplesPreserveAlarmAndDoNotEnterCurves()
     {
         ChannelConfig config;
@@ -438,6 +452,7 @@ private slots:
     void init()
     {
         auto& manager = MonitorManager::instance();
+        manager.setRuntimeSessionIdentity(QString());
         manager.setDatabaseLoggingEnabled(false);
         manager.stopMonitoring();
         manager.setDataProcessor(nullptr);
@@ -449,6 +464,7 @@ private slots:
     void cleanup()
     {
         auto& manager = MonitorManager::instance();
+        manager.setRuntimeSessionIdentity(QString());
         manager.stopMonitoring();
         manager.setDataProcessor(nullptr);
         manager.setDeviceBackend(nullptr);
@@ -490,6 +506,51 @@ private slots:
         manager.setDeviceBackend(nullptr);
         QVERIFY(backend2.writePoints({{QStringLiteral("pt1"), 4.0}}, nullptr));
         QCOMPARE(spy.count(), 2);
+    }
+
+    void reapplyingSameSessionPreservesHistoryWithoutCrossSessionLeak()
+    {
+        auto& manager = MonitorManager::instance();
+        MonitorDataProcessor processor;
+        manager.setDataProcessor(&processor);
+        manager.setRuntimeSessionIdentity(QStringLiteral("session-one"));
+        const auto config = makeConfig();
+        QVERIFY(manager.applyConfiguration(config));
+        const auto sample = Sample(QStringLiteral("channel.1"), 7.0, QStringLiteral("bar"), QDateTime::currentDateTimeUtc());
+        manager.recordSample(sample);
+        QCOMPARE(manager.history(sample.channelName, 10).size(), 1);
+        QCOMPARE(processor.getChannelData(sample.channelName).size(), 1);
+        QVERIFY(manager.applyConfiguration(config));
+        QCOMPARE(manager.history(sample.channelName, 10).size(), 1);
+        QCOMPARE(processor.getChannelData(sample.channelName).size(), 1);
+        auto unrelated = config;
+        ParameterDefinition p; p.id = QStringLiteral("new-parameter"); p.name = QStringLiteral("Kp");
+        p.dataType = QStringLiteral("REAL"); p.onlineEditable = true;
+        unrelated.parameters.append(p);
+        QVERIFY(manager.applyConfiguration(unrelated));
+        QCOMPARE(manager.history(sample.channelName, 10).size(), 1);
+        QCOMPARE(processor.getChannelData(sample.channelName).size(), 1);
+        unrelated.providers[0].periodMs = 100;
+        QVERIFY(manager.applyConfiguration(unrelated));
+        QCOMPARE(manager.history(sample.channelName, 10).size(), 1);
+        QCOMPARE(manager.expectedPeriodMs(sample.channelName), 100);
+        auto differentPoint = unrelated;
+        differentPoint.providers[0].id = QStringLiteral("different-point");
+        QVERIFY(manager.applyConfiguration(differentPoint));
+        QVERIFY(manager.history(sample.channelName, 10).isEmpty());
+        QVERIFY(processor.getChannelData(sample.channelName).isEmpty());
+        manager.recordSample(sample);
+        VirtualDeviceBackend replacement;
+        manager.setDeviceBackend(&replacement);
+        QVERIFY(manager.applyConfiguration(differentPoint));
+        QVERIFY(manager.history(sample.channelName, 10).isEmpty());
+        QVERIFY(processor.getChannelData(sample.channelName).isEmpty());
+        manager.recordSample(sample);
+        manager.setRuntimeSessionIdentity(QStringLiteral("session-two"));
+        QVERIFY(manager.applyConfiguration(differentPoint));
+        QVERIFY(manager.history(sample.channelName, 10).isEmpty());
+        QVERIFY(processor.getChannelData(sample.channelName).isEmpty());
+        manager.setDataProcessor(nullptr);
     }
 
     void backendPollCarriesBackendStatusMetadata()
@@ -732,7 +793,12 @@ private slots:
     {
         auto& manager = MonitorManager::instance();
         manager.setDeviceBackend(nullptr);
-        QVERIFY(manager.applyConfiguration(makeConfig()));
+        ProviderConfig provider;
+        provider.id = QStringLiteral("stop-test-provider");
+        provider.channelName = QStringLiteral("stop-test-channel");
+        provider.periodMs = 20;
+        provider.sampler = [] { return 1.0; };
+        QVERIFY(manager.registerProvider(provider));
 
         QSignalSpy samples(&manager, &MonitorManager::sampleRecorded);
         manager.startMonitoring();
@@ -742,6 +808,7 @@ private slots:
         const int samplesAtStop = samples.count();
         QTest::qWait(50);
         QCOMPARE(samples.count(), samplesAtStop);
+        QVERIFY(manager.unregisterProvider(provider.id));
     }
 
     void providerUnknownExceptionProducesBadSample()

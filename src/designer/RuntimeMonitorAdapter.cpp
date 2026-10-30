@@ -7,7 +7,8 @@ public:
     explicit MonitorAdapter(Monitor::MonitorManager& manager) : m_manager(&manager) {}
     void setDeviceBackend(IDeviceBackend* backend) override { if (m_manager) m_manager->setDeviceBackend(backend); }
     bool applyConfiguration(const ProjectRuntimeConfig& config) override { return m_manager && m_manager->applyConfiguration(config); }
-    QStringList providerIds() const override { return m_manager ? m_manager->providerIds() : QStringList(); }
+    void setSessionIdentity(const QString& identity) override { if (m_manager) m_manager->setRuntimeSessionIdentity(identity); }
+    QStringList providerIds() const override { return m_manager ? m_manager->availableProviderIds() : QStringList(); }
     void startMonitoring() override { if (m_manager) m_manager->startMonitoring(); }
     void stopMonitoring() override { if (m_manager) m_manager->stopMonitoring(); }
     bool isMonitoring() const override { return m_manager && m_manager->isMonitoring(); }

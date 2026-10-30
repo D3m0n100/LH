@@ -1026,6 +1026,7 @@ QByteArray MonitorExportHelper::generateMultiChannelCsvContent(
             stream << "# [" << idx++ << "] " << field(info.channelId, true)
                    << " | " << field(info.displayName, true)
                    << " | " << field(info.unit, true)
+                   << " | Source: " << field(info.source, true)
                    << " | Period: " << info.samplePeriodMs << "ms\n";
         }
         stream << "#\n";
@@ -1099,6 +1100,7 @@ QByteArray MonitorExportHelper::generateMultiChannelCsvContent(
                    << field(QStringLiteral("timestamp_ms"), false) << sep
                    << field(QStringLiteral("channel_id"), false) << sep
                    << field(QStringLiteral("channel_name"), false) << sep
+                   << field(QStringLiteral("source"), false) << sep
                    << field(QStringLiteral("value"), false) << sep
                    << field(QStringLiteral("unit"), false) << sep
                    << field(QStringLiteral("quality"), false) << sep
@@ -1112,6 +1114,7 @@ QByteArray MonitorExportHelper::generateMultiChannelCsvContent(
                        << field(QString::number(sample.timestampMs()), false) << sep
                        << field(info.channelId, true) << sep
                        << field(info.displayName, true) << sep
+                       << field(info.source, true) << sep
                        << field(sample.valueValid
                                        ? QString::number(sample.value, 'g', m_config.csvPrecision)
                                        : QString(), false) << sep
@@ -1200,6 +1203,7 @@ QByteArray MonitorExportHelper::generateMultiChannelJsonContent(
         channelObj["channelId"] = info.channelId;
         channelObj["displayName"] = info.displayName;
         channelObj["unit"] = info.unit;
+        channelObj["source"] = info.source;
         channelObj["samplePeriodMs"] = info.samplePeriodMs;
         
         const QList<Monitor::Sample>& samples = package.channelSamples.value(info.channelId);
@@ -1393,6 +1397,7 @@ QString MonitorExportHelper::generateTsvMetadataHeader(
         stream << "# [" << idx++ << "] " << field(info.channelId, true)
                << " | " << field(info.displayName, true)
                << " | " << field(info.unit, true)
+               << " | Source: " << field(info.source, true)
                << " | Period: " << info.samplePeriodMs << "ms\n";
     }
     stream << "#\n";
@@ -1706,6 +1711,8 @@ ExportResult MonitorExportHelper::exportPagedPackageToFile(
                            + QString::fromUtf8(jsonQuote(info.displayName))
                            + QStringLiteral(",\"unit\":")
                            + QString::fromUtf8(jsonQuote(info.unit))
+                           + QStringLiteral(",\"source\":")
+                           + QString::fromUtf8(jsonQuote(info.source))
                            + QStringLiteral(",\"samplePeriodMs\":")
                            + QString::number(info.samplePeriodMs)
                            + QStringLiteral(",\"sampleCount\":")
@@ -1767,7 +1774,8 @@ ExportResult MonitorExportHelper::exportPagedPackageToFile(
                 commentStream << "# [" << definitionIndex++ << "] "
                               << field(info.channelId, true) << " | "
                               << field(info.displayName, true) << " | "
-                              << field(info.unit, true) << " | Period: "
+                              << field(info.unit, true) << " | Source: "
+                              << field(info.source, true) << " | Period: "
                               << info.samplePeriodMs << "ms\n";
             }
             commentStream << "#\n";
@@ -1788,6 +1796,7 @@ ExportResult MonitorExportHelper::exportPagedPackageToFile(
             } else {
                 header += sep + field(QStringLiteral("channel_id"), false) + sep
                        + field(QStringLiteral("channel_name"), false) + sep
+                       + field(QStringLiteral("source"), false) + sep
                        + field(QStringLiteral("value"), false) + sep
                        + field(QStringLiteral("unit"), false) + sep
                        + field(QStringLiteral("quality"), false) + sep
@@ -1863,6 +1872,7 @@ ExportResult MonitorExportHelper::exportPagedPackageToFile(
                                + sep + field(QString::number(sample.timestampMs()), false)
                                + sep + field(info.channelId, true)
                                + sep + field(info.displayName, true)
+                               + sep + field(info.source, true)
                                + sep + field(sample.valueValid && std::isfinite(sample.value)
                                                  ? QString::number(sample.value, 'g', m_config.csvPrecision)
                                                  : QString(), false)

@@ -13,6 +13,7 @@
 #include <QPixmap>
 #include <QSvgGenerator>
 #include <QPainter>
+#include <QShowEvent>
 
 // 默认颜色列表
 const QList<QColor> MonitorChartView::DEFAULT_COLORS = Monitor::defaultChannelColors();
@@ -119,11 +120,15 @@ void MonitorChartView::setDataProcessor(MonitorDataProcessor* processor)
     }
     
     m_dataProcessor = processor;
+    m_dirtyProcessorChannels.clear();
     
     // 建立新连接
     if (m_dataProcessor) {
         connect(m_dataProcessor, &MonitorDataProcessor::deltaDataReady,
                 this, &MonitorChartView::onDeltaDataReady);
+        connect(m_dataProcessor, &MonitorDataProcessor::channelDataUpdated, this,
+                [this](const QString& id) { m_dirtyProcessorChannels.insert(id); });
+        for (const auto& id : m_channelStyles.keys()) m_dirtyProcessorChannels.insert(id);
     }
 }
 
@@ -148,6 +153,7 @@ void MonitorChartView::addChannel(const QString& channelId, const ChannelStyle& 
     }
 
     m_channelStyles[channelId] = actualStyle;
+    m_dirtyProcessorChannels.insert(channelId);
 
     if (m_activeChannel.isEmpty()) {
         setActiveChannel(channelId);
@@ -170,6 +176,7 @@ void MonitorChartView::removeChannel(const QString& channelId)
     m_channelStyles.remove(channelId);
     m_visibleChannelSet.remove(channelId);
     m_pendingDeltas.remove(channelId);
+    m_dirtyProcessorChannels.remove(channelId);
 
     if (m_activeChannel == channelId) {
         if (!m_channelStyles.isEmpty()) {
@@ -211,6 +218,7 @@ void MonitorChartView::addChannelSeries(const QString& channelId)
     
     if (style.visible) {
         m_visibleChannelSet.insert(channelId);
+        m_dirtyProcessorChannels.insert(channelId);
     }
 }
 
@@ -239,6 +247,7 @@ void MonitorChartView::toggleChannelVisible(const QString& channelId, bool visib
         }
         m_chartWidget->setChannelVisible(channelId, true);
         m_visibleChannelSet.insert(channelId);
+        m_dirtyProcessorChannels.insert(channelId);
     } else {
         m_chartWidget->setChannelVisible(channelId, false);
         m_visibleChannelSet.remove(channelId);
@@ -269,6 +278,7 @@ void MonitorChartView::setVisibleChannels(const QStringList& channelIds)
             }
             m_chartWidget->setChannelVisible(id, true);
             m_visibleChannelSet.insert(id);
+            m_dirtyProcessorChannels.insert(id);
         }
     }
 
@@ -394,11 +404,15 @@ void MonitorChartView::consumeAndRender()
         return;
     }
     
-    // 从数据处理器消费所有增量数据
-    QMap<QString, QVector<QPointF>> deltas = m_dataProcessor->drainAllDeltas();
-    
-    for (auto it = deltas.begin(); it != deltas.end(); ++it) {
-        appendDeltaPoints(it.key(), it.value());
+    // Each view reads its own snapshot; consuming a shared delta queue would
+    // cause sibling views to steal samples from one another.
+    const auto dirty = m_dirtyProcessorChannels;
+    m_dirtyProcessorChannels.clear();
+    for (const auto& id : dirty) {
+        ensureChannel(id);
+        if (!m_channelStyles.value(id).visible) continue;
+        if (!m_chartWidget->hasChannel(id)) addChannelSeries(id);
+        m_chartWidget->updateChannelData(id, m_dataProcessor->processedSnapshot(id));
     }
 }
 
@@ -587,8 +601,18 @@ void MonitorChartView::forceRefresh()
 // 私有槽函数
 // ============================================================================
 
+void MonitorChartView::showEvent(QShowEvent* event)
+{
+    QWidget::showEvent(event);
+    m_hasBeenShown = true;
+}
+
 void MonitorChartView::onRenderTimer()
 {
+    // 显式隐藏后暂停绘制；采样与处理仍由共享处理器继续，重新显示后从快照恢复。
+    if (m_hasBeenShown && !isVisible()) {
+        return;
+    }
     // 如果连接了数据处理器，先消费增量数据
     if (m_dataProcessor) {
         consumeAndRender();

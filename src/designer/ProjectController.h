@@ -80,10 +80,11 @@ public:
     bool hasOpenProject() const { return !m_currentProject.isEmpty(); }
     
     /// 项目是否已修改
-    bool isModified() const { return m_modified; }
+    bool isModified() const { return m_modified || m_scriptModified; }
     
     /// 设置修改状态
     void setModified(bool modified);
+    void setScriptModified(bool modified);
     
     /// 获取运行时配置（只读）
     const ProjectRuntimeConfig& runtimeConfig() const { return m_runtimeConfig; }
@@ -127,6 +128,9 @@ public:
     void setDefaultProjectDir(const QString& dir) { m_defaultProjectDir = dir; }
     QString defaultProjectDir() const { return m_defaultProjectDir; }
 
+    /// 保存构建参与的主脚本与项目配置。项目配置失败时不回滚已成功保存的脚本输入。
+    bool saveProjectForBuildInputs(QString* failureDescription = nullptr);
+
 public slots:
     // ===== 项目操作槽函数 =====
     
@@ -141,7 +145,7 @@ public slots:
     
     /// 保存当前项目
     bool saveProject();
-    
+
     /// 关闭当前项目；取消或保存失败时返回 false
     bool closeProject();
     
@@ -208,6 +212,7 @@ private:
     
     /// 保存项目配置
     bool saveProjectConfig(const QString& projectDir);
+    bool saveProjectImpl(bool rollbackScriptOnConfigFailure, QString* failureDescription);
     bool saveDslScript(QString& savedScript);
     bool confirmPendingChanges();
     void syncScriptConfigFields();
@@ -235,6 +240,7 @@ private:
     QString m_currentProject;           ///< 当前项目路径
     QString m_currentScriptFile;        ///< 当前脚本文件路径
     bool m_modified = false;            ///< 是否已修改
+    bool m_scriptModified = false;      ///< 当前构建入口文档的修改状态
     ProjectRuntimeConfig m_runtimeConfig; ///< 运行时配置
     
     // ===== 最近项目 =====

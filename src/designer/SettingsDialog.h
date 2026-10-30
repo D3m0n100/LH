@@ -22,10 +22,14 @@ public:
     QString defaultProjectDir() const;
     bool autoScrollLog() const;
     int fontSizeIndex() const;
+    int themeMode() const;
+    int density() const;
 
     void setDefaultProjectDir(const QString& dir);
     void setAutoScrollLog(bool enabled);
     void setFontSizeIndex(int index);
+    void setThemeMode(int mode);
+    void setDensity(int density);
 
     static int fontPointSize(int index);
 
@@ -41,6 +45,8 @@ private:
     QPushButton* m_btnBrowseDir = nullptr;
     QCheckBox* m_chkAutoScroll = nullptr;
     QComboBox* m_comboFontSize = nullptr;
+    QComboBox* m_comboTheme = nullptr;
+    QComboBox* m_comboDensity = nullptr;
 
     QPushButton* m_btnOk = nullptr;
     QPushButton* m_btnCancel = nullptr;

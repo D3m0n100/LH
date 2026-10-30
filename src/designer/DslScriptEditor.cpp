@@ -1113,6 +1113,22 @@ void DslScriptEditor::onFunctionItemActivated(QListWidgetItem* item)
     emit snippetInserted(record);
 }
 
+void DslScriptEditor::insertFunctionSnippet(const FunctionSnippet& snippet)
+{
+    if (!m_editor || !snippet.canInsert() || snippet.templateCode.isEmpty()) return;
+    const QTextCursor cursor = m_editor->textCursor();
+    DslInsertRecord record;
+    record.snippetId = snippet.id;
+    record.snippetName = snippet.name;
+    record.mappingId = QUuid::createUuid().toString(QUuid::WithoutBraces);
+    record.lineNumber = cursor.blockNumber() + (cursor.atBlockStart() ? 1 : 2);
+    record.generatedCode = snippet.templateCode;
+    record.insertTime = QDateTime::currentDateTime();
+    insertSnippet(snippet.templateCode);
+    m_insertRecords.append(record);
+    emit snippetInserted(record);
+}
+
 void DslScriptEditor::insertSnippet(const QString& text)
 {
     if (!m_editor || text.isEmpty()) {

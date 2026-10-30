@@ -49,7 +49,8 @@ public:
 
     bool connectBackend() override;
     void connectBackendAsync(int budgetMs, std::shared_ptr<std::atomic_bool> cancelled,
-                             QObject* context, std::function<void(bool, QString)> completed);
+                             QObject* context, std::function<void(bool, QString)> completed,
+                             bool publishConnectionOnSuccess = true);
     void disconnectBackend() override;
     bool isOnline() const override;
 
@@ -67,6 +68,8 @@ public:
                           QString* errorMessage = nullptr,
                           CommError* operationError = nullptr) override;
     bool supportsAsyncDownload() const { return m_client && m_client->hasWorkerThread(); }
+    bool hasAsyncOperationInFlight() const
+    { return m_asyncConnectActive || m_asyncDownloadActive || m_disconnectPending; }
     bool supportsAsyncRead() const override { return supportsAsyncDownload(); }
     bool supportsAsyncWrite() const override { return supportsAsyncDownload(); }
     void writePointsAsync(const QHash<QString, QVariant>& writes, int budgetMs,
@@ -79,6 +82,11 @@ public:
                                std::function<void(bool, QString, CommError)> completed);
     void cancelDownload() override;
     void resetDownloadCancellation() override;
+
+signals:
+    void asyncOperationBusyChanged(bool busy);
+
+public:
 
     BackendStatusSnapshot statusSnapshot() const override;
 

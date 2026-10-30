@@ -92,10 +92,15 @@ ParameterTuningPanel::ParameterTuningPanel(QWidget* parent)
     auto* scrollArea = new QScrollArea(this);
     scrollArea->setObjectName(QStringLiteral("ParameterTuningScrollArea"));
     scrollArea->setWidgetResizable(true);
+    scrollArea->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     scrollArea->setFrameShape(QFrame::NoFrame);
     auto* content = new QWidget(scrollArea);
     content->setObjectName(QStringLiteral("ParameterTuningContent"));
+    // The table and PID tabs have their own overflow handling. Their preferred
+    // widths must not make the whole inspector wider than this viewport.
+    content->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Preferred);
     auto* layout = new QVBoxLayout(content);
+    layout->setSizeConstraint(QLayout::SetNoConstraint);
     layout->setContentsMargins(6, 6, 6, 6);
     layout->setSpacing(6);
     scrollArea->setWidget(content);
@@ -126,7 +131,7 @@ ParameterTuningPanel::ParameterTuningPanel(QWidget* parent)
     layout->addWidget(m_topToolBar);
 
     m_chartGroup = new QGroupBox(QStringLiteral("PID 曲线"), this);
-    m_chartGroup->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+    m_chartGroup->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Fixed);
     // The dock can be a bottom strip on narrow logical windows. Keep the
     // chart compact there; the inspector below remains the primary control
     // surface and retains its own scrolling/navigation.
@@ -242,13 +247,17 @@ ParameterTuningPanel::ParameterTuningPanel(QWidget* parent)
 
     m_panel = new InspectorPanel(this);
     m_panel->setPanelMode(InspectorPanel::PanelMode::Tuning);
-    m_panel->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    // Keep the nested inspector viewport usable. In a short side dock the PID
+    // chart otherwise consumes all height and leaves a zero-height viewport,
+    // so scrolling cannot reveal the apply button. The outer scroll area can
+    // scroll this minimum-height inspector into view without enlarging the dock.
+    m_panel->setMinimumHeight(160);
+    m_panel->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Expanding);
     layout->addWidget(m_panel, 1);
 
     connect(m_panel, &InspectorPanel::requestCompile, this, &ParameterTuningPanel::requestCompile);
     connect(m_panel, &InspectorPanel::requestRun, this, &ParameterTuningPanel::requestRun);
     connect(m_panel, &InspectorPanel::requestOpenMonitor, this, &ParameterTuningPanel::requestOpenMonitor);
-    connect(m_panel, &InspectorPanel::requestEditParameter, this, &ParameterTuningPanel::requestEditParameter);
     connect(m_panel, &InspectorPanel::requestApplyParameters, this, &ParameterTuningPanel::requestApplyParameters);
     connect(m_pidSelector, &QComboBox::currentTextChanged, this, &ParameterTuningPanel::refreshPidTrend);
     connect(m_pidGroupTabs, &QTabBar::currentChanged, this, [this](int index) {
